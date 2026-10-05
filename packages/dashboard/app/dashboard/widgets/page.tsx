@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { Check, Copy, ExternalLink, Lock, Plus, Settings, Trash2 } from 'lucide-react';
 import { WIDGET_LABELS } from '@/components/Pricing';
 import { Alert, Badge, Button, Card, Input, PageHeader, Spinner } from '@/components/ui';
@@ -21,6 +21,49 @@ const PARAM_HINTS: Record<string, string> = {
   timer: '&start=60&coin=5&like=0&follow=30&share=10&max=0&label=...&fontSize=90&bg=35',
   tts: '&lang=th-TH&rate=1&readChat=1&readGift=1&minGift=1',
 };
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
+
+/** คำอธิบายสั้นในแกลเลอรี */
+const WIDGET_BLURB: Record<string, string> = {
+  coinjar: 'เครื่องจักรพาสเทล ของขวัญวิ่งบนสายพานแล้วกองเป็นภูเขา',
+  giftjar: 'ของขวัญจริงตกลงโหล — มีทรงโหล รถ ลูกแก้วหิมะ',
+  garden: 'ของขวัญกลายเป็นดอกไม้บนกิ่งที่แกว่งตามลม',
+  alerts: 'แจ้งเตือนของขวัญ/ติดตาม/แชร์ พร้อมรูปจริง',
+  goal: 'แถบเป้าหมายไลค์ / เพชร / ผู้ติดตาม',
+  chat: 'แชทสดแบบฟองกระจก',
+  follower: 'ผู้ติดตามล่าสุด',
+  topgifters: 'อันดับคนส่งของขวัญ (จำทั้งไลฟ์)',
+  toplikers: 'อันดับคนกดไลค์',
+  timer: 'นาฬิกานับถอยหลัง ผู้ชมเติมเวลาได้',
+  tts: 'อ่านแชท/ของขวัญออกเสียง',
+  fx: 'เล่นเสียง/รูป/วิดีโอตามกฎ Actions',
+};
+
+/** พรีวิวสดของวิดเจ็ต (โหมดเดโม) — ย่อจาก 1920×1080 ให้พอดีการ์ด, โหลดเฉพาะตอนเลื่อนมาเห็น */
+function WidgetPreview({ type }: { type: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setScale(el.clientWidth / 1920));
+    const io = new IntersectionObserver(([e]) => setVisible(!!e?.isIntersecting), { rootMargin: '200px' });
+    ro.observe(el); io.observe(el);
+    return () => { ro.disconnect(); io.disconnect(); };
+  }, []);
+  return (
+    <div ref={ref} className="relative aspect-video overflow-hidden rounded-xl"
+      style={{ background: 'radial-gradient(circle at 30% 20%, #3a2d52, #17121f 70%)' }}>
+      {visible && scale > 0 && (
+        <iframe src={`${API_BASE}/overlay/${type}.html?demo=1&reset=1`} title={`ตัวอย่าง ${type}`} loading="lazy"
+          className="pointer-events-none absolute left-0 top-0 h-[1080px] w-[1920px] origin-top-left border-0"
+          style={{ transform: `scale(${scale})` }} />
+      )}
+    </div>
+  );
+}
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -96,6 +139,32 @@ export default function WidgetsPage() {
         </div>
       )}
 
+      <h2 className="mb-3 text-sm font-semibold text-violet">ตัวอย่างวิดเจ็ตทั้งหมด</h2>
+      <div className="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {(tokens?.[0]?.urls ?? Object.keys(WIDGET_BLURB).map((type) => ({ type, url: '', locked: false }))).map((w) => (
+          <Card key={w.type} className="p-3">
+            <WidgetPreview type={w.type} />
+            <div className="mt-3 flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  {WIDGET_LABELS[w.type] ?? w.type}
+                  {w.locked && <Badge tone="pink"><Lock className="size-3" /> Pro</Badge>}
+                </div>
+                <p className="mt-0.5 text-xs text-muted">{WIDGET_BLURB[w.type] ?? ''}</p>
+              </div>
+              <div className="flex shrink-0 gap-1.5">
+                {w.url && !w.locked && <CopyButton text={w.url} />}
+                <Link href={`/dashboard/widgets/settings/?type=${w.type}`} aria-label="ตั้งค่าวิดเจ็ต">
+                  <Button variant="secondary" className="px-3"><Settings className="size-4" /></Button>
+                </Link>
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+      {tokens && tokens.length === 0 && <p className="-mt-5 mb-6 text-xs text-muted">สร้างลิงก์ชุดแรกด้านล่างก่อน จึงจะมีปุ่มคัดลอกลิงก์ในแต่ละการ์ด</p>}
+
+      <h2 className="mb-3 text-sm font-semibold text-violet">ชุดลิงก์ของคุณ</h2>
       <Card className="mb-6">
         <form onSubmit={create} className="flex flex-wrap items-center gap-3">
           <Input name="label" placeholder="ชื่อชุดลิงก์ (เช่น OBS คอมบ้าน)" maxLength={60} className="max-w-xs flex-1" />
@@ -136,7 +205,7 @@ export default function WidgetsPage() {
                       <Link href="/dashboard/billing/" className="text-sm text-pink hover:underline">อัปเกรดเป็น Pro เพื่อใช้วิดเจ็ตนี้</Link>
                     ) : (
                       <>
-                        <code className="min-w-0 flex-1 truncate rounded-lg bg-canvas px-3 py-2 text-xs text-muted blur-[3px] transition hover:blur-none">{w.url}</code>
+                        <code className="min-w-0 flex-1 truncate rounded-lg bg-canvas px-3 py-2 text-xs text-muted">{w.url}</code>
                         <CopyButton text={w.url} />
                         <Link href={`/dashboard/widgets/settings/?type=${w.type}`} aria-label="ตั้งค่าวิดเจ็ต">
                           <Button variant="secondary" className="px-3"><Settings className="size-4" /><span className="hidden sm:inline">ตั้งค่า</span></Button>

@@ -510,8 +510,23 @@
     restore(); renderBoard();
     requestAnimationFrame(frame);
 
+    // ---- ตัววัดประสิทธิภาพ (?debug=1) + ทดสอบของจำนวนมาก (?n=300) — ใช้เทียบกับ lab/giftjar-pixi.html ----
+    if (P('debug', '0') === '1') {
+      const el = document.createElement('div');
+      el.style.cssText = 'position:fixed;left:8px;top:8px;font:13px/1.4 monospace;color:#fff;background:rgba(20,10,30,.7);padding:6px 10px;border-radius:8px;white-space:pre;z-index:99';
+      document.body.appendChild(el);
+      let frames = 0, last = performance.now(), prev = last, worst = 0;
+      (function meter() { const now = performance.now(); worst = Math.max(worst, now - prev); prev = now; frames++;
+        if (now - last >= 1000) { el.textContent = `Canvas 2D
+FPS ${frames}  แย่สุด ${worst.toFixed(1)} ms
+ของขวัญ ${bodies.length}`; frames = 0; worst = 0; last = now; }
+        requestAnimationFrame(meter); })();
+    }
+    const STRESS = Math.min(1500, parseInt(P('n', '0'), 10) || 0);
+    if (STRESS) { let i = 0; const iv = setInterval(() => { if (i++ >= STRESS) return clearInterval(iv); addBody({ img: '', e: ['🌹', '🫰', '🧴', '🎵', '🌌', '🦁'][i % 6], d: [1, 5, 20, 1, 1000, 2999][i % 6] }); }, 30); }
+
     // ---- เดโม (เปิดไฟล์ตรง ๆ / ?demo=1) ----
-    if (!Overlay.connected) {
+    if (!Overlay.connected && !STRESS) {
       const names = ['somchai', 'mimi', 'บิ๊ก', 'lisa', 'ต้นน้ำ'];
       const gifts = [['Rose', 1], ['Finger Heart', 5], ['Perfume', 20], ['TikTok', 1], ['Galaxy', 1000], ['Lion', 2999]];
       setInterval(() => {

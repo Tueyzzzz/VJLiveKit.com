@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gift Jar — PixiJS spike</title>
+  <style>
+    html,body{margin:0;height:100%;background:transparent;overflow:hidden}
+    #stats{position:fixed;left:8px;top:8px;font:13px/1.4 monospace;color:#fff;background:rgba(20,10,30,.7);padding:6px 10px;border-radius:8px;white-space:pre;display:none}
+  </style>
+</head>
+<body>
+  <div id="stats"></div>
+  <script src="https://cdn.jsdelivr.net/npm/pixi.js@8.6.6/dist/pixi.min.js"></script>
+  <script src="../js/juice.js"></script>
+  <script>
+  /*
+   * ทดลอง PixiJS v8 (WebGL) กับโหลแก้ว — ใช้วัดประสิทธิภาพเทียบกับ giftjar.html (Canvas 2D)
+   *   ?n=150     จำนวนของขวัญทดสอบ (ใส่เยอะ ๆ เพื่อวัดความหนัก เช่น 300, 500)
+   *   ?debug=1   แสดง FPS / เวลาต่อเฟรม / จำนวนชิ้น
+   *   ?glass=1   เปิดกระจกหักเหแสง (DisplacementFilter)
+   * ชั้นภาพแบบเกม: back (หลังโหล) → dynamic (ของขวัญ+ฟิสิกส์) → front (กระจกหน้า) → fx (ประกาย/ออร่า)
+   */
+  (async function () {
+    const q = new URLSearchParams(location.search);
+    const N = Math.min(1500, parseInt(q.get('n') || '150', 10)), DEBUG = q.get('debug') === '1', GLASS = q.get('glass') !== '0';
+
+    const app = new PIXI.Application();
+    await app.init({ resizeTo: window, backgroundAlpha: 0, antialias: true, autoDensity: true, resolution: Math.min(2, devicePixelRatio || 1), preference: 'webgl' });
+    document.body.appendChild(app.canvas);
+
+    // ---- ฉาก: พิกัด local เดียวกับ giftjar (0,0 = ก้นโหล) ----
+    const scene = new PIXI.Container(); app.stage.addChild(scene);
+    const layers = { back: new PIXI.Container(), dyn: new PIXI.Container(), front: new PIXI.Container(), fx: new PIXI.Container() };
+    Object.values(layers).forEach((l) => scene.addChild(l));
+    function layout() { const s = Math.min(1.6, Math.max(0.5, innerHeight / 720)); scene.scale.set(s); scene.position.set(innerWidth / 2, innerHeight - 30); }
+    addEventListener('resize', layout); layout();
+
+    // โปรไฟล์โหล (เหมือน giftjar shape=jar)
+    const hw = (y) => y > -40 ? 90 + Math.sqrt(Math.max(0, 1600 - (y + 40) ** 2)) : y > -260 ? 130 : y > -300 ? 92 + 38 * (0.5 + 0.5 * Math.cos(Math.PI * (-260 - y) / 40)) : 92;
+    const OPEN_Y = -338, OPEN_HW = 92, TOP_Y = -362;
+    const outline = []; for (let i = 0; i <= 48; i++) { const y = OPEN_Y - OPEN_Y * i / 48; outline.push(-hw(Math.min(-0.5, y)), y); }
+    for (let i = 48; i >= 0; i--) { const y = OPEN_Y - OPEN_Y * i / 48; outline.push(hw(Math.min(-0.5, y)), y); }
+
+    const back = new PIXI.Graphics().poly(outline).fill({ color: 0xd2ebff, alpha: 0.16 })
+      .ellipse(0, -6, 116, 10).fill({ color: 0xffffff, alpha: 0.18 });
+    layers.back.addChild(back);
+    const front = new PIXI.Graphics()
+      .poly(outline, false).stroke({ width: 5, color: 0xffffff, alpha: 0.85 })
+      .roundRect(-102, TOP_Y, 204, OPEN_Y - TOP_Y + 4, 8).fill({ color: 0xffffff, alpha: 0.45 }).stroke({ width: 3, color: 0xffffff, alpha: 0.9 });
+    // ไฮไลต์กระจก (แถบโค้งตามโหล)
+    const hl = new PIXI.Graphics(); const pts = []; for (let i = 0; i <= 12; i++) { const y = -250 + 190 * i / 12; pts.push(-hw(y) + 20, y); }
+    hl.poly(pts, false).stroke({ width: 10, color: 0xffffff, alpha: 0.35, cap: 'round' });
+    layers.front.addChild(front, hl);
+
+    // ---- กระจกหักเหแสง: displacement map จาก noise ที่สร้างเอง ----
+    if (GLASS) {
+      const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'); const img = g.createImageData(256, 256);
+      for (let y = 0; y < 256; y++) for (let x = 0; x < 256; x++) { const i = (y * 256 + x) * 4, v = 128 + 40 * Math.sin(x / 18) + 30 * Math.sin(y / 23 + x / 40); img.data[i] = v; img.data[i + 1] = 128 + 40 * Math.cos(y / 16); img.data[i + 2] = 128; img.data[i + 3] = 255; }
+      g.putImageData(img, 0, 0);
+      const map = new PIXI.Sprite(PIXI.Texture.from(c)); map.texture.source.addressMode = 'repeat'; map.renderable = false; map.position.set(-128, -300);
+      layers.dyn.addChild(map);
+      const disp = new PIXI.DisplacementFilter({ sprite: map, scale: 6 });
+      layers.dyn.filters = [disp];
+      app.ticker.add(() => { map.x += 0.3; });
+    }
+
+    // ---- เท็กซ์เจอร์ของขวัญ (ทดสอบ: อีโมจิวาดลง canvas) + ออร่าเรืองแสง (sprite blend add) ----
+    function emojiTex(e) { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.font = '52px serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(e, 32, 36); return PIXI.Texture.from(c); }
+    const TEX = ['🌹', '🫰', '🧴', '🎵', '🌌', '🦁'].map(emojiTex);
+    const glowTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'); const r = g.createRadialGradient(64, 64, 10, 64, 64, 64); r.addColorStop(0, 'rgba(255,215,110,.8)'); r.addColorStop(1, 'rgba(255,215,110,0)'); g.fillStyle = r; g.fillRect(0, 0, 128, 128); return PIXI.Texture.from(c); })();
+
+    // ---- ฟิสิกส์วงกลม (แยกจากการวาด) ----
+    const bodies = [], G = 0.6;
+    function add(i) {
+      const d = [1, 5, 20, 1, 1000, 2999][i % 6], r = 14.4 * (1 + Math.min(1, Math.log10(d + 1) / 4) * 0.9);
+      const sp = new PIXI.Sprite(TEX[i % 6]); sp.anchor.set(0.5); sp.width = sp.height = r * 2.3;
+      let glow = null; if (d >= 1000) { glow = new PIXI.Sprite(glowTex); glow.anchor.set(0.5); glow.blendMode = 'add'; glow.width = glow.height = r * 3.4; layers.dyn.addChild(glow); }
+      layers.dyn.addChild(sp);
+      const b = { x: (Math.random() - .5) * 120, y: TOP_Y - 40 - Math.random() * 60, r, sp, glow, sq: new Juice.Spring(260, 13), age: 0, d };
+      b.px = b.x; b.py = b.y - 2; bodies.push(b);
+    }
+    function constrain(b) {
+      if (b.y + b.r > -3) b.y = -3 - b.r;
+      const w = (b.y < OPEN_Y ? OPEN_HW : Math.min(hw(Math.min(-0.5, b.y)), hw(Math.min(-0.5, b.y + b.r * 0.75)))) - 3;
+      if (b.x - b.r < -w) b.x = -w + b.r; if (b.x + b.r > w) b.x = w - b.r;
+    }
+    function step() {
+      for (const b of bodies) { const vx = (b.x - b.px) * 0.985, vy = (b.y - b.py) * 0.985; b.px = b.x; b.py = b.y; b.x += vx; b.y += vy + G; b.vin = vy + G; b.age++; }
+      for (let it = 0; it < 4; it++) {
+        for (let i = 0; i < bodies.length; i++) { const a = bodies[i];
+          for (let j = i + 1; j < bodies.length; j++) { const c = bodies[j], dx = c.x - a.x, dy = c.y - a.y, m = a.r + c.r;
+            if (Math.abs(dx) > m || Math.abs(dy) > m) continue; const d2 = dx * dx + dy * dy; if (d2 >= m * m || !d2) continue;
+            const d = Math.sqrt(d2), p = (m - d) / d * 0.5; a.x -= dx * p; a.y -= dy * p; c.x += dx * p; c.y += dy * p; } }
+        for (const b of bodies) constrain(b);
+      }
+      for (const b of bodies) { if (b.vin > 4 && b.y - b.py < b.vin * 0.35 && b.age > 3) b.sq.kick(-Math.min(b.vin, 14) * 0.9); b.sq.step(1 / 60); }
+    }
+
+    // ---- loop: ฟิสิกส์ fixed step + ซิงก์ตำแหน่งไปที่ sprite ----
+    let acc = 0, spawned = 0, physMs = 0;
+    app.ticker.add((t) => {
+      if (spawned < N && t.lastTime % 2 < 1.5) { add(spawned++); }
+      acc += Math.min(250, t.deltaMS);
+      const t0 = performance.now(); let n = 0;
+      while (acc >= 16.7 && n < 15) { step(); acc -= 16.7; n++; }
+      physMs = physMs * 0.9 + (performance.now() - t0) * 0.1;
+      const now = performance.now() / 1000;
+      for (const b of bodies) {
+        const qv = Math.max(-0.35, Math.min(0.35, b.sq.x));
+        b.sp.position.set(b.x, b.y); b.sp.rotation = (b.sp.rotation + (b.x - b.px) / b.r);
+        b.sp.scale.set((b.r * 2.3 / 64) * (1 - qv), (b.r * 2.3 / 64) * (1 + qv));
+        if (b.glow) { b.glow.position.set(b.x, b.y); b.glow.alpha = 0.6 + 0.3 * Math.sin(now * 4 + b.x); }
+      }
+    });
+
+    // ---- ตัววัดประสิทธิภาพ ----
+    if (DEBUG) {
+      const el = document.getElementById('stats'); el.style.display = 'block';
+      let frames = 0, last = performance.now(), worst = 0, prev = performance.now();
+      app.ticker.add(() => {
+        const now = performance.now(); worst = Math.max(worst, now - prev); prev = now; frames++;
+        if (now - last >= 1000) {
+          const gl = app.renderer.gl, info = gl && gl.getExtension('WEBGL_debug_renderer_info');
+          el.textContent = `PixiJS ${PIXI.VERSION} · ${app.renderer.name}\nFPS ${frames}  แย่สุด ${worst.toFixed(1)} ms\nฟิสิกส์ ${physMs.toFixed(2)} ms/เฟรม\nของขวัญ ${bodies.length}` + (info ? `\nGPU ${gl.getParameter(info.UNMASKED_RENDERER_WEBGL)}` : '');
+          frames = 0; worst = 0; last = now;
+        }
+      });
+    }
+  })();
+  </script>
+</body>
+</html>

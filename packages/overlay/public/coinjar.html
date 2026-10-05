@@ -276,17 +276,23 @@
     // ---- จำกองไว้ (รีเฟรช OBS แล้วกองเดิมกลับมา) ----
     const KEY = 'vjl-coinjar2:' + (P('t', '') || P('username', 'demo')).slice(-24);
     let saveT = null;
-    function save() { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(bodies.filter((b) => !b.dying).map((b) => b.src))); } catch { /* storage ปิด */ } }, 500); }
+    // จำกอง + ยอดเพชร + รหัสไลฟ์ (ยอดจากเซิร์ฟเวอร์เริ่ม 0 ใหม่ทุกครั้งที่รีสตาร์ท → ใช้ค่าที่มากกว่า, ไลฟ์ใหม่ → เริ่มนับใหม่)
+    let roomId = null;
+    function save() { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify({ g: bodies.filter((b) => !b.dying).map((b) => b.src), d: diamonds, room: roomId })); } catch { /* storage ปิด */ } }, 500); }
     function restore() {
       if (P('reset', '0') === '1') { try { localStorage.removeItem(KEY); } catch { /* ignore */ } return false; }
-      try { const list = JSON.parse(localStorage.getItem(KEY) || '[]'); list.slice(-MAX).forEach((g, i) => setTimeout(() => addBody(g, 'restore'), i * 6)); return list.length > 0; }
+      try {
+        const raw = JSON.parse(localStorage.getItem(KEY) || '[]'), list = Array.isArray(raw) ? raw : (raw.g || []);
+        if (!Array.isArray(raw)) { diamonds = raw.d || 0; roomId = raw.room || null; }
+        list.slice(-MAX).forEach((g, i) => setTimeout(() => addBody(g, 'restore'), i * 6)); return list.length > 0;
+      }
       catch { return false; }
     }
 
     const EMOJI = { Rose: '🌹', 'Finger Heart': '🫰', Perfume: '🧴', Galaxy: '🌌', Lion: '🦁', Universe: '🪐', Heart: '❤️', TikTok: '🎵' };
     function onGift(e) {
       const count = e.repeatCount || 1, unit = e.diamondCount || 0, value = e.totalValue || unit * count;
-      diamonds += value; updateDia(); shakeT = 24; showGifter(e.user);
+      diamonds += value; updateDia(); save(); shakeT = 24; showGifter(e.user);
       screenImg = giftImg(e.giftImage); screenEmoji = EMOJI[e.giftName] || '🎁';
       const g = { u: e.giftImage || '', e: screenEmoji, d: unit };
       for (let i = 0; i < Math.min(count, 30); i++) setTimeout(() => { addBody(g); save(); }, i * 160);
@@ -295,13 +301,17 @@
     let prefilled = false;
     function onStats(s) {
       if (!s || typeof s.diamondCount !== 'number') return;
-      diamonds = s.diamondCount; updateDia();
+      diamonds = Math.max(diamonds, s.diamondCount); updateDia(); save();
       if (prefilled) return; prefilled = true;
       // ไม่มีกองในความจำแต่ไลฟ์มีเพชรแล้ว → เติมเหรียญตามยอด
       if (!bodies.length && diamonds > 0) for (let i = 0; i < Math.min(120, Math.ceil(Math.sqrt(diamonds) * 2)); i++) addBody({ u: '', e: '🪙', d: 1 }, 'restore');
     }
     Overlay.on('event', (e) => { if (e.type === 'gift' && !e.streaking) { prefilled = true; onGift(e); } });
-    Overlay.on('state', (s) => onStats(s && s.stats));
+    Overlay.on('state', (s) => {
+      if (s && s.roomId && roomId && s.roomId !== roomId) diamonds = 0; // ไลฟ์ใหม่ → นับเพชรใหม่ (กองยังอยู่จนกดล้าง)
+      if (s && s.roomId) roomId = s.roomId;
+      onStats(s && s.stats);
+    });
     Overlay.on('stats', onStats);
 
     addEventListener('resize', resize); resize();

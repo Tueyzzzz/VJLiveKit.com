@@ -48,7 +48,7 @@
    *   board=1 top=1 boardFormat=full|name   ผู้ให้สูงสุดใต้โหล (top = จำนวนคน, board=0 ซ่อน; full = รูป+ชื่อ+เหรียญ)
    *   total=0                               แสดงยอดเหรียญรวมเหนือโหล
    *   minCoins=0                            รับเฉพาะของขวัญมูลค่า >= นี้
-   *   shape=jar|bowl|mason|car cloth=#e0452b body=#bfe9e6   ทรง: jar = คอแคบ, bowl = กลมปากกว้าง, mason = ฝาผ้า (สีผ้า), car = รถพาสเทล (สีรถ)
+   *   shape=jar|bowl|mason|car|globe cloth=#e0452b body=#bfe9e6   ทรง: jar = คอแคบ, bowl = กลมปากกว้าง, mason = ฝาผ้า (สีผ้า), car = รถพาสเทล (สีรถ)
    *   full=spill|fade|reset fullText=...    โหลเต็มแล้ว: spill = ล้นออกกองรอบโหล (ไม่หาย, ค่าเริ่มต้น)
    *                                         fade = ชิ้นเก่าสุดจางออก, reset = ฉลองแล้วเทโหลเริ่มใหม่
    *   font=Kanit fontSize=50                ฟอนต์ (Kanit/Prompt/Mitr/Sriracha/Chakra Petch) และขนาด
@@ -61,7 +61,7 @@
     const SHOW_ALERT = P('alert', '1') !== '0', ALERT_MS = num('alertSec', 5) * 1000;
     const SHOW_BOARD = P('board', '1') !== '0', TOP = Math.max(1, Math.min(10, num('top', 1))), BOARD_FULL = P('boardFormat', 'full') !== 'name';
     const SHOW_TOTAL = P('total', '0') === '1', MIN_COINS = num('minCoins', 0);
-    const FULL_MODE = P('full', 'spill'), FULL_TEXT = P('fullText', 'โหลเต็มแล้ว! 🎉');
+    let FULL_MODE = P('full', 'spill'); const FULL_TEXT = P('fullText', 'โหลเต็มแล้ว! 🎉');
     document.documentElement.style.setProperty('--font', `'${P('font', 'Kanit')}'`);
     document.documentElement.style.setProperty('--fs', String(num('fontSize', 50)));
 
@@ -84,6 +84,10 @@
         hw: (y) => y > -30 ? 95 + Math.sqrt(Math.max(0, 900 - (y + 30) ** 2)) : y > -250 ? 125 : y > -280 ? 105 + 20 * (0.5 + 0.5 * Math.cos(Math.PI * (-250 - y) / 30)) : 105,
         openY: -292, openHW: 105, rimHW: 138, topY: -342, fullY: -252, maxHW: 125, closed: true, cloth: P('cloth', '#e0452b'),
       },
+      globe: { // ลูกแก้วหิมะ: ทรงกลมบนฐาน (ปิดสนิท — เต็มแล้วชิ้นเก่าจางออก)
+        hw: (y) => Math.sqrt(Math.max(0, 170 * 170 - (y + 250) ** 2)),
+        openY: -392, openHW: 90, rimHW: 120, topY: -420, fullY: -330, maxHW: 170, closed: true, floor: -112, globe: true, fullMode: 'fade',
+      },
       car: { // รถพาสเทล (มุมหลัง) — ของขวัญกองบนหลังคาแล้วไหลลงข้างรถ (ตัวรถทึบ ไม่มีของข้างใน)
         hw: () => 152, openY: -282, openHW: 100, rimHW: 112, topY: -300, fullY: -300, maxHW: 152, solid: true,
         // ตัวรถเป็นกล่องสี่เหลี่ยมมุมมน 2 ชั้น + ราวหลังคา (กันของตก)
@@ -92,6 +96,7 @@
       },
     };
     const SH = SHAPES[P('shape', 'jar')] || SHAPES.jar;
+    if (SH.fullMode) FULL_MODE = SH.fullMode;
     // เว้นที่ใต้โหลไว้ให้ป้ายผู้ให้สูงสุด
     const BOARD_SPACE = SHOW_BOARD ? (TOP === 1 ? 70 : TOP * 46 + 14) : 0;
     const origin = () => ({ x: W / 2 + OX, y: H - 24 * SCALE - BOARD_SPACE + OY });
@@ -105,6 +110,7 @@
     }
     function drawJarBack() {
       if (SH.solid) return drawCar();
+      if (SH.globe) return drawGlobeBack();
       jarPath(); ctx.closePath();
       const g = ctx.createLinearGradient(-SH.maxHW, 0, SH.maxHW, 0);
       g.addColorStop(0, 'rgba(210,235,255,.22)'); g.addColorStop(.5, 'rgba(255,255,255,.06)'); g.addColorStop(1, 'rgba(210,235,255,.2)');
@@ -113,6 +119,7 @@
     }
     function drawJarFront() {
       if (SH.solid) return;
+      if (SH.globe) return drawGlobeFront();
       jarPath();
       ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.stroke();
       ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(150,190,230,.6)'; ctx.stroke();
@@ -139,6 +146,53 @@
       lg.addColorStop(0, 'rgba(255,255,255,.55)'); lg.addColorStop(1, 'rgba(200,225,250,.3)');
       ctx.fillStyle = lg; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.stroke();
       for (let i = 1; i <= 2; i++) { ctx.beginPath(); ctx.moveTo(-SH.rimHW + 4, SH.topY + i * 8); ctx.lineTo(SH.rimHW - 4, SH.topY + i * 8); ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.stroke(); }
+    }
+    // ---- ลูกแก้วหิมะ ----
+    const GC = { x: 0, y: -250, r: 170 };
+    const flakes = Array.from({ length: 70 }, () => ({ x: (Math.random() - .5) * 300, y: -400 + Math.random() * 290, r: 1.5 + Math.random() * 2.5, sp: .2 + Math.random() * .5, ph: Math.random() * 6.28 }));
+    function drawGlobeBack() {
+      const { x, y, r } = GC, rr = (a, b, w, h, k) => { ctx.beginPath(); ctx.roundRect(a, b, w, h, k); };
+      // เงา + ฐาน (ครีมลายนูน)
+      ctx.beginPath(); ctx.ellipse(0, -2, 175, 14, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(90,70,140,.25)'; ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-150, -8); ctx.bezierCurveTo(-170, -50, -150, -96, -128, -112); ctx.lineTo(128, -112); ctx.bezierCurveTo(150, -96, 170, -50, 150, -8); ctx.closePath();
+      let g = ctx.createLinearGradient(-160, 0, 160, 0); g.addColorStop(0, '#d9c7a4'); g.addColorStop(.35, '#fff8ea'); g.addColorStop(.6, '#f3e6cc'); g.addColorStop(1, '#bfa67c');
+      ctx.fillStyle = g; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(120,95,60,.35)'; ctx.stroke();
+      rr(-70, -88, 140, 46, 18); ctx.fillStyle = '#fffaf0'; ctx.fill(); ctx.strokeStyle = 'rgba(180,150,100,.6)'; ctx.stroke();
+      ctx.font = '600 22px Kanit, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#c89a5a'; ctx.fillText('VJLiveKit', 0, -64);
+      ctx.font = '22px serif'; ctx.fillText('🎀', -105, -60); ctx.fillText('🎀', 105, -60);
+      // ข้างในลูกแก้ว: ฟ้าอุ่น + พื้นหิมะ + บ้าน + ต้นสน
+      ctx.save(); ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.clip();
+      g = ctx.createRadialGradient(0, y - 40, 20, 0, y, r); g.addColorStop(0, 'rgba(255,233,190,.55)'); g.addColorStop(1, 'rgba(160,120,90,.35)');
+      ctx.fillStyle = g; ctx.fillRect(-r, y - r, r * 2, r * 2);
+      ctx.beginPath(); ctx.ellipse(0, -112, 160, 22, 0, 0, Math.PI * 2); ctx.fillStyle = '#fbfaff'; ctx.fill();
+      // ต้นสน
+      for (const [tx, ty, s] of [[-80, -118, 1], [-50, -114, .7]]) {
+        for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.moveTo(tx, ty - (90 - k * 22) * s); ctx.lineTo(tx - (34 + k * 8) * s, ty - (40 - k * 22) * s); ctx.lineTo(tx + (34 + k * 8) * s, ty - (40 - k * 22) * s); ctx.closePath(); ctx.fillStyle = k % 2 ? '#7cc9a6' : '#5fb48f'; ctx.fill(); }
+        for (const [dx, dy, c] of [[-10, -55, '#ffb5c8'], [12, -40, '#ffd76a'], [-4, -75, '#a9d8ff']]) { ctx.beginPath(); ctx.arc(tx + dx * s, ty + dy * s, 4 * s, 0, 6.29); ctx.fillStyle = c; ctx.fill(); }
+      }
+      // บ้าน
+      rr(10, -190, 90, 74, 6); ctx.fillStyle = '#fff3e0'; ctx.fill();
+      ctx.beginPath(); ctx.moveTo(0, -186); ctx.lineTo(55, -232); ctx.lineTo(110, -186); ctx.closePath(); ctx.fillStyle = '#ffffff'; ctx.fill(); ctx.strokeStyle = 'rgba(150,130,180,.4)'; ctx.stroke();
+      rr(44, -150, 22, 34, 10); ctx.fillStyle = '#c8a27a'; ctx.fill();
+      for (const wx of [20, 76]) { rr(wx, -176, 16, 18, 4); ctx.fillStyle = '#ffd76a'; ctx.fill(); }
+      ctx.restore();
+    }
+    function drawGlobeFront() {
+      const { x, y, r } = GC, now = performance.now() / 1000;
+      ctx.save(); ctx.beginPath(); ctx.arc(x, y, r - 2, 0, Math.PI * 2); ctx.clip();
+      for (const f of flakes) { // หิมะลอย
+        f.y += f.sp; if (f.y > -110) { f.y = -410; f.x = (Math.random() - .5) * 300; }
+        ctx.beginPath(); ctx.arc(f.x + Math.sin(now + f.ph) * 6, f.y, f.r, 0, 6.29); ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fill();
+      }
+      ctx.restore();
+      // กระจก: Fresnel ขอบ + ไฮไลต์
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+      const g = ctx.createRadialGradient(x, y, r * .7, x, y, r); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(1, 'rgba(230,240,255,.45)');
+      ctx.fillStyle = g; ctx.fill(); ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.stroke();
+      ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.arc(x, y, r - 22, Math.PI * 1.08, Math.PI * 1.42); ctx.lineWidth = 12; ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.stroke();
+      ctx.beginPath(); ctx.arc(x, y, r - 22, Math.PI * 1.5, Math.PI * 1.56); ctx.lineWidth = 8; ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.stroke();
+      ctx.beginPath(); ctx.arc(x, y, r - 14, Math.PI * .1, Math.PI * .3); ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.stroke();
     }
     function drawCar() { // รถพาสเทลมุมหลัง (แสงซ้ายบน · เงาอมม่วง)
       const rr = (x, y, w, h, r) => { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); };
@@ -249,7 +303,8 @@
     }
     function constrain(b) {
       if (b.out) return constrainOutside(b);
-      if (b.y + b.r > -3) b.y = -3 - b.r;
+      const floorIn = SH.floor ?? -3;
+      if (b.y + b.r > floorIn) b.y = floorIn - b.r;
       if (SH.closed && b.y - b.r < SH.openY) b.y = SH.openY + b.r; // ฝาผ้าปิดด้านบน
       // เหนือปากโหล = ช่องทางเข้า (กว้างเท่าปาก) · ในโหล = ตามโปรไฟล์ (เช็กส่วนล่างของลูกด้วย สำหรับก้นโค้ง)
       const hw = (b.y < SH.openY ? SH.openHW : Math.min(SH.hw(Math.min(-0.5, b.y)), SH.hw(Math.min(-0.5, b.y + b.r * 0.75)))) - 3;

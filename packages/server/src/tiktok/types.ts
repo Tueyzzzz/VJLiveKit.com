@@ -18,6 +18,7 @@ export interface TikTokEvent {
   // gift
   giftName?: string;
   giftId?: number;
+  giftImage?: string;
   repeatCount?: number;
   diamondCount?: number;
   totalValue?: number;

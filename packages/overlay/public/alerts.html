@@ -41,12 +41,12 @@
 
     function show(html,cls,big){ const el=document.createElement('div'); el.className='alert '+(cls||''); el.innerHTML=html; stage.appendChild(el);
       setTimeout(()=>el.remove(),4700); while(stage.children.length>4) stage.removeChild(stage.firstChild); if(big) burst(40); }
-    function gift(nm,g,count,val){ const em=EMOJI[g]||'🎁'; show(`<div class="ava" style="background:${colOf(nm)}">${em}</div><div><div>${Overlay.esc(nm)}</div><div class="sub">ส่ง ${Overlay.esc(g)} ×${count}</div></div><span class="val">💎 ${Overlay.fmt(val)}</span>`,'',val>=1000); }
+    function gift(nm,g,count,val,img){ const em=EMOJI[g]||'🎁'; const safeImg=/^https:\/\//.test(img||'')?img.replace(/"/g,'%22'):''; const icon=safeImg?`<img src="${safeImg}" alt="" style="width:100%;height:100%;object-fit:contain">`:em; show(`<div class="ava" style="background:${colOf(nm)}">${icon}</div><div><div>${Overlay.esc(nm)}</div><div class="sub">ส่ง ${Overlay.esc(g)} ×${count}</div></div><span class="val">💎 ${Overlay.fmt(val)}</span>`,'',val>=1000); }
     function follow(nm){ show(`<div class="ava" style="background:${colOf(nm)}">➕</div><div><div>${Overlay.esc(nm)}</div><div class="sub">กดติดตามแล้ว!</div></div>`,'follow'); }
     function share(nm){ show(`<div class="ava" style="background:${colOf(nm)}">🔁</div><div><div>${Overlay.esc(nm)}</div><div class="sub">แชร์ไลฟ์นี้</div></div>`,'share'); }
 
     Overlay.on('event',(e)=>{ const nm=e.user?(e.user.nickname||e.user.uniqueId):'';
-      if(e.type==='gift'&&!e.streaking){ const v=e.totalValue||(e.diamondCount||0)*(e.repeatCount||1); gift(nm,e.giftName,e.repeatCount||1,v); }
+      if(e.type==='gift'&&!e.streaking){ const v=e.totalValue||(e.diamondCount||0)*(e.repeatCount||1); gift(nm,e.giftName,e.repeatCount||1,v,e.giftImage); }
       else if(e.type==='follow') follow(nm); else if(e.type==='share') share(nm); });
 
     if(!Overlay.connected){ const names=['mimi','บิ๊ก','lisa','ต้นน้ำ','somchai']; const gifts=[['Rose',1],['Perfume',20],['Galaxy',1000],['Lion',2999]];

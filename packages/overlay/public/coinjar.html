@@ -62,17 +62,34 @@
     addEventListener('resize', resize); resize();
     const at = (el)=>{ const s=stage.getBoundingClientRect(), r=el.getBoundingClientRect(); return {x:r.left-s.left+r.width/2, y:r.top-s.top+r.height/2}; };
 
-    const G=0.55, coins=[], conf=[];
-    function spawnCoin(emoji){ const m=at(mouthA); const belt=H-H*0.12;
-      coins.push({x:m.x,y:m.y,vx:-(2.2+Math.random()*3.3),vy:-(6+Math.random()*5),rot:Math.random()*6.28,vr:(Math.random()-.5)*.5,size:26+Math.random()*8,emoji,settled:false,life:1,rest:belt-Math.random()*10,t:0});
-      if(coins.length>160) coins.shift(); }
+    // ของขวัญกองค้างไว้เป็นภูเขา (heightmap ต่อคอลัมน์) — เกิน MAX_COINS ค่อยจางชิ้นเก่าสุดออก
+    const G=0.55, coins=[], conf=[], MAX_COINS=220, COL=22;
+    let heights={};
+    const imgCache={};
+    function giftImg(url){ if(!url) return null; let im=imgCache[url]; if(!im){ im=new Image(); im.src=url; imgCache[url]=im; } return im; }
+    const floorY=()=>H-H*0.12, colAt=(x)=>Math.max(0,Math.floor(x/COL));
+    const landY=(x)=>floorY()-(heights[colAt(x)]||0);
+    // ไหลลงเนินไปคอลัมน์ที่ต่ำกว่า (ไม่เลยปากเครื่องไปทางขวา) → กองเป็นภูเขาลาดเอียง
+    function settle(c){ let k=colAt(c.x); const h=(i)=>heights[i]||0, maxK=colAt(at(mouthA).x), step=c.size*0.5;
+      for(let n=0;n<60;n++){ if(k>0 && h(k-1)+step<h(k)) k--; else if(k<maxK && h(k+1)+step<h(k)) k++; else break; }
+      c.x=k*COL+COL/2+(Math.random()-.5)*6; c.y=floorY()-h(k)-c.size*0.4; heights[k]=h(k)+c.size*0.55;
+      c.col=k; c.settled=true; c.vr=0; }
+    function spawnCoin(emoji, img, preSettled){ const m=at(mouthA); const size=26+Math.random()*8;
+      const c={x:m.x,y:m.y,vx:-(2.2+Math.random()*3.3),vy:-(6+Math.random()*5),rot:Math.random()*6.28,vr:(Math.random()-.5)*.5,size,emoji,img,settled:false,life:1};
+      if(preSettled){ c.x=16+Math.random()*Math.max(40,m.x-40); c.rot=(Math.random()-.5)*.8; settle(c); }
+      coins.push(c);
+      if(coins.filter(k=>!k.dying).length>MAX_COINS){ const old=coins.find(k=>k.settled&&!k.dying); if(old) old.dying=true; } }
+    // ขนาดจอเปลี่ยน (เช่น ปรับ Browser Source ใน OBS) → จัดกองใหม่
+    addEventListener('resize', ()=>{ heights={}; coins.filter(c=>c.settled&&!c.dying).forEach(settle); });
     function spawnConf(n){ const m=at(mouthA); for(let i=0;i<n;i++) conf.push({x:m.x,y:m.y,vx:(Math.random()-.5)*12,vy:-(3+Math.random()*8),rot:Math.random()*6.28,vr:(Math.random()-.5)*.8,w:6+Math.random()*5,h:9+Math.random()*6,c:cols[Math.floor(Math.random()*cols.length)],life:1}); }
     function loop(){ ctx.clearRect(0,0,W,H);
       for(let i=coins.length-1;i>=0;i--){ const c=coins[i];
         if(!c.settled){ c.vy+=G; c.x+=c.vx; c.y+=c.vy; c.rot+=c.vr; if(c.x<16){c.x=16;c.vx*=-.5;}
-          if(c.y>=c.rest){ c.y=c.rest; c.vy*=-.42; c.vx*=.7; c.vr*=.6; if(Math.abs(c.vy)<1.6){c.settled=true;} } }
-        else { c.t++; if(c.t>90) c.life-=0.02; if(c.life<=0){ coins.splice(i,1); continue; } }
+          const ly=landY(c.x)-c.size*0.4;
+          if(c.y>=ly){ c.y=ly; c.vy*=-.42; c.vx*=.7; c.vr*=.6; if(Math.abs(c.vy)<1.6) settle(c); } }
+        else if(c.dying){ c.life-=0.03; if(c.life<=0){ heights[c.col]=Math.max(0,(heights[c.col]||0)-c.size*0.55); coins.splice(i,1); continue; } }
         ctx.save(); ctx.globalAlpha=c.life; ctx.translate(c.x,c.y); ctx.rotate(c.rot); const r=c.size/2;
+        if(c.img && c.img.complete && c.img.naturalWidth){ const s=c.size*1.25; ctx.drawImage(c.img,-s/2,-s/2,s,s); ctx.restore(); continue; }
         const g=ctx.createRadialGradient(-r*.3,-r*.3,r*.2,0,0,r); g.addColorStop(0,'#fff6cf'); g.addColorStop(.55,'#ffcf5c'); g.addColorStop(1,'#f5a623');
         ctx.beginPath(); ctx.arc(0,0,r,0,6.2832); ctx.fillStyle=g; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle='rgba(255,255,255,.7)'; ctx.stroke();
         ctx.rotate(-c.rot); ctx.font=Math.round(c.size*.62)+'px serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(c.emoji,0,1); ctx.restore(); }
@@ -87,13 +104,21 @@
     function shake(){ machine.classList.remove('shake'); void machine.offsetWidth; machine.classList.add('shake'); }
 
     const EMOJI = { Rose:'🌹','Finger Heart':'🫰',Perfume:'🧴',Galaxy:'🌌',Lion:'🦁',Universe:'🪐' };
-    function onGift(nm, giftName, value, count){ diamonds+=value; updateDia(); shake(); showGifter(nm);
-      const emoji=EMOJI[giftName]||'🎁'; const n=Math.min((count||1)+(value>=1000?10:2), value>=1000?16:6);
-      for(let i=0;i<n;i++) setTimeout(spawnCoin, i*70, emoji); if(value>=1000) spawnConf(40); }
+    function onGift(nm, giftName, value, count, imgUrl){ diamonds+=value; updateDia(); shake(); showGifter(nm);
+      const emoji=EMOJI[giftName]||'🎁', img=giftImg(imgUrl); const n=Math.min((count||1)+(value>=1000?10:2), value>=1000?16:6);
+      for(let i=0;i<n;i++) setTimeout(spawnCoin, i*70, emoji, img); if(value>=1000) spawnConf(40); }
+
+    // เปิด/รีเฟรช overlay กลางไลฟ์ → เติมกองตามยอดเพชรที่สะสมแล้ว
+    let prefilled=false;
+    function prefill(total){ if(prefilled) return; prefilled=true; if(!total || coins.length) return;
+      const n=Math.min(Math.round(MAX_COINS*0.6), Math.ceil(Math.sqrt(total)*2));
+      for(let i=0;i<n;i++) spawnCoin('🪙', null, true); }
+    function onStats(s){ if(s && typeof s.diamondCount==='number'){ diamonds=s.diamondCount; updateDia(); prefill(diamonds); } }
 
     // ---- ต่ออีเวนต์จริงจากเซิร์ฟเวอร์ ----
-    Overlay.on('event', (e)=>{ if(e.type==='gift' && !e.streaking){ const v=e.totalValue||(e.diamondCount||0)*(e.repeatCount||1); onGift(e.user?.nickname||e.user?.uniqueId, e.giftName, v, e.repeatCount); } });
-    Overlay.on('stats', (s)=>{ if(typeof s.diamondCount==='number'){ diamonds=s.diamondCount; updateDia(); } });
+    Overlay.on('event', (e)=>{ if(e.type==='gift' && !e.streaking){ prefilled=true; const v=e.totalValue||(e.diamondCount||0)*(e.repeatCount||1); onGift(e.user?.nickname||e.user?.uniqueId, e.giftName, v, e.repeatCount, e.giftImage); } });
+    Overlay.on('state', (s)=>onStats(s && s.stats));
+    Overlay.on('stats', onStats);
 
     // ---- demo fallback (เมื่อเปิดไฟล์ตรง ๆ ไม่ได้ต่อเซิร์ฟเวอร์) ----
     if (!Overlay.connected) {

@@ -120,14 +120,15 @@ export class TikTokRoom extends EventEmitter {
         const g = d.gift ?? d.giftDetails ?? {};
         const giftName: string = g.name ?? g.giftName ?? d.giftName ?? '';
         const giftId = num(d.giftId ?? g.id);
+        const giftImage: string | undefined = g.image?.urlList?.[0] ?? d.giftPictureUrl ?? undefined;
         const diamonds = num(g.diamondCount ?? d.diamondCount);
         const streak = num(g.type ?? d.giftType) === 1;
         const streakEnd = d.repeatEnd === true || num(d.repeatEnd) === 1;
         const count = num(d.repeatCount, 1) || 1;
-        if (streak && !streakEnd) { this.send('gift', { user, giftName, giftId, repeatCount: count, diamondCount: diamonds, streaking: true }); return; }
+        if (streak && !streakEnd) { this.send('gift', { user, giftName, giftId, giftImage, repeatCount: count, diamondCount: diamonds, streaking: true }); return; }
         const value = diamonds * count;
         this.stats.giftCount += count; this.stats.diamondCount += value;
-        this.send('gift', { user, giftName, giftId, repeatCount: count, diamondCount: diamonds, totalValue: value, streaking: false });
+        this.send('gift', { user, giftName, giftId, giftImage, repeatCount: count, diamondCount: diamonds, totalValue: value, streaking: false });
         break;
       }
       case 'like': {

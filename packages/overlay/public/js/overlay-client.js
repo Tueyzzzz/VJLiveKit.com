@@ -21,7 +21,7 @@ window.Overlay = (function () {
   let cfg = {};
   try { cfg = owner ? JSON.parse(localStorage.getItem(CFG_KEY) || '{}') : {}; } catch { cfg = {}; }
   // ปุ่ม "ล้าง/เริ่มใหม่" ใน Dashboard (resetAt เปลี่ยน) → ลบข้อมูลที่วิดเจ็ตจำไว้ (กองของขวัญ, อันดับ, เวลา)
-  const STORE_PREFIX = { giftjar: 'vjl-giftjar:', garden: 'vjl-garden:', coinjar: 'vjl-coinjar2:', timer: 'vjl-timer:', league: 'vjl-league:', topgifters: 'vjl-rank:gifts:', toplikers: 'vjl-rank:likes:' };
+  const STORE_PREFIX = { giftjar: 'vjl-giftjar:', garden: 'vjl-garden:', tree: 'vjl-tree:', coinjar: 'vjl-coinjar2:', timer: 'vjl-timer:', league: 'vjl-league:', topgifters: 'vjl-rank:gifts:', toplikers: 'vjl-rank:likes:' };
   try {
     const RESET_KEY = 'vjl-resetAt:' + widgetName + ':' + owner;
     if (cfg.resetAt && localStorage.getItem(RESET_KEY) !== String(cfg.resetAt)) {
@@ -35,11 +35,13 @@ window.Overlay = (function () {
     param: (k, def) => {
       if (params.get(k) != null) return params.get(k);
       if (cfg[k] !== undefined && cfg[k] !== null && cfg[k] !== '') return String(cfg[k]);
+      const D = window.VJL_DEFAULTS; if (D && D[k] !== undefined) return String(D[k]); // ค่าเริ่มต้นของวิดเจ็ตแฝง (เช่น tree = garden แบบต้นไม้)
       return def;
     },
     on(type, fn) { if (handlers[type]) handlers[type].push(fn); return api; },
     esc: (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'),
     fmt: (n) => (Math.round(n) || 0).toLocaleString('en-US'),
+    widget: widgetName,
     isDemo: params.get('demo') === '1' || (!params.get('t') && !!params.get('username')),
   };
 

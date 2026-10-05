@@ -346,7 +346,7 @@
     }
 
     // ---- จำต้นไม้ไว้ (รีเฟรชแล้วดอกยังอยู่) ----
-    const KEY = 'vjl-garden:' + (P('t', '') || P('username', 'demo')).slice(-24);
+    const KEY = (Overlay.widget === 'tree' ? 'vjl-tree:' : 'vjl-garden:') + (P('t', '') || P('username', 'demo')).slice(-24); // ต้นไม้/กระถาง จำกองแยกกัน
     let saveT = null;
     const save = () => { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify({ f: flowers.map((f) => f.g).concat(bigs.map((b) => b.g), ground.filter((b) => !b.dying).map((b) => b.g)), r: ranking })); } catch { /* storage ปิด */ } }, 500); };
     try {

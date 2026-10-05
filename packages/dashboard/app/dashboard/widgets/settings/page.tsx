@@ -12,8 +12,9 @@ import { WIDGET_SETTINGS, defaultsOf, toOverlayParams, type FieldDef, type Value
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
 
 /** จัดตัวเลือกเป็นกลุ่มตามลำดับที่เจอ (ตัวเลือกที่ไม่มีกลุ่มอยู่นอก optgroup) */
-function groupOptions(options: [string, string, string?][]): [string, [string, string, string?][]][] {
-  const out: [string, [string, string, string?][]][] = [];
+type Opt = [string, string, string?, string?];
+function groupOptions(options: Opt[]): [string, Opt[]][] {
+  const out: [string, Opt[]][] = [];
   for (const o of options) {
     const g = o[2] ?? '';
     const hit = out.find(([k]) => k === g);
@@ -54,6 +55,32 @@ function FieldInput({ f, value, onChange }: { f: FieldDef; value: Values[string]
     case 'number':
       return <Input type="number" min={f.min} max={f.max} value={String(value)} onChange={(e) => onChange(e.target.value === '' ? 0 : Number(e.target.value))} />;
     case 'select':
+      // มีรูปย่อ → กางเป็นการ์ดรูปตามหมวด ให้เห็นทุกแบบแล้วกดเลือกได้เลย
+      if (f.options.some((o) => o[3])) return (
+        <div className="space-y-3">
+          {groupOptions(f.options).map(([g, opts]) => (
+            <div key={g || '-'}>
+              {g && <div className="mb-1.5 text-xs font-semibold text-violet">{g}</div>}
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                {opts.map(([v, l, , thumb]) => {
+                  const on = String(value) === v;
+                  return (
+                    <button key={v} type="button" onClick={() => onChange(v)} aria-pressed={on} title={l}
+                      className={`flex flex-col items-center gap-1 rounded-xl border-2 p-1.5 text-center transition ${on ? 'border-pink bg-pink-soft' : 'border-line bg-white hover:border-pink/40'}`}>
+                      <span className="grid aspect-square w-full place-items-center overflow-hidden rounded-lg bg-canvas">
+                        {thumb
+                          ? <img src={`${API_BASE}/overlay/themes/thumbs/${thumb}.webp`} alt="" loading="lazy" className="max-h-full max-w-full object-contain p-1" />
+                          : <span className="text-2xl">✏️</span>}
+                      </span>
+                      <span className={`line-clamp-2 text-[11px] leading-tight ${on ? 'font-medium text-pink' : 'text-muted'}`}>{l}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      );
       return (
         <Select value={String(value)} onChange={(e) => onChange(e.target.value)}>
           {groupOptions(f.options).map(([g, opts]) => g

@@ -6,7 +6,7 @@
 export type FieldDef =
   | { key: string; label: string; type: 'range'; min: number; max: number; step: number; def: number; unit?: string; hint?: string; when?: (v: Values) => boolean }
   | { key: string; label: string; type: 'number'; min?: number; max?: number; def: number; hint?: string; when?: (v: Values) => boolean }
-  | { key: string; label: string; type: 'select'; /** [ค่า, ชื่อ, กลุ่ม?] — ใส่กลุ่มเพื่อจัดหมวดในรายการ */ options: [string, string, string?][]; def: string; hint?: string; when?: (v: Values) => boolean }
+  | { key: string; label: string; type: 'select'; /** [ค่า, ชื่อ, กลุ่ม?, รูปย่อ?] — มีรูปย่อ = แสดงเป็นการ์ดรูปให้กดเลือก */ options: [string, string, string?, string?][]; def: string; hint?: string; when?: (v: Values) => boolean }
   | { key: string; label: string; type: 'toggle'; def: boolean; hint?: string; when?: (v: Values) => boolean }
   | { key: string; label: string; type: 'swatch'; /** [ค่า, สีที่แสดง, ชื่อ] */ options: [number, string, string][]; def: number; hint?: string; when?: (v: Values) => boolean }
   | { key: string; label: string; type: 'color'; def: string; hint?: string; when?: (v: Values) => boolean }
@@ -39,22 +39,22 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
     sections: [
       { title: 'รูปแบบโหล', fields: [
         { key: 'shape', label: 'ทรงโหล', type: 'select', def: 'heart', options: [
-          ['heart', 'โหลหัวใจ', '🫙 โหลและตู้ (ภาพ 3D)'], ['orb', 'โหลกลมห่วงชมพู', '🫙 โหลและตู้ (ภาพ 3D)'], ['tank', 'ตู้ปลา', '🫙 โหลและตู้ (ภาพ 3D)'],
-          ['sundae', 'ถ้วยไอศกรีม', '🫙 โหลและตู้ (ภาพ 3D)'],
-          ['jstar', 'โหลดาว', '🫙 โหลและตู้ (ภาพ 3D)'],
-          ['jbasket', 'โหลตะกร้า', '🫙 โหลและตู้ (ภาพ 3D)'],
-          ['cauldron', 'โหลหม้อแม่มด', '🫙 โหลและตู้ (ภาพ 3D)'],
-          ['catbank', 'กระปุกแมวใส', '🫙 โหลและตู้ (ภาพ 3D)'],
-          ['jsnowman', 'โหลตุ๊กตาหิมะ', '🫙 โหลและตู้ (ภาพ 3D)'],
-          ['castle', 'ตู้ปลาปราสาท', '🫙 โหลและตู้ (ภาพ 3D)'],
-          ['fishbowl', 'โหลปลาทองขอบคลื่น', '🫙 โหลและตู้ (ภาพ 3D)'],
-          ['hearttank', 'ตู้ปลาหัวใจ', '🫙 โหลและตู้ (ภาพ 3D)'],
-          ['moon', 'ตู้ปลาพระจันทร์', '🫙 โหลและตู้ (ภาพ 3D)'],
-          ['gacha', 'ตู้ปลากาชาปอง', '🫙 โหลและตู้ (ภาพ 3D)'],
-          ['shell', 'ตู้ปลาเปลือกหอย', '🫙 โหลและตู้ (ภาพ 3D)'],
-          ['pig', 'หมูท้องใส งับของขวัญ', '🐷 ตัวละคร (ภาพ 3D)'], ['catbelly', 'แมวท้องใส', '🐷 ตัวละคร (ภาพ 3D)'], ['jdino', 'ไดโนเสาร์ท้องใส', '🐷 ตัวละคร (ภาพ 3D)'], ['jbear', 'หมีท้องใส', '🐷 ตัวละคร (ภาพ 3D)'], ['jfrog', 'กบท้องใส', '🐷 ตัวละคร (ภาพ 3D)'],
-          ['snow', 'ลูกแก้วหิมะ (ภาพ 3D)', '❄️ ลูกแก้วหิมะ'], ['globe', 'ลูกแก้วหิมะ (วาดด้วยโค้ด)', '❄️ ลูกแก้วหิมะ'],
-          ['van', 'รถหัวใจ (ภาพ 3D)', '🚐 ยานพาหนะ'], ['sub', 'เรือดำน้ำ (ภาพ 3D)', '🚐 ยานพาหนะ'], ['car', 'รถพาสเทล (วาดด้วยโค้ด)', '🚐 ยานพาหนะ'],
+          ['heart', 'โหลหัวใจ', '🫙 โหลและตู้ (ภาพ 3D)', 'gj-heart'], ['orb', 'โหลกลมห่วงชมพู', '🫙 โหลและตู้ (ภาพ 3D)', 'gj-orb'], ['tank', 'ตู้ปลา', '🫙 โหลและตู้ (ภาพ 3D)', 'gj-tank'],
+          ['sundae', 'ถ้วยไอศกรีม', '🫙 โหลและตู้ (ภาพ 3D)', 'gj-sundae'],
+          ['jstar', 'โหลดาว', '🫙 โหลและตู้ (ภาพ 3D)', 'gj-jstar'],
+          ['jbasket', 'โหลตะกร้า', '🫙 โหลและตู้ (ภาพ 3D)', 'gj-jbasket'],
+          ['cauldron', 'โหลหม้อแม่มด', '🫙 โหลและตู้ (ภาพ 3D)', 'gj-cauldron'],
+          ['catbank', 'กระปุกแมวใส', '🫙 โหลและตู้ (ภาพ 3D)', 'gj-catbank'],
+          ['jsnowman', 'โหลตุ๊กตาหิมะ', '🫙 โหลและตู้ (ภาพ 3D)', 'gj-jsnowman'],
+          ['castle', 'ตู้ปลาปราสาท', '🫙 โหลและตู้ (ภาพ 3D)', 'gj-castle'],
+          ['fishbowl', 'โหลปลาทองขอบคลื่น', '🫙 โหลและตู้ (ภาพ 3D)', 'gj-fishbowl'],
+          ['hearttank', 'ตู้ปลาหัวใจ', '🫙 โหลและตู้ (ภาพ 3D)', 'gj-hearttank'],
+          ['moon', 'ตู้ปลาพระจันทร์', '🫙 โหลและตู้ (ภาพ 3D)', 'gj-moon'],
+          ['gacha', 'ตู้ปลากาชาปอง', '🫙 โหลและตู้ (ภาพ 3D)', 'gj-gacha'],
+          ['shell', 'ตู้ปลาเปลือกหอย', '🫙 โหลและตู้ (ภาพ 3D)', 'gj-shell'],
+          ['pig', 'หมูท้องใส งับของขวัญ', '🐷 ตัวละคร (ภาพ 3D)', 'gj-pig'], ['catbelly', 'แมวท้องใส', '🐷 ตัวละคร (ภาพ 3D)', 'gj-catbelly'], ['jdino', 'ไดโนเสาร์ท้องใส', '🐷 ตัวละคร (ภาพ 3D)', 'gj-jdino'], ['jbear', 'หมีท้องใส', '🐷 ตัวละคร (ภาพ 3D)', 'gj-jbear'], ['jfrog', 'กบท้องใส', '🐷 ตัวละคร (ภาพ 3D)', 'gj-jfrog'],
+          ['snow', 'ลูกแก้วหิมะ (ภาพ 3D)', '❄️ ลูกแก้วหิมะ', 'gj-snow'], ['globe', 'ลูกแก้วหิมะ (วาดด้วยโค้ด)', '❄️ ลูกแก้วหิมะ'],
+          ['van', 'รถหัวใจ (ภาพ 3D)', '🚐 ยานพาหนะ', 'gj-van'], ['sub', 'เรือดำน้ำ (ภาพ 3D)', '🚐 ยานพาหนะ', 'gj-sub'], ['car', 'รถพาสเทล (วาดด้วยโค้ด)', '🚐 ยานพาหนะ'],
           ['jar', 'โหลแก้วคอแคบ', '✏️ โหลแบบวาดด้วยโค้ด'], ['bowl', 'โหลกลมปากกว้าง', '✏️ โหลแบบวาดด้วยโค้ด'], ['mason', 'โหลฝาผ้าผูกโบว์', '✏️ โหลแบบวาดด้วยโค้ด'],
         ] },
         { key: 'body', label: 'สีรถ', type: 'color', def: '#bfe9e6', when: (v) => v.shape === 'car' },
@@ -109,15 +109,38 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
   garden: {
     resettable: 'ล้างดอกไม้ทั้งหมด',
     sections: [
-      { title: 'ต้นไม้', fields: [
+      { title: 'กระถาง', fields: [
         { key: 'sway', label: 'ความแรงลม (กิ่งแกว่ง)', type: 'range', min: 0, max: 3, step: 0.1, def: 1, hint: '0 = นิ่ง' },
         { key: 'big', label: 'ของขวัญที่เป็นดอกใหญ่บนยอด ตั้งแต่ (เหรียญ)', type: 'number', min: 1, def: 1000 },
         { key: 'skin', label: 'แบบกระถาง', type: 'select', def: 'image', options: [
-          ['tree', 'ต้นไม้ใหญ่', '🌳 ต้นไม้ (ภาพ 3D)'], ['sakura', 'ต้นซากุระ', '🌳 ต้นไม้ (ภาพ 3D)'], ['night', 'ต้นไม้ดวงดาว', '🌳 ต้นไม้ (ภาพ 3D)'], ['heart', 'ต้นหัวใจ', '🌳 ต้นไม้ (ภาพ 3D)'], ['bonsai', 'บอนไซกระถางหัวใจ', '🌳 ต้นไม้ (ภาพ 3D)'], ['palm', 'ต้นปาล์มเกาะ', '🌳 ต้นไม้ (ภาพ 3D)'], ['autumn', 'ต้นไม้ใบไม้ร่วง', '🌳 ต้นไม้ (ภาพ 3D)'],
-          ['image', 'กระถางหัวใจมีปีก (ภาพ 3D)', '🪴 กระถาง'], ['classic', 'กระถางเซรามิก (วาดด้วยโค้ด)', '🪴 กระถาง'],
+          ['image', 'กระถางหัวใจมีปีก', '🪴 กระถาง (ภาพ 3D)', 'gd-image'], ['classic', 'กระถางเซรามิก (วาดด้วยโค้ด)', '✏️ แบบวาดด้วยโค้ด'],
         ] },
         ...tint((v) => v.skin !== 'classic'),
         { key: 'pot', label: 'สีกระถาง', type: 'color', def: '#f3e6cc', when: (v) => v.skin === 'classic' },
+        { key: 'minCoins', label: 'รับเฉพาะของขวัญตั้งแต่ (เหรียญ)', type: 'number', min: 0, def: 0 },
+      ] },
+      { title: 'ขนาดและตำแหน่ง', fields: [
+        size(),
+        { key: 'pileMax', label: 'ความสูงกองบนพื้นสูงสุด', type: 'range', min: 15, max: 90, step: 5, def: 40, unit: '%', hint: 'ดอกเต็มต้นแล้วของขวัญร่วงกองพื้น — เกินความสูงนี้ชิ้นเก่าสุดค่อย ๆ จางไป' },
+        { key: 'flowerScale', label: 'ขนาดดอกไม้', type: 'range', min: 0.5, max: 2.5, step: 0.05, def: 1, unit: '×', hint: 'ยิ่งเล็ก ยิ่งกองบนพื้นได้มาก — 1× ≈ 300 ชิ้น · 0.5× = 1,200 (สูงสุด)' },
+        ...pos(),
+      ] },
+      { title: 'การแสดงผล', fields: [
+        { key: 'alert', label: 'แสดงชื่อผู้ส่ง', type: 'toggle', def: true },
+        { key: 'board', label: 'แสดงผู้ให้สูงสุดใต้กระถาง', type: 'toggle', def: true },
+      ] },
+    ],
+  },
+  tree: {
+    resettable: 'ล้างดอกไม้ทั้งหมด',
+    sections: [
+      { title: 'ต้นไม้', fields: [
+        { key: 'sway', label: 'ความแรงลม (กิ่งแกว่ง)', type: 'range', min: 0, max: 3, step: 0.1, def: 1, hint: '0 = นิ่ง' },
+        { key: 'big', label: 'ของขวัญที่เป็นดอกใหญ่บนยอด ตั้งแต่ (เหรียญ)', type: 'number', min: 1, def: 1000 },
+        { key: 'skin', label: 'แบบต้นไม้', type: 'select', def: 'tree', options: [
+          ['tree', 'ต้นไม้ใหญ่', '🌳 ต้นไม้ (ภาพ 3D)', 'gd-tree'], ['sakura', 'ต้นซากุระ', '🌳 ต้นไม้ (ภาพ 3D)', 'gd-sakura'], ['night', 'ต้นไม้ดวงดาว', '🌳 ต้นไม้ (ภาพ 3D)', 'gd-night'], ['heart', 'ต้นหัวใจ', '🌳 ต้นไม้ (ภาพ 3D)', 'gd-heart'], ['bonsai', 'บอนไซกระถางหัวใจ', '🌳 ต้นไม้ (ภาพ 3D)', 'gd-bonsai'], ['palm', 'ต้นปาล์มเกาะ', '🌳 ต้นไม้ (ภาพ 3D)', 'gd-palm'], ['autumn', 'ต้นไม้ใบไม้ร่วง', '🌳 ต้นไม้ (ภาพ 3D)', 'gd-autumn'],
+        ] },
+        ...tint(() => true),
         { key: 'minCoins', label: 'รับเฉพาะของขวัญตั้งแต่ (เหรียญ)', type: 'number', min: 0, def: 0 },
       ] },
       { title: 'ขนาดและตำแหน่ง', fields: [
@@ -137,10 +160,9 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
     sections: [
       { title: 'เครื่องและเป้าหมาย', fields: [
         { key: 'skin', label: 'หน้าตาเครื่อง', type: 'select', def: 'image', options: [
-          ['image', 'ตู้ชมพู', '🎰 ตู้เครื่องจักร (ภาพ 3D)'], ['cupcake', 'ตู้คัพเค้ก', '🎰 ตู้เครื่องจักร (ภาพ 3D)'], ['cat', 'ตู้หัวแมว', '🎰 ตู้เครื่องจักร (ภาพ 3D)'], ['house', 'บ้านขนมปังขิง', '🎰 ตู้เครื่องจักร (ภาพ 3D)'], ['rocket', 'ตู้จรวด', '🎰 ตู้เครื่องจักร (ภาพ 3D)'], ['gacha', 'ตู้กาชาปอง', '🎰 ตู้เครื่องจักร (ภาพ 3D)'], ['gift', 'ตู้กล่องของขวัญ', '🎰 ตู้เครื่องจักร (ภาพ 3D)'], ['icecream', 'ร้านไอศกรีม', '🎰 ตู้เครื่องจักร (ภาพ 3D)'], ['bear', 'หมีน้อยถือกล่อง', '🎰 ตู้เครื่องจักร (ภาพ 3D)'],
-          ['classic', 'ตู้วาดด้วยโค้ด', '✏️ แบบวาดด้วยโค้ด'],
+          ['image', 'ตู้ชมพู', '🎰 ตู้เครื่องจักร (ภาพ 3D)', 'cj-image'], ['cupcake', 'ตู้คัพเค้ก', '🎰 ตู้เครื่องจักร (ภาพ 3D)', 'cj-cupcake'], ['cat', 'ตู้หัวแมว', '🎰 ตู้เครื่องจักร (ภาพ 3D)', 'cj-cat'], ['house', 'บ้านขนมปังขิง', '🎰 ตู้เครื่องจักร (ภาพ 3D)', 'cj-house'], ['rocket', 'ตู้จรวด', '🎰 ตู้เครื่องจักร (ภาพ 3D)', 'cj-rocket'], ['gacha', 'ตู้กาชาปอง', '🎰 ตู้เครื่องจักร (ภาพ 3D)', 'cj-gacha'], ['gift', 'ตู้กล่องของขวัญ', '🎰 ตู้เครื่องจักร (ภาพ 3D)', 'cj-gift'], ['icecream', 'ร้านไอศกรีม', '🎰 ตู้เครื่องจักร (ภาพ 3D)', 'cj-icecream'], ['bear', 'หมีน้อยถือกล่อง', '🎰 ตู้เครื่องจักร (ภาพ 3D)', 'cj-bear'],
         ] },
-        ...tint((v) => v.skin !== 'classic'),
+        ...tint(() => true),
         { key: 'goal', label: 'เป้าหมาย (เหรียญ)', type: 'number', min: 1, def: 10000, hint: 'แถบบนจอเครื่องจะเต็มเมื่อถึงเป้า' },
         { key: 'counter', label: 'แสดงจำนวนเหรียญบนเครื่อง', type: 'toggle', def: true },
       ] },

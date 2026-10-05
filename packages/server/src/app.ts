@@ -42,11 +42,14 @@ export async function buildApp(): Promise<FastifyInstance> {
     const { page } = req.params;
     reply.header('cache-control', 'no-cache, no-store, must-revalidate');
     if (!/^[\w-]+\.html$/.test(page)) return reply.sendFile(page);
+    // วิดเจ็ตที่ใช้ไฟล์เดียวกันแต่ค่าเริ่มต้นต่างกัน (ลิงก์/ตั้งค่า/ข้อมูลแยกกัน)
+    const ALIAS: Record<string, { file: string; defaults: Record<string, string> }> = { 'tree.html': { file: 'garden.html', defaults: { skin: 'tree' } } };
+    const alias = ALIAS[page];
     let html: string;
-    try { html = await fs.promises.readFile(path.join(OVERLAY_DIR, page), 'utf8'); }
+    try { html = await fs.promises.readFile(path.join(OVERLAY_DIR, alias ? alias.file : page), 'utf8'); }
     catch { return reply.code(404).send({ error: 'ไม่พบ' }); }
     html = html.replace(/src="(js\/[\w.-]+\.js)"/g, `src="$1?v=${OVERLAY_VERSION}"`)
-      .replace('<script', `<script>window.VJL_VERSION=${JSON.stringify(OVERLAY_VERSION)}</script>
+      .replace('<script', `<script>window.VJL_VERSION=${JSON.stringify(OVERLAY_VERSION)}${alias ? `;window.VJL_DEFAULTS=${JSON.stringify(alias.defaults)}` : ''}</script>
   <script`);
     return reply.type('text/html; charset=utf-8').send(html);
   });

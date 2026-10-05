@@ -29,6 +29,8 @@ centered, isolated object, transparent background, no text, no logo, no ground s
 | `globe.png` | ลูกแก้วหิมะ | `a snow globe with a cream ornate base decorated with pink roses and two tiny bunnies, inside a tiny cozy cottage and a small pine tree on snow, the upper half of the glass dome empty` |
 | `car.png` | รถ | `a cute retro pastel minivan seen from directly behind, mint and cream two-tone body, pink stripe, round tail lights, blank license plate, a flat roof rack with rails on top, small yellow flag` |
 | `pot.png` | กระถางต้นไม้ | `an ornate cream ceramic flower pot with embossed swirl patterns and a tiny bunny relief, filled with dark soil, no plant` |
+| `tank.png` | ตู้ปลา (โหล) | `a cute rectangular toy aquarium fish tank with thick rounded pastel lavender frame edges and a pink rim on top, open top, very clear transparent glass with soft reflections, a little pastel sand and two tiny round pebbles and a small pink coral at the bottom corners only, the water area is mostly empty, no fish, a small heart charm on the front frame` |
+| `tree.png` | ต้นไม้ใหญ่ (สวน) | `a big cute storybook tree on a small round grassy mound, thick smooth curvy trunk in warm caramel, branches spreading wide like an umbrella, the canopy made of soft rounded clouds of pastel pink and mint leaves with gaps between them, small empty spots on the canopy for hanging ornaments, no fruit, no flowers` |
 | `gift-frame-gold.png` (ออปชัน) | ออร่าของแพง | `a round decorative golden badge frame with sparkles, empty center, for a game reward icon` |
 
 > เคล็ดลับให้ทั้งชุดเข้ากัน: สร้างภาพแรก (เช่น jar) ให้ถูกใจก่อน แล้วภาพต่อไปแนบภาพแรกเป็น "ภาพอ้างอิงสไตล์" (ChatGPT: แนบรูปแล้วบอก "same style as this image") หรือ Midjourney ใช้ `--sref <url>` + seed เดิม

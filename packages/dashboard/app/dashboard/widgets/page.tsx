@@ -28,7 +28,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
 
 /** จัดหมวดวิดเจ็ตในแกลเลอรี (ประเภทเดียวกันอยู่ด้วยกัน) */
 const WIDGET_GROUPS: [string, string[]][] = [
-  ['🎁 สะสมของขวัญ — โหล ตู้ ต้นไม้ เครื่องจักร', ['giftjar', 'aquarium', 'belly', 'snowglobe', 'vehicle', 'tree', 'garden', 'coinjar']],
+  ['🎁 สะสมของขวัญ — โหล ตู้ ต้นไม้ เครื่องจักร', ['giftjar', 'aquarium', 'belly', 'snowglobe', 'spacedome', 'vehicle', 'tree', 'garden', 'coinjar']],
   ['🏆 เป้าหมายและลีก', ['league', 'goal', 'timer']],
   ['🔔 แจ้งเตือนและแชท', ['alerts', 'chat', 'follower', 'tts']],
   ['🥇 อันดับผู้ชม', ['topgifters', 'toplikers']],
@@ -40,6 +40,7 @@ const WIDGET_BLURB: Record<string, string> = {
   coinjar: 'เครื่องจักรพาสเทล ของขวัญวิ่งบนสายพานแล้วกองเป็นภูเขา',
   giftjar: 'ของขวัญจริงตกลงโหล — มีทรงโหล รถ ลูกแก้วหิมะ',
   belly: 'หมู แมว ไดโน หมี กบ อ้าปากงับของขวัญ แล้วไปกองในท้องใส',
+  spacedome: 'ของขวัญลอยไร้แรงโน้มถ่วงหมุนวนในโดม · 10 แบบ (มีสายเท่)',
   snowglobe: 'ของขวัญตกลงในลูกแก้วหน้าบ้านกระต่าย หิมะโปรยในโดม',
   aquarium: 'ของขวัญตกลงน้ำ จมช้า ๆ มีฟองอากาศ · ตู้ปลา 7 แบบ + เรือดำน้ำ',
   vehicle: 'รถลากของขวัญแบบรถงานแต่ง ผูกเชือกท้ายรถ กระเด้งตามถนน',

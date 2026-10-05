@@ -217,6 +217,108 @@
         belly: { cy: -139.5, rx: 84.0, ry: 62.6 }, mouth: { x: 0.4, y: -303.2 },
         image: { src: 'themes/jar-frog.webp', x: -258.5, y: -440.0, w: 504.9, h: 440.0 },
       },
+      smoon: { // โดมอวกาศฐานบนดวงจันทร์ (ภาพ 3D) — ไร้แรงโน้มถ่วง ของขวัญลอยหมุนช้า ๆ ในโดม
+        hw: (y) => Math.sqrt(Math.max(0, 186.8 ** 2 - (y - (-220.2)) ** 2)),
+        openY: -403.0, openHW: 90, rimHW: 120, topY: -420.0, fullY: -276.2, maxHW: 186.8, closed: true, floor: -152.5, fullMode: 'fade', space: true,
+        dome: { cy: -220.2, r: 186.8 },
+        image: { src: 'themes/space-moon-front.webp', back: 'themes/space-moon-back.webp', x: -363.2, y: -420.0, w: 692.9, h: 420.0 },
+      },
+      sring: { // โดมอวกาศดาวเคราะห์วงแหวน (ภาพ 3D) — ไร้แรงโน้มถ่วง ของขวัญลอยหมุนช้า ๆ ในโดม
+        hw: (y) => Math.sqrt(Math.max(0, 152.6 ** 2 - (y - (-263.0)) ** 2)),
+        openY: -411.6, openHW: 90, rimHW: 120, topY: -420.0, fullY: -308.8, maxHW: 152.6, closed: true, floor: -169.7, fullMode: 'fade', space: true,
+        dome: { cy: -263.0, r: 152.6 },
+        image: { src: 'themes/space-ring-front.webp', back: 'themes/space-ring-back.webp', x: -248.0, y: -420.0, w: 489.4, h: 420.0 },
+      },
+      sufo: { // โดมอวกาศยาน UFO (ภาพ 3D) — ไร้แรงโน้มถ่วง ของขวัญลอยหมุนช้า ๆ ในโดม
+        hw: (y) => Math.sqrt(Math.max(0, 148.0 ** 2 - (y - (-276.8)) ** 2)),
+        openY: -420.8, openHW: 90, rimHW: 120, topY: -420.0, fullY: -321.2, maxHW: 148.0, closed: true, floor: -223.0, fullMode: 'fade', space: true,
+        dome: { cy: -276.8, r: 148.0 },
+        image: { src: 'themes/space-ufo-front.webp', back: 'themes/space-ufo-back.webp', x: -243.0, y: -420.0, w: 486.8, h: 420.0 },
+      },
+      shelmet: { // โดมอวกาศหมวกนักบินอวกาศ (ภาพ 3D) — ไร้แรงโน้มถ่วง ของขวัญลอยหมุนช้า ๆ ในโดม
+        hw: (y) => Math.sqrt(Math.max(0, 201.2 ** 2 - (y - (-213.9)) ** 2)),
+        openY: -411.1, openHW: 90, rimHW: 120, topY: -420.0, fullY: -274.3, maxHW: 201.2, closed: true, floor: -150.5, fullMode: 'fade', space: true,
+        dome: { cy: -213.9, r: 201.2 },
+        image: { src: 'themes/space-helmet-front.webp', back: 'themes/space-helmet-back.webp', x: -244.5, y: -420.0, w: 489.8, h: 420.0 },
+      },
+      sstation: { // โดมอวกาศสถานีอวกาศ (ภาพ 3D) — ไร้แรงโน้มถ่วง ของขวัญลอยหมุนช้า ๆ ในโดม
+        hw: (y) => Math.sqrt(Math.max(0, 133.6 ** 2 - (y - (-247.7)) ** 2)),
+        openY: -377.3, openHW: 90, rimHW: 120, topY: -420.0, fullY: -287.8, maxHW: 133.6, closed: true, floor: -189.7, fullMode: 'fade', space: true,
+        dome: { cy: -247.7, r: 133.6 },
+        image: { src: 'themes/space-station-front.webp', back: 'themes/space-station-back.webp', x: -237.2, y: -420.0, w: 475.0, h: 420.0 },
+      },
+      sgalaxy: { // โดมอวกาศกาแล็กซี่ (ภาพ 3D) — ไร้แรงโน้มถ่วง ของขวัญลอยหมุนช้า ๆ ในโดม
+        hw: (y) => Math.sqrt(Math.max(0, 167.9 ** 2 - (y - (-247.3)) ** 2)),
+        openY: -411.2, openHW: 90, rimHW: 120, topY: -420.0, fullY: -297.7, maxHW: 167.9, closed: true, floor: -175.2, fullMode: 'fade', space: true,
+        dome: { cy: -247.3, r: 167.9 },
+        image: { src: 'themes/space-galaxy-front.webp', back: 'themes/space-galaxy-back.webp', x: -242.2, y: -420.0, w: 485.1, h: 420.0 },
+      },
+      srocket: { // โดมอวกาศแคปซูลจรวด (ภาพ 3D) — ไร้แรงโน้มถ่วง ของขวัญลอยหมุนช้า ๆ ในโดม
+        hw: (y) => Math.sqrt(Math.max(0, 92.6 ** 2 - (y - (-211.3)) ** 2)),
+        openY: -299.9, openHW: 90, rimHW: 120, topY: -420.0, fullY: -239.1, maxHW: 92.6, closed: true, floor: -121.9, fullMode: 'fade', space: true,
+        dome: { cy: -211.3, r: 92.6 },
+        image: { src: 'themes/space-rocket-front.webp', back: 'themes/space-rocket-back.webp', x: -219.8, y: -420.0, w: 441.8, h: 420.0 },
+      },
+      sshield: { // โดมอวกาศโดมโล่พลังงาน (ภาพ 3D) — ไร้แรงโน้มถ่วง ของขวัญลอยหมุนช้า ๆ ในโดม
+        hw: (y) => Math.sqrt(Math.max(0, 196.0 ** 2 - (y - (-228.9)) ** 2)),
+        openY: -420.9, openHW: 90, rimHW: 120, topY: -420.0, fullY: -287.7, maxHW: 196.0, closed: true, floor: -134.5, fullMode: 'fade', space: true,
+        dome: { cy: -228.9, r: 196.0 },
+        image: { src: 'themes/space-shield-front.webp', back: 'themes/space-shield-back.webp', x: -251.2, y: -420.0, w: 495.5, h: 420.0 },
+      },
+      sobservatory: { // โดมอวกาศหอดูดาว (ภาพ 3D) — ไร้แรงโน้มถ่วง ของขวัญลอยหมุนช้า ๆ ในโดม
+        hw: (y) => Math.sqrt(Math.max(0, 148.3 ** 2 - (y - (-247.2)) ** 2)),
+        openY: -391.5, openHW: 90, rimHW: 120, topY: -420.0, fullY: -291.7, maxHW: 148.3, closed: true, floor: -198.8, fullMode: 'fade', space: true,
+        dome: { cy: -247.2, r: 148.3 },
+        image: { src: 'themes/space-observatory-front.webp', back: 'themes/space-observatory-back.webp', x: -205.7, y: -420.0, w: 425.2, h: 420.0 },
+      },
+      smilitary: { // โดมอวกาศฐานทัพอวกาศ (ภาพ 3D) — ไร้แรงโน้มถ่วง ของขวัญลอยหมุนช้า ๆ ในโดม
+        hw: (y) => Math.sqrt(Math.max(0, 189.1 ** 2 - (y - (-197.3)) ** 2)),
+        openY: -382.4, openHW: 90, rimHW: 120, topY: -420.0, fullY: -254.0, maxHW: 189.1, closed: true, floor: -195.5, fullMode: 'fade', space: true,
+        dome: { cy: -197.3, r: 189.1 },
+        image: { src: 'themes/space-military-front.webp', back: 'themes/space-military-back.webp', x: -233.7, y: -420.0, w: 462.1, h: 420.0 },
+      },
+      xtech: { // โหลแก้วเทค (ภาพ 3D สายเท่) — ผนังวัดจากแก้ว
+        prof: [[-273.1,167.7],[-261.9,167.7],[-250.8,166.4],[-239.7,166.6],[-228.5,166.0],[-217.4,166.4],[-206.3,166.2],[-195.1,165.6],[-184.0,165.3],[-172.9,165.1],[-161.8,164.7],[-150.6,164.7],[-139.5,164.4],[-128.4,164.5],[-117.2,164.0],[-106.1,164.9],[-95.0,166.6],[-83.8,165.8],[-72.7,165.1]],
+        hw: (y) => profileHW(SHAPES.xtech.prof, y),
+        openY: -273.1, openHW: 100.6, rimHW: 134.2, topY: -440.0, fullY: -233.1, maxHW: 167.7, floor: -72.7, closed: true, fullMode: 'fade',
+        image: { src: 'themes/jar-xtech.webp', x: -227.0, y: -440.0, w: 454.5, h: 440.0 },
+      },
+      xcan: { // ถังพลังงานฟ้า (ภาพ 3D สายเท่) — ผนังวัดจากแก้ว
+        prof: [[-294.7,95.7],[-285.4,95.3],[-276.2,95.0],[-266.9,95.2],[-257.6,94.7],[-248.4,94.7],[-239.1,94.7],[-229.9,94.6],[-220.6,94.4],[-211.4,94.4],[-202.1,94.1],[-192.8,94.1],[-183.6,94.1],[-174.3,94.0],[-165.1,93.8]],
+        hw: (y) => profileHW(SHAPES.xcan.prof, y),
+        openY: -294.7, openHW: 57.4, rimHW: 76.6, topY: -440.0, fullY: -254.7, maxHW: 95.7, floor: -165.1, closed: true, fullMode: 'fade',
+        image: { src: 'themes/jar-xcan.webp', x: -158.0, y: -440.0, w: 316.0, h: 440.0 },
+      },
+      xcan2: { // ถังพลังงานชมพู (ภาพ 3D สายเท่) — ผนังวัดจากแก้ว
+        prof: [[-295.2,96.0],[-285.9,96.0],[-276.7,95.4],[-267.5,95.5],[-258.2,95.2],[-249.0,94.9],[-239.7,94.9],[-230.5,94.6],[-221.2,94.6],[-212.0,94.6],[-202.7,94.3],[-193.5,94.3],[-184.3,94.3],[-175.0,94.0],[-165.8,93.8]],
+        hw: (y) => profileHW(SHAPES.xcan2.prof, y),
+        openY: -295.2, openHW: 57.6, rimHW: 76.8, topY: -440.0, fullY: -255.2, maxHW: 96.0, floor: -165.8, closed: true, fullMode: 'fade',
+        image: { src: 'themes/jar-xcan2.webp', x: -157.8, y: -440.0, w: 315.5, h: 440.0 },
+      },
+      xchest: { // หีบสมบัติเกม (ภาพ 3D สายเท่) — เปิดด้านบน ล้นออกข้างหีบ
+        prof: [[-214.7,182.1],[-176.6,186.4],[-117.3,177.9]],
+        hw: (y) => profileHW(SHAPES.xchest.prof, y),
+        openY: -214.7, openHW: 182.1, rimHW: 196.7, topY: -396.0, fullY: -184.7, maxHW: 186.4, floor: -117.3,
+        image: { src: 'themes/jar-xchest-front.webp', back: 'themes/jar-xchest-back.webp', x: -321.9, y: -396.0, w: 650.5, h: 396.0 },
+      },
+      xrobot: { // หุ่นยนต์ท้องใส (ภาพ 3D สายเท่) — งับของขวัญเข้าปากแล้วไปกองในท้อง
+        hw: (y) => 41.5 * Math.sqrt(Math.max(0, 1 - ((y - (-142.9)) / 32.3) ** 2)),
+        openY: -171.2, openHW: 40, rimHW: 60, topY: -440.0, fullY: -157.4, maxHW: 41.5, closed: true, floor: -110.6, fullMode: 'fade',
+        belly: { cy: -142.9, rx: 41.5, ry: 32.3 }, mouth: { x: 1.5, y: -287.6 },
+        image: { src: 'themes/jar-xrobot.webp', x: -234.3, y: -440.0, w: 469.4, h: 440.0 },
+      },
+      xwolf: { // หมาป่าไซเบอร์ท้องใส (ภาพ 3D สายเท่) — งับของขวัญเข้าปากแล้วไปกองในท้อง
+        hw: (y) => 49.1 * Math.sqrt(Math.max(0, 1 - ((y - (-176.3)) / 34.5) ** 2)),
+        openY: -206.8, openHW: 40, rimHW: 60, topY: -440.0, fullY: -191.8, maxHW: 49.1, closed: true, floor: -141.8, fullMode: 'fade',
+        belly: { cy: -176.3, rx: 49.1, ry: 34.5 }, mouth: { x: -3.8, y: -337.1 },
+        image: { src: 'themes/jar-xwolf.webp', x: -135.7, y: -440.0, w: 299.4, h: 440.0 },
+      },
+      xdragon: { // มังกรนีออนท้องใส (ภาพ 3D สายเท่) — งับของขวัญเข้าปากแล้วไปกองในท้อง
+        hw: (y) => 46.0 * Math.sqrt(Math.max(0, 1 - ((y - (-143.6)) / 44.6) ** 2)),
+        openY: -184.2, openHW: 40, rimHW: 60, topY: -440.0, fullY: -163.7, maxHW: 46.0, closed: true, floor: -99.0, fullMode: 'fade',
+        belly: { cy: -143.6, rx: 46.0, ry: 44.6 }, mouth: { x: -24.8, y: -358.6 },
+        image: { src: 'themes/jar-xdragon.webp', x: -233.4, y: -440.0, w: 435.0, h: 440.0 },
+      },
       tank: { // ตู้ปลา (ภาพ 3D) — ปากเปิด: ของขวัญตกผ่านราวบน ลงน้ำ (จมช้า มีฟองอากาศ) กองบนพื้นทราย
         hw: () => 210.2,
         openY: -257.9, openHW: 210.2, rimHW: 247.9, topY: -300.0, fullY: -217.9, maxHW: 210.2, floor: -57.3, water: -217.7,
@@ -546,6 +648,10 @@
           b.px -= Math.sin(tw * 0.7 + b.y * 0.035) * 0.045;
           g *= 1 - 0.35 * (0.5 + 0.5 * Math.sin(tw * 1.1 + b.x * 0.04));
         }
+        if (SH.space && !b.out && !b.eat) { // โดมอวกาศ: ไร้แรงโน้มถ่วง ลอยหมุนวนช้า ๆ รอบกลางโดม
+          const dx = b.x, dy = b.y - SH.dome.cy, dd = Math.hypot(dx, dy) || 1;
+          b.px += (dy / dd) * 0.02; b.py -= (dx / dd) * 0.02; g *= 0.12; damp = 0.992;
+        }
         if (swirlK > 0 && !b.out && !b.eat) { // ลูกแก้ว: หมุนวนเบา ๆ รอบกลางโดม
           const dx = b.x, dy = b.y - SH.dome.cy, d = Math.hypot(dx, dy) || 1;
           b.px += (dy / d) * 0.09 * swirlK; b.py -= (dx / d) * 0.09 * swirlK; // ความเร็วตามแนวสัมผัส (ทวนเข็ม)
@@ -717,7 +823,7 @@
     }
 
     // ---- จำโหลไว้ (รีเฟรช OBS แล้วไม่หาย) ----
-    const KEY = (Overlay.widget === 'belly' ? 'vjl-belly:' : Overlay.widget === 'snowglobe' ? 'vjl-snowglobe:' : Overlay.widget === 'aquarium' ? 'vjl-aquarium:' : 'vjl-giftjar:') + (P('t', '') || P('username', 'demo')).slice(-24); // ตัวละคร/โหล จำแยกกัน
+    const KEY = (Overlay.widget === 'belly' ? 'vjl-belly:' : Overlay.widget === 'snowglobe' ? 'vjl-snowglobe:' : Overlay.widget === 'aquarium' ? 'vjl-aquarium:' : Overlay.widget === 'spacedome' ? 'vjl-spacedome:' : 'vjl-giftjar:') + (P('t', '') || P('username', 'demo')).slice(-24); // ตัวละคร/โหล จำแยกกัน
     let saveTimer = null, restoreUntil = 0;
     function saveNow() {
       if (performance.now() < restoreUntil) return; // ยังกู้ของขวัญกลับมาไม่ครบ → อย่าบันทึกทับ (กันของหายตอนรีโหลดซ้อน)

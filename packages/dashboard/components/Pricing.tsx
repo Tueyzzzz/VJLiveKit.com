@@ -11,6 +11,7 @@ export const WIDGET_LABELS: Record<string, string> = {
   aquarium: 'ตู้ปลาของขวัญ',
   belly: 'ตัวละครกินของขวัญ',
   snowglobe: 'ลูกแก้วหิมะ',
+  spacedome: 'โดมอวกาศ',
   vehicle: 'รถลากของขวัญ',
   garden: 'กระถางดอกไม้',
   tree: 'ต้นไม้ของขวัญ',

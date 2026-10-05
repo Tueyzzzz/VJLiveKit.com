@@ -39,13 +39,14 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
     sections: [
       { title: 'รูปแบบโหล', fields: [
         { key: 'shape', label: 'ทรงโหล', type: 'select', def: 'heart', options: [
-          ['heart', 'โหลหัวใจ', '🫙 โหลแก้ว (ภาพ 3D)', 'gj-heart'], ['orb', 'โหลกลมห่วงชมพู', '🫙 โหลแก้ว (ภาพ 3D)', 'gj-orb'],
-          ['sundae', 'ถ้วยไอศกรีม', '🫙 โหลแก้ว (ภาพ 3D)', 'gj-sundae'],
-          ['jstar', 'โหลดาว', '🫙 โหลแก้ว (ภาพ 3D)', 'gj-jstar'],
-          ['jbasket', 'โหลตะกร้า', '🫙 โหลแก้ว (ภาพ 3D)', 'gj-jbasket'],
-          ['cauldron', 'โหลหม้อแม่มด', '🫙 โหลแก้ว (ภาพ 3D)', 'gj-cauldron'],
-          ['catbank', 'กระปุกแมวใส', '🫙 โหลแก้ว (ภาพ 3D)', 'gj-catbank'],
-          ['jsnowman', 'โหลตุ๊กตาหิมะ', '🫙 โหลแก้ว (ภาพ 3D)', 'gj-jsnowman'],
+          ['heart', 'โหลหัวใจ', '🌸 พาสเทลน่ารัก', 'gj-heart'], ['orb', 'โหลกลมห่วงชมพู', '🌸 พาสเทลน่ารัก', 'gj-orb'],
+          ['sundae', 'ถ้วยไอศกรีม', '🌸 พาสเทลน่ารัก', 'gj-sundae'],
+          ['jstar', 'โหลดาว', '🌸 พาสเทลน่ารัก', 'gj-jstar'],
+          ['jbasket', 'โหลตะกร้า', '🌸 พาสเทลน่ารัก', 'gj-jbasket'],
+          ['cauldron', 'โหลหม้อแม่มด', '🌸 พาสเทลน่ารัก', 'gj-cauldron'],
+          ['catbank', 'กระปุกแมวใส', '🌸 พาสเทลน่ารัก', 'gj-catbank'],
+          ['jsnowman', 'โหลตุ๊กตาหิมะ', '🌸 พาสเทลน่ารัก', 'gj-jsnowman'],
+          ['xtech', 'โหลแก้วเทค', '🎮 สายเท่ เกมมิ่ง', 'gj-xtech'], ['xcan', 'ถังพลังงานฟ้า', '🎮 สายเท่ เกมมิ่ง', 'gj-xcan'], ['xcan2', 'ถังพลังงานชมพู', '🎮 สายเท่ เกมมิ่ง', 'gj-xcan2'], ['xchest', 'หีบสมบัติเกม', '🎮 สายเท่ เกมมิ่ง', 'gj-xchest'],
         ] },
         ...tint((v) => ['heart', 'orb', 'tank', 'pig', 'sundae', 'jstar', 'jbasket', 'cauldron', 'catbank', 'jsnowman', 'catbelly', 'jdino', 'jbear', 'jfrog', 'castle', 'fishbowl', 'hearttank', 'moon', 'gacha', 'shell', 'sub', 'snow', 'van'].includes(String(v.shape))),
         { key: 'full', label: 'เมื่อโหลเต็ม', type: 'select', when: (v) => !['car', 'globe', 'heart', 'snow', 'van', 'pig', 'sub', 'jstar', 'catbank', 'jsnowman', 'catbelly', 'jdino', 'jbear', 'jfrog'].includes(String(v.shape)), def: 'spill', options: [['spill', 'ล้นออกมากองข้างโหล'], ['fade', 'ชิ้นเก่าสุดค่อย ๆ หายไป'], ['reset', 'ฉลอง แล้วเทโหลเริ่มใหม่']] },
@@ -80,14 +81,14 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
     sections: [
       { title: 'ตู้ปลา', fields: [
         { key: 'shape', label: 'ตู้ปลา', type: 'select', def: 'tank', options: [
-          ['tank', 'ตู้ปลา', '🐠 ตู้ปลา (ภาพ 3D)', 'gj-tank'],
-          ['castle', 'ตู้ปลาปราสาท', '🐠 ตู้ปลา (ภาพ 3D)', 'gj-castle'],
-          ['fishbowl', 'โหลปลาทองขอบคลื่น', '🐠 ตู้ปลา (ภาพ 3D)', 'gj-fishbowl'],
-          ['hearttank', 'ตู้ปลาหัวใจ', '🐠 ตู้ปลา (ภาพ 3D)', 'gj-hearttank'],
-          ['moon', 'ตู้ปลาพระจันทร์', '🐠 ตู้ปลา (ภาพ 3D)', 'gj-moon'],
-          ['gacha', 'ตู้ปลากาชาปอง', '🐠 ตู้ปลา (ภาพ 3D)', 'gj-gacha'],
-          ['shell', 'ตู้ปลาเปลือกหอย', '🐠 ตู้ปลา (ภาพ 3D)', 'gj-shell'],
-          ['sub', 'เรือดำน้ำ (ภาพ 3D)', '🐠 ตู้ปลา (ภาพ 3D)', 'gj-sub'],
+          ['tank', 'ตู้ปลา', '🌸 พาสเทลน่ารัก', 'gj-tank'],
+          ['castle', 'ตู้ปลาปราสาท', '🌸 พาสเทลน่ารัก', 'gj-castle'],
+          ['fishbowl', 'โหลปลาทองขอบคลื่น', '🌸 พาสเทลน่ารัก', 'gj-fishbowl'],
+          ['hearttank', 'ตู้ปลาหัวใจ', '🌸 พาสเทลน่ารัก', 'gj-hearttank'],
+          ['moon', 'ตู้ปลาพระจันทร์', '🌸 พาสเทลน่ารัก', 'gj-moon'],
+          ['gacha', 'ตู้ปลากาชาปอง', '🌸 พาสเทลน่ารัก', 'gj-gacha'],
+          ['shell', 'ตู้ปลาเปลือกหอย', '🌸 พาสเทลน่ารัก', 'gj-shell'],
+          ['sub', 'เรือดำน้ำ (ภาพ 3D)', '🌸 พาสเทลน่ารัก', 'gj-sub'],
         ] },
         { key: 'waves', label: 'ของขวัญโยกตามคลื่นใต้น้ำ', type: 'toggle', def: true },
         ...tint(() => true),
@@ -123,13 +124,14 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
     sections: [
       { title: 'รถ', fields: [
         { key: 'car', label: 'แบบรถ', type: 'select', def: 'van', options: [
-          ['van', 'รถหัวใจ', '🚗 รถลากของขวัญ (ภาพ 3D)', 'gj-van'],
-          ['pickup2', 'รถกระบะฟ้า', '🚗 รถลากของขวัญ (ภาพ 3D)', 'car-pickup2'],
-          ['camper', 'รถคาราวาน', '🚗 รถลากของขวัญ (ภาพ 3D)', 'car-camper'],
-          ['beetle', 'รถเต่างานแต่ง', '🚗 รถลากของขวัญ (ภาพ 3D)', 'car-beetle'],
-          ['minivan', 'รถตู้วินเทจ', '🚗 รถลากของขวัญ (ภาพ 3D)', 'car-minivan'],
-          ['convertible', 'รถเปิดประทุน', '🚗 รถลากของขวัญ (ภาพ 3D)', 'car-convertible'],
-          ['pickup', 'รถกระบะ', '🚗 รถลากของขวัญ (ภาพ 3D)', 'car-pickup'],
+          ['van', 'รถหัวใจ', '🌸 พาสเทลน่ารัก', 'gj-van'],
+          ['pickup2', 'รถกระบะฟ้า', '🌸 พาสเทลน่ารัก', 'car-pickup2'],
+          ['camper', 'รถคาราวาน', '🌸 พาสเทลน่ารัก', 'car-camper'],
+          ['beetle', 'รถเต่างานแต่ง', '🌸 พาสเทลน่ารัก', 'car-beetle'],
+          ['minivan', 'รถตู้วินเทจ', '🌸 พาสเทลน่ารัก', 'car-minivan'],
+          ['convertible', 'รถเปิดประทุน', '🌸 พาสเทลน่ารัก', 'car-convertible'],
+          ['pickup', 'รถกระบะ', '🌸 พาสเทลน่ารัก', 'car-pickup'],
+          ['sports', 'รถสปอร์ต', '🎮 สายเท่ เกมมิ่ง', 'car-sports'], ['offroad', 'รถออฟโรด 4x4', '🎮 สายเท่ เกมมิ่ง', 'car-offroad'], ['jdm', 'รถดริฟต์ JDM', '🎮 สายเท่ เกมมิ่ง', 'car-jdm'], ['bike', 'บิ๊กไบค์', '🎮 สายเท่ เกมมิ่ง', 'car-bike'],
         ] },
         ...tint(() => true),
         { key: 'alert', label: 'แสดงชื่อคนส่ง', type: 'toggle', def: true },
@@ -151,14 +153,57 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
     sections: [
       { title: 'ลูกแก้วหิมะ', fields: [
         { key: 'shape', label: 'ลูกแก้ว', type: 'select', def: 'snow', options: [
-          ['snow', 'ลูกแก้วหิมะบ้านกระต่าย', '❄️ ลูกแก้วหิมะ (ภาพ 3D)', 'gj-snow'],
-          ['gcastle', 'ลูกแก้วปราสาทเจ้าหญิง', '❄️ ลูกแก้วหิมะ (ภาพ 3D)', 'gl-castle'],
-          ['gxmas', 'ลูกแก้วคริสต์มาส', '❄️ ลูกแก้วหิมะ (ภาพ 3D)', 'gl-xmas'],
-          ['gcarousel', 'ลูกแก้วม้าหมุน', '❄️ ลูกแก้วหิมะ (ภาพ 3D)', 'gl-carousel'],
-          ['gbunnies', 'ลูกแก้วกระต่ายหัวใจ', '❄️ ลูกแก้วหิมะ (ภาพ 3D)', 'gl-bunnies'],
-          ['gsakura', 'ลูกแก้วซากุระ', '❄️ ลูกแก้วหิมะ (ภาพ 3D)', 'gl-sakura'],
+          ['snow', 'ลูกแก้วหิมะบ้านกระต่าย', '🌸 พาสเทลน่ารัก', 'gj-snow'],
+          ['gcastle', 'ลูกแก้วปราสาทเจ้าหญิง', '🌸 พาสเทลน่ารัก', 'gl-castle'],
+          ['gxmas', 'ลูกแก้วคริสต์มาส', '🌸 พาสเทลน่ารัก', 'gl-xmas'],
+          ['gcarousel', 'ลูกแก้วม้าหมุน', '🌸 พาสเทลน่ารัก', 'gl-carousel'],
+          ['gbunnies', 'ลูกแก้วกระต่ายหัวใจ', '🌸 พาสเทลน่ารัก', 'gl-bunnies'],
+          ['gsakura', 'ลูกแก้วซากุระ', '🌸 พาสเทลน่ารัก', 'gl-sakura'],
         ] },
         { key: 'swirl', label: 'ของขวัญหมุนวนเมื่อมีของใหม่', type: 'toggle', def: true, hint: 'เหมือนเขย่าลูกแก้วหิมะเบา ๆ แล้วค่อย ๆ ตกกลับมากอง' },
+        ...tint(() => true),
+        { key: 'fullText', label: 'ข้อความตอนโหลเต็ม', type: 'text', def: 'โหลเต็มแล้ว! 🎉', when: (v) => v.full === 'reset' },
+      ] },
+      { title: 'ขนาดและตำแหน่ง', fields: [
+        size(),
+        { key: 'giftScale', label: 'ขนาดของขวัญ', type: 'range', min: 0.5, max: 2.5, step: 0.05, def: 1, unit: '×', hint: 'ยิ่งเล็ก ยิ่งกองได้มาก — 1× ≈ 600 ชิ้น · 0.7× ≈ 1,200 · 0.55× = 2,000 (สูงสุด)' },
+        ...pos(),
+      ] },
+      { title: 'ของขวัญ', fields: [
+        { key: 'minCoins', label: 'รับเฉพาะของขวัญตั้งแต่ (เหรียญ)', type: 'number', min: 0, def: 0, hint: '0 = รับทุกชิ้น' },
+      ] },
+      { title: 'แจ้งเตือนผู้ส่ง', fields: [
+        { key: 'alert', label: 'แสดงชื่อผู้ส่งเหนือโหล', type: 'toggle', def: true },
+        { key: 'alertSec', label: 'แสดงนาน (วินาที)', type: 'number', min: 1, max: 30, def: 5, when: (v) => !!v.alert },
+      ] },
+      { title: 'ผู้ให้สูงสุด', fields: [
+        { key: 'board', label: 'แสดงใต้โหล', type: 'toggle', def: true },
+        { key: 'top', label: 'จำนวนคน', type: 'number', min: 1, max: 10, def: 1, when: (v) => !!v.board },
+        { key: 'boardFormat', label: 'รูปแบบ', type: 'select', def: 'full', options: [['full', 'รูป + ชื่อ + เหรียญ'], ['name', 'ชื่ออย่างเดียว']], when: (v) => !!v.board },
+        { key: 'total', label: 'แสดงยอดเหรียญรวมเหนือโหล', type: 'toggle', def: false },
+      ] },
+      { title: 'ตัวอักษร', fields: [
+        { key: 'font', label: 'ฟอนต์', type: 'select', def: 'Kanit', options: FONTS },
+        { key: 'fontSize', label: 'ขนาดตัวอักษร', type: 'range', min: 30, max: 90, step: 2, def: 50 },
+      ] },
+    ],
+  },
+  spacedome: {
+    resettable: 'ล้างของขวัญในโดมและอันดับ',
+    sections: [
+      { title: 'โดมอวกาศ', fields: [
+        { key: 'shape', label: 'แบบโดม', type: 'select', def: 'smoon', options: [
+          ['smoon', 'ฐานบนดวงจันทร์', '🌸 พาสเทลน่ารัก', 'sp-moon'],
+          ['sring', 'ดาวเคราะห์วงแหวน', '🌸 พาสเทลน่ารัก', 'sp-ring'],
+          ['sufo', 'ยาน UFO', '🌸 พาสเทลน่ารัก', 'sp-ufo'],
+          ['shelmet', 'หมวกนักบินอวกาศ', '🌸 พาสเทลน่ารัก', 'sp-helmet'],
+          ['sstation', 'สถานีอวกาศ', '🌸 พาสเทลน่ารัก', 'sp-station'],
+          ['sgalaxy', 'กาแล็กซี่', '🌸 พาสเทลน่ารัก', 'sp-galaxy'],
+          ['srocket', 'แคปซูลจรวด', '🌸 พาสเทลน่ารัก', 'sp-rocket'],
+          ['sshield', 'โดมโล่พลังงาน', '🎮 สายเท่ เกมมิ่ง', 'sp-shield'],
+          ['sobservatory', 'หอดูดาว', '🌸 พาสเทลน่ารัก', 'sp-observatory'],
+          ['smilitary', 'ฐานทัพอวกาศ', '🎮 สายเท่ เกมมิ่ง', 'sp-military'],
+        ] },
         ...tint(() => true),
         { key: 'fullText', label: 'ข้อความตอนโหลเต็ม', type: 'text', def: 'โหลเต็มแล้ว! 🎉', when: (v) => v.full === 'reset' },
       ] },
@@ -191,7 +236,8 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
     sections: [
       { title: 'ตัวละคร', fields: [
         { key: 'shape', label: 'ตัวละคร', type: 'select', def: 'pig', options: [
-          ['pig', 'หมูท้องใส งับของขวัญ', '🐷 ตัวละครท้องใส (ภาพ 3D)', 'gj-pig'], ['catbelly', 'แมวท้องใส', '🐷 ตัวละครท้องใส (ภาพ 3D)', 'gj-catbelly'], ['jdino', 'ไดโนเสาร์ท้องใส', '🐷 ตัวละครท้องใส (ภาพ 3D)', 'gj-jdino'], ['jbear', 'หมีท้องใส', '🐷 ตัวละครท้องใส (ภาพ 3D)', 'gj-jbear'], ['jfrog', 'กบท้องใส', '🐷 ตัวละครท้องใส (ภาพ 3D)', 'gj-jfrog'],
+          ['pig', 'หมูท้องใส งับของขวัญ', '🌸 พาสเทลน่ารัก', 'gj-pig'], ['catbelly', 'แมวท้องใส', '🌸 พาสเทลน่ารัก', 'gj-catbelly'], ['jdino', 'ไดโนเสาร์ท้องใส', '🌸 พาสเทลน่ารัก', 'gj-jdino'], ['jbear', 'หมีท้องใส', '🌸 พาสเทลน่ารัก', 'gj-jbear'], ['jfrog', 'กบท้องใส', '🌸 พาสเทลน่ารัก', 'gj-jfrog'],
+          ['xrobot', 'หุ่นยนต์', '🎮 สายเท่ เกมมิ่ง', 'gj-xrobot'], ['xwolf', 'หมาป่าไซเบอร์', '🎮 สายเท่ เกมมิ่ง', 'gj-xwolf'], ['xdragon', 'มังกรนีออน', '🎮 สายเท่ เกมมิ่ง', 'gj-xdragon'],
         ] },
         ...tint(() => true),
         { key: 'fullText', label: 'ข้อความตอนโหลเต็ม', type: 'text', def: 'โหลเต็มแล้ว! 🎉', when: (v) => v.full === 'reset' },
@@ -246,7 +292,8 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
         { key: 'sway', label: 'ความแรงลม (กิ่งแกว่ง)', type: 'range', min: 0, max: 3, step: 0.1, def: 1, hint: '0 = นิ่ง' },
         { key: 'big', label: 'ของขวัญที่เป็นดอกใหญ่บนยอด ตั้งแต่ (เหรียญ)', type: 'number', min: 1, def: 1000 },
         { key: 'skin', label: 'แบบกระถาง', type: 'select', def: 'image', options: [
-          ['image', 'กระถางหัวใจมีปีก', '🪴 กระถาง (ภาพ 3D)', 'gd-image'], ['cat', 'กระถางหน้าแมว', '🪴 กระถาง (ภาพ 3D)', 'pot-cat'], ['bunny', 'กระถางกระต่าย', '🪴 กระถาง (ภาพ 3D)', 'pot-bunny'], ['bear', 'กระถางหมี', '🪴 กระถาง (ภาพ 3D)', 'pot-bear'], ['teacup', 'กระถางถ้วยชา', '🪴 กระถาง (ภาพ 3D)', 'pot-teacup'], ['boot', 'กระถางรองเท้าบูท', '🪴 กระถาง (ภาพ 3D)', 'pot-boot'], ['pumpkin', 'กระถางฟักทอง', '🪴 กระถาง (ภาพ 3D)', 'pot-pumpkin'], ['star', 'กระถางดาว', '🪴 กระถาง (ภาพ 3D)', 'pot-star'], ['cart', 'รถเข็นดอกไม้', '🪴 กระถาง (ภาพ 3D)', 'pot-cart'], ['basket', 'ตะกร้าสาน', '🪴 กระถาง (ภาพ 3D)', 'pot-basket'],
+          ['image', 'กระถางหัวใจมีปีก', '🌸 พาสเทลน่ารัก', 'gd-image'], ['cat', 'กระถางหน้าแมว', '🌸 พาสเทลน่ารัก', 'pot-cat'], ['bunny', 'กระถางกระต่าย', '🌸 พาสเทลน่ารัก', 'pot-bunny'], ['bear', 'กระถางหมี', '🌸 พาสเทลน่ารัก', 'pot-bear'], ['teacup', 'กระถางถ้วยชา', '🌸 พาสเทลน่ารัก', 'pot-teacup'], ['boot', 'กระถางรองเท้าบูท', '🌸 พาสเทลน่ารัก', 'pot-boot'], ['pumpkin', 'กระถางฟักทอง', '🌸 พาสเทลน่ารัก', 'pot-pumpkin'], ['star', 'กระถางดาว', '🌸 พาสเทลน่ารัก', 'pot-star'], ['cart', 'รถเข็นดอกไม้', '🌸 พาสเทลน่ารัก', 'pot-cart'], ['basket', 'ตะกร้าสาน', '🌸 พาสเทลน่ารัก', 'pot-basket'],
+          ['tech', 'กระถางเทคนีออน', '🎮 สายเท่ เกมมิ่ง', 'pot-tech'],
         ] },
         ...tint(() => true),
         { key: 'minCoins', label: 'รับเฉพาะของขวัญตั้งแต่ (เหรียญ)', type: 'number', min: 0, def: 0 },
@@ -270,7 +317,8 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
         { key: 'sway', label: 'ความแรงลม (กิ่งแกว่ง)', type: 'range', min: 0, max: 3, step: 0.1, def: 1, hint: '0 = นิ่ง' },
         { key: 'big', label: 'ของขวัญที่เป็นดอกใหญ่บนยอด ตั้งแต่ (เหรียญ)', type: 'number', min: 1, def: 1000 },
         { key: 'skin', label: 'แบบต้นไม้', type: 'select', def: 'tree', options: [
-          ['tree', 'ต้นไม้ใหญ่', '🌳 ต้นไม้ (ภาพ 3D)', 'gd-tree'], ['sakura', 'ต้นซากุระ', '🌳 ต้นไม้ (ภาพ 3D)', 'gd-sakura'], ['night', 'ต้นไม้ดวงดาว', '🌳 ต้นไม้ (ภาพ 3D)', 'gd-night'], ['heart', 'ต้นหัวใจ', '🌳 ต้นไม้ (ภาพ 3D)', 'gd-heart'], ['bonsai', 'บอนไซกระถางหัวใจ', '🌳 ต้นไม้ (ภาพ 3D)', 'gd-bonsai'], ['palm', 'ต้นปาล์มเกาะ', '🌳 ต้นไม้ (ภาพ 3D)', 'gd-palm'], ['autumn', 'ต้นไม้ใบไม้ร่วง', '🌳 ต้นไม้ (ภาพ 3D)', 'gd-autumn'],
+          ['tree', 'ต้นไม้ใหญ่', '🌸 พาสเทลน่ารัก', 'gd-tree'], ['sakura', 'ต้นซากุระ', '🌸 พาสเทลน่ารัก', 'gd-sakura'], ['night', 'ต้นไม้ดวงดาว', '🌸 พาสเทลน่ารัก', 'gd-night'], ['heart', 'ต้นหัวใจ', '🌸 พาสเทลน่ารัก', 'gd-heart'], ['bonsai', 'บอนไซกระถางหัวใจ', '🌸 พาสเทลน่ารัก', 'gd-bonsai'], ['palm', 'ต้นปาล์มเกาะ', '🌸 พาสเทลน่ารัก', 'gd-palm'], ['autumn', 'ต้นไม้ใบไม้ร่วง', '🌸 พาสเทลน่ารัก', 'gd-autumn'],
+          ['cyber', 'ต้นไม้ไซเบอร์', '🎮 สายเท่ เกมมิ่ง', 'gd-cyber'],
         ] },
         ...tint(() => true),
         { key: 'minCoins', label: 'รับเฉพาะของขวัญตั้งแต่ (เหรียญ)', type: 'number', min: 0, def: 0 },
@@ -292,7 +340,8 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
     sections: [
       { title: 'เครื่องและเป้าหมาย', fields: [
         { key: 'skin', label: 'หน้าตาเครื่อง', type: 'select', def: 'image', options: [
-          ['image', 'ตู้ชมพู', '🎰 ตู้เครื่องจักร (ภาพ 3D)', 'cj-image'], ['cupcake', 'ตู้คัพเค้ก', '🎰 ตู้เครื่องจักร (ภาพ 3D)', 'cj-cupcake'], ['cat', 'ตู้หัวแมว', '🎰 ตู้เครื่องจักร (ภาพ 3D)', 'cj-cat'], ['house', 'บ้านขนมปังขิง', '🎰 ตู้เครื่องจักร (ภาพ 3D)', 'cj-house'], ['rocket', 'ตู้จรวด', '🎰 ตู้เครื่องจักร (ภาพ 3D)', 'cj-rocket'], ['gacha', 'ตู้กาชาปอง', '🎰 ตู้เครื่องจักร (ภาพ 3D)', 'cj-gacha'], ['gift', 'ตู้กล่องของขวัญ', '🎰 ตู้เครื่องจักร (ภาพ 3D)', 'cj-gift'], ['icecream', 'ร้านไอศกรีม', '🎰 ตู้เครื่องจักร (ภาพ 3D)', 'cj-icecream'], ['bear', 'หมีน้อยถือกล่อง', '🎰 ตู้เครื่องจักร (ภาพ 3D)', 'cj-bear'],
+          ['image', 'ตู้ชมพู', '🌸 พาสเทลน่ารัก', 'cj-image'], ['cupcake', 'ตู้คัพเค้ก', '🌸 พาสเทลน่ารัก', 'cj-cupcake'], ['cat', 'ตู้หัวแมว', '🌸 พาสเทลน่ารัก', 'cj-cat'], ['house', 'บ้านขนมปังขิง', '🌸 พาสเทลน่ารัก', 'cj-house'], ['rocket', 'ตู้จรวด', '🌸 พาสเทลน่ารัก', 'cj-rocket'], ['gacha', 'ตู้กาชาปอง', '🌸 พาสเทลน่ารัก', 'cj-gacha'], ['gift', 'ตู้กล่องของขวัญ', '🌸 พาสเทลน่ารัก', 'cj-gift'], ['icecream', 'ร้านไอศกรีม', '🌸 พาสเทลน่ารัก', 'cj-icecream'], ['bear', 'หมีน้อยถือกล่อง', '🌸 พาสเทลน่ารัก', 'cj-bear'],
+          ['arcade', 'ตู้เกมอาร์เคด', '🎮 สายเท่ เกมมิ่ง', 'cj-arcade'], ['atm', 'ตู้ ATM ทองคำ', '🎮 สายเท่ เกมมิ่ง', 'cj-atm'], ['reactor', 'เตาปฏิกรณ์ไซไฟ', '🎮 สายเท่ เกมมิ่ง', 'cj-reactor'],
         ] },
         ...tint(() => true),
         { key: 'goal', label: 'เป้าหมาย (เหรียญ)', type: 'number', min: 1, def: 10000, hint: 'แถบบนจอเครื่องจะเต็มเมื่อถึงเป้า' },

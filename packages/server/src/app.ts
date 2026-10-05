@@ -50,6 +50,7 @@ export async function buildApp(): Promise<FastifyInstance> {
       'tree.html': { file: 'garden.html', defaults: { skin: 'tree' } },
       'belly.html': { file: 'giftjar.html', defaults: { shape: 'pig' } },
       'snowglobe.html': { file: 'giftjar.html', defaults: { shape: 'snow' } },
+      'spacedome.html': { file: 'giftjar.html', defaults: { shape: 'smoon' } },
       'aquarium.html': { file: 'giftjar.html', defaults: { shape: 'tank' } },
       'vehicle.html': { file: 'dragcar.html', defaults: {} },
     };

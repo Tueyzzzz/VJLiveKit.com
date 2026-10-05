@@ -9,7 +9,7 @@
  */
 window.Overlay = (function () {
   const params = new URLSearchParams(location.search);
-  const handlers = { event: [], stats: [], status: [], state: [] };
+  const handlers = { event: [], stats: [], status: [], state: [], action: [] };
   const fire = (k, d) => handlers[k].forEach((fn) => fn(d));
 
   const api = {
@@ -37,6 +37,7 @@ window.Overlay = (function () {
     socket.on('stats', (s) => fire('stats', s));
     socket.on('status', (s) => fire('status', s));
     socket.on('state', (s) => fire('state', s));
+    socket.on('action', (a) => fire('action', a));
     api.connected = true;
     api.socket = socket;
   } else {

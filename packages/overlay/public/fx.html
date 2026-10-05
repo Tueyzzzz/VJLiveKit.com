@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FX Overlay</title>
+<link rel="icon" href="favicon.svg" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Itim&display=swap');
+  html,body { margin:0; width:100%; height:100%; background:transparent; overflow:hidden; font-family:'Itim',sans-serif; }
+  #fx { position:fixed; inset:0; display:grid; place-items:center; pointer-events:none; }
+  .media { max-width:70vw; max-height:70vh; border-radius:20px; box-shadow:0 20px 50px rgba(0,0,0,.4);
+    animation:pop .4s cubic-bezier(.2,1.4,.4,1); }
+  .text { font-size:48px; color:#fff; text-align:center; padding:20px 40px; border-radius:24px;
+    background:linear-gradient(135deg,#ff93c0,#9d86e8); box-shadow:0 16px 40px rgba(120,80,150,.45);
+    animation:pop .4s cubic-bezier(.2,1.4,.4,1); max-width:80vw; }
+  @keyframes pop { from{transform:scale(.5);opacity:0;} to{transform:scale(1);opacity:1;} }
+  @keyframes fade { to{opacity:0;transform:scale(.96);} }
+  #armBtn { position:fixed; bottom:16px; left:50%; transform:translateX(-50%); pointer-events:auto;
+    font-family:'Itim',sans-serif; font-size:15px; border:none; cursor:pointer; padding:9px 18px; border-radius:999px;
+    color:#fff; background:linear-gradient(135deg,#b9a6f2,#9d86e8); box-shadow:0 6px 14px rgba(150,120,180,.3); }
+</style>
+</head>
+<body>
+  <div id="fx"></div>
+  <button id="armBtn">🔊 เปิดเสียง FX (คลิกครั้งเดียว)</button>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/overlay-client.js"></script>
+  <script>
+  (function(){
+    const fx=document.getElementById('fx'), armBtn=document.getElementById('armBtn');
+    let audioArmed=false;
+    armBtn.addEventListener('click',()=>{ audioArmed=true; armBtn.textContent='✅ พร้อมเล่น FX'; armBtn.disabled=true; setTimeout(()=>armBtn.style.display='none',1200); });
+
+    function clearLater(el,ms){ setTimeout(()=>{ el.style.animation='fade .4s forwards'; setTimeout(()=>el.remove(),400); }, ms||4000); }
+
+    function play(a){
+      const dur=a.durationMs||5000;
+      if(a.type==='sound' && a.url){ if(!audioArmed) return; const au=new Audio(a.url); au.play().catch(()=>{}); return; }
+      if(a.type==='image' && a.url){ const img=document.createElement('img'); img.src=a.url; img.className='media'; fx.appendChild(img); clearLater(img,dur); }
+      else if(a.type==='video' && a.url){ const v=document.createElement('video'); v.src=a.url; v.autoplay=true; v.muted=!audioArmed; v.className='media'; fx.appendChild(v); v.onended=()=>v.remove(); clearLater(v,dur); }
+      else if(a.type==='text' && a.text){ const t=document.createElement('div'); t.className='text'; t.textContent=a.text; fx.appendChild(t); clearLater(t,dur); }
+    }
+
+    // รับ action จากเซิร์ฟเวอร์ (Actions & Events engine)
+    Overlay.on('action',(fire)=>play(fire.action));
+
+    // demo fallback — จำลองกฎ "ได้ Galaxy -> โชว์ข้อความ"
+    if(!Overlay.connected){
+      const samples=[{type:'text',text:'🎉 ขอบคุณสำหรับ Galaxy!'},{type:'text',text:'💖 สุดยอดไปเลย!'},{type:'text',text:'🔥 ปังมาก!'}];
+      setInterval(()=>play(samples[Math.floor(Math.random()*samples.length)]), 5000);
+    }
+  })();
+  </script>
+</body>
+</html>

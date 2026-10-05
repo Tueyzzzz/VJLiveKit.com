@@ -12,7 +12,7 @@ async function main(): Promise<void> {
 
   await app.listen({ port: config.port, host: '0.0.0.0' });
 
-  app.log.info(`TikFinity Studio server :${config.port} (demo=${config.demoMode})`);
+  app.log.info(`VJLiveKit server :${config.port} (demo=${config.demoMode})`);
 
   // ปิดอย่างนุ่มนวล
   const shutdown = async (sig: string) => {

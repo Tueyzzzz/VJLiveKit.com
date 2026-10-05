@@ -1,17 +1,17 @@
 {
-  "name": "tikfinity-studio",
+  "name": "vjlivekit",
   "version": "0.1.0",
   "private": true,
-  "description": "TikFinity-style TikTok LIVE widget platform (coinjar, alerts, goals, chat, TTS) — production monorepo",
+  "description": "VJLiveKit — ชุดเครื่องมือ/overlay สำหรับ TikTok LIVE (coinjar, alerts, goals, chat, TTS, actions) — production monorepo",
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
-    "dev": "npm run dev --workspace @tikfinity/server",
-    "build": "npm run build --workspace @tikfinity/server",
-    "start": "npm run start --workspace @tikfinity/server",
-    "prisma:generate": "npm run prisma:generate --workspace @tikfinity/server",
-    "prisma:migrate": "npm run prisma:migrate --workspace @tikfinity/server",
+    "dev": "npm run dev --workspace @vjlivekit/server",
+    "build": "npm run build --workspace @vjlivekit/server",
+    "start": "npm run start --workspace @vjlivekit/server",
+    "prisma:generate": "npm run prisma:generate --workspace @vjlivekit/server",
+    "prisma:migrate": "npm run prisma:migrate --workspace @vjlivekit/server",
     "typecheck": "tsc -p packages/server/tsconfig.json --noEmit",
     "infra:up": "docker compose up -d",
     "infra:down": "docker compose down"

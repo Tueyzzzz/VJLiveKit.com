@@ -5,6 +5,7 @@ import path from 'node:path';
 import { authRoutes } from './auth/routes.js';
 import { widgetRoutes } from './widgets/routes.js';
 import { billingRoutes } from './billing/routes.js';
+import { actionRoutes } from './actions/routes.js';
 
 /** ที่อยู่โฟลเดอร์ overlay (เสิร์ฟไฟล์วิดเจ็ตให้ OBS) */
 const OVERLAY_DIR = process.env.OVERLAY_DIR ?? path.resolve(process.cwd(), '../overlay/public');
@@ -29,6 +30,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(authRoutes);
   await app.register(widgetRoutes);
   await app.register(billingRoutes);
+  await app.register(actionRoutes);
 
   return app;
 }

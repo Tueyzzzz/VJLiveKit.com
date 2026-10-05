@@ -27,6 +27,7 @@ model User {
   payments      Payment[]
   widgetConfigs WidgetConfig[]
   overlayTokens OverlayToken[]
+  actionRules   ActionRule[]
 }
 
 enum Role {
@@ -139,6 +140,21 @@ model OverlayToken {
   label     String?
   revoked   Boolean  @default(false)
   createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ---------- Actions & Events (ทริกเกอร์: ได้กิฟต์ X -> ทำ Y) ----------
+model ActionRule {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  enabled   Boolean  @default(true)
+  trigger   Json     // { event:"gift", giftName?:"Rose", minDiamonds?:100 }
+  action    Json     // { type:"sound"|"image"|"video"|"text", url?, text?, durationMs? }
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])

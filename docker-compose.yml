@@ -3,25 +3,25 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: tikfinity-postgres
+    container_name: vjlivekit-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: tikfinity
-      POSTGRES_PASSWORD: tikfinity
-      POSTGRES_DB: tikfinity
+      POSTGRES_USER: vjlivekit
+      POSTGRES_PASSWORD: vjlivekit
+      POSTGRES_DB: vjlivekit
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U tikfinity"]
+      test: ["CMD-SHELL", "pg_isready -U vjlivekit"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   redis:
     image: redis:7-alpine
-    container_name: tikfinity-redis
+    container_name: vjlivekit-redis
     restart: unless-stopped
     ports:
       - "6379:6379"

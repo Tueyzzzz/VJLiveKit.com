@@ -1,9 +1,14 @@
-# TikFinity Studio 🎀
+<p align="center">
+  <img src="assets/logo.svg" alt="VJLiveKit" width="340" />
+</p>
 
-แพลตฟอร์มวิดเจ็ต **TikTok LIVE** สไตล์ TikFinity/vj-studio — coinjar, แจ้งเตือนกิฟต์, แถบเป้าหมาย, แชทสด, อ่านแชทออกเสียง (TTS)
+# VJLiveKit 🎀
+
+**ชุดเครื่องมือ & overlay สำหรับ TikTok LIVE** — coinjar, แจ้งเตือนกิฟต์, แถบเป้าหมาย, แชทสด, อ่านแชทออกเสียง (TTS), Actions & Events
 พร้อม **ระบบสมาชิก + ชำระเงิน (subscription)** สำหรับทำเป็นผลิตภัณฑ์จริง
 
-> โปรเจกต์นี้เป็นงานพัฒนาเพื่อการเรียนรู้/ต่อยอด ไม่เกี่ยวข้องกับ TikFinity, Zerody หรือ TikTok อย่างเป็นทางการ
+> *VJLiveKit — ชุดเครื่องมือไลฟ์ครบ จบในที่เดียว*
+> งานพัฒนาอิสระ ไม่เกี่ยวข้องกับ TikTok, TikFinity หรือ vj-studio อย่างเป็นทางการ
 
 ---
 

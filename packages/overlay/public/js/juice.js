@@ -33,6 +33,14 @@ window.Juice = (function () {
         this.push({ kind: 'conf', x, y, vx: (Math.random() - 0.5) * 14, vy: -(4 + Math.random() * 10), g: 0.35, life: 1, decay: 0.012, size: 8 + Math.random() * 6, rot: 0, vr: (Math.random() - 0.5) * 0.8, color: cols[i % cols.length] });
       }
     }
+    /** โน้ตดนตรีลอยขึ้นแกว่งซ้ายขวา (ธีมนักร้อง) */
+    notes(x, y, n = 4, cols = ['#F3D9A4', '#E8B4A0', '#ff9ec7', '#fff6c2']) {
+      const SYM = ['♪', '♫', '♬', '♩'];
+      for (let i = 0; i < n; i++) {
+        this.push({ kind: 'note', x: x + (Math.random() - .5) * 30, y, vx: (Math.random() - .5) * 1.2, vy: -(1.2 + Math.random() * 1.6), g: -0.005, life: 1, decay: 0.008 + Math.random() * 0.006,
+          size: 18 + Math.random() * 14, rot: (Math.random() - .5) * 0.5, ph: Math.random() * 6.28, color: cols[i % cols.length], sym: SYM[Math.floor(Math.random() * SYM.length)] });
+      }
+    }
     push(p) { this.list.push(p); if (this.list.length > this.max) this.list.shift(); }
     step() {
       for (let i = this.list.length - 1; i >= 0; i--) {
@@ -50,6 +58,10 @@ window.Juice = (function () {
           ctx.beginPath(); // ดาว 4 แฉก
           for (let k = 0; k < 8; k++) { const r = k % 2 ? s * 0.28 : s, a = k * Math.PI / 4; ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r); }
           ctx.closePath(); ctx.fill();
+        } else if (p.kind === 'note') {
+          ctx.rotate(p.rot + Math.sin((1 - p.life) * 8 + p.ph) * 0.25); ctx.translate(Math.sin((1 - p.life) * 6 + p.ph) * 10, 0);
+          ctx.font = `bold ${Math.round(p.size)}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.shadowColor = 'rgba(255,220,160,.8)'; ctx.shadowBlur = 8; ctx.fillStyle = p.color; ctx.fillText(p.sym, 0, 0);
         } else if (p.kind === 'dust') {
           ctx.beginPath(); ctx.arc(0, 0, p.size * (1.6 - p.life * 0.6), 0, Math.PI * 2); ctx.fillStyle = p.color; ctx.fill();
         } else {

@@ -57,6 +57,8 @@
     // พิกัดจุดสำคัญวัดจากรูปต้นฉบับ (พิกเซล) แล้วแปลงเป็นพิกัดออกแบบ: ช่องอุโมงค์, ผิวสายพาน, จอ, แผงตัวเลข
     // ทุกสกิน: m = ตัวเครื่อง [x0, x1, y0], mouth = ช่องอุโมงค์ [x0, x1, y0, y1], screen = จอ, belt = ผิวบนสายพาน [ขอบหลังปลาย, ขอบหลังฝั่งเครื่อง, ขอบหน้าปลาย, ขอบหน้าฝั่งเครื่อง]
     const SKINS = {
+      karaoke: { label: 'ตู้คาราโอเกะ', src: 'themes/machine-karaoke.webp', w: 1199, h: 1312, k: 0.31693, x0: 860.0, y0: 306.6, counter: { px: 612, py: 874 }, music: true,
+        m: [260, 1116, 13], mouth: [270, 420, 840, 985], screen: [437, 721, 197, 481], belt: [[95, 1010], [420, 960], [100, 1040], [440, 1005]] },
       arcade: { label: 'ตู้เกมอาร์เคด', src: 'themes/machine-arcade.webp', w: 1199, h: 1312, k: 0.31693, x0: 860.0, y0: 292.7, counter: { px: 895, py: 665 },
         m: [280, 1090, 20], mouth: [290, 540, 820, 990], screen: [650, 760, 630, 700], belt: [[95, 1025], [450, 950], [100, 1060], [470, 1000]] },
       atm: { label: 'ตู้ ATM ทองคำ', src: 'themes/machine-atm.webp', w: 1312, h: 1199, k: 0.28963, x0: 860.0, y0: 365.0, counter: { px: 860, py: 430 },
@@ -167,6 +169,7 @@
     }
 
     const fx = new Juice.Particles(), machinePunch = new Juice.Spring(220, 11);
+    if (SKIN && SKIN.music) setInterval(() => { if (!document.hidden && fx.notes) fx.notes((SCREEN.x0 + SCREEN.x1) / 2 + (Math.random() - .5) * 60, SCREEN.y0, 1); }, 1500);
     let nowT = 0;
     // เพดานกอง: ยอดกองสูงเกิน PILE_MAX ของความสูงจอ → ชิ้นเก่าสุดค่อย ๆ จางไป (ล้นได้ แต่ไม่ท่วมจอ)
     const PILE_MAX = Math.max(0.2, Math.min(0.9, num('pileMax', 55) / 100));
@@ -437,6 +440,7 @@
       screenImg = giftImg(e.giftImage); screenEmoji = EMOJI[e.giftName] || '🎁';
       const g = { u: e.giftImage || '', e: screenEmoji, d: unit };
       for (let i = 0; i < Math.min(count, 30); i++) setTimeout(() => { addBody(g); save(); }, i * 160);
+      if (SKIN && SKIN.music && fx.notes) fx.notes((SCREEN.x0 + SCREEN.x1) / 2, SCREEN.y0, unit >= 100 ? 6 : 3); // ตู้คาราโอเกะ: โน้ตลอยจากจอ
     }
 
     let prefilled = false;

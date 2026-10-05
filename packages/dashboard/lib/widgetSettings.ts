@@ -57,6 +57,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
           ['catbank', 'กระปุกแมวใส', '🌸 พาสเทลน่ารัก', 'gj-catbank'],
           ['jsnowman', 'โหลตุ๊กตาหิมะ', '🌸 พาสเทลน่ารัก', 'gj-jsnowman'],
           ['xtech', 'โหลแก้วเทค', '🎮 สายเท่ เกมมิ่ง', 'gj-xtech'], ['xcan', 'ถังพลังงานฟ้า', '🎮 สายเท่ เกมมิ่ง', 'gj-xcan'], ['xcan2', 'ถังพลังงานชมพู', '🎮 สายเท่ เกมมิ่ง', 'gj-xcan2'], ['xchest', 'หีบสมบัติเกม', '🎮 สายเท่ เกมมิ่ง', 'gj-xchest'],
+          ['mmic', 'โหลไมโครโฟน', '🎤 สายนักร้อง', 'gj-mmic'], ['mcoupe', 'แก้วแชมเปญยักษ์', '🎤 สายนักร้อง', 'gj-mcoupe'], ['mbox', 'กล่องดนตรี', '🎤 สายนักร้อง', 'gj-mbox'], ['mdrum', 'กลองใส', '🎤 สายนักร้อง', 'gj-mdrum'], ['mjuke', 'โดมตู้เพลง', '🎤 สายนักร้อง', 'gj-mjuke'],
         ] },
         ...tint((v) => ['heart', 'orb', 'tank', 'pig', 'sundae', 'jstar', 'jbasket', 'cauldron', 'catbank', 'jsnowman', 'catbelly', 'jdino', 'jbear', 'jfrog', 'castle', 'fishbowl', 'hearttank', 'moon', 'gacha', 'shell', 'sub', 'snow', 'van'].includes(String(v.shape))),
         { key: 'full', label: 'เมื่อโหลเต็ม', type: 'select', when: (v) => !['car', 'globe', 'heart', 'snow', 'van', 'pig', 'sub', 'jstar', 'catbank', 'jsnowman', 'catbelly', 'jdino', 'jbear', 'jfrog'].includes(String(v.shape)), def: 'spill', options: [['spill', 'ล้นออกมากองข้างโหล'], ['fade', 'ชิ้นเก่าสุดค่อย ๆ หายไป'], ['reset', 'ฉลอง แล้วเทโหลเริ่มใหม่']] },
@@ -142,6 +143,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
           ['convertible', 'รถเปิดประทุน', '🌸 พาสเทลน่ารัก', 'car-convertible'],
           ['pickup', 'รถกระบะ', '🌸 พาสเทลน่ารัก', 'car-pickup'],
           ['sports', 'รถสปอร์ต', '🎮 สายเท่ เกมมิ่ง', 'car-sports'], ['offroad', 'รถออฟโรด 4x4', '🎮 สายเท่ เกมมิ่ง', 'car-offroad'], ['jdm', 'รถดริฟต์ JDM', '🎮 สายเท่ เกมมิ่ง', 'car-jdm'], ['bike', 'บิ๊กไบค์', '🎮 สายเท่ เกมมิ่ง', 'car-bike'],
+          ['tourbus', 'รถทัวร์คอนเสิร์ต', '🎤 สายนักร้อง', 'car-tourbus'], ['limo', 'รถลีมูซีนดารา', '🎤 สายนักร้อง', 'car-limo'], ['vintage', 'รถเปิดประทุนวินเทจ', '🎤 สายนักร้อง', 'car-vintage'],
         ] },
         ...tint(() => true),
         { key: 'alert', label: 'แสดงชื่อคนส่ง', type: 'toggle', def: true },
@@ -169,6 +171,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
           ['gcarousel', 'ลูกแก้วม้าหมุน', '🌸 พาสเทลน่ารัก', 'gl-carousel'],
           ['gbunnies', 'ลูกแก้วกระต่ายหัวใจ', '🌸 พาสเทลน่ารัก', 'gl-bunnies'],
           ['gsakura', 'ลูกแก้วซากุระ', '🌸 พาสเทลน่ารัก', 'gl-sakura'],
+          ['gstage', 'ลูกแก้วเวทีคอนเสิร์ต', '🎤 สายนักร้อง', 'gl-gstage'], ['gpiano', 'ลูกแก้วกล่องดนตรีเปียโน', '🎤 สายนักร้อง', 'gl-gpiano'],
         ] },
         { key: 'swirl', label: 'ของขวัญหมุนวนเมื่อมีของใหม่', type: 'toggle', def: true, hint: 'เหมือนเขย่าลูกแก้วหิมะเบา ๆ แล้วค่อย ๆ ตกกลับมากอง' },
         ...tint(() => true),
@@ -248,6 +251,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
         { key: 'shape', label: 'ตัวละคร', type: 'select', def: 'pig', options: [
           ['pig', 'หมูท้องใส งับของขวัญ', '🌸 พาสเทลน่ารัก', 'gj-pig'], ['catbelly', 'แมวท้องใส', '🌸 พาสเทลน่ารัก', 'gj-catbelly'], ['jdino', 'ไดโนเสาร์ท้องใส', '🌸 พาสเทลน่ารัก', 'gj-jdino'], ['jbear', 'หมีท้องใส', '🌸 พาสเทลน่ารัก', 'gj-jbear'], ['jfrog', 'กบท้องใส', '🌸 พาสเทลน่ารัก', 'gj-jfrog'],
           ['xrobot', 'หุ่นยนต์', '🎮 สายเท่ เกมมิ่ง', 'gj-xrobot'], ['xwolf', 'หมาป่าไซเบอร์', '🎮 สายเท่ เกมมิ่ง', 'gj-xwolf'], ['xdragon', 'มังกรนีออน', '🎮 สายเท่ เกมมิ่ง', 'gj-xdragon'],
+          ['mbird', 'นกร้องเพลง', '🎤 สายนักร้อง', 'gj-mbird'], ['mcat', 'แมวนักร้อง', '🎤 สายนักร้อง', 'gj-mcat'], ['mbear', 'หมีนักร้อง', '🎤 สายนักร้อง', 'gj-mbear'],
         ] },
         ...tint(() => true),
         { key: 'fullText', label: 'ข้อความตอนโหลเต็ม', type: 'text', def: 'โหลเต็มแล้ว! 🎉', when: (v) => v.full === 'reset' },
@@ -304,6 +308,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
         { key: 'skin', label: 'แบบกระถาง', type: 'select', def: 'image', options: [
           ['image', 'กระถางหัวใจมีปีก', '🌸 พาสเทลน่ารัก', 'gd-image'], ['cat', 'กระถางหน้าแมว', '🌸 พาสเทลน่ารัก', 'pot-cat'], ['bunny', 'กระถางกระต่าย', '🌸 พาสเทลน่ารัก', 'pot-bunny'], ['bear', 'กระถางหมี', '🌸 พาสเทลน่ารัก', 'pot-bear'], ['teacup', 'กระถางถ้วยชา', '🌸 พาสเทลน่ารัก', 'pot-teacup'], ['boot', 'กระถางรองเท้าบูท', '🌸 พาสเทลน่ารัก', 'pot-boot'], ['pumpkin', 'กระถางฟักทอง', '🌸 พาสเทลน่ารัก', 'pot-pumpkin'], ['star', 'กระถางดาว', '🌸 พาสเทลน่ารัก', 'pot-star'], ['cart', 'รถเข็นดอกไม้', '🌸 พาสเทลน่ารัก', 'pot-cart'], ['basket', 'ตะกร้าสาน', '🌸 พาสเทลน่ารัก', 'pot-basket'],
           ['tech', 'กระถางเทคนีออน', '🎮 สายเท่ เกมมิ่ง', 'pot-tech'],
+          ['trumpet', 'กระถางแตรทอง', '🎤 สายนักร้อง', 'pot-trumpet'], ['drum', 'กระถางกลอง', '🎤 สายนักร้อง', 'pot-drum'],
         ] },
         ...tint(() => true),
         { key: 'minCoins', label: 'รับเฉพาะของขวัญตั้งแต่ (เหรียญ)', type: 'number', min: 0, def: 0 },
@@ -329,6 +334,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
         { key: 'skin', label: 'แบบต้นไม้', type: 'select', def: 'tree', options: [
           ['tree', 'ต้นไม้ใหญ่', '🌸 พาสเทลน่ารัก', 'gd-tree'], ['sakura', 'ต้นซากุระ', '🌸 พาสเทลน่ารัก', 'gd-sakura'], ['night', 'ต้นไม้ดวงดาว', '🌸 พาสเทลน่ารัก', 'gd-night'], ['heart', 'ต้นหัวใจ', '🌸 พาสเทลน่ารัก', 'gd-heart'], ['bonsai', 'บอนไซกระถางหัวใจ', '🌸 พาสเทลน่ารัก', 'gd-bonsai'], ['palm', 'ต้นปาล์มเกาะ', '🌸 พาสเทลน่ารัก', 'gd-palm'], ['autumn', 'ต้นไม้ใบไม้ร่วง', '🌸 พาสเทลน่ารัก', 'gd-autumn'],
           ['cyber', 'ต้นไม้ไซเบอร์', '🎮 สายเท่ เกมมิ่ง', 'gd-cyber'],
+          ['notes', 'ต้นไม้โน้ตดนตรี', '🎤 สายนักร้อง', 'gd-notes'],
         ] },
         ...tint(() => true),
         { key: 'minCoins', label: 'รับเฉพาะของขวัญตั้งแต่ (เหรียญ)', type: 'number', min: 0, def: 0 },
@@ -352,6 +358,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
         { key: 'skin', label: 'หน้าตาเครื่อง', type: 'select', def: 'image', options: [
           ['image', 'ตู้ชมพู', '🌸 พาสเทลน่ารัก', 'cj-image'], ['cupcake', 'ตู้คัพเค้ก', '🌸 พาสเทลน่ารัก', 'cj-cupcake'], ['cat', 'ตู้หัวแมว', '🌸 พาสเทลน่ารัก', 'cj-cat'], ['house', 'บ้านขนมปังขิง', '🌸 พาสเทลน่ารัก', 'cj-house'], ['rocket', 'ตู้จรวด', '🌸 พาสเทลน่ารัก', 'cj-rocket'], ['gacha', 'ตู้กาชาปอง', '🌸 พาสเทลน่ารัก', 'cj-gacha'], ['gift', 'ตู้กล่องของขวัญ', '🌸 พาสเทลน่ารัก', 'cj-gift'], ['icecream', 'ร้านไอศกรีม', '🌸 พาสเทลน่ารัก', 'cj-icecream'], ['bear', 'หมีน้อยถือกล่อง', '🌸 พาสเทลน่ารัก', 'cj-bear'],
           ['arcade', 'ตู้เกมอาร์เคด', '🎮 สายเท่ เกมมิ่ง', 'cj-arcade'], ['atm', 'ตู้ ATM ทองคำ', '🎮 สายเท่ เกมมิ่ง', 'cj-atm'], ['reactor', 'เตาปฏิกรณ์ไซไฟ', '🎮 สายเท่ เกมมิ่ง', 'cj-reactor'],
+          ['karaoke', 'ตู้คาราโอเกะ', '🎤 สายนักร้อง', 'cj-karaoke'],
         ] },
         ...tint(() => true),
         { key: 'goal', label: 'เป้าหมาย (เหรียญ)', type: 'number', min: 1, def: 10000, hint: 'แถบบนจอเครื่องจะเต็มเมื่อถึงเป้า' },

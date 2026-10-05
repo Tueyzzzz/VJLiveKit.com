@@ -47,6 +47,9 @@
       offroad: { src: 'themes/car-offroad.webp', x: -242.6, y: -360, w: 485.2, h: 360, hook: { x: -0.4, y: -60.1 } },
       jdm: { src: 'themes/car-jdm.webp', x: -261.2, y: -360, w: 522.5, h: 360, hook: { x: -0.4, y: -54.7 } },
       bike: { src: 'themes/car-bike.webp', x: -145.2, y: -360, w: 290.5, h: 360, hook: { x: -0.2, y: -113.1 } },
+      tourbus: { src: 'themes/car-tourbus.webp', x: -163.5, y: -360, w: 327.0, h: 360, hook: { x: -0.3, y: -74.6 }, music: true },
+      limo: { src: 'themes/car-limo.webp', x: -285.3, y: -360, w: 570.6, h: 360, hook: { x: -0.4, y: -58.5 }, music: true },
+      vintage: { src: 'themes/car-vintage.webp', x: -290.5, y: -360, w: 580.9, h: 360, hook: { x: -0.2, y: -89.1 }, music: true },
       van: { src: 'themes/car-heart.webp', x: -209.3, y: -360, w: 418, h: 360, hook: { x: -2, y: -54 } },
       beetle: { src: 'themes/car-beetle.webp', x: -207.1, y: -360.0, w: 414.2, h: 360.0, hook: { x: -0.7, y: -59.1 } },
       minivan: { src: 'themes/car-minivan.webp', x: -191.1, y: -360.0, w: 382.2, h: 360.0, hook: { x: -0.7, y: -48.1 } },
@@ -55,7 +58,8 @@
     };
     const CAR = CARS[P('car', 'van')] || CARS.van;
     const carImg = Juice.skin(CAR.src, num('hue', 0), num('sat', 1), num('bright', 1));
-    const CAR_Y = -250; // รถยกขึ้นจากขอบล่าง → ของขวัญลากอยู่ด้านหน้า (ใกล้กล้อง) เชือกยาวแบบรถงานแต่ง
+    const CAR_Y = -250;
+    if (CAR.music) setInterval(() => { if (!document.hidden && fx.notes) fx.notes((Math.random() - .5) * CAR.w * 0.5, CAR_Y + CAR.y + 30, 1); }, 1700); // รถยกขึ้นจากขอบล่าง → ของขวัญลากอยู่ด้านหน้า (ใกล้กล้อง) เชือกยาวแบบรถงานแต่ง
     const ROPE = Math.max(40, num('rope', 90)); // ระยะเว้นจากท้ายรถถึงแถวแรก (ยิ่งมาก เชือกยิ่งยาว)
 
     const canvas = document.getElementById('fx'), ctx = canvas.getContext('2d');
@@ -192,6 +196,7 @@
       const g = { u: e.giftImage || '', e: EMOJI[e.giftName] || '🎁', d: unit };
       const n = unit >= 1000 ? 1 : Math.min(count, 25);
       for (let i = 0; i < n; i++) setTimeout(() => { addGift(g, performance.now()); save(); }, i * 140);
+      if (CAR.music && fx.notes) fx.notes(0, CAR_Y + CAR.y + 20, unit >= 100 ? 5 : 2);
       showAlert(e, count);
     }
     Overlay.on('event', (e) => { if (e.type === 'gift' && !e.streaking) onGift(e); });

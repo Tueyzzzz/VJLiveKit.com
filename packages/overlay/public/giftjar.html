@@ -319,6 +319,66 @@
         belly: { cy: -143.6, rx: 46.0, ry: 44.6 }, mouth: { x: -24.8, y: -358.6 },
         image: { src: 'themes/jar-xdragon.webp', x: -233.4, y: -440.0, w: 435.0, h: 440.0 },
       },
+      mmic: { // โหลไมโครโฟน (ภาพ 3D สายนักร้อง) — โน้ตดนตรีลอยเมื่อมีของขวัญ
+        prof: [[-411.2,87.8],[-365.1,104.6],[-303.8,106.2],[-242.4,103.1],[-181.0,97.0]],
+        hw: (y) => profileHW(SHAPES.mmic.prof, y),
+        openY: -411.2, openHW: 55.2, rimHW: 73.6, topY: -440.0, fullY: -371.2, maxHW: 106.2, floor: -181.0, closed: true, fullMode: 'fade', music: true,
+        image: { src: 'themes/jar-mmic.webp', x: -157.4, y: -440.0, w: 314.2, h: 440.0 },
+      },
+      mcoupe: { // แก้วแชมเปญยักษ์ (ภาพ 3D สายนักร้อง) — โน้ตดนตรีลอยเมื่อมีของขวัญ
+        prof: [[-362.6,170.0],[-340.0,157.1],[-323.8,118.3],[-312.5,60.1]],
+        hw: (y) => profileHW(SHAPES.mcoupe.prof, y),
+        openY: -362.6, openHW: 174.5, rimHW: 188.5, topY: -410.5, fullY: -322.6, maxHW: 170.0, floor: -312.5, music: true,
+        image: { src: 'themes/jar-mcoupe-front.webp', back: 'themes/jar-mcoupe-back.webp', x: -195.2, y: -410.5, w: 392.4, h: 410.5 },
+      },
+      mbox: { // กล่องดนตรี (ภาพ 3D สายนักร้อง) — โน้ตดนตรีลอยเมื่อมีของขวัญ
+        prof: [[-252.8,170.0],[-208.0,170.0],[-170.7,162.5]],
+        hw: (y) => profileHW(SHAPES.mbox.prof, y),
+        openY: -252.8, openHW: 175.2, rimHW: 189.2, topY: -438.0, fullY: -212.8, maxHW: 170.0, floor: -170.7, music: true,
+        image: { src: 'themes/jar-mbox-front.webp', back: 'themes/jar-mbox-back.webp', x: -244.2, y: -438.0, w: 489.1, h: 438.0 },
+      },
+      mdrum: { // กลองใส (ภาพ 3D สายนักร้อง) — โน้ตดนตรีลอยเมื่อมีของขวัญ
+        prof: [[-296.7,170.0],[-203.3,170.0],[-78.8,170.0],[-47.6,163.8]],
+        hw: (y) => profileHW(SHAPES.mdrum.prof, y),
+        openY: -296.7, openHW: 174.4, rimHW: 188.3, topY: -350.3, fullY: -256.7, maxHW: 170.0, floor: -47.6, music: true,
+        image: { src: 'themes/jar-mdrum-front.webp', back: 'themes/jar-mdrum-back.webp', x: -199.6, y: -350.3, w: 406.3, h: 350.3 },
+      },
+      mjuke: { // โดมตู้เพลง (ภาพ 3D สายนักร้อง) — โน้ตดนตรีลอยเมื่อมีของขวัญ
+        prof: [[-370.0,72.1],[-324.2,96.6],[-232.5,99.6],[-140.9,99.6],[-79.8,96.6]],
+        hw: (y) => profileHW(SHAPES.mjuke.prof, y),
+        openY: -370.0, openHW: 45.8, rimHW: 61.1, topY: -440.0, fullY: -330.0, maxHW: 99.6, floor: -79.8, closed: true, fullMode: 'fade', music: true,
+        image: { src: 'themes/jar-mjuke.webp', x: -156.4, y: -440.0, w: 312.9, h: 440.0 },
+      },
+      gstage: { // ลูกแก้วเวทีคอนเสิร์ต (ภาพ 3D สายนักร้อง) — ประกายทองโปรย + โน้ตดนตรี
+        hw: (y) => Math.sqrt(Math.max(0, 136.1 ** 2 - (y - (-252.8)) ** 2)),
+        openY: -384.9, openHW: 90, rimHW: 120, topY: -400.0, fullY: -314.0, maxHW: 136.1, closed: true, floor: -173.9, fullMode: 'fade', music: true, flake: '#F3D9A4',
+        dome: { cy: -252.8, r: 136.1 },
+        image: { src: 'themes/globe-gstage-front.webp', back: 'themes/globe-gstage-back.webp', x: -199.3, y: -400.0, w: 403.3, h: 400.0 },
+      },
+      gpiano: { // ลูกแก้วกล่องดนตรีเปียโน (ภาพ 3D สายนักร้อง) — ประกายทองโปรย + โน้ตดนตรี
+        hw: (y) => Math.sqrt(Math.max(0, 136.7 ** 2 - (y - (-256.0)) ** 2)),
+        openY: -388.7, openHW: 90, rimHW: 120, topY: -400.0, fullY: -317.5, maxHW: 136.7, closed: true, floor: -162.6, fullMode: 'fade', music: true, flake: '#F3D9A4',
+        dome: { cy: -256.0, r: 136.7 },
+        image: { src: 'themes/globe-gpiano-front.webp', back: 'themes/globe-gpiano-back.webp', x: -200.3, y: -400.0, w: 403.0, h: 400.0 },
+      },
+      mbird: { // นกร้องเพลงท้องใส (ภาพ 3D สายนักร้อง) — ร้องเพลงงับของขวัญ
+        hw: (y) => 60.1 * Math.sqrt(Math.max(0, 1 - ((y - (-163.0)) / 66.9) ** 2)),
+        openY: -225.9, openHW: 40, rimHW: 60, topY: -440.0, fullY: -193.1, maxHW: 60.1, closed: true, floor: -96.1, fullMode: 'fade', music: true,
+        belly: { cy: -163.0, rx: 60.1, ry: 66.9 }, mouth: { x: 21.9, y: -336.0 },
+        image: { src: 'themes/jar-mbird.webp', x: -242.1, y: -440.0, w: 436.8, h: 440.0 },
+      },
+      mcat: { // แมวนักร้องท้องใส (ภาพ 3D สายนักร้อง) — ร้องเพลงงับของขวัญ
+        hw: (y) => 71.0 * Math.sqrt(Math.max(0, 1 - ((y - (-142.4)) / 62.6) ** 2)),
+        openY: -201.0, openHW: 40, rimHW: 60, topY: -440.0, fullY: -170.6, maxHW: 71.0, closed: true, floor: -79.8, fullMode: 'fade', music: true,
+        belly: { cy: -142.4, rx: 71.0, ry: 62.6 }, mouth: { x: 9.1, y: -299.9 },
+        image: { src: 'themes/jar-mcat.webp', x: -232.3, y: -440.0, w: 498.1, h: 440.0 },
+      },
+      mbear: { // หมีนักร้องท้องใส (ภาพ 3D สายนักร้อง) — ร้องเพลงงับของขวัญ
+        hw: (y) => 71.2 * Math.sqrt(Math.max(0, 1 - ((y - (-135.3)) / 55.7) ** 2)),
+        openY: -187.0, openHW: 40, rimHW: 60, topY: -440.0, fullY: -160.4, maxHW: 71.2, closed: true, floor: -79.6, fullMode: 'fade', music: true,
+        belly: { cy: -135.3, rx: 71.2, ry: 55.7 }, mouth: { x: -9.2, y: -310.4 },
+        image: { src: 'themes/jar-mbear.webp', x: -232.5, y: -440.0, w: 422.4, h: 440.0 },
+      },
       tank: { // ตู้ปลา (ภาพ 3D) — ปากเปิด: ของขวัญตกผ่านราวบน ลงน้ำ (จมช้า มีฟองอากาศ) กองบนพื้นทราย
         hw: () => 210.2,
         openY: -257.9, openHW: 210.2, rimHW: 247.9, topY: -300.0, fullY: -217.9, maxHW: 210.2, floor: -57.3, water: -217.7,
@@ -412,7 +472,7 @@
           ctx.save(); ctx.beginPath(); ctx.arc(0, cy, r - 4, 0, Math.PI * 2); ctx.clip();
           for (const f of domeFlakes) {
             f.y += f.sp * (1 - swirlK * 0.8); f.x += swirlK * 1.2 * Math.sin(t * 0.8 + f.ph); if (f.y > SH.floor - 6) { f.y = cy - r; f.x = (Math.random() - .5) * r * 1.6; }
-            ctx.beginPath(); ctx.arc(f.x + Math.sin(t + f.ph) * 6, f.y, f.r, 0, 6.29); ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fill();
+            ctx.beginPath(); ctx.arc(f.x + Math.sin(t + f.ph) * 6, f.y, f.r, 0, 6.29); ctx.fillStyle = SH.flake || 'rgba(255,255,255,.85)'; ctx.fill();
           }
           ctx.restore();
         }
@@ -584,6 +644,7 @@
       if (SH.mouth && dropFromTop && !out) { b.eat = true; b.x = SH.mouth.x + (Math.random() - .5) * 60; b.y = SH.topY - 50 - Math.random() * 70; b.px = b.x; b.py = b.y - 2; } // หมู: ตกลงปากก่อน
       bodies.push(b);
       if (dropFromTop) fx.sparkle(b.x, b.y, 5, b.d >= 1000 ? '#ffe08a' : '#fff6e8');
+      if (dropFromTop && SH.music && fx.notes) fx.notes(b.x, SH.topY + 20, b.d >= 100 ? 5 : 2); // ธีมนักร้อง: โน้ตดนตรีลอย
       if (dropFromTop && SH.dome && SWIRL) swirlUntil = Math.max(swirlUntil, performance.now() + (b.d >= 1000 ? 4200 : b.d >= 100 ? 3200 : 2400)); // ลูกแก้ว: เขย่าเบา ๆ
       const alive = bodies.filter((k) => !k.dying);
       if (alive.length > MAX) alive[0].dying = true;
@@ -773,6 +834,7 @@
       if (n === 240) acc = 0;
     }
     setInterval(() => { if (document.hidden) tick(); }, 250);
+    if (SH.music) setInterval(() => { if (!document.hidden && fx.notes) fx.notes((Math.random() - .5) * SH.maxHW * 1.4, SH.topY + 30, 1); }, 1800); // โน้ตลอยเบา ๆ ตลอดเวลา
     function frame() {
       tick();
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.imageSmoothingQuality = 'high';

@@ -73,9 +73,16 @@ window.Juice = (function () {
 
   /**
    * ตัวคูณขนาดตามราคาของขวัญ (เหรียญต่อชิ้น) — ใช้ร่วมทุกวิดเจ็ต ของแพงใหญ่ตามราคา
-   * 1 เหรียญ = 1× · 100 ≈ 1.7× · 1,000 ≈ 2.1× · 30,000+ = max (ค่าเริ่ม 2.6×)
+   * 1 เหรียญ = 1× · 500 = 1.9× · 1,000 = 3× · 30,000+ = 4× (เส้นโค้งตามตาราง เทียบแบบ log)
+   * max = เพดานของวิดเจ็ตนั้น (ย่อเส้นโค้งทั้งเส้นให้จบที่ max)
    */
-  const sizeFor = (d, max = 2.6) => 1 + (max - 1) * Math.min(1, Math.log10(Math.max(1, d || 1)) / 4.5);
+  const SIZE_TABLE = [[1, 1], [20, 1.3], [100, 1.55], [500, 1.9], [1000, 3], [5000, 3.5], [30000, 4]];
+  function sizeFor(d, max = 4) {
+    const x = Math.log10(Math.max(1, d || 1)), T = SIZE_TABLE;
+    let t = T[T.length - 1][1];
+    for (let i = 1; i < T.length; i++) { const x1 = Math.log10(T[i][0]); if (x <= x1) { const x0 = Math.log10(T[i - 1][0]); t = T[i - 1][1] + (T[i][1] - T[i - 1][1]) * (x - x0) / (x1 - x0); break; } }
+    return 1 + (t - 1) * (max - 1) / 3;
+  }
   const breathe = (t, amp = 0.012, hz = 0.5) => 1 + Math.sin(t * Math.PI * 2 * hz) * amp;
   const easeOutBack = (k) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(k - 1, 3) + c1 * Math.pow(k - 1, 2); };
 

@@ -28,9 +28,9 @@ const tint = (when: (v: Values) => boolean): FieldDef[] => [
   { key: 'sat', label: 'ความสดของสี', type: 'range', min: 0.3, max: 1.6, step: 0.05, def: 1, unit: '×', when },
   { key: 'bright', label: 'ความสว่าง', type: 'range', min: 0.7, max: 1.3, step: 0.05, def: 1, unit: '×', when },
 ];
-const pos = (): FieldDef[] => [
-  { key: 'x', label: 'เลื่อนแนวนอน', type: 'range', min: -900, max: 900, step: 10, def: 0, unit: 'px' },
-  { key: 'y', label: 'เลื่อนแนวตั้ง', type: 'range', min: -500, max: 500, step: 10, def: 0, unit: 'px' },
+const pos = (defY = 0): FieldDef[] => [
+  { key: 'x', label: 'เลื่อนแนวนอน (แกน X)', type: 'range', min: -900, max: 900, step: 10, def: 0, unit: 'px', hint: 'ลบ = ไปทางซ้าย' },
+  { key: 'y', label: 'เลื่อนแนวตั้ง (แกน Y)', type: 'range', min: -500, max: 500, step: 10, def: defY, unit: 'px', hint: 'ลบ = ยกขึ้น' },
 ];
 
 export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
@@ -40,21 +40,27 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
       { title: 'รูปแบบโหล', fields: [
         { key: 'shape', label: 'ทรงโหล', type: 'select', def: 'heart', options: [
           ['heart', 'โหลหัวใจ', '🫙 โหลและตู้ (ภาพ 3D)'], ['orb', 'โหลกลมห่วงชมพู', '🫙 โหลและตู้ (ภาพ 3D)'], ['tank', 'ตู้ปลา', '🫙 โหลและตู้ (ภาพ 3D)'],
+          ['sundae', 'ถ้วยไอศกรีม', '🫙 โหลและตู้ (ภาพ 3D)'],
+          ['jstar', 'โหลดาว', '🫙 โหลและตู้ (ภาพ 3D)'],
+          ['jbasket', 'โหลตะกร้า', '🫙 โหลและตู้ (ภาพ 3D)'],
+          ['cauldron', 'โหลหม้อแม่มด', '🫙 โหลและตู้ (ภาพ 3D)'],
+          ['catbank', 'กระปุกแมวใส', '🫙 โหลและตู้ (ภาพ 3D)'],
+          ['jsnowman', 'โหลตุ๊กตาหิมะ', '🫙 โหลและตู้ (ภาพ 3D)'],
           ['castle', 'ตู้ปลาปราสาท', '🫙 โหลและตู้ (ภาพ 3D)'],
           ['fishbowl', 'โหลปลาทองขอบคลื่น', '🫙 โหลและตู้ (ภาพ 3D)'],
           ['hearttank', 'ตู้ปลาหัวใจ', '🫙 โหลและตู้ (ภาพ 3D)'],
           ['moon', 'ตู้ปลาพระจันทร์', '🫙 โหลและตู้ (ภาพ 3D)'],
           ['gacha', 'ตู้ปลากาชาปอง', '🫙 โหลและตู้ (ภาพ 3D)'],
           ['shell', 'ตู้ปลาเปลือกหอย', '🫙 โหลและตู้ (ภาพ 3D)'],
-          ['pig', 'หมูท้องใส งับของขวัญ', '🐷 ตัวละคร (ภาพ 3D)'],
+          ['pig', 'หมูท้องใส งับของขวัญ', '🐷 ตัวละคร (ภาพ 3D)'], ['catbelly', 'แมวท้องใส', '🐷 ตัวละคร (ภาพ 3D)'], ['jdino', 'ไดโนเสาร์ท้องใส', '🐷 ตัวละคร (ภาพ 3D)'], ['jbear', 'หมีท้องใส', '🐷 ตัวละคร (ภาพ 3D)'], ['jfrog', 'กบท้องใส', '🐷 ตัวละคร (ภาพ 3D)'],
           ['snow', 'ลูกแก้วหิมะ (ภาพ 3D)', '❄️ ลูกแก้วหิมะ'], ['globe', 'ลูกแก้วหิมะ (วาดด้วยโค้ด)', '❄️ ลูกแก้วหิมะ'],
           ['van', 'รถหัวใจ (ภาพ 3D)', '🚐 ยานพาหนะ'], ['sub', 'เรือดำน้ำ (ภาพ 3D)', '🚐 ยานพาหนะ'], ['car', 'รถพาสเทล (วาดด้วยโค้ด)', '🚐 ยานพาหนะ'],
           ['jar', 'โหลแก้วคอแคบ', '✏️ โหลแบบวาดด้วยโค้ด'], ['bowl', 'โหลกลมปากกว้าง', '✏️ โหลแบบวาดด้วยโค้ด'], ['mason', 'โหลฝาผ้าผูกโบว์', '✏️ โหลแบบวาดด้วยโค้ด'],
         ] },
         { key: 'body', label: 'สีรถ', type: 'color', def: '#bfe9e6', when: (v) => v.shape === 'car' },
-        ...tint((v) => ['heart', 'orb', 'tank', 'pig', 'castle', 'fishbowl', 'hearttank', 'moon', 'gacha', 'shell', 'sub', 'snow', 'van'].includes(String(v.shape))),
+        ...tint((v) => ['heart', 'orb', 'tank', 'pig', 'sundae', 'jstar', 'jbasket', 'cauldron', 'catbank', 'jsnowman', 'catbelly', 'jdino', 'jbear', 'jfrog', 'castle', 'fishbowl', 'hearttank', 'moon', 'gacha', 'shell', 'sub', 'snow', 'van'].includes(String(v.shape))),
         { key: 'cloth', label: 'สีผ้าฝาโหล', type: 'color', def: '#e0452b', when: (v) => v.shape === 'mason' },
-        { key: 'full', label: 'เมื่อโหลเต็ม', type: 'select', when: (v) => !['car', 'globe', 'heart', 'snow', 'van', 'pig', 'sub'].includes(String(v.shape)), def: 'spill', options: [['spill', 'ล้นออกมากองข้างโหล'], ['fade', 'ชิ้นเก่าสุดค่อย ๆ หายไป'], ['reset', 'ฉลอง แล้วเทโหลเริ่มใหม่']] },
+        { key: 'full', label: 'เมื่อโหลเต็ม', type: 'select', when: (v) => !['car', 'globe', 'heart', 'snow', 'van', 'pig', 'sub', 'jstar', 'catbank', 'jsnowman', 'catbelly', 'jdino', 'jbear', 'jfrog'].includes(String(v.shape)), def: 'spill', options: [['spill', 'ล้นออกมากองข้างโหล'], ['fade', 'ชิ้นเก่าสุดค่อย ๆ หายไป'], ['reset', 'ฉลอง แล้วเทโหลเริ่มใหม่']] },
         { key: 'fullText', label: 'ข้อความตอนโหลเต็ม', type: 'text', def: 'โหลเต็มแล้ว! 🎉', when: (v) => v.full === 'reset' },
       ] },
       { title: 'ขนาดและตำแหน่ง', fields: [
@@ -140,7 +146,8 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
       { title: 'ขนาดและตำแหน่ง', fields: [
         size(),
         { key: 'giftScale', label: 'ขนาดของขวัญ', type: 'range', min: 0.5, max: 2.5, step: 0.05, def: 1, unit: '×' },
-        ...pos(),
+        { key: 'pileMax', label: 'ความสูงกองของขวัญสูงสุด', type: 'range', min: 20, max: 90, step: 5, def: 55, unit: '%', hint: 'เทียบความสูงจอ — เกินแล้วชิ้นเก่าสุดค่อย ๆ จางไป' },
+        ...pos(-80),
       ] },
     ],
   },

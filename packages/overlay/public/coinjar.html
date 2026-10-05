@@ -36,7 +36,7 @@
   (function () {
     const P = (k, d) => Overlay.param(k, d);
     const num = (k, d) => { const v = parseFloat(P(k, d)); return Number.isFinite(v) ? v : d; };
-    const GOAL = Math.max(1, num('goal', 10000)), SCALE = num('scale', 1), GIFT_SCALE = num('giftScale', 1), OX = num('x', 0), OY = num('y', 0);
+    const GOAL = Math.max(1, num('goal', 10000)), SCALE = num('scale', 1), GIFT_SCALE = num('giftScale', 1), OX = num('x', 0), OY = num('y', -80); // ค่าเริ่มต้นยกเครื่องขึ้นจากขอบล่าง (พ้นแถบ UI ของ TikTok)
     const SHOW_COUNTER = P('counter', '1') !== '0';
     document.getElementById('counter').style.display = 'none'; // ตัวเลขแสดงบนหน้าเครื่องแทน
 
@@ -99,16 +99,18 @@
     const toScreen = (x, y) => ({ x: TX + x * S, y: TY + y * S });
 
     // ---- ฟิสิกส์ ----
-    const bodies = [], MAX = 600, G = 0.55;
+    const bodies = [], MAX = 1000, G = 0.55; // กองได้ 1,000 ชิ้น (วีเจชอบให้ล้น ๆ)
     const imgCache = {};
     function giftImg(url) { if (!url || !/^https:\/\//.test(url)) return null; let im = imgCache[url]; if (!im) { im = new Image(); im.src = url; imgCache[url] = im; } return im; }
     // ของแพงใหญ่ตามราคา · ไม่เกินความสูงช่องอุโมงค์ (ออกจากเครื่องได้เสมอ)
-    const sizeFor = Juice.sizeFor || ((d, max = 2.6) => 1 + (max - 1) * Math.min(1, Math.log10(Math.max(1, d || 1)) / 4.5)); // กันไฟล์ juice.js เก่าในแคช
-    const radiusFor = (d) => Math.min(19 * GIFT_SCALE * sizeFor(d, 2.1), (MOUTH.y1 - MOUTH.y0) * 0.46, 56);
+    const sizeFor = Juice.sizeFor || ((d, max = 4) => 1 + (max - 1) * Math.min(1, Math.log10(Math.max(1, d || 1)) / 4.5)); // กันไฟล์ juice.js เก่าในแคช
+    // ขนาดเต็มตามราคา (สูงสุด 4×, เพดาน 70) · ตอนออกจากอุโมงค์จำกัดเท่าความสูงช่อง แล้วค่อยพองเต็มขนาดเมื่อพ้นเครื่อง
+    const radiusFor = (d) => Math.min(19 * GIFT_SCALE * sizeFor(d, 4), 70);
+    const tunnelR = () => (MOUTH.y1 - MOUTH.y0) * 0.46;
 
     function addBody(g, mode) {
-      const r = radiusFor(g.d);
-      const b = { r, rot: Math.random() * 6.28, img: giftImg(g.u), e: g.e || '🎁', d: g.d || 1, src: g, life: 1, age: 0 };
+      const rFull = radiusFor(g.d), r = mode === 'restore' ? rFull : Math.min(rFull, tunnelR());
+      const b = { r, rFull, rot: Math.random() * 6.28, img: giftImg(g.u), e: g.e || '🎁', d: g.d || 1, src: g, life: 1, age: 0 };
       if (mode === 'restore') { b.x = BELT_B.x - 50 + Math.random() * 60; b.y = FLOOR - 150 - Math.random() * 500; }
       else if (SKIN) { b.x = MOUTH.x1 - 22 - Math.random() * 12; b.y = MOUTH.y0 + 45 + Math.random() * 12; }
       else { b.x = MOUTH.x0 + 18 + Math.random() * 20; b.y = MOUTH.y0 + 40 + Math.random() * 50; }
@@ -116,7 +118,7 @@
       bodies.push(b);
       if (mode !== 'restore') fx.sparkle(b.x, b.y, 4, b.d >= 1000 ? '#ffe08a' : '#fff6e8');
       const alive = bodies.filter((k) => !k.dying);
-      if (alive.length > MAX) alive[0].dying = true; // กันเครื่องช้าเท่านั้น
+      if (alive.length > MAX) alive.reduce((o, k) => (k.age > o.age ? k : o)).dying = true; // ชิ้นเก่าสุด (ลำดับในอาเรย์ถูกเรียงตาม x) · กันเครื่องช้าเท่านั้น
     }
 
     // ระยะจากจุดถึงเส้นตรง A-B
@@ -151,7 +153,7 @@
       if (inMouthZone && b.x + b.r > MOUTH.x1) b.x = MOUTH.x1 - b.r;
       if (SKIN && inMouthZone && b.x > M.x0 && b.y - b.r < MOUTH.y0) { b.y = MOUTH.y0 + b.r; b.py = b.y; } // เพดานอุโมงค์
       // พื้น + ขอบจอ
-      if (b.y + b.r > FLOOR) { b.y = FLOOR - b.r; b.px = b.x - (b.x - b.px) * 0.5; } // แรงเสียดทานพื้น → กองเป็นภูเขา
+      if (b.y + b.r > FLOOR) { b.y = FLOOR - b.r; b.px = b.x - (b.x - b.px) * 0.35; } // แรงเสียดทานพื้น → กองพูนเป็นภูเขา
       const left = -TX / S, right = (W - TX) / S;
       if (b.x - b.r < left) b.x = left + b.r;
       if (b.x + b.r > right) b.x = right - b.r;
@@ -159,23 +161,39 @@
 
     const fx = new Juice.Particles(), machinePunch = new Juice.Spring(220, 11);
     let nowT = 0;
+    // เพดานกอง: ยอดกองสูงเกิน PILE_MAX ของความสูงจอ → ชิ้นเก่าสุดค่อย ๆ จางไป (ล้นได้ แต่ไม่ท่วมจอ)
+    const PILE_MAX = Math.max(0.2, Math.min(0.9, num('pileMax', 55) / 100));
+    let pileCheck = 0;
+    function trimPile() {
+      const limitY = FLOOR - DH * PILE_MAX;
+      // นับเฉพาะชิ้นที่วางนิ่งแล้ว (ไม่นับชิ้นที่ยังตกอยู่กลางอากาศ)
+      const over = bodies.filter((b) => !b.dying && b.age > 120 && Math.abs(b.y - b.py) < 0.6 && b.y - b.r < limitY).length;
+      if (!over) return;
+      const alive = bodies.filter((b) => !b.dying).sort((p, q) => q.age - p.age);
+      for (let i = 0; i < Math.min(alive.length, Math.min(6, over)); i++) alive[i].dying = true;
+    }
     function step() {
+      if (++pileCheck % 30 === 0) trimPile();
       const VMAX = 14;
       for (const b of bodies) {
+        if (b.r < b.rFull && b.x + b.r < MOUTH.x0 - 10) b.r = Math.min(b.rFull, b.r + 0.7); // พ้นเครื่องแล้ว → พองเต็มขนาดตามราคา
         const vx = Math.max(-VMAX, Math.min(VMAX, (b.x - b.px) * 0.985)), vy = Math.max(-VMAX, Math.min(VMAX, (b.y - b.py) * 0.985));
         b.px = b.x; b.py = b.y; b.x += vx; b.y += vy + G; b.vin = vy + G; b.rot += vx / b.r; b.age++;
       }
       for (let it = 0; it < 4; it++) {
+        // เรียงตามแกน x แล้วเช็กเฉพาะชิ้นที่ช่วง x ซ้อนกัน (เร็วพอสำหรับ 1,000 ชิ้น)
+        bodies.sort((p, q) => p.x - q.x);
         for (let i = 0; i < bodies.length; i++) {
           const a = bodies[i];
           for (let j = i + 1; j < bodies.length; j++) {
             const c = bodies[j], dx = c.x - a.x, dy = c.y - a.y, min = a.r + c.r;
+            if (dx > a.r + 75) break; // ไกลเกินรัศมีใหญ่สุดแล้ว → ชิ้นถัดไปไกลกว่านี้หมด
             if (Math.abs(dx) > min || Math.abs(dy) > min) continue;
             const d2 = dx * dx + dy * dy;
             if (d2 >= min * min || d2 === 0) continue;
             const d = Math.sqrt(d2), push = (min - d) / d * 0.5;
             a.x -= dx * push; a.y -= dy * push; c.x += dx * push; c.y += dy * push;
-            if (dy * dy > dx * dx * 0.5) { const f = 0.08; a.px += (a.x - a.px) * f; c.px += (c.x - c.px) * f; } // ทับกัน → หน่วงให้กองนิ่ง
+            if (dy * dy > dx * dx * 0.5) { const f = 0.14; a.px += (a.x - a.px) * f; c.px += (c.x - c.px) * f; } // ทับกัน → หน่วงให้กองนิ่ง
           }
         }
         for (const b of bodies) constrain(b);

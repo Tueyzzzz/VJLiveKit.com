@@ -369,7 +369,10 @@
     const bodies = [], MAX = 600, G = 0.6; // MAX กันเครื่องช้าเท่านั้น
     const imgCache = {};
     function giftImg(url) { if (!url || !/^https:\/\//.test(url)) return null; let im = imgCache[url]; if (!im) { im = new Image(); im.src = url; imgCache[url] = im; } return im; }
-    const radiusFor = (diamonds) => 14.4 * GIFT_SCALE * (1 + Math.min(1, Math.log10((diamonds || 1) + 1) / 4) * 0.9);
+    // ของแพงใหญ่ตามราคา (Juice.sizeFor) · จำกัดไม่ให้ใหญ่เกินภาชนะเล็ก (เช่น ท้องหมู/เรือดำน้ำ)
+    const sizeFor = Juice.sizeFor || ((d, max = 2.6) => 1 + (max - 1) * Math.min(1, Math.log10(Math.max(1, d || 1)) / 4.5)); // กันไฟล์ juice.js เก่าในแคช
+    // เพดาน: ไม่เกิน 42% ของความกว้างภาชนะ และไม่เกิน 56 หน่วย (≈ 1/6 ความสูงจอ) แม้ตั้งขนาดของขวัญไว้ใหญ่
+    const radiusFor = (diamonds) => Math.min(14.4 * GIFT_SCALE * sizeFor(diamonds, 2.3), Math.max(18, SH.maxHW * 0.42), 56);
 
     function addBody(g, dropFromTop = true) {
       const r = radiusFor(g.d);

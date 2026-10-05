@@ -75,7 +75,7 @@
       const hit = { x: DC.x + Math.cos(a) * R, y: DC.y + Math.sin(a) * R };
       const from = { x: side * (520 + Math.random() * 120), y: DC.y + 40 - Math.random() * 260 };
       const ctrl = { x: (from.x + hit.x) / 2, y: Math.min(from.y, hit.y) - 80 - Math.random() * 120 };
-      const size = 26 + Math.min(1, Math.log10(g.d + 1) / 4) * 34;
+      const size = Math.min(24 * (Juice.sizeFor ? Juice.sizeFor(g.d, 2.5) : 1), 72); // ของแพงใหญ่ตามราคา (เพดาน 72)
       comets.push({ g, img: giftImg(g.u), from, ctrl, hit, t: -delay, dur: 0.9 + Math.random() * 0.5, value, name, size, big: g.d >= 100, rot: 0 });
     }
     function impact(c) {

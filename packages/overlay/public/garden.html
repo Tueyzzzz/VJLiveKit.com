@@ -207,7 +207,7 @@
         const p = slotPoint(f.sl, time), s = pop(f.born, now);
         if (!f.sparkled) { f.sparkled = true; if (f.born > 0) fx.sparkle(p.x + f.jx, p.y + f.jy, 4); }
         ctx.save(); ctx.translate(p.x + f.jx, p.y + f.jy); ctx.scale(s, s); ctx.rotate(Math.sin(time * 1.6 + f.sl.t * 9) * .12 * SWAY);
-        drawGift(f.img, f.g.e, 30 * FLOWER); ctx.restore();
+        drawGift(f.img, f.g.e, Math.min(30 * FLOWER * (Juice.sizeFor ? Juice.sizeFor(f.g.d, 1.6) : 1), 70)); ctx.restore(); // ของแพงดอกใหญ่ขึ้น
       }
       bigs.forEach((b, i) => {
         // ตำแหน่งดอกใหญ่: ยอดกิ่งหลัก (กลางก่อน) → ปลายกิ่งย่อย · เกินแล้ววนซ้ำแบบเหลื่อมนิด ๆ (ไม่ซ้อนเป็นเสา)

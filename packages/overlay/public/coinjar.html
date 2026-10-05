@@ -102,7 +102,9 @@
     const bodies = [], MAX = 600, G = 0.55;
     const imgCache = {};
     function giftImg(url) { if (!url || !/^https:\/\//.test(url)) return null; let im = imgCache[url]; if (!im) { im = new Image(); im.src = url; imgCache[url] = im; } return im; }
-    const radiusFor = (d) => 19 * GIFT_SCALE * (1 + Math.min(1, Math.log10((d || 1) + 1) / 4) * 0.9);
+    // ของแพงใหญ่ตามราคา · ไม่เกินความสูงช่องอุโมงค์ (ออกจากเครื่องได้เสมอ)
+    const sizeFor = Juice.sizeFor || ((d, max = 2.6) => 1 + (max - 1) * Math.min(1, Math.log10(Math.max(1, d || 1)) / 4.5)); // กันไฟล์ juice.js เก่าในแคช
+    const radiusFor = (d) => Math.min(19 * GIFT_SCALE * sizeFor(d, 2.1), (MOUTH.y1 - MOUTH.y0) * 0.46, 56);
 
     function addBody(g, mode) {
       const r = radiusFor(g.d);

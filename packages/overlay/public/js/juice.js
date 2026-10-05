@@ -71,6 +71,11 @@ window.Juice = (function () {
     ctx.beginPath(); ctx.arc(x, y, r * 1.6, 0, Math.PI * 2); ctx.fill(); ctx.restore();
   }
 
+  /**
+   * ตัวคูณขนาดตามราคาของขวัญ (เหรียญต่อชิ้น) — ใช้ร่วมทุกวิดเจ็ต ของแพงใหญ่ตามราคา
+   * 1 เหรียญ = 1× · 100 ≈ 1.7× · 1,000 ≈ 2.1× · 30,000+ = max (ค่าเริ่ม 2.6×)
+   */
+  const sizeFor = (d, max = 2.6) => 1 + (max - 1) * Math.min(1, Math.log10(Math.max(1, d || 1)) / 4.5);
   const breathe = (t, amp = 0.012, hz = 0.5) => 1 + Math.sin(t * Math.PI * 2 * hz) * amp;
   const easeOutBack = (k) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(k - 1, 3) + c1 * Math.pow(k - 1, 2); };
 
@@ -92,5 +97,5 @@ window.Juice = (function () {
     return out;
   }
 
-  return { Spring, Particles, aura, auraColor, breathe, easeOutBack, tinted, skin };
+  return { Spring, Particles, aura, auraColor, sizeFor, breathe, easeOutBack, tinted, skin };
 })();

@@ -74,5 +74,23 @@ window.Juice = (function () {
   const breathe = (t, amp = 0.012, hz = 0.5) => 1 + Math.sin(t * Math.PI * 2 * hz) * amp;
   const easeOutBack = (k) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(k - 1, 3) + c1 * Math.pow(k - 1, 2); };
 
-  return { Spring, Particles, aura, auraColor, breathe, easeOutBack };
+  /**
+   * เปลี่ยนสีภาพ (หมุนเฉดสี/ความสด/ความสว่าง) ครั้งเดียวตอนโหลด → คืน canvas ไว้วาดแทนรูปเดิม
+   * hue: องศา -180..180, sat/bright: 1 = เท่าเดิม · ไม่เปลี่ยนอะไร = คืนรูปเดิม
+   */
+  function tinted(img, hue = 0, sat = 1, bright = 1) {
+    if (!hue && sat === 1 && bright === 1) return img;
+    const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
+    const g = c.getContext('2d'); g.filter = `hue-rotate(${hue}deg) saturate(${sat}) brightness(${bright})`; g.drawImage(img, 0, 0);
+    return c;
+  }
+  /** โหลดรูป + เปลี่ยนสีตามพารามิเตอร์ → { ready(), source } */
+  function skin(src, hue, sat, bright) {
+    const img = new Image(), out = { source: null, ready: () => !!out.source };
+    img.onload = () => { out.source = tinted(img, hue, sat, bright); };
+    img.src = src;
+    return out;
+  }
+
+  return { Spring, Particles, aura, auraColor, breathe, easeOutBack, tinted, skin };
 })();

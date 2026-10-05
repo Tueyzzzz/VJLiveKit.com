@@ -112,7 +112,8 @@
     };
     const SH = SHAPES[P('shape', 'heart')] || SHAPES.heart;
     if (SH.fullMode) FULL_MODE = SH.fullMode;
-    const shapeImg = SH.image ? Object.assign(new Image(), { src: SH.image.src }) : null;
+    // เปลี่ยนสีโหล (ภาพ): ?hue=-180..180 ?sat=1 ?bright=1
+    const shapeImg = SH.image ? Juice.skin(SH.image.src, num('hue', 0), num('sat', 1), num('bright', 1)) : null;
     // เว้นที่ใต้โหลไว้ให้ป้ายผู้ให้สูงสุด
     const BOARD_SPACE = SHOW_BOARD ? (TOP === 1 ? 70 : TOP * 46 + 14) : 0;
     const origin = () => ({ x: W / 2 + OX, y: H - 24 * SCALE - BOARD_SPACE + OY });
@@ -127,7 +128,7 @@
     function drawJarBack() {
       if (SH.image) {
         ctx.beginPath(); ctx.ellipse(0, -2, SH.maxHW * 0.9, 12, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(90,70,140,.25)'; ctx.fill();
-        if (shapeImg.complete && shapeImg.naturalWidth) { ctx.save(); ctx.globalAlpha = 0.35; ctx.drawImage(shapeImg, SH.image.x, SH.image.y, SH.image.w, SH.image.h); ctx.restore(); } // ผนังหลัง
+        if (shapeImg.ready()) { ctx.save(); ctx.globalAlpha = 0.35; ctx.drawImage(shapeImg.source, SH.image.x, SH.image.y, SH.image.w, SH.image.h); ctx.restore(); } // ผนังหลัง
         return;
       }
       if (SH.solid) return drawCar();
@@ -139,7 +140,7 @@
       ctx.beginPath(); ctx.ellipse(0, -6, SH.hw(-6) - 14, 10, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fill();
     }
     function drawJarFront() {
-      if (SH.image) { if (shapeImg.complete && shapeImg.naturalWidth) ctx.drawImage(shapeImg, SH.image.x, SH.image.y, SH.image.w, SH.image.h); return; }
+      if (SH.image) { if (shapeImg.ready()) ctx.drawImage(shapeImg.source, SH.image.x, SH.image.y, SH.image.w, SH.image.h); return; }
       if (SH.solid) return;
       if (SH.globe) return drawGlobeFront();
       jarPath();

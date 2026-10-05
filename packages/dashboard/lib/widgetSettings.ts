@@ -18,6 +18,12 @@ export interface WidgetSettingsDef { sections: Section[]; /** มีข้อม
 const FONTS: [string, string][] = [['Kanit', 'Kanit'], ['Prompt', 'Prompt'], ['Mitr', 'Mitr'], ['Sriracha', 'Sriracha (ลายมือ)'], ['Chakra Petch', 'Chakra Petch']];
 const bg = (def = 35): FieldDef => ({ key: 'bg', label: 'ความทึบพื้นหลัง', type: 'range', min: 0, max: 100, step: 5, def, unit: '%', hint: '0 = ใสทั้งหมด' });
 const size = (def = 1): FieldDef => ({ key: 'scale', label: 'ขนาด', type: 'range', min: 0.4, max: 2, step: 0.05, def, unit: '×' });
+// เปลี่ยนสีภาพ 3D (หมุนเฉดสี): 0 = ชมพูเดิม · -60 ม่วง · -120 ฟ้า · 180 มิ้นต์ · 120 เขียว · 50 พีช/ทอง
+const tint = (when: (v: Values) => boolean): FieldDef[] => [
+  { key: 'hue', label: 'เฉดสี', type: 'range', min: -180, max: 180, step: 5, def: 0, unit: '°', hint: '0 = ชมพูเดิม · -60 ม่วง · -120 ฟ้า · 180 มิ้นต์ · 120 เขียว · 50 พีช/ทอง', when },
+  { key: 'sat', label: 'ความสดของสี', type: 'range', min: 0.3, max: 1.6, step: 0.05, def: 1, unit: '×', when },
+  { key: 'bright', label: 'ความสว่าง', type: 'range', min: 0.7, max: 1.3, step: 0.05, def: 1, unit: '×', when },
+];
 const pos = (): FieldDef[] => [
   { key: 'x', label: 'เลื่อนแนวนอน', type: 'range', min: -900, max: 900, step: 10, def: 0, unit: 'px' },
   { key: 'y', label: 'เลื่อนแนวตั้ง', type: 'range', min: -500, max: 500, step: 10, def: 0, unit: 'px' },
@@ -30,6 +36,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
       { title: 'รูปแบบโหล', fields: [
         { key: 'shape', label: 'ทรงโหล', type: 'select', def: 'heart', options: [['heart', 'โหลหัวใจ (ภาพ 3D)'], ['jar', 'โหลแก้วคอแคบ'], ['bowl', 'โหลกลมปากกว้าง'], ['mason', 'โหลฝาผ้าผูกโบว์'], ['car', 'รถพาสเทล (ของกองบนหลังคา)'], ['globe', 'ลูกแก้วหิมะ']] },
         { key: 'body', label: 'สีรถ', type: 'color', def: '#bfe9e6', when: (v) => v.shape === 'car' },
+        ...tint((v) => v.shape === 'heart'),
         { key: 'cloth', label: 'สีผ้าฝาโหล', type: 'color', def: '#e0452b', when: (v) => v.shape === 'mason' },
         { key: 'full', label: 'เมื่อโหลเต็ม', type: 'select', when: (v) => !['car', 'globe', 'heart'].includes(String(v.shape)), def: 'spill', options: [['spill', 'ล้นออกมากองข้างโหล'], ['fade', 'ชิ้นเก่าสุดค่อย ๆ หายไป'], ['reset', 'ฉลอง แล้วเทโหลเริ่มใหม่']] },
         { key: 'fullText', label: 'ข้อความตอนโหลเต็ม', type: 'text', def: 'โหลเต็มแล้ว! 🎉', when: (v) => v.full === 'reset' },
@@ -83,6 +90,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
     sections: [
       { title: 'เครื่องและเป้าหมาย', fields: [
         { key: 'skin', label: 'หน้าตาเครื่อง', type: 'select', def: 'image', options: [['image', 'ตู้หัวใจชมพู (ภาพ 3D)'], ['classic', 'ตู้พาสเทล (วาดด้วยโค้ด)']] },
+        ...tint((v) => v.skin !== 'classic'),
         { key: 'goal', label: 'เป้าหมาย (เหรียญ)', type: 'number', min: 1, def: 10000, hint: 'แถบบนจอเครื่องจะเต็มเมื่อถึงเป้า' },
         { key: 'counter', label: 'แสดงจำนวนเหรียญบนเครื่อง', type: 'toggle', def: true },
       ] },

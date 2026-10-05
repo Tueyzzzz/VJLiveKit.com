@@ -57,7 +57,8 @@
     // พิกัดจุดสำคัญวัดจากรูปต้นฉบับ (พิกเซล) แล้วแปลงเป็นพิกัดออกแบบ: ช่องอุโมงค์, ผิวสายพาน, จอ, แผงตัวเลข
     const SKIN = Overlay.param('skin', 'image') === 'classic' ? null
       : { src: 'themes/machine-pink.webp', w: 1249, h: 1241, k: 380 / 1249, x0: 860, y0: 327.6, counter: { px: 915, py: 985 } };
-    const skinImg = SKIN ? Object.assign(new Image(), { src: SKIN.src }) : null;
+    // เปลี่ยนสีตู้: ?hue=-180..180 ?sat=1 ?bright=1
+    const skinImg = SKIN ? Juice.skin(SKIN.src, num('hue', 0), num('sat', 1), num('bright', 1)) : null;
     const fromSkin = (px, py) => ({ x: SKIN.x0 + px * SKIN.k, y: SKIN.y0 + py * SKIN.k });
     if (SKIN) {
       Object.assign(M, { x0: 951, x1: 1231, y0: 440, y1: 700, depth: 0 });
@@ -208,21 +209,20 @@
       ctx.beginPath(); ctx.ellipse(bx, FLOOR - 2, W2 * 0.42, 12, 0, 0, 6.2832); ctx.fillStyle = 'rgba(120,90,160,.2)'; ctx.fill(); // เงาพื้น
       const sc = Juice.breathe(nowT, 0.01) + machinePunch.x;
       ctx.translate(bx, FLOOR); ctx.scale(1 - (sc - 1) * 0.5, sc); ctx.translate(-bx, -FLOOR);
-      ctx.drawImage(skinImg, SKIN.x0, SKIN.y0, W2, H2);
-      // สายพานเลื่อน: ร่องสายพานวิ่งทับผิวสายพานในรูป (clip ตามผิว) — เลื่อนไปทางปลายซ้ายตามความเร็วฟิสิกส์
+      ctx.drawImage(skinImg.source, SKIN.x0, SKIN.y0, W2, H2);
+      // สายพานเลื่อน: ตัดผิวสายพานจากรูปแล้วเลื่อนวนทีละช่วงแผ่น (~60px ในรูป) ให้แผ่นสายพานจริงขยับไปทางปลาย
       {
         const b0 = fromSkin(60, 812), b1 = fromSkin(545, 762), f0 = fromSkin(72, 858), f1 = fromSkin(545, 826);
+        const len = Math.hypot(b1.x - b0.x, b1.y - b0.y), dx = (b1.x - b0.x) / len, dy = (b1.y - b0.y) / len;
+        const PERIOD = 60 * SKIN.k, o = ((beltOffset % PERIOD) + PERIOD) % PERIOD, cut = 1 - o / len;
         const lerp = (p, q, t) => ({ x: p.x + (q.x - p.x) * t, y: p.y + (q.y - p.y) * t });
-        ctx.save();
-        ctx.beginPath(); ctx.moveTo(b0.x, b0.y); ctx.lineTo(b1.x, b1.y); ctx.lineTo(f1.x, f1.y); ctx.lineTo(f0.x, f0.y); ctx.closePath(); ctx.clip();
-        const len = Math.hypot(b1.x - b0.x, b1.y - b0.y), gap = 0.075, off = ((beltOffset / len) % gap + gap) % gap;
-        ctx.lineCap = 'round';
-        for (let t = 1 - off; t > -gap; t -= gap) {
-          const p = lerp(b0, b1, t), q = lerp(f0, f1, t);
-          ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.lineWidth = 2.2; ctx.strokeStyle = 'rgba(110,80,170,.35)'; ctx.stroke(); // ร่อง
-          ctx.beginPath(); ctx.moveTo(p.x + 2, p.y); ctx.lineTo(q.x + 2, q.y); ctx.lineWidth = 1.6; ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.stroke(); // สันสะท้อนแสง
-        }
-        ctx.restore();
+        const band = (t0, t1, shift) => { // วาดรูปเลื่อนไป shift ตามแนวสายพาน เฉพาะช่วง t0..t1 ของผิว
+          const a = lerp(b0, b1, t0), b = lerp(b0, b1, t1), c = lerp(f0, f1, t1), d = lerp(f0, f1, t0);
+          ctx.save(); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.lineTo(c.x, c.y); ctx.lineTo(d.x, d.y); ctx.closePath(); ctx.clip();
+          ctx.drawImage(skinImg.source, SKIN.x0 + dx * shift, SKIN.y0 + dy * shift, W2, H2); ctx.restore();
+        };
+        band(0, cut, -o);            // ผิวทั้งหมดเลื่อนไปทางปลาย (ซ้าย)
+        band(cut, 1, PERIOD - o);    // ช่องว่างฝั่งเครื่อง เติมด้วยลายช่วงก่อนหน้า (วนต่อเนื่อง)
       }
       // จอ: รูปของขวัญล่าสุดเรืองแสง (ยังไม่มีของขวัญ = โชว์หัวใจพิกเซลในรูป)
       if (screenImg && screenImg.complete && screenImg.naturalWidth) {
@@ -326,7 +326,7 @@
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H);
       ctx.translate(TX, TY); ctx.scale(S, S);
       nowT = performance.now() / 1000;
-      if (SKIN && skinImg.complete && skinImg.naturalWidth) {
+      if (SKIN && skinImg.ready()) {
         drawMachineImage();
         for (const b of bodies) drawBody(b);
       } else {

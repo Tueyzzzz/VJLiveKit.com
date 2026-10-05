@@ -19,6 +19,8 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   // หลังล็อกอิน → กลับไปหน้าที่เปิดค้างไว้ (เฉพาะหน้าในแดชบอร์ด)
   const nextPath = () => { const n = new URLSearchParams(window.location.search).get('next') ?? ''; return n.startsWith('/dashboard/') ? n : '/dashboard/'; };
   useEffect(() => { if (user) router.replace(nextPath()); }, [user, router]);
+  // ลิงก์แนะนำ ?ref=... → จำไว้ (เผื่อเพื่อนกดไปหน้าอื่นก่อนสมัคร)
+  useEffect(() => { const r = new URLSearchParams(window.location.search).get('ref'); if (r) try { localStorage.setItem('vjl_ref', r); } catch { /* ignore */ } }, []);
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -31,6 +33,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
         password: String(form.get('password') ?? ''),
         ...(mode === 'register' && form.get('displayName') ? { displayName: String(form.get('displayName')) } : {}),
         ...(mode === 'login' ? { remember } : {}),
+        ...(mode === 'register' ? (() => { try { const r = localStorage.getItem('vjl_ref'); return r ? { ref: r } : {}; } catch { return {}; } })() : {}),
       };
       const res = await api<{ token: string }>(`/api/auth/${mode}`, { method: 'POST', body });
       await login(res.token, mode === 'login' ? remember : true);

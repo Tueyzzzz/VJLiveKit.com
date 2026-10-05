@@ -4,6 +4,7 @@ import { prisma } from '../db/prisma.js';
 import { hashPassword, verifyPassword, signSession } from './service.js';
 import { requireUser, getUser } from './middleware.js';
 import { getEntitlements } from '../plans/index.js';
+import { recordReferral, checkReferralReward } from '../referrals/routes.js';
 import { getHub } from '../realtime/hub.js';
 
 /** ชื่อ TikTok: ตัวอักษร/ตัวเลข/จุด/ขีดล่าง (ตัด @ นำหน้าให้) */
@@ -39,6 +40,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     const user = await prisma.user.create({
       data: { email: email.toLowerCase(), passwordHash: await hashPassword(password), displayName },
     });
+    await recordReferral(user.id, (req.body as { ref?: unknown } | undefined)?.ref); // สมัครผ่านลิงก์แนะนำ
     const token = signSession({ userId: user.id, email: user.email, role: user.role });
     return reply.code(201).send({ token, user: { id: user.id, email: user.email, displayName: user.displayName } });
   });
@@ -98,6 +100,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     // เปลี่ยนชื่อ TikTok -> ล้างแคชกฎของทั้งชื่อเก่าและใหม่
     if (before?.tiktokUsername) getHub()?.invalidateRules(before.tiktokUsername);
     if (user.tiktokUsername) getHub()?.invalidateRules(user.tiktokUsername);
+    if (user.tiktokUsername && !before?.tiktokUsername) void checkReferralReward(claims.userId); // ตั้งชื่อ TikTok ครั้งแรก → นับเป็นเพื่อนที่แนะนำสำเร็จ
     return { user };
   });
 }

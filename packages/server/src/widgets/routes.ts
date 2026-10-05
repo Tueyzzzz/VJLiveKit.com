@@ -58,7 +58,7 @@ export async function widgetRoutes(app: FastifyInstance): Promise<void> {
 
   // ตั้งค่าทุก widget ของผู้ใช้ในครั้งเดียว (การ์ดตัวอย่างในหน้าวิดเจ็ตแสดงตามที่บันทึกไว้)
   app.get('/api/widgets/configs', { preHandler: requireUser }, async (req) => {
-    const rows = await prisma.widgetConfig.findMany({ where: { userId: getUser(req)!.userId }, select: { type: true, settings: true } });
+    const rows = await prisma.widgetConfig.findMany({ where: { userId: getUser(req)!.userId, NOT: { type: { startsWith: '_' } } }, select: { type: true, settings: true } });
     return { configs: Object.fromEntries(rows.map((r) => [r.type, r.settings ?? {}])) };
   });
 

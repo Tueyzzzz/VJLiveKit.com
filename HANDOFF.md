@@ -88,21 +88,39 @@ npm run dev                     # http://localhost:8080
 ```
 Deploy production: ดู **DEPLOY.md**
 
-## 8) ยืนยันคุณภาพล่าสุด
+## 8) ยืนยันคุณภาพล่าสุด (5 ต.ค. 2026: typecheck ✅ build ✅ CI+Docker smoke test ✅ image อยู่บน GHCR ✅ — ยังไม่ deploy)
 typecheck ✅ · build ✅ · overlay ทั้ง 6 + favicon เสิร์ฟ 200 ✅ · CI เขียว ✅
 
 ---
 
 ## 9) 📋 Prompt สำหรับวางในแชทใหม่ (คัดลอกไปใช้ได้เลย)
 
-> ช่วยทำงานต่อกับโปรเจกต์ **VJLiveKit** — repo `Tueyzzzz/VJLiveKit.com` (branch main)
-> มันคือแพลตฟอร์มวิดเจ็ต TikTok LIVE สไตล์ TikFinity (SaaS: สมาชิก+subscription)
-> Stack: TypeScript, Fastify, Socket.IO, tiktok-live-connector, PostgreSQL+Prisma, Redis, Docker+Caddy, GitHub Actions. Overlay = vanilla JS + Canvas. Monorepo (packages/server, packages/overlay).
-> อ่าน `HANDOFF.md` และ `DEPLOY.md` ใน repo เพื่อเข้าใจสถานะทั้งหมด
-> ทำเสร็จแล้ว: server core, auth, Actions&Events engine, overlay 6 ตัว, billing abstraction, rebrand, deploy files, CI/CD (เขียว)
-> Infra: Vultr vhf-1c-1gb Tokyo IP 45.77.26.217, โดเมน vjlivekit.com (Dynadot)
-> งานถัดไปที่อยากทำ: **[ใส่สิ่งที่อยากทำ เช่น Dashboard / Stripe / deploy ครั้งแรก]**
-> หมายเหตุ: push ขึ้น repo ได้ (GitHub App ติดตั้งแล้ว) แต่ SSH เข้าเครื่อง Vultr ไม่ได้ (รันเอง/ผ่าน CI-CD)
+> ทำงานต่อโปรเจกต์ **VJLiveKit** — repo `Tueyzzzz/VJLiveKit.com` branch `main` (ถ้าอยู่ในเครื่อง: `git pull origin main` ก่อน)
+> แพลตฟอร์มวิดเจ็ต TikTok LIVE สไตล์ TikFinity แบบ SaaS (สมาชิก Free/Pro + Stripe) โดเมน vjlivekit.com
+> **อ่าน `HANDOFF.md` และ `DEPLOY.md` ให้จบก่อนลงมือ** แล้วสรุปสถานะให้ฉันฟังสั้น ๆ
+>
+> สถานะล่าสุด (5 ต.ค. 2026): โค้ดครบแล้วและอยู่ใน main — server, Dashboard (Next.js static export เสิร์ฟจาก Fastify), Stripe จริง + gating ตามแพลน, overlay 8 ตัว, migration แรก
+> CI เขียวและ push image ขึ้น `ghcr.io/tueyzzzz/vjlivekit.com:latest` แล้ว แต่ **ยังไม่เคย deploy ขึ้นเครื่องจริง**
+>
+> Infra: Vultr vhf-1c-1gb Tokyo IP `45.77.26.217` (Ubuntu, ยังเปล่า), DNS ที่ Dynadot
+> Deploy ทำผ่าน GitHub Actions `deploy.yml` ซึ่ง SSH เข้าไปรัน `deploy/bootstrap.sh` (ลง swap/Docker/ufw, สร้าง `.env` สุ่มรหัสเอง, pull image, up) — **รันซ้ำได้ปลอดภัย**
+>
+> งานที่ต้องทำต่อ ตามลำดับ:
+> 1. เช็กว่าตั้ง GitHub Secrets `VULTR_HOST`, `VULTR_PASSWORD` (หรือ `VULTR_SSH_KEY`) และ Variable `DEPLOY_ENABLED=true` แล้วหรือยัง ถ้ายัง บอกฉันว่าต้องกดตรงไหน
+> 2. สั่ง deploy (Actions → Deploy → Run workflow) แล้วตามดูจนเสร็จ ถ้าล้มให้อ่าน log แล้วแก้
+>    - ถ้าเครื่องนี้ SSH เข้า `root@45.77.26.217` ได้ จะรัน bootstrap เองก็ได้: คัดลอก `docker-compose.prod.yml`, `deploy/Caddyfile`, `deploy/bootstrap.sh` ไปที่ `/opt/vjlivekit` แล้วรัน
+>      `APP_IMAGE=ghcr.io/tueyzzzz/vjlivekit.com:latest DOMAIN=vjlivekit.com bash /opt/vjlivekit/deploy/bootstrap.sh`
+>      (image เป็น private ต้อง `docker login ghcr.io` ด้วย GitHub token ที่มีสิทธิ์ `read:packages` ก่อน หรือตั้ง package เป็น public)
+> 3. เช็กว่า DNS ของ `vjlivekit.com` และ `www` ชี้ `45.77.26.217` แล้วหรือยัง (`nslookup vjlivekit.com`) ถ้ายัง บอกขั้นตอนที่ Dynadot ให้ฉันทำ
+> 4. ยืนยันว่า `https://vjlivekit.com/healthz` ได้ `{"ok":true}` แล้วลองสมัคร → ตั้งชื่อ TikTok → สร้างลิงก์ overlay
+> 5. ตั้ง Stripe ตามหัวข้อ "เปิดรับเงินด้วย Stripe" ใน DEPLOY.md (เมื่อฉันพร้อม)
+>
+> ข้อควรระวัง:
+> - **รหัส root ของ Vultr หลุดในแชทไปแล้ว** ต้องเปลี่ยนก่อนใส่ใน Secrets ห้ามพิมพ์รหัสลงในแชท ไฟล์ หรือ commit
+> - push เข้า `main` = deploy อัตโนมัติ (เมื่อ `DEPLOY_ENABLED=true`) ทดสอบให้ผ่านก่อน: `npm run typecheck && npm run build`
+> - ห้ามแก้ไฟล์ใน `packages/server/prisma/migrations/` เอง ให้ใช้ `prisma migrate dev`
+> - repo `APWEBV2` เป็นคนละโปรเจกต์ (.NET) ห้ามเอาโค้ด VJLiveKit ไปลงที่นั่น
+> - ตอบเป็นภาษาไทย
 
 ---
 
@@ -171,5 +189,6 @@ SIGN_API_KEY  BILLING_PROVIDER  STRIPE_*  OMISE_*  PUBLIC_BASE_URL  DOMAIN
 
 ## 16) หมายเหตุสภาพแวดล้อม/ข้อจำกัด
 - GitHub App ติดตั้งแล้ว → push ขึ้น repo ได้
-- Claude Code (คลาวด์) **SSH เข้าเครื่อง Vultr ไม่ได้** → deploy ด้วยตนเอง หรือผ่าน CI/CD (deploy.yml)
+- Claude Code แบบ **Cloud** (ไอคอนเมฆหน้าชื่อแชท) SSH เข้า Vultr ไม่ได้ (พอร์ต 22 ถูกบล็อก) และตั้ง GitHub Secrets / DNS ให้ไม่ได้ → deploy ผ่าน CI/CD (deploy.yml)
+- ถ้าอยากให้ Claude ทำบนเครื่องเตย: เปิด PowerShell ในโฟลเดอร์โปรเจกต์แล้วพิมพ์ `claude` (โหมด Local) — เครื่องนั้นอาจ SSH เข้า Vultr ได้เอง
 - git history: branch `main` (คอมมิตไล่: scaffold → overlays → rebrand/actions → deploy/CICD → handoff)

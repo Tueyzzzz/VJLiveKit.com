@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { LayoutDashboard, LayoutTemplate, Zap, CreditCard, LogOut, Gift, Shield } from 'lucide-react';
+import { LayoutDashboard, LayoutTemplate, Zap, CreditCard, LogOut, Gift, Shield, BookOpen } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { Badge, Spinner, cx } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
@@ -15,6 +15,7 @@ const NAV = [
   { href: '/dashboard/actions/', label: 'Actions & Events', icon: Zap },
   { href: '/dashboard/billing/', label: 'แพลน & การชำระเงิน', icon: CreditCard },
   { href: '/dashboard/referral/', label: 'แนะนำเพื่อน รับฟรี', icon: Gift },
+  { href: '/dashboard/guide/', label: 'คู่มือการใช้งาน', icon: BookOpen },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

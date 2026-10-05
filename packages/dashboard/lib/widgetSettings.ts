@@ -157,6 +157,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
           ['gbunnies', 'ลูกแก้วกระต่ายหัวใจ', '❄️ ลูกแก้วหิมะ (ภาพ 3D)', 'gl-bunnies'],
           ['gsakura', 'ลูกแก้วซากุระ', '❄️ ลูกแก้วหิมะ (ภาพ 3D)', 'gl-sakura'],
         ] },
+        { key: 'swirl', label: 'ของขวัญหมุนวนเมื่อมีของใหม่', type: 'toggle', def: true, hint: 'เหมือนเขย่าลูกแก้วหิมะเบา ๆ แล้วค่อย ๆ ตกกลับมากอง' },
         ...tint(() => true),
         { key: 'fullText', label: 'ข้อความตอนโหลเต็ม', type: 'text', def: 'โหลเต็มแล้ว! 🎉', when: (v) => v.full === 'reset' },
       ] },

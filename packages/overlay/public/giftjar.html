@@ -309,7 +309,7 @@
           const { cy, r } = SH.dome, t = performance.now() / 1000;
           ctx.save(); ctx.beginPath(); ctx.arc(0, cy, r - 4, 0, Math.PI * 2); ctx.clip();
           for (const f of domeFlakes) {
-            f.y += f.sp; if (f.y > SH.floor - 6) { f.y = cy - r; f.x = (Math.random() - .5) * r * 1.6; }
+            f.y += f.sp * (1 - swirlK * 0.8); f.x += swirlK * 1.2 * Math.sin(t * 0.8 + f.ph); if (f.y > SH.floor - 6) { f.y = cy - r; f.x = (Math.random() - .5) * r * 1.6; }
             ctx.beginPath(); ctx.arc(f.x + Math.sin(t + f.ph) * 6, f.y, f.r, 0, 6.29); ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fill();
           }
           ctx.restore();
@@ -482,6 +482,7 @@
       if (SH.mouth && dropFromTop && !out) { b.eat = true; b.x = SH.mouth.x + (Math.random() - .5) * 60; b.y = SH.topY - 50 - Math.random() * 70; b.px = b.x; b.py = b.y - 2; } // หมู: ตกลงปากก่อน
       bodies.push(b);
       if (dropFromTop) fx.sparkle(b.x, b.y, 5, b.d >= 1000 ? '#ffe08a' : '#fff6e8');
+      if (dropFromTop && SH.dome && SWIRL) swirlUntil = Math.max(swirlUntil, performance.now() + (b.d >= 1000 ? 4200 : b.d >= 100 ? 3200 : 2400)); // ลูกแก้ว: เขย่าเบา ๆ
       const alive = bodies.filter((k) => !k.dying);
       if (alive.length > MAX) alive[0].dying = true;
     }
@@ -533,10 +534,17 @@
     }
     // ---- juice: สปริงโหลสั่น + อนุภาค ----
     const fx = new Juice.Particles(), jarWobble = new Juice.Spring(140, 7), gulp = new Juice.Spring(260, 10);
+    const SWIRL = P('swirl', '1') !== '0'; let swirlUntil = 0, swirlK = 0; // ลูกแก้วหิมะ: ของขวัญหมุนวนเมื่อมีของใหม่
     function step() {
+      { const left = swirlUntil - performance.now(); swirlK = left > 0 ? Math.min(1, left / 1500) : 0; } // อ่อนลงช่วงท้าย → ค่อย ๆ ตกกลับมากอง
       const VMAX = 14;
       for (const b of bodies) {
-        const wet = SH.water != null && !b.out && b.y > SH.water, damp = wet ? 0.9 : 0.985, g = wet ? G * 0.45 : G; // ในน้ำ: จมช้า
+        let wet = SH.water != null && !b.out && b.y > SH.water, damp = wet ? 0.9 : 0.985, g = wet ? G * 0.45 : G; // ในน้ำ: จมช้า
+        if (swirlK > 0 && !b.out && !b.eat) { // ลูกแก้ว: หมุนวนเบา ๆ รอบกลางโดม
+          const dx = b.x, dy = b.y - SH.dome.cy, d = Math.hypot(dx, dy) || 1;
+          b.px += (dy / d) * 0.09 * swirlK; b.py -= (dx / d) * 0.09 * swirlK; // ความเร็วตามแนวสัมผัส (ทวนเข็ม)
+          g *= 1 - 0.75 * swirlK; damp = 0.975;
+        }
         const vx = Math.max(-VMAX, Math.min(VMAX, (b.x - b.px) * damp)), vy = Math.max(-VMAX, Math.min(VMAX, (b.y - b.py) * damp));
         if (SH.water != null && !b.out && b.py <= SH.water && b.y > SH.water && vy > 2) { fx.sparkle(b.x, SH.water, 5, '#d8f1ff'); fx.dust(b.x, SH.water, 4); } // ตูม!
         if (wet && Math.random() < 0.012) fx.push({ kind: 'dust', x: b.x + (Math.random() - .5) * b.r, y: b.y - b.r, vx: 0, vy: -1.2, g: -0.02, life: 1, decay: 0.012, size: 2 + Math.random() * 3, color: 'rgba(235,248,255,.8)' }); // ฟองอากาศ

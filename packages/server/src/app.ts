@@ -10,9 +10,8 @@ import { billingRoutes } from './billing/routes.js';
 import { actionRoutes } from './actions/routes.js';
 import { ttsRoutes } from './tts/routes.js';
 import { config } from './config/index.js';
+import { OVERLAY_DIR } from './overlay-version.js';
 
-/** ที่อยู่โฟลเดอร์ overlay (เสิร์ฟไฟล์วิดเจ็ตให้ OBS) */
-const OVERLAY_DIR = process.env.OVERLAY_DIR ?? path.resolve(process.cwd(), '../overlay/public');
 /** ที่อยู่ไฟล์ Dashboard (Next.js static export) */
 const DASHBOARD_DIR = config.dashboardDir ?? path.resolve(process.cwd(), '../dashboard/out');
 
@@ -31,7 +30,11 @@ export async function buildApp(): Promise<FastifyInstance> {
   });
 
   // เสิร์ฟหน้า overlay (เช่น /overlay/coinjar.html)
-  await app.register(fastifyStatic, { root: OVERLAY_DIR, prefix: '/overlay/' });
+  // ไม่ให้ OBS / TikTok Live Studio จำไฟล์เก่า (โหลดใหม่ = ได้เวอร์ชันล่าสุดเสมอ)
+  await app.register(fastifyStatic, {
+    root: OVERLAY_DIR, prefix: '/overlay/', cacheControl: false,
+    setHeaders: (res) => { res.setHeader('cache-control', 'no-cache, no-store, must-revalidate'); },
+  });
 
   // เสิร์ฟ Dashboard ที่ / (ถ้า build แล้ว)
   const hasDashboard = fs.existsSync(path.join(DASHBOARD_DIR, 'index.html'));

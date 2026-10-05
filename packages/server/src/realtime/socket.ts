@@ -3,6 +3,7 @@ import type { Server as HttpServer } from 'node:http';
 import { RoomHub, type RulesProvider } from './hub.js';
 import { verifyOverlayToken } from '../widgets/tokens.js';
 import { config } from '../config/index.js';
+import { OVERLAY_VERSION } from '../overlay-version.js';
 import { prisma } from '../db/prisma.js';
 import { getEntitlements, isWidgetType } from '../plans/index.js';
 import type { ActionRule, RuleTrigger, RuleAction } from '../actions/engine.js';
@@ -50,6 +51,7 @@ export function setupRealtime(httpServer: HttpServer): RoomHub {
 
   io.on('connection', (socket) => {
     const { token, username, widget } = socket.handshake.query as { token?: string; username?: string; widget?: string };
+    socket.emit('version', OVERLAY_VERSION); // overlay เวอร์ชันเก่า → โหลดตัวเองใหม่
 
     void (async () => {
       let viewer: Viewer | { error: string };

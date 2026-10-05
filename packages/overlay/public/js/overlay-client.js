@@ -52,6 +52,13 @@ window.Overlay = (function () {
       else if (s && s.type === 'connected' && badge) badge.style.display = 'none';
     });
     socket.on('state', (s) => { if (s && s.connected && badge) badge.style.display = 'none'; });
+    // อัปเดตตัวเองอัตโนมัติ: เวอร์ชันแรกที่ได้ = ของหน้านี้, หลัง deploy เซิร์ฟเวอร์ส่งเวอร์ชันใหม่มา → โหลดหน้าใหม่
+    let version = null;
+    socket.on('version', (v) => {
+      if (!v) return;
+      if (version === null) { version = v; return; }
+      if (v !== version) setTimeout(() => location.reload(), 1500 + Math.random() * 3000);
+    });
     socket.on('tiktok-event', (e) => fire('event', e));
     socket.on('stats', (s) => fire('stats', s));
     socket.on('status', (s) => fire('status', s));

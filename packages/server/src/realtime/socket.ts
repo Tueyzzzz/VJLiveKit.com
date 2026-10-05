@@ -31,7 +31,7 @@ async function resolveViewer(token: string | undefined, username: string | undef
     if (!user?.tiktokUsername) return { error: 'ยังไม่ได้ตั้งชื่อ TikTok ใน Dashboard' };
     if (widget && isWidgetType(widget)) {
       const ent = await getEntitlements(payload.userId);
-      if (!ent.widgets.includes(widget)) return { error: `วิดเจ็ต ${widget} ใช้ได้เฉพาะแพลน Pro` };
+      if (!ent.widgets.includes(widget)) return { error: 'หมดช่วงทดลองฟรี/สิทธิ์ Pro — ต่ออายุที่ vjlivekit.com แล้วลิงก์นี้จะกลับมาใช้ได้เอง' };
     }
     // ใช้ชื่อ TikTok ปัจจุบันของผู้ใช้ (เปลี่ยนชื่อแล้วลิงก์เดิมยังใช้ได้)
     return { username: user.tiktokUsername, ownerId: payload.userId };

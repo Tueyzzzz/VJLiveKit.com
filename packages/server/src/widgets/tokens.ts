@@ -13,13 +13,15 @@ export interface OverlayTokenPayload {
  */
 export function signOverlayToken(payload: OverlayTokenPayload, issuedAt: Date): string {
   const iat = Math.floor(issuedAt.getTime() / 1000);
-  return jwt.sign({ tid: payload.tid, userId: payload.userId, iat }, config.jwtSecret, { expiresIn: `${config.overlayTokenTtlDays}d` });
+  // ลิงก์ไม่หมดอายุเอง — ใช้ได้ตามสิทธิ์ของบัญชี (ช่วงทดลอง/Pro) ซึ่งตรวจทุกครั้งที่วิดเจ็ตเชื่อมต่อ · เพิกถอนได้ที่ Dashboard
+  return jwt.sign({ tid: payload.tid, userId: payload.userId, iat }, config.jwtSecret);
 }
 
 /** ตรวจสอบ token — คืน payload ถ้าถูกต้อง, null ถ้าไม่ */
 export function verifyOverlayToken(token: string): OverlayTokenPayload | null {
   try {
-    return jwt.verify(token, config.jwtSecret) as OverlayTokenPayload;
+    // ไม่สนวันหมดอายุเดิม (ลิงก์รุ่นแรกมีอายุ 365 วัน) — ให้สิทธิ์ของบัญชีเป็นตัวตัดสินแทน
+    return jwt.verify(token, config.jwtSecret, { ignoreExpiration: true }) as OverlayTokenPayload;
   } catch {
     return null;
   }

@@ -72,6 +72,7 @@ window.Overlay = (function () {
       badge.textContent = 'VJLiveKit: ' + text;
       badge.style.display = 'block';
     };
+    socket.on('disconnect', (reason) => { if (reason === 'io server disconnect') setTimeout(() => socket.connect(), 60_000); }); // ต่ออายุแล้วกลับมาเอง
     socket.on('status', (s) => {
       if (s && (s.type === 'error' || s.type === 'offline')) showBadge(s.message);
       else if (s && s.type === 'connected' && badge) badge.style.display = 'none';

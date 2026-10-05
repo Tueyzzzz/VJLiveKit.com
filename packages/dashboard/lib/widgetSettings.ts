@@ -89,6 +89,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
           ['shell', 'ตู้ปลาเปลือกหอย', '🐠 ตู้ปลา (ภาพ 3D)', 'gj-shell'],
           ['sub', 'เรือดำน้ำ (ภาพ 3D)', '🐠 ตู้ปลา (ภาพ 3D)', 'gj-sub'],
         ] },
+        { key: 'waves', label: 'ของขวัญโยกตามคลื่นใต้น้ำ', type: 'toggle', def: true },
         ...tint(() => true),
         { key: 'full', label: 'เมื่อโหลเต็ม', type: 'select', when: (v) => !['car', 'globe', 'heart', 'snow', 'van', 'pig', 'sub', 'jstar', 'catbank', 'jsnowman', 'catbelly', 'jdino', 'jbear', 'jfrog'].includes(String(v.shape)), def: 'spill', options: [['spill', 'ล้นออกมากองข้างโหล'], ['fade', 'ชิ้นเก่าสุดค่อย ๆ หายไป'], ['reset', 'ฉลอง แล้วเทโหลเริ่มใหม่']] },
         { key: 'fullText', label: 'ข้อความตอนโหลเต็ม', type: 'text', def: 'โหลเต็มแล้ว! 🎉', when: (v) => v.full === 'reset' },

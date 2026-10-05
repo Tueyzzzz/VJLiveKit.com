@@ -135,15 +135,77 @@
     const imgCache = {};
     function giftImg(url) { if (!url || !/^https:\/\//.test(url)) return null; let im = imgCache[url]; if (!im) { im = new Image(); im.src = url; imgCache[url] = im; } return im; }
     const PETALS = ['#ffb5c8', '#c9b8ff', '#a8e6cf', '#ffd3a5', '#a9d8ff', '#fff1a8'];
+    // ผิวพื้น/เนินของภาพแต่ละแบบ [x, y บนสุด] — ของขวัญที่เกินจุดบนต้นจะร่วงลงมากองบนเนินแล้วกลิ้งลงพื้น
+    const GROUND_FIELDS = {
+      tree: [[-125.8,-94.1],[-119.8,-97.1],[-113.8,-66.3],[-107.8,-66.3],[-101.8,-66.7],[-95.8,-71.0],[-89.8,-77.4],[-83.8,-81.3],[-77.9,-82.1],[-71.9,-63.7],[-65.9,-62.9],[-59.9,-63.3],[-53.9,-63.7],[-47.9,-65.0],[-41.9,-69.7],[-35.9,-69.7],[-29.9,-75.3],[-24.0,-81.3],[-18.0,-80.8],[-12.0,-71.9],[-6.0,-86.4],[0.0,-90.7],[6.0,-94.5],[12.0,-81.7],[18.0,-66.7],[24.0,-66.7],[30.0,-67.2],[35.9,-68.4],[41.9,-80.0],[47.9,-87.3],[53.9,-89.8],[59.9,-81.3],[65.9,-73.1],[71.9,-72.3],[77.9,-72.7],[83.9,-67.2],[89.8,-69.3],[95.8,-62.9],[101.8,-61.6],[107.8,-60.3],[113.8,-59.9],[119.8,-60.3],[125.8,-86.8],[131.8,-81.7],[137.8,-98.4],[143.8,-95.4],[149.7,-92.0]],
+      sakura: [[-97.4,-98.3],[-86.1,-131.1],[-69.0,-78.7],[-63.3,-79.5],[-57.7,-81.3],[-52.0,-83.5],[-46.3,-92.2],[-40.6,-96.1],[-34.9,-97.0],[-29.2,-96.1],[-23.6,-93.5],[-17.9,-86.1],[-12.2,-75.2],[-6.5,-71.7],[-0.8,-69.9],[4.9,-69.0],[10.5,-67.7],[16.2,-62.5],[21.9,-61.6],[27.6,-62.9],[33.3,-64.2],[39.0,-66.9],[44.6,-98.8],[50.3,-102.7],[56.0,-100.5],[61.7,-94.8],[67.4,-92.2],[73.1,-90.0],[78.7,-84.8],[84.4,-80.0],[90.1,-76.9],[95.8,-75.6],[101.5,-73.4],[107.2,-73.0],[112.8,-117.1],[118.5,-115.8]],
+      night: [[-66.7,-60.1],[-61.0,-60.1],[-55.4,-60.1],[-49.8,-60.1],[-44.2,-60.1],[-38.6,-60.1],[-33.0,-60.1],[-27.4,-60.1],[-21.8,-60.1],[-16.2,-60.1],[-10.6,-60.1],[-5.0,-60.1],[0.6,-60.1],[6.2,-60.1],[11.8,-60.1],[17.4,-60.1],[23.0,-60.1],[28.6,-60.1],[34.2,-60.1],[39.8,-60.1],[45.4,-60.1],[51.0,-60.1],[56.6,-60.1],[62.3,-60.1],[67.9,-60.1],[73.5,-60.1]],
+      heart: [[-98.9,-113.9],[-93.2,-115.7],[-87.6,-100.0],[-81.9,-100.9],[-76.3,-116.5],[-70.6,-118.7],[-65.0,-66.5],[-59.3,-95.2],[-53.7,-97.8],[-48.0,-97.0],[-42.4,-98.3],[-36.7,-90.0],[-31.1,-80.9],[-25.4,-73.1],[-19.8,-88.7],[-14.1,-89.6],[-8.5,-86.1],[-2.8,-89.6],[2.8,-94.4],[8.5,-79.2],[14.1,-77.9],[19.8,-69.2],[25.5,-67.0],[31.1,-65.2],[36.8,-63.9],[42.4,-67.0],[48.1,-67.9],[53.7,-65.2],[59.4,-95.7],[65.0,-95.2],[70.7,-93.5],[76.3,-95.7],[82.0,-123.5],[87.6,-124.8],[93.3,-73.5],[98.9,-73.1]],
+      bonsai: [[-28.5,-76.1],[-22.8,-73.9],[-17.2,-70.5],[-11.5,-65.7],[-5.9,-59.6],[-0.2,-18.7],[5.4,-62.6],[11.1,-24.3],[16.8,-27.8],[22.4,-31.7],[28.1,-73.1],[33.7,-41.7],[39.4,-68.3]],
+      palm: [[-131.3,-149.2],[-125.7,-155.3],[-120.1,-121.2],[-97.7,-108.7],[-92.1,-134.6],[-86.5,-106.1],[-80.9,-98.3],[-75.3,-99.6],[-69.7,-104.0],[-64.0,-106.5],[-58.4,-135.0],[-52.8,-135.4],[-47.2,-135.9],[-41.6,-133.3],[-36.0,-122.5],[-30.4,-124.7],[-24.8,-124.7],[-19.2,-122.1],[-13.6,-78.1],[-8.0,-118.2],[-2.4,-116.9],[3.2,-116.5],[8.8,-116.5],[14.4,-117.3],[20.1,-118.6],[25.7,-105.2],[31.3,-122.5],[36.9,-124.7],[42.5,-125.5],[48.1,-119.5],[53.7,-116.9],[87.3,-163.9],[92.9,-165.6],[98.5,-86.3],[104.1,-166.0],[109.8,-145.8],[115.4,-141.5],[121.0,-136.7]],
+      autumn: [[-104.9,-62.6],[-99.2,-63.0],[-93.6,-64.6],[-88.0,-68.6],[-43.1,-60.2],[-37.5,-60.2],[-31.9,-36.5],[-26.3,-37.7],[-20.6,-37.3],[-15.0,-38.5],[-9.4,-41.3],[-3.8,-41.7],[1.8,-40.1],[7.4,-39.7],[13.0,-60.2],[18.6,-60.2],[24.3,-51.3],[29.9,-48.5],[35.5,-46.5],[41.1,-44.9],[46.7,-44.9],[52.3,-48.1],[57.9,-60.2],[63.6,-60.2],[69.2,-60.2],[74.8,-60.2],[80.4,-73.8],[86.0,-64.2],[91.6,-64.2],[97.2,-65.8],[102.9,-93.5],[108.5,-89.8],[114.1,-65.0],[119.7,-63.4],[125.3,-63.4],[130.9,-65.8]],
+      image: [[-151.9,-132.2],[-145.9,-144.7],[-139.9,-148.3],[-133.9,-149.5],[-127.9,-148.8],[-121.9,-146.4],[-115.9,-142.8],[-109.9,-138.7],[-103.9,-134.9],[-97.9,-183.3],[-91.9,-192.2],[-85.9,-198.0],[-79.9,-202.3],[-73.9,-205.6],[-67.9,-208.3],[-61.9,-210.7],[-55.9,-212.6],[-49.9,-214.3],[-43.9,-215.5],[-37.9,-216.7],[-31.9,-217.6],[-25.9,-218.4],[-19.9,-218.8],[-13.9,-219.3],[-7.9,-219.6],[-1.9,-219.8],[4.1,-219.8],[10.1,-219.6],[16.1,-219.3],[22.1,-218.8],[28.1,-218.1],[34.1,-217.4],[40.1,-216.2],[46.1,-215.0],[52.1,-213.6],[58.1,-211.9],[64.1,-209.7],[70.1,-207.3],[76.1,-204.4],[82.1,-200.6],[88.1,-195.8],[94.1,-189.1],[100.1,-176.8],[106.1,-135.8],[112.1,-139.9],[118.1,-144.0],[124.1,-147.3],[130.1,-149.2],[136.1,-149.2],[142.1,-147.1],[148.1,-141.8]],
+    };
+    const FIELD = POT_SKIN ? GROUND_FIELDS[TREE ? SKIN_NAME : 'image'] : null, GROUND_Y = -4;
+    function floorAt(x) {
+      if (!FIELD) return Math.abs(x) < 100 ? -100 : GROUND_Y; // กระถางวาดด้วยโค้ด
+      if (x < FIELD[0][0] - 3 || x > FIELD[FIELD.length - 1][0] + 3) return GROUND_Y;
+      let i = 1; while (i < FIELD.length - 1 && FIELD[i][0] < x) i++;
+      const [x0, y0] = FIELD[i - 1], [x1, y1] = FIELD[i];
+      if (x1 - x0 > 9) return GROUND_Y; // ช่องว่างในภาพ = พื้น
+      return y0 + (y1 - y0) * Math.max(0, Math.min(1, (x - x0) / (x1 - x0)));
+    }
+    // ของขวัญที่ร่วงลงพื้น (ฟิสิกส์วงกลม: ตก → ชนเนิน/กันเอง → กลิ้ง → กองบนพื้น)
+    const ground = [], GROUND_MAX = 300; // วีเจชอบให้ดูล้น ๆ
+    function dropToGround(g, born) {
+      const big = !!g.big, r = big ? 24 * FLOWER : Math.min(35, 15 * FLOWER * (Juice.sizeFor ? Juice.sizeFor(g.d, 1.6) : 1));
+      let x, y;
+      if (born > 0) { const sl = slots[Math.floor(Math.random() * slots.length)], p = slotPoint(sl, performance.now() / 1000); x = p.x; y = p.y; }
+      else { x = (Math.random() - .5) * 520; y = -320 - Math.random() * 260; } // โหลดจากที่จำไว้: โปรยลงมาใหม่
+      ground.push({ g, img: giftImg(g.u), x, y, px: x - (Math.random() - .5) * 2, py: y + 1, r, rot: Math.random() * 6.28, born, big, life: 1 });
+      const alive = ground.filter((b) => !b.dying); if (alive.length > GROUND_MAX) alive[0].dying = true;
+    }
     function addFlower(g, born) {
       if (g.big) {
-        const i = bigs.length % 6;
-        bigs.push({ g, img: giftImg(g.u), born, color: PETALS[bigs.length % PETALS.length], jx: (Math.random() - .5) * 30, jy: (Math.random() - .5) * 30 });
+        if (bigs.length >= BIG_SPOTS.length) return dropToGround(g, born); // ยอดเต็ม → ร่วงลงพื้น
+        bigs.push({ g, img: giftImg(g.u), born, color: PETALS[bigs.length % PETALS.length], jx: 0, jy: 0 });
       } else {
-        const sl = slots[flowers.length % slots.length], lap = Math.floor(flowers.length / slots.length);
-        flowers.push({ g, img: giftImg(g.u), born, sl, jx: lap ? (Math.random() - .5) * 22 : 0, jy: lap ? (Math.random() - .5) * 22 : 0 });
+        if (flowers.length >= slots.length) return dropToGround(g, born); // กิ่งเต็ม → ร่วงลงพื้น
+        flowers.push({ g, img: giftImg(g.u), born, sl: slots[flowers.length], jx: 0, jy: 0 });
       }
     }
+    function stepGround() {
+      const left = -origin().x / S(), right = (W - origin().x) / S();
+      for (const b of ground) {
+        const vx = (b.x - b.px) * 0.99, vy = (b.y - b.py) * 0.99; b.px = b.x; b.py = b.y;
+        b.x += vx; b.y += vy + 0.5; b.rot += vx / b.r;
+        if (b.dying) { b.life -= 0.02; }
+      }
+      for (let it = 0; it < 3; it++) {
+        for (let i = 0; i < ground.length; i++) for (let j = i + 1; j < ground.length; j++) {
+          const a = ground[i], c = ground[j], dx = c.x - a.x, dy = c.y - a.y, m = a.r + c.r;
+          if (Math.abs(dx) > m || Math.abs(dy) > m) continue;
+          const d2 = dx * dx + dy * dy; if (d2 >= m * m || !d2) continue;
+          const d = Math.sqrt(d2), k = (m - d) / d * 0.5; a.x -= dx * k; a.y -= dy * k; c.x += dx * k; c.y += dy * k;
+          if (dy > d * 0.85) { a.px = a.x - (a.x - a.px) * 0.9; } // วางทับตรง ๆ → หน่วงนิดหน่อย (กองเป็นภูเขา ไม่เป็นเสา)
+        }
+        for (const b of ground) {
+          let h = Infinity; // ผิวรองรับใต้ลูก (เช็กหลายจุดตามความกว้าง)
+          for (let q = -1; q <= 1.001; q += 0.25) h = Math.min(h, floorAt(b.x + q * b.r) - Math.sqrt(Math.max(0, 1 - q * q)) * b.r);
+          if (b.y > h) { b.y = h; b.px = b.x - (b.x - b.px) * 0.45; } // เสียดทาน → กองพูนบนเนิน
+          if (b.x - b.r < left) b.x = left + b.r; if (b.x + b.r > right) b.x = right - b.r;
+        }
+      }
+      for (let i = ground.length - 1; i >= 0; i--) if (ground[i].life <= 0) ground.splice(i, 1);
+    }
+    function drawGround(time, now) {
+      for (const b of ground) {
+        if (b.big) Juice.aura(ctx, b.x, b.y, b.r * 0.9, b.g.d || 1000, time);
+        ctx.save(); ctx.globalAlpha = b.life * Math.min(1, b.born > 0 ? (now - b.born) / 150 : 1); ctx.translate(b.x, b.y); ctx.rotate(b.rot);
+        drawGift(b.img, b.g.e, b.r * 2); ctx.restore();
+      }
+    }
+    let gAcc = 0, gLast = performance.now();
 
     // ---- วาด ----
     function drawPot() {
@@ -234,6 +296,9 @@
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.imageSmoothingQuality = 'high';
       const o = origin(), s = S(); ctx.translate(o.x, o.y); ctx.scale(s, s);
       if (TREE) drawPot(); else if (POT_SKIN) { drawPot(); drawStems(time); drawSoilTufts(time); } else { drawStems(time); drawPot(); }
+      gAcc += Math.min(500, now - gLast); gLast = now; let gn = 0;
+      while (gAcc >= 16.7 && gn < 30) { stepGround(); gAcc -= 16.7; gn++; }
+      drawGround(time, now);
       drawFlowers(time, now);
       fx.step(); fx.draw(ctx);
       requestAnimationFrame(frame);
@@ -267,7 +332,7 @@
     // ---- จำต้นไม้ไว้ (รีเฟรชแล้วดอกยังอยู่) ----
     const KEY = 'vjl-garden:' + (P('t', '') || P('username', 'demo')).slice(-24);
     let saveT = null;
-    const save = () => { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify({ f: flowers.map((f) => f.g).concat(bigs.map((b) => b.g)), r: ranking })); } catch { /* storage ปิด */ } }, 500); };
+    const save = () => { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify({ f: flowers.map((f) => f.g).concat(bigs.map((b) => b.g), ground.filter((b) => !b.dying).map((b) => b.g)), r: ranking })); } catch { /* storage ปิด */ } }, 500); };
     try {
       if (P('reset', '0') === '1') localStorage.removeItem(KEY);
       const s = JSON.parse(localStorage.getItem(KEY) || 'null');

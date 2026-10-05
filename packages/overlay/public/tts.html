@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TTS Reader Overlay</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Itim&family=Mali:wght@500;700&display=swap');
+  html,body { margin:0; width:100%; height:100%; background:transparent; overflow:hidden; font-family:'Mali','Itim',sans-serif; }
+  #panel { position:fixed; bottom:20px; right:20px; width:min(320px,70vw); background:rgba(255,250,252,.95); border:3px solid #fff;
+    border-radius:20px; padding:14px 18px; box-shadow:0 10px 26px rgba(150,120,180,.3); color:#5f4a66; }
+  .row { display:flex; align-items:center; gap:10px; }
+  .dot { width:12px; height:12px; border-radius:50%; background:#cbb; } .dot.on { background:#5fc9b0; box-shadow:0 0 8px #5fc9b0; } .dot.speaking { background:#ff6aa8; animation:blink .6s infinite; }
+  @keyframes blink { 50%{opacity:.3;} }
+  h3 { font-family:'Itim',sans-serif; margin:0; font-size:19px; }
+  .last { margin-top:10px; font-size:15px; min-height:22px; color:#7a6180; }
+  .last b { color:#9d86e8; }
+  button { margin-top:12px; width:100%; font-family:'Itim',sans-serif; font-size:16px; border:none; cursor:pointer; padding:10px; border-radius:12px;
+    color:#fff; background:linear-gradient(135deg,#b9a6f2,#9d86e8); }
+  .hint { font-size:12px; color:#ab96b5; margin-top:8px; text-align:center; }
+</style>
+</head>
+<body>
+  <div id="panel">
+    <div class="row"><span class="dot" id="dot"></span><h3>🔊 อ่านแชทออกเสียง</h3></div>
+    <div class="last" id="last">—</div>
+    <button id="startBtn">▶ เปิดเสียง (คลิกครั้งเดียว)</button>
+    <div class="hint" id="hint">OBS: เพิ่ม Browser Source แล้วติ๊ก "Control audio via OBS"</div>
+  </div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/overlay-client.js"></script>
+  <script src="js/tts.js"></script>
+  <script>
+  (function(){
+    const dot=document.getElementById('dot'), last=document.getElementById('last'), btn=document.getElementById('startBtn');
+    let armed=false;
+    // ห่อ say เพื่ออัปเดต UI + สถานะพูด
+    const origSay=TTS.say;
+    TTS.say=function(t){ last.innerHTML=t; dot.classList.add('speaking'); origSay(t); };
+    setInterval(()=>{ if(!speechSynthesis.speaking) dot.classList.remove('speaking'); }, 300);
+
+    TTS.attach(Overlay);
+    btn.addEventListener('click',()=>{ TTS.unlock(); armed=true; dot.classList.add('on'); btn.textContent='✅ เปิดเสียงแล้ว'; btn.disabled=true;
+      document.getElementById('hint').textContent='กำลังอ่านแชท/กิฟต์อัตโนมัติ · ภาษา: '+TTS.cfg.lang; });
+
+    if(!Overlay.connected){ const names=['mimi','บิ๊ก','lisa']; const msgs=['สวัสดีครับ','เก่งมาก','สู้ๆนะ'];
+      setInterval(()=>{ if(!armed) return; const nm=names[Math.floor(Math.random()*names.length)];
+        Overlay && TTS.say(nm+' พูดว่า '+msgs[Math.floor(Math.random()*msgs.length)]); }, 4000); }
+  })();
+  </script>
+</body>
+</html>

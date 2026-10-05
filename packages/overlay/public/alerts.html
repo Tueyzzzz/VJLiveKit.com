@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Gift Alerts Overlay</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Itim&family=Mali:wght@500;700&display=swap');
+  html,body { margin:0; width:100%; height:100%; background:transparent; overflow:hidden; font-family:'Mali','Itim',sans-serif; }
+  #stage { position:fixed; top:40px; left:0; right:0; display:flex; flex-direction:column; align-items:center; gap:14px; }
+  .alert { display:flex; align-items:center; gap:14px; padding:16px 26px; border-radius:22px; color:#fff; font-family:'Itim',sans-serif; font-size:26px;
+    box-shadow:0 12px 30px rgba(120,80,150,.4); max-width:86vw; background:linear-gradient(135deg,#ff93c0,#ff6aa8);
+    animation:in .4s cubic-bezier(.2,1.4,.4,1), out .5s ease forwards 4.2s; }
+  .alert.follow { background:linear-gradient(135deg,#8fe3cf,#5fc9b0); color:#114a42; }
+  .alert.share  { background:linear-gradient(135deg,#ffcf5c,#f5a623); }
+  .alert .ava { width:54px; height:54px; border-radius:50%; display:grid; place-items:center; background:#ffffff35; font-size:26px; border:2px solid #fff6; }
+  .alert .sub { font-family:'Mali',sans-serif; font-size:17px; opacity:.95; }
+  .alert .val { background:rgba(0,0,0,.22); padding:3px 13px; border-radius:999px; font-size:19px; }
+  @keyframes in { from{transform:scale(.6) translateY(-12px);opacity:0;} to{transform:none;opacity:1;} }
+  @keyframes out { to{transform:translateY(-24px);opacity:0;} }
+  #cfx { position:fixed; inset:0; pointer-events:none; }
+</style>
+</head>
+<body>
+  <div id="stage"></div>
+  <canvas id="cfx"></canvas>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/overlay-client.js"></script>
+  <script>
+  (function(){
+    const stage=document.getElementById('stage'), canvas=document.getElementById('cfx'), ctx=canvas.getContext('2d');
+    const cols=['#ff93c0','#b9a6f2','#8fe3cf','#ffcf5c','#ff6aa8','#9d86e8'];
+    const colOf=(nm)=>cols[(nm||'?').charCodeAt(0)%cols.length];
+    const EMOJI={Rose:'🌹','Finger Heart':'🫰',Perfume:'🧴',Galaxy:'🌌',Lion:'🦁',Universe:'🪐'};
+    function size(){ canvas.width=innerWidth; canvas.height=innerHeight; } addEventListener('resize',size); size();
+    const conf=[];
+    function burst(n){ for(let i=0;i<n;i++) conf.push({x:innerWidth/2,y:120,vx:(Math.random()-.5)*14,vy:-(4+Math.random()*9),rot:0,vr:(Math.random()-.5)*.8,w:7+Math.random()*6,h:10+Math.random()*7,c:cols[Math.floor(Math.random()*cols.length)],life:1}); }
+    (function loop(){ ctx.clearRect(0,0,canvas.width,canvas.height);
+      for(let i=conf.length-1;i>=0;i--){ const p=conf[i]; p.vy+=.35;p.x+=p.vx;p.y+=p.vy;p.rot+=p.vr;p.life-=.012; if(p.life<=0||p.y>innerHeight+20){conf.splice(i,1);continue;}
+        ctx.save();ctx.globalAlpha=Math.max(0,p.life);ctx.translate(p.x,p.y);ctx.rotate(p.rot);ctx.fillStyle=p.c;ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);ctx.restore(); }
+      requestAnimationFrame(loop); })();
+
+    function show(html,cls,big){ const el=document.createElement('div'); el.className='alert '+(cls||''); el.innerHTML=html; stage.appendChild(el);
+      setTimeout(()=>el.remove(),4700); while(stage.children.length>4) stage.removeChild(stage.firstChild); if(big) burst(40); }
+    function gift(nm,g,count,val){ const em=EMOJI[g]||'🎁'; show(`<div class="ava" style="background:${colOf(nm)}">${em}</div><div><div>${Overlay.esc(nm)}</div><div class="sub">ส่ง ${Overlay.esc(g)} ×${count}</div></div><span class="val">💎 ${Overlay.fmt(val)}</span>`,'',val>=1000); }
+    function follow(nm){ show(`<div class="ava" style="background:${colOf(nm)}">➕</div><div><div>${Overlay.esc(nm)}</div><div class="sub">กดติดตามแล้ว!</div></div>`,'follow'); }
+    function share(nm){ show(`<div class="ava" style="background:${colOf(nm)}">🔁</div><div><div>${Overlay.esc(nm)}</div><div class="sub">แชร์ไลฟ์นี้</div></div>`,'share'); }
+
+    Overlay.on('event',(e)=>{ const nm=e.user?(e.user.nickname||e.user.uniqueId):'';
+      if(e.type==='gift'&&!e.streaking){ const v=e.totalValue||(e.diamondCount||0)*(e.repeatCount||1); gift(nm,e.giftName,e.repeatCount||1,v); }
+      else if(e.type==='follow') follow(nm); else if(e.type==='share') share(nm); });
+
+    if(!Overlay.connected){ const names=['mimi','บิ๊ก','lisa','ต้นน้ำ','somchai']; const gifts=[['Rose',1],['Perfume',20],['Galaxy',1000],['Lion',2999]];
+      setInterval(()=>{ const r=Math.random(), nm=names[Math.floor(Math.random()*names.length)];
+        if(r<.6){ const g=gifts[Math.floor(Math.random()*gifts.length)]; const c=g[1]>=1000?1:1+Math.floor(Math.random()*3); gift(nm,g[0],c,g[1]*c); }
+        else if(r<.85) follow(nm); else share(nm); }, 2600); }
+  })();
+  </script>
+</body>
+</html>

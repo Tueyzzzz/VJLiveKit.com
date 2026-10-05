@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Goal Overlay</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Itim&family=Mali:wght@500;700&display=swap');
+  html,body { margin:0; width:100%; height:100%; background:transparent; overflow:hidden; font-family:'Mali','Itim',sans-serif; }
+  #goal { position:fixed; top:24px; left:50%; transform:translateX(-50%); width:min(480px,86vw);
+    background:rgba(255,250,252,.94); border:3px solid #fff; border-radius:22px; padding:16px 20px; box-shadow:0 10px 26px rgba(150,120,180,.3); }
+  .hd { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; }
+  .tt { font-family:'Itim',sans-serif; font-size:21px; color:#5f4a66; }
+  .nm { font-family:'Itim',sans-serif; font-size:17px; font-variant-numeric:tabular-nums; }
+  .track { height:26px; border-radius:14px; background:#f0e6f5; overflow:hidden; }
+  .fill { height:100%; width:0%; border-radius:14px; transition:width .5s cubic-bezier(.3,.8,.4,1); }
+  .pct { text-align:right; font-size:13px; color:#ab96b5; margin-top:6px; }
+  #goal.done .fill { filter:brightness(1.05) saturate(1.1); }
+  #goal.done .tt::after { content:' 🎉'; }
+</style>
+</head>
+<body>
+  <div id="goal">
+    <div class="hd"><span class="tt" id="title">เป้าหมาย</span><span class="nm"><span id="cur">0</span> / <span id="target">0</span></span></div>
+    <div class="track"><div class="fill" id="fill"></div></div>
+    <div class="pct" id="pct">0%</div>
+  </div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/overlay-client.js"></script>
+  <script>
+  (function(){
+    // ?type=like|follow|share|diamond|gift & ?target=10000 & ?label=...
+    const type=Overlay.param('type','like');
+    const target=parseInt(Overlay.param('target','10000'),10);
+    const labels={like:'❤️ เป้าหมายไลค์',follow:'➕ เป้าหมายผู้ติดตาม',share:'🔁 เป้าหมายแชร์',diamond:'💎 เป้าหมายเพชร',gift:'🎁 เป้าหมายกิฟต์'};
+    const colors={like:['#ff93c0','#ff6aa8'],follow:['#8fe3cf','#5fc9b0'],share:['#ffcf5c','#f5a623'],diamond:['#ffd56b','#f5a623'],gift:['#b9a6f2','#9d86e8']};
+    document.getElementById('title').textContent=Overlay.param('label',labels[type]||'เป้าหมาย');
+    document.getElementById('target').textContent=Overlay.fmt(target);
+    const c=colors[type]||colors.like; document.getElementById('fill').style.background=`linear-gradient(90deg,${c[0]},${c[1]})`;
+    const key={like:'likeCount',follow:'followCount',share:'shareCount',diamond:'diamondCount',gift:'giftCount'}[type];
+
+    function render(v){ const pct=Math.min(100,v/target*100); document.getElementById('cur').textContent=Overlay.fmt(v);
+      document.getElementById('fill').style.width=pct+'%'; document.getElementById('pct').textContent=pct.toFixed(1)+'%';
+      document.getElementById('goal').classList.toggle('done',pct>=100); }
+
+    Overlay.on('stats',(s)=>render(s[key]||0));
+    Overlay.on('state',(s)=>render((s.stats&&s.stats[key])||0));
+
+    if(!Overlay.connected){ let v=0; const step={like:120,follow:1,share:1,diamond:260,gift:2}[type];
+      setInterval(()=>{ v+=Math.ceil(Math.random()*step); render(v); if(v>target) v=0; }, 900); }
+    render(0);
+  })();
+  </script>
+</body>
+</html>

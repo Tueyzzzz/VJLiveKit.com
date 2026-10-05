@@ -3,6 +3,7 @@ import { setupRealtime } from './realtime/socket.js';
 import { config } from './config/index.js';
 import { disconnectDb } from './db/prisma.js';
 import { ensurePlans } from './plans/index.js';
+import { runtime } from './runtime.js';
 
 async function main(): Promise<void> {
   if (config.isProd && (config.jwtSecret === 'dev-insecure-secret' || config.jwtSecret.length < 32)) {
@@ -16,6 +17,7 @@ async function main(): Promise<void> {
 
   // ผูก Socket.IO เข้ากับ HTTP server ตัวเดียวกับ Fastify
   const hub = setupRealtime(app.server);
+  runtime.liveRooms = () => hub.liveCount();
 
   await app.listen({ port: config.port, host: '0.0.0.0' });
 

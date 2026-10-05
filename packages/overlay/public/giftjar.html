@@ -673,20 +673,21 @@
 
     // ---- จำโหลไว้ (รีเฟรช OBS แล้วไม่หาย) ----
     const KEY = 'vjl-giftjar:' + (P('t', '') || P('username', 'demo')).slice(-24);
-    let saveTimer = null;
-    function save() {
-      clearTimeout(saveTimer);
-      saveTimer = setTimeout(() => {
-        try { localStorage.setItem(KEY, JSON.stringify({ g: bodies.filter((b) => !b.dying).map((b) => b.src), r: ranking, t: totalCoins })); } catch { /* storage ปิดอยู่ */ }
-      }, 500);
+    let saveTimer = null, restoreUntil = 0;
+    function saveNow() {
+      if (performance.now() < restoreUntil) return; // ยังกู้ของขวัญกลับมาไม่ครบ → อย่าบันทึกทับ (กันของหายตอนรีโหลดซ้อน)
+      try { localStorage.setItem(KEY, JSON.stringify({ g: bodies.filter((b) => !b.dying).map((b) => b.src), r: ranking, t: totalCoins })); } catch { /* storage ปิดอยู่ */ }
     }
+    function save() { clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 500); }
+    addEventListener('pagehide', () => { clearTimeout(saveTimer); saveNow(); }); // รีโหลด (deploy ใหม่)/ปิด → บันทึกทันที
     function restore() {
       if (P('reset', '0') === '1') { try { localStorage.removeItem(KEY); } catch { /* ignore */ } return; }
       try {
         const s = JSON.parse(localStorage.getItem(KEY) || 'null');
         if (!s) return;
         ranking = s.r || {}; totalCoins = s.t || 0;
-        (s.g || []).slice(-MAX).forEach((g, i) => setTimeout(() => addBody(g, false), i * 8));
+        const list = (s.g || []).slice(-MAX); restoreUntil = performance.now() + list.length * 8 + 300;
+        list.forEach((g, i) => setTimeout(() => addBody(g, false), i * 8));
       } catch { /* ignore */ }
     }
 

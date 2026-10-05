@@ -348,7 +348,9 @@
     // ---- จำต้นไม้ไว้ (รีเฟรชแล้วดอกยังอยู่) ----
     const KEY = (Overlay.widget === 'tree' ? 'vjl-tree:' : 'vjl-garden:') + (P('t', '') || P('username', 'demo')).slice(-24); // ต้นไม้/กระถาง จำกองแยกกัน
     let saveT = null;
-    const save = () => { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify({ f: flowers.map((f) => f.g).concat(bigs.map((b) => b.g), ground.filter((b) => !b.dying).map((b) => b.g)), r: ranking })); } catch { /* storage ปิด */ } }, 500); };
+    const saveNow = () => { try { localStorage.setItem(KEY, JSON.stringify({ f: flowers.map((f) => f.g).concat(bigs.map((b) => b.g), ground.filter((b) => !b.dying).map((b) => b.g)), r: ranking })); } catch { /* storage ปิด */ } };
+    const save = () => { clearTimeout(saveT); saveT = setTimeout(saveNow, 500); };
+    addEventListener('pagehide', () => { clearTimeout(saveT); saveNow(); }); // รีโหลด (deploy ใหม่)/ปิด → บันทึกทันที
     try {
       if (P('reset', '0') === '1') localStorage.removeItem(KEY);
       const s = JSON.parse(localStorage.getItem(KEY) || 'null');

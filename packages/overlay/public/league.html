@@ -252,6 +252,7 @@
     addEventListener('resize', resize); resize(); requestAnimationFrame(frame);
     // ไม่ให้ค้างเมื่อหน้าถูกซ่อน (OBS ซ่อนซีน): ดาวหางที่ค้างอยู่ให้ชนทันที
     document.addEventListener('visibilitychange', () => { if (document.hidden) { while (comets.length) impact(comets.pop()); } });
+    addEventListener('pagehide', () => { while (comets.length) impact(comets.pop()); save(); }); // รีโหลด (deploy ใหม่) → ไม่เสียคะแนนที่กำลังบิน
 
     if (!Overlay.connected) {
       const names = ['อาร์ม', 'mimi', 'บิ๊ก', 'lisa', 'ต้นน้ำ'];

@@ -170,6 +170,9 @@ export class RoomHub {
     await entry.room.disconnect();
   }
 
+  /** จำนวนห้องที่เชื่อม TikTok อยู่ (กำลังไลฟ์) */
+  liveCount(): number { let n = 0; for (const e of this.rooms.values()) if (e.room.isConnected()) n++; return n; }
+
   async stopAll(): Promise<void> {
     await Promise.all([...this.rooms.keys()].map((k) => this.stop(k)));
   }

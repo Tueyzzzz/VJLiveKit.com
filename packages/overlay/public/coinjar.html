@@ -407,13 +407,17 @@
     let saveT = null;
     // จำกอง + ยอดเพชร + รหัสไลฟ์ (ยอดจากเซิร์ฟเวอร์เริ่ม 0 ใหม่ทุกครั้งที่รีสตาร์ท → ใช้ค่าที่มากกว่า, ไลฟ์ใหม่ → เริ่มนับใหม่)
     let roomId = null;
-    function save() { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify({ g: bodies.filter((b) => !b.dying).map((b) => b.src), d: diamonds, room: roomId })); } catch { /* storage ปิด */ } }, 500); }
+    let restoreUntil = 0;
+    function saveNow() { if (performance.now() < restoreUntil) return; try { localStorage.setItem(KEY, JSON.stringify({ g: bodies.filter((b) => !b.dying).map((b) => b.src), d: diamonds, room: roomId })); } catch { /* storage ปิด */ } }
+    function save() { clearTimeout(saveT); saveT = setTimeout(saveNow, 500); }
+    addEventListener('pagehide', () => { clearTimeout(saveT); saveNow(); }); // รีโหลด (deploy ใหม่)/ปิด → บันทึกทันที
     function restore() {
       if (P('reset', '0') === '1') { try { localStorage.removeItem(KEY); } catch { /* ignore */ } return false; }
       try {
         const raw = JSON.parse(localStorage.getItem(KEY) || '[]'), list = Array.isArray(raw) ? raw : (raw.g || []);
         if (!Array.isArray(raw)) { diamonds = raw.d || 0; roomId = raw.room || null; }
-        list.slice(-MAX).forEach((g, i) => setTimeout(() => addBody(g, 'restore'), i * 6)); return list.length > 0;
+        const keep = list.slice(-MAX); restoreUntil = performance.now() + keep.length * 6 + 300;
+        keep.forEach((g, i) => setTimeout(() => addBody(g, 'restore'), i * 6)); return list.length > 0;
       }
       catch { return false; }
     }

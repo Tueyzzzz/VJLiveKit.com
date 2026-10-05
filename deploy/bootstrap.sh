@@ -89,7 +89,33 @@ if [ -n "${GHCR_TOKEN:-}" ]; then
 fi
 log "ดึง image ${APP_IMAGE}"
 docker compose -f docker-compose.prod.yml pull
-docker compose -f docker-compose.prod.yml up -d --remove-orphans
+DC="docker compose -f docker-compose.prod.yml"
+healthy() { docker exec "$1" node -e "fetch('http://127.0.0.1:8080/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))" >/dev/null 2>&1; }
+# สลับแอปแบบไม่ดับ (มีคนไลฟ์ตลอดเวลา): เปิดตัวใหม่คู่ตัวเก่า → ตัวใหม่พร้อม → ปิดตัวเก่า
+# วิดเจ็ตที่ต่อกับตัวเก่าจะต่อใหม่เข้าตัวใหม่เองในไม่กี่วินาที (Caddy ลองต่อซ้ำระหว่างสลับ)
+OLD=$($DC ps -q app 2>/dev/null || true)
+$DC up -d --no-recreate --remove-orphans postgres caddy
+if [ -n "$OLD" ]; then
+  log "เปิดแอปตัวใหม่คู่ตัวเดิม"
+  $DC up -d --no-deps --no-recreate --scale app=2 app
+  NEW=$($DC ps -q app | grep -v -F "$OLD" | head -1 || true)
+  ok=""
+  if [ -n "$NEW" ]; then
+    for _ in $(seq 1 60); do if healthy "$NEW"; then ok=1; break; fi; sleep 2; done
+  fi
+  if [ -n "$ok" ]; then
+    log "ตัวใหม่พร้อม → ปิดตัวเดิม"
+    docker stop -t 25 $OLD >/dev/null; docker rm $OLD >/dev/null
+    $DC up -d --no-deps --no-recreate --scale app=1 app
+  else
+    log "⚠️ ตัวใหม่ไม่ขึ้น — ยกเลิก ใช้ตัวเดิมต่อ"
+    [ -n "$NEW" ] && { docker logs --tail 80 "$NEW" || true; docker rm -f "$NEW" >/dev/null || true; }
+    exit 1
+  fi
+else
+  $DC up -d --remove-orphans
+fi
+$DC exec -T caddy caddy reload --config /etc/caddy/Caddyfile >/dev/null 2>&1 || true
 docker logout ghcr.io >/dev/null 2>&1 || true
 docker image prune -f >/dev/null
 

@@ -11,6 +11,7 @@ import { actionRoutes } from './actions/routes.js';
 import { ttsRoutes } from './tts/routes.js';
 import { config } from './config/index.js';
 import { OVERLAY_DIR, OVERLAY_VERSION } from './overlay-version.js';
+import { runtime } from './runtime.js';
 
 /** ที่อยู่ไฟล์ Dashboard (Next.js static export) */
 const DASHBOARD_DIR = config.dashboardDir ?? path.resolve(process.cwd(), '../dashboard/out');
@@ -62,7 +63,7 @@ export async function buildApp(): Promise<FastifyInstance> {
     app.log.warn(`ไม่พบ Dashboard ที่ ${DASHBOARD_DIR} — เสิร์ฟเฉพาะ API/overlay`);
   }
 
-  app.get('/healthz', async () => ({ ok: true }));
+  app.get('/healthz', async () => ({ ok: true, live: runtime.liveRooms() }));
 
   await app.register(authRoutes);
   await app.register(widgetRoutes);

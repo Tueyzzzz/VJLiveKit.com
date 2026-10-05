@@ -123,6 +123,8 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
       { title: 'รถ', fields: [
         { key: 'car', label: 'แบบรถ', type: 'select', def: 'van', options: [
           ['van', 'รถหัวใจ', '🚗 รถลากของขวัญ (ภาพ 3D)', 'gj-van'],
+          ['pickup2', 'รถกระบะฟ้า', '🚗 รถลากของขวัญ (ภาพ 3D)', 'car-pickup2'],
+          ['camper', 'รถคาราวาน', '🚗 รถลากของขวัญ (ภาพ 3D)', 'car-camper'],
           ['beetle', 'รถเต่างานแต่ง', '🚗 รถลากของขวัญ (ภาพ 3D)', 'car-beetle'],
           ['minivan', 'รถตู้วินเทจ', '🚗 รถลากของขวัญ (ภาพ 3D)', 'car-minivan'],
           ['convertible', 'รถเปิดประทุน', '🚗 รถลากของขวัญ (ภาพ 3D)', 'car-convertible'],
@@ -148,6 +150,11 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
       { title: 'ลูกแก้วหิมะ', fields: [
         { key: 'shape', label: 'ลูกแก้ว', type: 'select', def: 'snow', options: [
           ['snow', 'ลูกแก้วหิมะบ้านกระต่าย', '❄️ ลูกแก้วหิมะ (ภาพ 3D)', 'gj-snow'],
+          ['gcastle', 'ลูกแก้วปราสาทเจ้าหญิง', '❄️ ลูกแก้วหิมะ (ภาพ 3D)', 'gl-castle'],
+          ['gxmas', 'ลูกแก้วคริสต์มาส', '❄️ ลูกแก้วหิมะ (ภาพ 3D)', 'gl-xmas'],
+          ['gcarousel', 'ลูกแก้วม้าหมุน', '❄️ ลูกแก้วหิมะ (ภาพ 3D)', 'gl-carousel'],
+          ['gbunnies', 'ลูกแก้วกระต่ายหัวใจ', '❄️ ลูกแก้วหิมะ (ภาพ 3D)', 'gl-bunnies'],
+          ['gsakura', 'ลูกแก้วซากุระ', '❄️ ลูกแก้วหิมะ (ภาพ 3D)', 'gl-sakura'],
         ] },
         ...tint(() => true),
         { key: 'fullText', label: 'ข้อความตอนโหลเต็ม', type: 'text', def: 'โหลเต็มแล้ว! 🎉', when: (v) => v.full === 'reset' },
@@ -236,7 +243,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
         { key: 'sway', label: 'ความแรงลม (กิ่งแกว่ง)', type: 'range', min: 0, max: 3, step: 0.1, def: 1, hint: '0 = นิ่ง' },
         { key: 'big', label: 'ของขวัญที่เป็นดอกใหญ่บนยอด ตั้งแต่ (เหรียญ)', type: 'number', min: 1, def: 1000 },
         { key: 'skin', label: 'แบบกระถาง', type: 'select', def: 'image', options: [
-          ['image', 'กระถางหัวใจมีปีก', '🪴 กระถาง (ภาพ 3D)', 'gd-image'],
+          ['image', 'กระถางหัวใจมีปีก', '🪴 กระถาง (ภาพ 3D)', 'gd-image'], ['cat', 'กระถางหน้าแมว', '🪴 กระถาง (ภาพ 3D)', 'pot-cat'], ['bunny', 'กระถางกระต่าย', '🪴 กระถาง (ภาพ 3D)', 'pot-bunny'], ['bear', 'กระถางหมี', '🪴 กระถาง (ภาพ 3D)', 'pot-bear'], ['teacup', 'กระถางถ้วยชา', '🪴 กระถาง (ภาพ 3D)', 'pot-teacup'], ['boot', 'กระถางรองเท้าบูท', '🪴 กระถาง (ภาพ 3D)', 'pot-boot'], ['pumpkin', 'กระถางฟักทอง', '🪴 กระถาง (ภาพ 3D)', 'pot-pumpkin'], ['star', 'กระถางดาว', '🪴 กระถาง (ภาพ 3D)', 'pot-star'], ['cart', 'รถเข็นดอกไม้', '🪴 กระถาง (ภาพ 3D)', 'pot-cart'], ['basket', 'ตะกร้าสาน', '🪴 กระถาง (ภาพ 3D)', 'pot-basket'],
         ] },
         ...tint(() => true),
         { key: 'minCoins', label: 'รับเฉพาะของขวัญตั้งแต่ (เหรียญ)', type: 'number', min: 0, def: 0 },

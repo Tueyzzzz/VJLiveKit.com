@@ -222,6 +222,36 @@
         openY: -257.9, openHW: 210.2, rimHW: 247.9, topY: -300.0, fullY: -217.9, maxHW: 210.2, floor: -57.3, water: -217.7,
         image: { src: 'themes/tank-front.webp', back: 'themes/tank-back.webp', x: -299.8, y: -300.0, w: 599.2, h: 300.0 },
       },
+      gcastle: { // ลูกแก้วหิมะปราสาทเจ้าหญิง (ภาพ 3D) — โดมปิด ของขวัญกองหน้าฉาก หิมะโปรย · เต็มแล้วชิ้นเก่าจางออก
+        hw: (y) => Math.sqrt(Math.max(0, 153.9 ** 2 - (y - (-238.3)) ** 2)),
+        openY: -388.2, openHW: 90, rimHW: 120, topY: -400.0, fullY: -307.6, maxHW: 153.9, closed: true, floor: -118.7, fullMode: 'fade',
+        dome: { cy: -238.3, r: 153.9 },
+        image: { src: 'themes/globe-castle-front.webp', back: 'themes/globe-castle-back.webp', x: -226.5, y: -400.0, w: 452.4, h: 400.0 },
+      },
+      gxmas: { // ลูกแก้วหิมะคริสต์มาส (ภาพ 3D) — โดมปิด ของขวัญกองหน้าฉาก หิมะโปรย · เต็มแล้วชิ้นเก่าจางออก
+        hw: (y) => Math.sqrt(Math.max(0, 140.3 ** 2 - (y - (-252.6)) ** 2)),
+        openY: -388.9, openHW: 90, rimHW: 120, topY: -400.0, fullY: -315.7, maxHW: 140.3, closed: true, floor: -143.6, fullMode: 'fade',
+        dome: { cy: -252.6, r: 140.3 },
+        image: { src: 'themes/globe-xmas-front.webp', back: 'themes/globe-xmas-back.webp', x: -198.7, y: -400.0, w: 397.7, h: 400.0 },
+      },
+      gcarousel: { // ลูกแก้วหิมะม้าหมุน (ภาพ 3D) — โดมปิด ของขวัญกองหน้าฉาก หิมะโปรย · เต็มแล้วชิ้นเก่าจางออก
+        hw: (y) => Math.sqrt(Math.max(0, 146.5 ** 2 - (y - (-245.3)) ** 2)),
+        openY: -387.8, openHW: 90, rimHW: 120, topY: -400.0, fullY: -311.2, maxHW: 146.5, closed: true, floor: -131.4, fullMode: 'fade',
+        dome: { cy: -245.3, r: 146.5 },
+        image: { src: 'themes/globe-carousel-front.webp', back: 'themes/globe-carousel-back.webp', x: -225.8, y: -400.0, w: 452.4, h: 400.0 },
+      },
+      gbunnies: { // ลูกแก้วหิมะกระต่ายหัวใจ (ภาพ 3D) — โดมปิด ของขวัญกองหน้าฉาก หิมะโปรย · เต็มแล้วชิ้นเก่าจางออก
+        hw: (y) => Math.sqrt(Math.max(0, 154.7 ** 2 - (y - (-237.6)) ** 2)),
+        openY: -388.3, openHW: 90, rimHW: 120, topY: -400.0, fullY: -307.2, maxHW: 154.7, closed: true, floor: -117.3, fullMode: 'fade',
+        dome: { cy: -237.6, r: 154.7 },
+        image: { src: 'themes/globe-bunnies-front.webp', back: 'themes/globe-bunnies-back.webp', x: -212.3, y: -400.0, w: 423.9, h: 400.0 },
+      },
+      gsakura: { // ลูกแก้วหิมะซากุระ (ภาพ 3D) — โดมปิด ของขวัญกองหน้าฉาก หิมะโปรย · เต็มแล้วชิ้นเก่าจางออก
+        hw: (y) => Math.sqrt(Math.max(0, 158.4 ** 2 - (y - (-234.2)) ** 2)),
+        openY: -388.6, openHW: 90, rimHW: 120, topY: -400.0, fullY: -305.5, maxHW: 158.4, closed: true, floor: -111.2, fullMode: 'fade',
+        dome: { cy: -234.2, r: 158.4 },
+        image: { src: 'themes/globe-sakura-front.webp', back: 'themes/globe-sakura-back.webp', x: -207.3, y: -400.0, w: 415.3, h: 400.0 },
+      },
       snow: { // ลูกแก้วหิมะ (ภาพ 3D) — โดมปิด: ของขวัญตกลงบนหิมะหน้าบ้าน อยู่หลังกระจก · เต็มแล้วชิ้นเก่าจางออก
         hw: (y) => Math.sqrt(Math.max(0, 147.7 ** 2 - (y - (-243.2)) ** 2)),
         openY: -378.9, openHW: 90, rimHW: 120, topY: -400.0, fullY: -320.9, maxHW: 147.7, closed: true, floor: -135.4, fullMode: 'fade',

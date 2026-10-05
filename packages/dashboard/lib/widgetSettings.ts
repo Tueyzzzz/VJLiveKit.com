@@ -34,11 +34,11 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
     resettable: 'ล้างของขวัญในโหลและอันดับ',
     sections: [
       { title: 'รูปแบบโหล', fields: [
-        { key: 'shape', label: 'ทรงโหล', type: 'select', def: 'heart', options: [['heart', 'โหลหัวใจ (ภาพ 3D)'], ['orb', 'โหลกลมห่วงชมพู (ภาพ 3D)'], ['tank', 'ตู้ปลา (ภาพ 3D)'], ['jar', 'โหลแก้วคอแคบ'], ['bowl', 'โหลกลมปากกว้าง'], ['mason', 'โหลฝาผ้าผูกโบว์'], ['car', 'รถพาสเทล (ของกองบนหลังคา)'], ['globe', 'ลูกแก้วหิมะ'], ['snow', 'ลูกแก้วหิมะ (ภาพ 3D)'], ['van', 'รถหัวใจ (ภาพ 3D)']] },
+        { key: 'shape', label: 'ทรงโหล', type: 'select', def: 'heart', options: [['heart', 'โหลหัวใจ (ภาพ 3D)'], ['orb', 'โหลกลมห่วงชมพู (ภาพ 3D)'], ['tank', 'ตู้ปลา (ภาพ 3D)'], ['pig', 'หมูท้องใส งับของขวัญ (ภาพ 3D)'], ['jar', 'โหลแก้วคอแคบ'], ['bowl', 'โหลกลมปากกว้าง'], ['mason', 'โหลฝาผ้าผูกโบว์'], ['car', 'รถพาสเทล (ของกองบนหลังคา)'], ['globe', 'ลูกแก้วหิมะ'], ['snow', 'ลูกแก้วหิมะ (ภาพ 3D)'], ['van', 'รถหัวใจ (ภาพ 3D)']] },
         { key: 'body', label: 'สีรถ', type: 'color', def: '#bfe9e6', when: (v) => v.shape === 'car' },
-        ...tint((v) => ['heart', 'orb', 'tank', 'snow', 'van'].includes(String(v.shape))),
+        ...tint((v) => ['heart', 'orb', 'tank', 'pig', 'snow', 'van'].includes(String(v.shape))),
         { key: 'cloth', label: 'สีผ้าฝาโหล', type: 'color', def: '#e0452b', when: (v) => v.shape === 'mason' },
-        { key: 'full', label: 'เมื่อโหลเต็ม', type: 'select', when: (v) => !['car', 'globe', 'heart', 'snow', 'van'].includes(String(v.shape)), def: 'spill', options: [['spill', 'ล้นออกมากองข้างโหล'], ['fade', 'ชิ้นเก่าสุดค่อย ๆ หายไป'], ['reset', 'ฉลอง แล้วเทโหลเริ่มใหม่']] },
+        { key: 'full', label: 'เมื่อโหลเต็ม', type: 'select', when: (v) => !['car', 'globe', 'heart', 'snow', 'van', 'pig'].includes(String(v.shape)), def: 'spill', options: [['spill', 'ล้นออกมากองข้างโหล'], ['fade', 'ชิ้นเก่าสุดค่อย ๆ หายไป'], ['reset', 'ฉลอง แล้วเทโหลเริ่มใหม่']] },
         { key: 'fullText', label: 'ข้อความตอนโหลเต็ม', type: 'text', def: 'โหลเต็มแล้ว! 🎉', when: (v) => v.full === 'reset' },
       ] },
       { title: 'ขนาดและตำแหน่ง', fields: [

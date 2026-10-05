@@ -109,6 +109,12 @@
         openY: -297.1, openHW: 130.9, rimHW: 152.6, topY: -380.0, fullY: -257.1, maxHW: 186.5, floor: -22.7,
         image: { src: 'themes/orb-front.webp', back: 'themes/orb-back.webp', x: -229.2, y: -380.0, w: 458.7, h: 380.0 },
       },
+      pig: { // หมูท้องใส (ภาพ 3D) — ของขวัญตกเข้าปาก (งับ!) แล้วไปโผล่กองในท้องแก้ว · เต็มแล้วชิ้นเก่าจางออก
+        hw: (y) => 100.0 * Math.sqrt(Math.max(0, 1 - ((y - (-126.8)) / 87.1) ** 2)),
+        openY: -209.9, openHW: 40, rimHW: 60, topY: -420.0, fullY: -166.0, maxHW: 100.0, closed: true, floor: -39.7, fullMode: 'fade',
+        belly: { cy: -126.8, rx: 100.0, ry: 87.1 }, mouth: { x: 1.5, y: -291.7 },
+        image: { src: 'themes/pig-belly.webp', x: -234.1, y: -420.0, w: 468.5, h: 420.0 },
+      },
       tank: { // ตู้ปลา (ภาพ 3D) — ปากเปิด: ของขวัญตกผ่านราวบน ลงน้ำ (จมช้า มีฟองอากาศ) กองบนพื้นทราย
         hw: () => 210.2,
         openY: -257.9, openHW: 210.2, rimHW: 247.9, topY: -300.0, fullY: -217.9, maxHW: 210.2, floor: -57.3, water: -217.7,
@@ -337,6 +343,7 @@
       if (out && dropFromTop && !SH.solid) b.px = b.x - side * (1.5 + Math.random() * 2.5); // พุ่งออกด้านข้าง
       if (SH.solid && dropFromTop) { b.x = SH.spawnX ? SH.spawnX[0] + 15 + Math.random() * (SH.spawnX[1] - SH.spawnX[0] - 30) : (Math.random() - .5) * 170; b.px = b.x; }
       if (SH.solid && !dropFromTop && !g.o) { b.x = (Math.random() - .5) * 180; b.y = SH.topY - 20 - Math.random() * 200; b.px = b.x; b.py = b.y; }
+      if (SH.mouth && dropFromTop && !out) { b.eat = true; b.x = SH.mouth.x + (Math.random() - .5) * 60; b.y = SH.topY - 50 - Math.random() * 70; b.px = b.x; b.py = b.y - 2; } // หมู: ตกลงปากก่อน
       bodies.push(b);
       if (dropFromTop) fx.sparkle(b.x, b.y, 5, b.d >= 1000 ? '#ffe08a' : '#fff6e8');
       const alive = bodies.filter((k) => !k.dying);
@@ -378,6 +385,7 @@
       }
     }
     function constrain(b) {
+      if (b.eat) return; // กำลังตกเข้าปาก (ยังไม่อยู่ในท้อง)
       if (b.out) return constrainOutside(b);
       const floorIn = SH.floor ?? -3;
       if (b.y + b.r > floorIn) b.y = floorIn - b.r;
@@ -388,7 +396,7 @@
       if (b.x + b.r > hw) b.x = hw - b.r;
     }
     // ---- juice: สปริงโหลสั่น + อนุภาค ----
-    const fx = new Juice.Particles(), jarWobble = new Juice.Spring(140, 7);
+    const fx = new Juice.Particles(), jarWobble = new Juice.Spring(140, 7), gulp = new Juice.Spring(260, 10);
     function step() {
       const VMAX = 14;
       for (const b of bodies) {
@@ -397,6 +405,13 @@
         if (SH.water != null && !b.out && b.py <= SH.water && b.y > SH.water && vy > 2) { fx.sparkle(b.x, SH.water, 5, '#d8f1ff'); fx.dust(b.x, SH.water, 4); } // ตูม!
         if (wet && Math.random() < 0.012) fx.push({ kind: 'dust', x: b.x + (Math.random() - .5) * b.r, y: b.y - b.r, vx: 0, vy: -1.2, g: -0.02, life: 1, decay: 0.012, size: 2 + Math.random() * 3, color: 'rgba(235,248,255,.8)' }); // ฟองอากาศ
         b.px = b.x; b.py = b.y; b.x += vx; b.y += vy + g; b.vin = vy + g;
+        if (b.eat) {
+          b.x += (SH.mouth.x - b.x) * 0.08; // เล็งเข้าปาก
+          if (b.y >= SH.mouth.y - 6) { // งับ! → ไปโผล่บนกองในท้อง
+            b.eat = false; fx.sparkle(SH.mouth.x, SH.mouth.y, 6, '#fff6c2'); gulp.kick(b.d >= 1000 ? 9 : 4);
+            b.x = (Math.random() - .5) * SH.belly.rx * 0.8; b.y = SH.belly.cy - SH.belly.ry * 0.55; b.px = b.x; b.py = b.y - 1;
+          }
+        }
         b.rot += vx / b.r; b.age = (b.age || 0) + 1;
       }
       for (let it = 0; it < 4; it++) {
@@ -424,7 +439,7 @@
         }
         if (b.sq) b.sq.step(1 / 60);
       }
-      fx.step(); jarWobble.step(1 / 60);
+      fx.step(); jarWobble.step(1 / 60); gulp.step(1 / 60);
       for (let i = bodies.length - 1; i >= 0; i--) {
         const b = bodies[i];
         if (b.dying) { b.life -= 0.04; if (b.life <= 0) { bodies.splice(i, 1); save(); } }
@@ -502,9 +517,11 @@
       nowT = performance.now() / 1000;
       ctx.translate(o.x, o.y); ctx.scale(s, s);
       ctx.rotate(jarWobble.x); ctx.scale(1, Juice.breathe(nowT, 0.005)); // โหลสั่น + หายใจ (หมุนรอบก้นโหล)
+      if (SH.mouth) { const q = Math.max(-0.09, Math.min(0.09, gulp.x * 0.02)); ctx.scale(1 + q, 1 - q); } // หมูกลืน: ตัวยุบ-ยืด
       drawJarBack();
-      for (const b of bodies) drawBody(b);
+      for (const b of bodies) if (!b.eat) drawBody(b);
       drawJarFront();
+      for (const b of bodies) if (b.eat) drawBody(b); // ของที่กำลังตกเข้าปากอยู่หน้าหน้าหมู
       fx.draw(ctx);
       drawConfetti();
       requestAnimationFrame(frame);

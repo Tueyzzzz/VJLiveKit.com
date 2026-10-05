@@ -7,18 +7,20 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Itim&family=Mali:wght@500;700&display=swap');
   html,body { margin:0; width:100%; height:100%; background:transparent; overflow:hidden; font-family:'Mali','Itim',sans-serif; }
-  #board { position:fixed; top:20px; right:20px; width:min(340px,80vw); background:rgba(255,250,252,.95); border:3px solid #fff;
-    border-radius:22px; padding:14px 16px; box-shadow:0 10px 26px rgba(150,120,180,.3); }
-  .tt { font-family:'Itim',sans-serif; font-size:20px; color:#5f4a66; margin:0 0 8px; }
+  /* พื้นหลังโปร่งแสง — ?bg=0..100 (ความทึบ %, 0 = ใสทั้งหมด) */
+  #board { position:fixed; top:20px; right:20px; width:min(340px,80vw); background:rgba(25,12,35,var(--bg,.35)); border:1.5px solid rgba(255,255,255,.35);
+    border-radius:22px; padding:14px 16px; backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
+  #board.clear { border-color:transparent; backdrop-filter:none; -webkit-backdrop-filter:none; padding:0; }
+  .tt { font-family:'Itim',sans-serif; font-size:20px; color:#fff; margin:0 0 8px; text-shadow:0 2px 4px rgba(0,0,0,.6); }
   ol { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:7px; }
-  li { display:flex; align-items:center; gap:10px; padding:6px 8px; border-radius:14px; background:#f8f1fb; transition:transform .3s; }
+  li { display:flex; align-items:center; gap:10px; padding:6px 8px; border-radius:14px; background:rgba(255,255,255,.12); transition:transform .3s; }
   li.bump { animation:bump .5s ease; }
-  @keyframes bump { 50%{transform:scale(1.04);background:#ffe9f3;} }
+  @keyframes bump { 50%{transform:scale(1.04);background:rgba(255,106,168,.35);} }
   .rk { width:26px; text-align:center; font-family:'Itim',sans-serif; font-size:18px; }
   .ava { width:34px; height:34px; border-radius:50%; display:grid; place-items:center; color:#fff; font-family:'Itim',sans-serif; background-size:cover; background-position:center; flex:none; }
-  .nm { flex:1; min-width:0; font-size:16px; color:#5f4a66; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .val { font-family:'Itim',sans-serif; font-size:15px; color:#f5a623; font-variant-numeric:tabular-nums; }
-  .empty { font-size:14px; color:#ab96b5; padding:6px 2px; }
+  .nm { flex:1; min-width:0; font-size:16px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.7); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .val { font-family:'Itim',sans-serif; font-size:15px; color:#ffd76a; text-shadow:0 1px 3px rgba(0,0,0,.7); font-variant-numeric:tabular-nums; }
+  .empty { font-size:14px; color:rgba(255,255,255,.8); background:none; text-shadow:0 1px 3px rgba(0,0,0,.6); padding:6px 2px; }
 </style>
 </head>
 <body>
@@ -30,7 +32,10 @@
   <script src="js/overlay-client.js"></script>
   <script>
   (function(){
-    // ?max=5 จำนวนอันดับ  ?label=หัวข้อ
+    // ?max=5 จำนวนอันดับ  ?label=หัวข้อ  ?bg=35 ความทึบพื้นหลัง (0 = ใส)
+    const BG=Math.max(0,Math.min(100,parseFloat(Overlay.param('bg','35'))||0))/100;
+    document.getElementById('board').style.setProperty('--bg',String(BG));
+    if(BG===0) document.getElementById('board').classList.add('clear');
     // นับเพชรสะสมตลอดไลฟ์ (เซิร์ฟเวอร์จำไว้ — รีเฟรชแล้วไม่หาย)
     const MAX=Math.max(1,Math.min(20,parseInt(Overlay.param('max','5'),10)||5));
     document.getElementById('title').textContent=Overlay.param('label','🏆 Top Gifters');

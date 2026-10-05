@@ -15,7 +15,7 @@ const PARAM_HINTS: Record<string, string> = {
   goal: '&type=like|follow|share|diamond|gift&target=10000&label=...',
   chat: '&max=8',
   follower: '&label=...&showCount=0',
-  topgifters: '&max=5&label=...',
+  topgifters: '&max=5&label=...&bg=35',
   tts: '&lang=th-TH&rate=1&readChat=1&readGift=1&minGift=1',
 };
 

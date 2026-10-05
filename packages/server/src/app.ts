@@ -44,7 +44,12 @@ export async function buildApp(): Promise<FastifyInstance> {
     reply.header('cache-control', 'no-cache, no-store, must-revalidate');
     if (!/^[\w-]+\.html$/.test(page)) return reply.sendFile(page);
     // วิดเจ็ตที่ใช้ไฟล์เดียวกันแต่ค่าเริ่มต้นต่างกัน (ลิงก์/ตั้งค่า/ข้อมูลแยกกัน)
-    const ALIAS: Record<string, { file: string; defaults: Record<string, string> }> = { 'tree.html': { file: 'garden.html', defaults: { skin: 'tree' } } };
+    const ALIAS: Record<string, { file: string; defaults: Record<string, string> }> = {
+      'tree.html': { file: 'garden.html', defaults: { skin: 'tree' } },
+      'belly.html': { file: 'giftjar.html', defaults: { shape: 'pig' } },
+      'snowglobe.html': { file: 'giftjar.html', defaults: { shape: 'snow' } },
+      'vehicle.html': { file: 'giftjar.html', defaults: { shape: 'van' } },
+    };
     const alias = ALIAS[page];
     let html: string;
     try { html = await fs.promises.readFile(path.join(OVERLAY_DIR, alias ? alias.file : page), 'utf8'); }

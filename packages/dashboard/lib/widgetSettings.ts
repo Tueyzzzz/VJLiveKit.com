@@ -52,14 +52,113 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
           ['moon', 'ตู้ปลาพระจันทร์', '🫙 โหลและตู้ (ภาพ 3D)', 'gj-moon'],
           ['gacha', 'ตู้ปลากาชาปอง', '🫙 โหลและตู้ (ภาพ 3D)', 'gj-gacha'],
           ['shell', 'ตู้ปลาเปลือกหอย', '🫙 โหลและตู้ (ภาพ 3D)', 'gj-shell'],
-          ['pig', 'หมูท้องใส งับของขวัญ', '🐷 ตัวละคร (ภาพ 3D)', 'gj-pig'], ['catbelly', 'แมวท้องใส', '🐷 ตัวละคร (ภาพ 3D)', 'gj-catbelly'], ['jdino', 'ไดโนเสาร์ท้องใส', '🐷 ตัวละคร (ภาพ 3D)', 'gj-jdino'], ['jbear', 'หมีท้องใส', '🐷 ตัวละคร (ภาพ 3D)', 'gj-jbear'], ['jfrog', 'กบท้องใส', '🐷 ตัวละคร (ภาพ 3D)', 'gj-jfrog'],
-          ['snow', 'ลูกแก้วหิมะ (ภาพ 3D)', '❄️ ลูกแก้วหิมะ', 'gj-snow'],
-          ['van', 'รถหัวใจ (ภาพ 3D)', '🚐 ยานพาหนะ', 'gj-van'], ['sub', 'เรือดำน้ำ (ภาพ 3D)', '🚐 ยานพาหนะ', 'gj-sub'],
+         
          
         ] },
-        { key: 'body', label: 'สีรถ', type: 'color', def: '#bfe9e6', when: (v) => v.shape === 'car' },
         ...tint((v) => ['heart', 'orb', 'tank', 'pig', 'sundae', 'jstar', 'jbasket', 'cauldron', 'catbank', 'jsnowman', 'catbelly', 'jdino', 'jbear', 'jfrog', 'castle', 'fishbowl', 'hearttank', 'moon', 'gacha', 'shell', 'sub', 'snow', 'van'].includes(String(v.shape))),
         { key: 'full', label: 'เมื่อโหลเต็ม', type: 'select', when: (v) => !['car', 'globe', 'heart', 'snow', 'van', 'pig', 'sub', 'jstar', 'catbank', 'jsnowman', 'catbelly', 'jdino', 'jbear', 'jfrog'].includes(String(v.shape)), def: 'spill', options: [['spill', 'ล้นออกมากองข้างโหล'], ['fade', 'ชิ้นเก่าสุดค่อย ๆ หายไป'], ['reset', 'ฉลอง แล้วเทโหลเริ่มใหม่']] },
+        { key: 'fullText', label: 'ข้อความตอนโหลเต็ม', type: 'text', def: 'โหลเต็มแล้ว! 🎉', when: (v) => v.full === 'reset' },
+      ] },
+      { title: 'ขนาดและตำแหน่ง', fields: [
+        size(),
+        { key: 'giftScale', label: 'ขนาดของขวัญ', type: 'range', min: 0.5, max: 2.5, step: 0.05, def: 1, unit: '×', hint: 'ยิ่งเล็ก ยิ่งกองได้มาก — 1× ≈ 600 ชิ้น · 0.7× ≈ 1,200 · 0.55× = 2,000 (สูงสุด)' },
+        ...pos(),
+      ] },
+      { title: 'ของขวัญ', fields: [
+        { key: 'minCoins', label: 'รับเฉพาะของขวัญตั้งแต่ (เหรียญ)', type: 'number', min: 0, def: 0, hint: '0 = รับทุกชิ้น' },
+      ] },
+      { title: 'แจ้งเตือนผู้ส่ง', fields: [
+        { key: 'alert', label: 'แสดงชื่อผู้ส่งเหนือโหล', type: 'toggle', def: true },
+        { key: 'alertSec', label: 'แสดงนาน (วินาที)', type: 'number', min: 1, max: 30, def: 5, when: (v) => !!v.alert },
+      ] },
+      { title: 'ผู้ให้สูงสุด', fields: [
+        { key: 'board', label: 'แสดงใต้โหล', type: 'toggle', def: true },
+        { key: 'top', label: 'จำนวนคน', type: 'number', min: 1, max: 10, def: 1, when: (v) => !!v.board },
+        { key: 'boardFormat', label: 'รูปแบบ', type: 'select', def: 'full', options: [['full', 'รูป + ชื่อ + เหรียญ'], ['name', 'ชื่ออย่างเดียว']], when: (v) => !!v.board },
+        { key: 'total', label: 'แสดงยอดเหรียญรวมเหนือโหล', type: 'toggle', def: false },
+      ] },
+      { title: 'ตัวอักษร', fields: [
+        { key: 'font', label: 'ฟอนต์', type: 'select', def: 'Kanit', options: FONTS },
+        { key: 'fontSize', label: 'ขนาดตัวอักษร', type: 'range', min: 30, max: 90, step: 2, def: 50 },
+      ] },
+    ],
+  },
+  vehicle: {
+    resettable: 'ล้างของขวัญและอันดับ',
+    sections: [
+      { title: 'ยานพาหนะ', fields: [
+        { key: 'shape', label: 'ยานพาหนะ', type: 'select', def: 'van', options: [
+          ['van', 'รถหัวใจ (ภาพ 3D)', '🚐 ยานพาหนะ', 'gj-van'], ['sub', 'เรือดำน้ำ (ภาพ 3D)', '🚐 ยานพาหนะ', 'gj-sub'],
+        ] },
+        ...tint(() => true),
+        { key: 'fullText', label: 'ข้อความตอนโหลเต็ม', type: 'text', def: 'โหลเต็มแล้ว! 🎉', when: (v) => v.full === 'reset' },
+      ] },
+      { title: 'ขนาดและตำแหน่ง', fields: [
+        size(),
+        { key: 'giftScale', label: 'ขนาดของขวัญ', type: 'range', min: 0.5, max: 2.5, step: 0.05, def: 1, unit: '×', hint: 'ยิ่งเล็ก ยิ่งกองได้มาก — 1× ≈ 600 ชิ้น · 0.7× ≈ 1,200 · 0.55× = 2,000 (สูงสุด)' },
+        ...pos(),
+      ] },
+      { title: 'ของขวัญ', fields: [
+        { key: 'minCoins', label: 'รับเฉพาะของขวัญตั้งแต่ (เหรียญ)', type: 'number', min: 0, def: 0, hint: '0 = รับทุกชิ้น' },
+      ] },
+      { title: 'แจ้งเตือนผู้ส่ง', fields: [
+        { key: 'alert', label: 'แสดงชื่อผู้ส่งเหนือโหล', type: 'toggle', def: true },
+        { key: 'alertSec', label: 'แสดงนาน (วินาที)', type: 'number', min: 1, max: 30, def: 5, when: (v) => !!v.alert },
+      ] },
+      { title: 'ผู้ให้สูงสุด', fields: [
+        { key: 'board', label: 'แสดงใต้โหล', type: 'toggle', def: true },
+        { key: 'top', label: 'จำนวนคน', type: 'number', min: 1, max: 10, def: 1, when: (v) => !!v.board },
+        { key: 'boardFormat', label: 'รูปแบบ', type: 'select', def: 'full', options: [['full', 'รูป + ชื่อ + เหรียญ'], ['name', 'ชื่ออย่างเดียว']], when: (v) => !!v.board },
+        { key: 'total', label: 'แสดงยอดเหรียญรวมเหนือโหล', type: 'toggle', def: false },
+      ] },
+      { title: 'ตัวอักษร', fields: [
+        { key: 'font', label: 'ฟอนต์', type: 'select', def: 'Kanit', options: FONTS },
+        { key: 'fontSize', label: 'ขนาดตัวอักษร', type: 'range', min: 30, max: 90, step: 2, def: 50 },
+      ] },
+    ],
+  },
+  snowglobe: {
+    resettable: 'ล้างของขวัญในลูกแก้วและอันดับ',
+    sections: [
+      { title: 'ลูกแก้วหิมะ', fields: [
+        { key: 'shape', label: 'ลูกแก้ว', type: 'select', def: 'snow', options: [
+          ['snow', 'ลูกแก้วหิมะบ้านกระต่าย', '❄️ ลูกแก้วหิมะ (ภาพ 3D)', 'gj-snow'],
+        ] },
+        ...tint(() => true),
+        { key: 'fullText', label: 'ข้อความตอนโหลเต็ม', type: 'text', def: 'โหลเต็มแล้ว! 🎉', when: (v) => v.full === 'reset' },
+      ] },
+      { title: 'ขนาดและตำแหน่ง', fields: [
+        size(),
+        { key: 'giftScale', label: 'ขนาดของขวัญ', type: 'range', min: 0.5, max: 2.5, step: 0.05, def: 1, unit: '×', hint: 'ยิ่งเล็ก ยิ่งกองได้มาก — 1× ≈ 600 ชิ้น · 0.7× ≈ 1,200 · 0.55× = 2,000 (สูงสุด)' },
+        ...pos(),
+      ] },
+      { title: 'ของขวัญ', fields: [
+        { key: 'minCoins', label: 'รับเฉพาะของขวัญตั้งแต่ (เหรียญ)', type: 'number', min: 0, def: 0, hint: '0 = รับทุกชิ้น' },
+      ] },
+      { title: 'แจ้งเตือนผู้ส่ง', fields: [
+        { key: 'alert', label: 'แสดงชื่อผู้ส่งเหนือโหล', type: 'toggle', def: true },
+        { key: 'alertSec', label: 'แสดงนาน (วินาที)', type: 'number', min: 1, max: 30, def: 5, when: (v) => !!v.alert },
+      ] },
+      { title: 'ผู้ให้สูงสุด', fields: [
+        { key: 'board', label: 'แสดงใต้โหล', type: 'toggle', def: true },
+        { key: 'top', label: 'จำนวนคน', type: 'number', min: 1, max: 10, def: 1, when: (v) => !!v.board },
+        { key: 'boardFormat', label: 'รูปแบบ', type: 'select', def: 'full', options: [['full', 'รูป + ชื่อ + เหรียญ'], ['name', 'ชื่ออย่างเดียว']], when: (v) => !!v.board },
+        { key: 'total', label: 'แสดงยอดเหรียญรวมเหนือโหล', type: 'toggle', def: false },
+      ] },
+      { title: 'ตัวอักษร', fields: [
+        { key: 'font', label: 'ฟอนต์', type: 'select', def: 'Kanit', options: FONTS },
+        { key: 'fontSize', label: 'ขนาดตัวอักษร', type: 'range', min: 30, max: 90, step: 2, def: 50 },
+      ] },
+    ],
+  },
+  belly: {
+    resettable: 'ล้างของขวัญในท้องและอันดับ',
+    sections: [
+      { title: 'ตัวละคร', fields: [
+        { key: 'shape', label: 'ตัวละคร', type: 'select', def: 'pig', options: [
+          ['pig', 'หมูท้องใส งับของขวัญ', '🐷 ตัวละครท้องใส (ภาพ 3D)', 'gj-pig'], ['catbelly', 'แมวท้องใส', '🐷 ตัวละครท้องใส (ภาพ 3D)', 'gj-catbelly'], ['jdino', 'ไดโนเสาร์ท้องใส', '🐷 ตัวละครท้องใส (ภาพ 3D)', 'gj-jdino'], ['jbear', 'หมีท้องใส', '🐷 ตัวละครท้องใส (ภาพ 3D)', 'gj-jbear'], ['jfrog', 'กบท้องใส', '🐷 ตัวละครท้องใส (ภาพ 3D)', 'gj-jfrog'],
+        ] },
+        ...tint(() => true),
         { key: 'fullText', label: 'ข้อความตอนโหลเต็ม', type: 'text', def: 'โหลเต็มแล้ว! 🎉', when: (v) => v.full === 'reset' },
       ] },
       { title: 'ขนาดและตำแหน่ง', fields: [

@@ -672,7 +672,7 @@
     }
 
     // ---- จำโหลไว้ (รีเฟรช OBS แล้วไม่หาย) ----
-    const KEY = 'vjl-giftjar:' + (P('t', '') || P('username', 'demo')).slice(-24);
+    const KEY = (Overlay.widget === 'belly' ? 'vjl-belly:' : Overlay.widget === 'snowglobe' ? 'vjl-snowglobe:' : Overlay.widget === 'vehicle' ? 'vjl-vehicle:' : 'vjl-giftjar:') + (P('t', '') || P('username', 'demo')).slice(-24); // ตัวละคร/โหล จำแยกกัน
     let saveTimer = null, restoreUntil = 0;
     function saveNow() {
       if (performance.now() < restoreUntil) return; // ยังกู้ของขวัญกลับมาไม่ครบ → อย่าบันทึกทับ (กันของหายตอนรีโหลดซ้อน)

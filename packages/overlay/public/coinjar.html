@@ -61,7 +61,7 @@
     const fromSkin = (px, py) => ({ x: SKIN.x0 + px * SKIN.k, y: SKIN.y0 + py * SKIN.k });
     if (SKIN) {
       Object.assign(M, { x0: 951, x1: 1231, y0: 440, y1: 700, depth: 0 });
-      Object.assign(MOUTH, { x0: 957, x1: 1030, y0: 505, y1: 562 });
+      Object.assign(MOUTH, { x0: 957, x1: 1030, y0: 470, y1: 562 }); // เผื่อด้านบนอุโมงค์ ของขวัญที่เด้งจะไม่ถูกดันขึ้นหลังคา
       Object.assign(SCREEN, { x0: 1100, x1: 1164, y0: 486, y1: 541 });
       Object.assign(BELT_A, fromSkin(540, 756)); Object.assign(BELT_B, fromSkin(50, 810));
       BELT_TH = 40;
@@ -85,7 +85,7 @@
       const r = radiusFor(g.d);
       const b = { r, rot: Math.random() * 6.28, img: giftImg(g.u), e: g.e || '🎁', d: g.d || 1, src: g, life: 1, age: 0 };
       if (mode === 'restore') { b.x = BELT_B.x - 50 + Math.random() * 60; b.y = FLOOR - 150 - Math.random() * 500; }
-      else if (SKIN) { b.x = MOUTH.x1 - 22 - Math.random() * 12; b.y = MOUTH.y0 + 10 + Math.random() * 12; }
+      else if (SKIN) { b.x = MOUTH.x1 - 22 - Math.random() * 12; b.y = MOUTH.y0 + 45 + Math.random() * 12; }
       else { b.x = MOUTH.x0 + 18 + Math.random() * 20; b.y = MOUTH.y0 + 40 + Math.random() * 50; }
       b.px = b.x + (mode === 'restore' ? 0 : 1.5 + Math.random()); b.py = b.y;
       bodies.push(b);
@@ -124,6 +124,7 @@
         if (pl < pt) b.x -= pl; else b.y -= pt;
       }
       if (inMouthZone && b.x + b.r > MOUTH.x1) b.x = MOUTH.x1 - b.r;
+      if (SKIN && inMouthZone && b.x > M.x0 && b.y - b.r < MOUTH.y0) { b.y = MOUTH.y0 + b.r; b.py = b.y; } // เพดานอุโมงค์
       // พื้น + ขอบจอ
       if (b.y + b.r > FLOOR) { b.y = FLOOR - b.r; b.px = b.x - (b.x - b.px) * 0.5; } // แรงเสียดทานพื้น → กองเป็นภูเขา
       const left = -TX / S, right = (W - TX) / S;
@@ -208,6 +209,21 @@
       const sc = Juice.breathe(nowT, 0.01) + machinePunch.x;
       ctx.translate(bx, FLOOR); ctx.scale(1 - (sc - 1) * 0.5, sc); ctx.translate(-bx, -FLOOR);
       ctx.drawImage(skinImg, SKIN.x0, SKIN.y0, W2, H2);
+      // สายพานเลื่อน: ร่องสายพานวิ่งทับผิวสายพานในรูป (clip ตามผิว) — เลื่อนไปทางปลายซ้ายตามความเร็วฟิสิกส์
+      {
+        const b0 = fromSkin(60, 812), b1 = fromSkin(545, 762), f0 = fromSkin(72, 858), f1 = fromSkin(545, 826);
+        const lerp = (p, q, t) => ({ x: p.x + (q.x - p.x) * t, y: p.y + (q.y - p.y) * t });
+        ctx.save();
+        ctx.beginPath(); ctx.moveTo(b0.x, b0.y); ctx.lineTo(b1.x, b1.y); ctx.lineTo(f1.x, f1.y); ctx.lineTo(f0.x, f0.y); ctx.closePath(); ctx.clip();
+        const len = Math.hypot(b1.x - b0.x, b1.y - b0.y), gap = 0.075, off = ((beltOffset / len) % gap + gap) % gap;
+        ctx.lineCap = 'round';
+        for (let t = 1 - off; t > -gap; t -= gap) {
+          const p = lerp(b0, b1, t), q = lerp(f0, f1, t);
+          ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.lineWidth = 2.2; ctx.strokeStyle = 'rgba(110,80,170,.35)'; ctx.stroke(); // ร่อง
+          ctx.beginPath(); ctx.moveTo(p.x + 2, p.y); ctx.lineTo(q.x + 2, q.y); ctx.lineWidth = 1.6; ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.stroke(); // สันสะท้อนแสง
+        }
+        ctx.restore();
+      }
       // จอ: รูปของขวัญล่าสุดเรืองแสง (ยังไม่มีของขวัญ = โชว์หัวใจพิกเซลในรูป)
       if (screenImg && screenImg.complete && screenImg.naturalWidth) {
         const cx = (SCREEN.x0 + SCREEN.x1) / 2, cy = (SCREEN.y0 + SCREEN.y1) / 2, sz = 44;

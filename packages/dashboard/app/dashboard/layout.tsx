@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { LayoutDashboard, LayoutTemplate, Zap, CreditCard, LogOut, Gift } from 'lucide-react';
+import { LayoutDashboard, LayoutTemplate, Zap, CreditCard, LogOut, Gift, Shield } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { Badge, Spinner, cx } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
@@ -18,7 +18,7 @@ const NAV = [
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { user, entitlements, loading, logout } = useAuth();
+  const { user, entitlements, isAdmin, loading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -33,7 +33,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <Logo href="/dashboard/" />
         </div>
         <nav className="flex gap-1 overflow-x-auto px-3 pb-3 md:flex-col md:pb-0">
-          {NAV.map(({ href, label, icon: Icon }) => {
+          {[...NAV, ...(isAdmin ? [{ href: '/dashboard/admin/', label: 'หลังบ้าน (แอดมิน)', icon: Shield }] : [])].map(({ href, label, icon: Icon }) => {
             const active = pathname === href || pathname === href.replace(/\/$/, '');
             return (
               <Link key={href} href={href}

@@ -49,6 +49,9 @@ repo → **Settings → Secrets and variables → Actions**
 
 **Variables** (แท็บ Variables):
 
+- `ADMIN_EMAILS` — อีเมลแอดมิน คั่นด้วย `,` (เข้าหน้าหลังบ้าน `/dashboard/admin/`)
+
+
 | ชื่อ | ค่า |
 |------|-----|
 | `DEPLOY_ENABLED` | `true` ← สวิตช์เปิด deploy |

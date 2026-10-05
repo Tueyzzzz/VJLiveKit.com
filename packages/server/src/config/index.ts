@@ -31,6 +31,9 @@ export const config = {
     publicKey: process.env.OMISE_PUBLIC_KEY,
   },
 
+  /** อีเมลแอดมิน (คั่นด้วย ,) — เข้าหน้าหลังบ้าน /dashboard/admin/ */
+  adminEmails: (process.env.ADMIN_EMAILS || '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean),
+
   publicBaseUrl: (process.env.PUBLIC_BASE_URL ?? 'http://localhost:8080').replace(/\/+$/, ''),
 
   /** โฟลเดอร์ไฟล์ static ของ Dashboard (Next.js static export) — ไม่มีก็ข้าม */

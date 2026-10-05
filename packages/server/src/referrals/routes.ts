@@ -38,7 +38,7 @@ async function stats(referrerId: string) {
 }
 
 /** ต่ออายุ Pro ให้ผู้แนะนำ (นับต่อจากวันหมดเดิม/วันหมดช่วงทดลอง ไม่เสียวันที่เหลือ) */
-async function grantDays(userId: string, days: number): Promise<void> {
+export async function grantDays(userId: string, days: number): Promise<void> {
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { createdAt: true, subscription: true } });
   const plan = await prisma.plan.findUnique({ where: { code: 'pro' } });
   if (!user || !plan) return;

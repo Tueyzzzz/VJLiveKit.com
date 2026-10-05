@@ -176,6 +176,15 @@ export class RoomHub {
     await entry.room.disconnect();
   }
 
+  /** รายการห้องทั้งหมด (หน้าแอดมิน) */
+  listRooms() {
+    return [...this.rooms.entries()].map(([key, e]) => {
+      const st = e.room.getState();
+      return { username: key, connected: st.connected, roomId: st.roomId, widgets: e.viewers, owners: e.owners.size,
+        diamonds: st.stats.diamondCount, gifts: st.stats.giftCount, likes: st.stats.likeCount, viewers: st.stats.viewerCount ?? 0, topGifter: st.topGifters[0]?.nickname ?? null };
+    }).sort((a, b) => Number(b.connected) - Number(a.connected) || b.diamonds - a.diamonds);
+  }
+
   /** จำนวนห้องที่เชื่อม TikTok อยู่ (กำลังไลฟ์) */
   liveCount(): number { let n = 0; for (const e of this.rooms.values()) if (e.room.isConnected()) n++; return n; }
 

@@ -21,7 +21,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter();
   const pathname = usePathname();
 
-  useEffect(() => { if (!loading && !user) router.replace('/login/'); }, [loading, user, router]);
+  useEffect(() => { if (!loading && !user) router.replace(`/login/?next=${encodeURIComponent(window.location.pathname + window.location.search)}`); }, [loading, user, router]);
 
   if (loading || !user) return <Spinner />;
 

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
 import { ArrowRight, CheckCircle2, Circle } from 'lucide-react';
 import { Alert, Badge, Button, Card, Field, Input, PageHeader } from '@/components/ui';
+import { ChangePassword } from '@/components/ChangePassword';
 import { api, planLabel, type Me } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 
@@ -91,6 +92,7 @@ export default function OverviewPage() {
               ))}
             </ol>
           </Card>
+          <ChangePassword />
         </div>
       </div>
     </div>

@@ -66,6 +66,20 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
   });
 
   // แก้โปรไฟล์ (ชื่อที่แสดง, ชื่อ TikTok ที่จะเชื่อมไลฟ์)
+  // เปลี่ยนรหัสผ่าน (ต้องยืนยันรหัสเดิม)
+  app.post('/api/auth/password', { preHandler: requireUser, config: { rateLimit: { max: 10, timeWindow: '15 minutes' } } }, async (req, reply) => {
+    const claims = getUser(req)!;
+    const b = (req.body ?? {}) as { current?: string; next?: string };
+    if (typeof b.next !== 'string' || b.next.length < 8) return reply.code(400).send({ error: 'รหัสผ่านใหม่อย่างน้อย 8 ตัวอักษร' });
+    const user = await prisma.user.findUnique({ where: { id: claims.userId }, select: { passwordHash: true } });
+    if (!user) return reply.code(401).send({ error: 'ไม่พบผู้ใช้' });
+    if (user.passwordHash && !(await verifyPassword(String(b.current ?? ''), user.passwordHash))) {
+      return reply.code(400).send({ error: 'รหัสผ่านปัจจุบันไม่ถูกต้อง' });
+    }
+    await prisma.user.update({ where: { id: claims.userId }, data: { passwordHash: await hashPassword(b.next) } });
+    return { ok: true };
+  });
+
   app.patch('/api/auth/me', { preHandler: requireUser }, async (req, reply) => {
     const claims = getUser(req)!;
     const parsed = profileSchema.safeParse(req.body);

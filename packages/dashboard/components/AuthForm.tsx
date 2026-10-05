@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Logo } from './Logo';
 import { Alert, Button, Card, Field, Input } from './ui';
+import { PasswordInput } from './PasswordInput';
 import { api, ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 
@@ -14,7 +15,9 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => { if (user) router.replace('/dashboard/'); }, [user, router]);
+  // หลังล็อกอิน → กลับไปหน้าที่เปิดค้างไว้ (เฉพาะหน้าในแดชบอร์ด)
+  const nextPath = () => { const n = new URLSearchParams(window.location.search).get('next') ?? ''; return n.startsWith('/dashboard/') ? n : '/dashboard/'; };
+  useEffect(() => { if (user) router.replace(nextPath()); }, [user, router]);
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -29,7 +32,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
       };
       const res = await api<{ token: string }>(`/api/auth/${mode}`, { method: 'POST', body });
       await login(res.token);
-      router.replace('/dashboard/');
+      router.replace(nextPath());
     } catch (err) {
       setError(err instanceof ApiError && err.status === 400 && mode === 'register'
         ? 'กรุณากรอกอีเมลให้ถูกต้อง และรหัสผ่านอย่างน้อย 8 ตัวอักษร'
@@ -55,7 +58,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
             <Input name="email" type="email" required autoComplete="email" placeholder="you@example.com" />
           </Field>
           <Field label="รหัสผ่าน" hint={isLogin ? undefined : 'อย่างน้อย 8 ตัวอักษร'}>
-            <Input name="password" type="password" required minLength={8} autoComplete={isLogin ? 'current-password' : 'new-password'} />
+            <PasswordInput name="password" required minLength={8} autoComplete={isLogin ? 'current-password' : 'new-password'} />
           </Field>
           {error && <Alert>{error}</Alert>}
           <Button type="submit" loading={busy} className="w-full">{isLogin ? 'เข้าสู่ระบบ' : 'สร้างบัญชี'}</Button>

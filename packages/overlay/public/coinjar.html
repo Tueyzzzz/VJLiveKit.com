@@ -189,7 +189,7 @@
           const a = ord[i];
           for (let j = i + 1; j < ord.length; j++) {
             const c = ord[j], dx = c.x - a.x, dy = c.y - a.y, min = a.r + c.r;
-            if (dx > a.r + maxR) break; // ไกลเกินรัศมีใหญ่สุดที่มีอยู่ → ชิ้นถัดไปไกลกว่านี้หมด // ไกลเกินรัศมีใหญ่สุดแล้ว → ชิ้นถัดไปไกลกว่านี้หมด
+            if (dx > a.r + maxR) break; // ไกลเกินรัศมีใหญ่สุดที่มีอยู่ → ชิ้นถัดไปไกลกว่านี้หมด
             if (Math.abs(dx) > min || Math.abs(dy) > min) continue;
             const d2 = dx * dx + dy * dy;
             if (d2 >= min * min || d2 === 0) continue;

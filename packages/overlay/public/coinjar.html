@@ -36,7 +36,8 @@
     const P = (k, d) => Overlay.param(k, d);
     const num = (k, d) => { const v = parseFloat(P(k, d)); return Number.isFinite(v) ? v : d; };
     const GOAL = Math.max(1, num('goal', 10000)), SCALE = num('scale', 1), GIFT_SCALE = num('giftScale', 1), OX = num('x', 0), OY = num('y', 0);
-    if (P('counter', '1') === '0') document.getElementById('counter').style.display = 'none';
+    const SHOW_COUNTER = P('counter', '1') !== '0';
+    document.getElementById('counter').style.display = 'none'; // ตัวเลขแสดงบนหน้าเครื่องแทน
 
     const canvas = document.getElementById('fx'), ctx = canvas.getContext('2d');
     const DPR = Math.min(2, devicePixelRatio || 1);
@@ -55,8 +56,6 @@
       canvas.width = W * DPR; canvas.height = H * DPR; canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
       S = Math.min(W / DW, H / DH) * SCALE;
       TX = W - DW * S + OX; TY = H - DH * S + OY; // ชิดขวาล่าง
-      const c = toScreen(M.x0 - 150, M.y0 - 10); // ตัวเลขเพชรอยู่ซ้ายบนของเครื่อง (ไม่ทับรูปผู้ส่ง)
-      const counter = document.getElementById('counter'); counter.style.left = c.x + 'px'; counter.style.top = Math.max(4, c.y) + 'px';
     }
     const toScreen = (x, y) => ({ x: TX + x * S, y: TY + y * S });
 
@@ -64,12 +63,12 @@
     const bodies = [], MAX = 600, G = 0.55;
     const imgCache = {};
     function giftImg(url) { if (!url || !/^https:\/\//.test(url)) return null; let im = imgCache[url]; if (!im) { im = new Image(); im.src = url; imgCache[url] = im; } return im; }
-    const radiusFor = (d) => 15 * GIFT_SCALE * (1 + Math.min(1, Math.log10((d || 1) + 1) / 4) * 0.9);
+    const radiusFor = (d) => 19 * GIFT_SCALE * (1 + Math.min(1, Math.log10((d || 1) + 1) / 4) * 0.9);
 
     function addBody(g, mode) {
       const r = radiusFor(g.d);
       const b = { r, rot: Math.random() * 6.28, img: giftImg(g.u), e: g.e || '🎁', d: g.d || 1, src: g, life: 1, age: 0 };
-      if (mode === 'restore') { b.x = BELT_B.x - 260 + Math.random() * 300; b.y = FLOOR - 200 - Math.random() * 300; }
+      if (mode === 'restore') { b.x = BELT_B.x - 50 + Math.random() * 60; b.y = FLOOR - 150 - Math.random() * 500; }
       else { b.x = MOUTH.x0 + 18 + Math.random() * 20; b.y = MOUTH.y0 + 40 + Math.random() * 50; }
       b.px = b.x + (mode === 'restore' ? 0 : 1.5 + Math.random()); b.py = b.y;
       bodies.push(b);
@@ -210,8 +209,14 @@
       const pct = Math.min(1, diamonds / GOAL);
       rr(SCREEN.x0 + 12, SCREEN.y1 - 20, SCREEN.x1 - SCREEN.x0 - 24, 10, 5); ctx.fillStyle = 'rgba(157,134,232,.25)'; ctx.fill();
       if (pct > 0) { rr(SCREEN.x0 + 12, SCREEN.y1 - 20, (SCREEN.x1 - SCREEN.x0 - 24) * pct, 10, 5); ctx.fillStyle = '#ff6aa8'; ctx.fill(); }
-      // ปุ่ม
-      [['#ff93c0', 0], ['#8fe3cf', 1], ['#ffcf5c', 2]].forEach(([c, i]) => { ctx.beginPath(); ctx.arc(SCREEN.x0 + 22 + i * 30, SCREEN.y1 + 32, 9, 0, 6.2832); ctx.fillStyle = c; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke(); });
+      // ตัวเลขเพชรบนหน้าเครื่อง (ใต้จอ)
+      if (SHOW_COUNTER) {
+        const label = '💎 ' + Overlay.fmt(diamonds);
+        ctx.font = '22px Itim, sans-serif'; const tw = ctx.measureText(label).width;
+        const cx = (SCREEN.x0 + SCREEN.x1) / 2, cy = SCREEN.y1 + 32;
+        rr(cx - tw / 2 - 14, cy - 17, tw + 28, 34, 17); ctx.fillStyle = '#fffafc'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#ffcf5c'; ctx.stroke();
+        ctx.fillStyle = '#f5a623'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, cx, cy + 1);
+      }
       // ป้าย
       rr(x0 + 14, y0 + 14, 120, 30, 15); ctx.fillStyle = '#fffafc'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#ff93c0'; ctx.stroke();
       ctx.font = '16px Itim, sans-serif'; ctx.fillStyle = '#ff6aa8'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('♡ VJLiveKit', x0 + 74, y0 + 30);

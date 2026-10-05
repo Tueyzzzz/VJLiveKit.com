@@ -106,10 +106,26 @@
     const potImg = POT_SKIN ? Juice.skin(POT_SKIN.src, num('hue', 0), num('sat', 1), num('bright', 1)) : null;
     const POT_TOP = POT_SKIN ? (POT_SKIN.top ?? -179.2) : -96; // กิ่งงอกจากกลางดิน
     const SPREAD = (POT_SKIN && POT_SKIN.spread) || 46;
+    // กิ่งไม้ออกแบบให้เข้ากับแต่ละกระถาง: สีกิ่ง/กิ่งย่อย/ใบ (สลับ 2 สี) · รูปใบ · ความยาว/ความหนา · ลูกเล่นพิเศษ
+    const STEM_STYLES = {
+      image:   { stem: '#b5486b', twig: '#c45a7c', leaf: '#4fbf86', leaf2: '#ff9ec4', shape: 'heart' },
+      cat:     { stem: '#7d62b8', twig: '#9b84d6', leaf: '#c9b8ff', leaf2: '#ffc8dd', shape: 'oval' },
+      bunny:   { stem: '#6f9e5f', twig: '#88b878', leaf: '#a8e6a0', leaf2: '#ffd1dc', shape: 'round', lenK: 0.95 },
+      bear:    { stem: '#7a4b2a', twig: '#93603a', leaf: '#7cc36f', leaf2: '#f2c879', shape: 'oval', widthK: 1.25 },
+      teacup:  { stem: '#b9587a', twig: '#d27a98', leaf: '#8fd3b0', leaf2: '#ffe0a8', shape: 'round', lenK: 0.85 },
+      boot:    { stem: '#3c8f78', twig: '#55aa91', leaf: '#9ee3c8', leaf2: '#ffd6e8', shape: 'oval', lenK: 0.85 },
+      pumpkin: { stem: '#4f7f33', twig: '#6a9b47', leaf: '#8cc05a', leaf2: '#ffb46b', shape: 'oval', widthK: 1.15, curl: true },
+      star:    { stem: '#8a6cc6', twig: '#a88ce0', leaf: '#ffe08a', leaf2: '#c9b8ff', shape: 'star' },
+      cart:    { stem: '#4e8c4a', twig: '#6aa863', leaf: '#b6e3a1', leaf2: '#ffd59a', shape: 'oval', lenK: 1.05 },
+      basket:  { stem: '#7f8c3a', twig: '#9aa84e', leaf: '#d7e36a', leaf2: '#ffe9a8', shape: 'oval' },
+      tech:    { stem: '#20242e', twig: '#2a2f3b', leaf: '#FF2E88', leaf2: '#00E5FF', shape: 'neon', glow: '#00E5FF', lenK: 1.05 },
+      classic: { stem: '#b5486b', twig: '#c45a7c', leaf: '#4fbf86', leaf2: '#4fbf86', shape: 'oval' },
+    };
+    const STEM = STEM_STYLES[SKIN_NAME] || STEM_STYLES.image;
     const stems = [];
     for (let i = 0; i < 11; i++) {
       const a = -Math.PI / 2 + (i / 10 - .5) * 2.3 + (rnd() - .5) * .12; // พัดกว้าง ~130°
-      const len = 230 + rnd() * 120 - Math.abs(i - 5) * 6;
+      const len = (230 + rnd() * 120 - Math.abs(i - 5) * 6) * (STEM.lenK || 1);
       const stem = { a, len, bend: (rnd() - .5) * .5, phase: rnd() * 6.28, twigs: [] };
       for (let k = 0; k < 3; k++) stem.twigs.push({ t: .35 + k * .2 + rnd() * .08, a: (rnd() < .5 ? -1 : 1) * (.45 + rnd() * .35), len: 50 + rnd() * 55 });
       stems.push(stem);
@@ -287,23 +303,47 @@
     function drawSoilTufts(time) {
       for (const t of TUFTS) { const p = stemPoint(t.st, 0, time); ctx.beginPath(); ctx.arc(p.x + t.dx, p.y + t.dy, t.r, 0, Math.PI * 2); ctx.fillStyle = t.c; ctx.fill(); }
     }
+    function leafPath(shape, s) { // ใบไม้แต่ละแบบ (จุดเริ่ม = โคนใบ ชี้ไปทาง +x)
+      ctx.beginPath();
+      if (shape === 'heart') { ctx.moveTo(0, 0); ctx.bezierCurveTo(s * 0.5, -s * 0.9, s * 1.5, -s * 0.4, s * 1.1, s * 0.15); ctx.lineTo(0, 0); ctx.bezierCurveTo(s * 0.5, s * 0.9, s * 1.5, s * 0.4, s * 1.1, -s * 0.15); }
+      else if (shape === 'round') ctx.arc(s * 0.65, 0, s * 0.6, 0, Math.PI * 2);
+      else if (shape === 'star') { for (let k = 0; k < 10; k++) { const r = k % 2 ? s * 0.32 : s * 0.75, a = k * Math.PI / 5 - Math.PI / 2; ctx.lineTo(s * 0.7 + Math.cos(a) * r, Math.sin(a) * r); } ctx.closePath(); }
+      else ctx.ellipse(s * 0.65, 0, s * (shape === 'neon' ? 0.75 : 0.95), s * (shape === 'neon' ? 0.26 : 0.42), 0, 0, Math.PI * 2);
+    }
     function drawStems(time) {
       ctx.lineCap = 'round';
-      for (const st of stems) {
-        ctx.strokeStyle = '#b5486b'; let prev = stemPoint(st, 0, time);
+      const wk = STEM.widthK || 1;
+      if (STEM.glow) { ctx.save(); ctx.shadowColor = STEM.glow; ctx.shadowBlur = 10; }
+      stems.forEach((st, si) => {
+        ctx.strokeStyle = STEM.stem; let prev = stemPoint(st, 0, time);
         for (let t = .05; t <= 1.001; t += .05) { // เส้นเรียวจากโคนหนาไปปลายบาง
           const p = stemPoint(st, t, time); ctx.beginPath(); ctx.moveTo(prev.x, prev.y); ctx.lineTo(p.x, p.y);
-          ctx.lineWidth = 7.5 - 5 * t; ctx.stroke(); prev = p;
+          ctx.lineWidth = (7.5 - 5 * t) * wk; ctx.stroke(); prev = p;
         }
-        for (const tw of st.twigs) {
+        if (STEM.glow) { // ไฟนีออนวิ่งตามกิ่ง
+          ctx.beginPath(); let q = stemPoint(st, 0.08, time); ctx.moveTo(q.x, q.y);
+          for (let t = .13; t <= 1.001; t += .05) { q = stemPoint(st, t, time); ctx.lineTo(q.x, q.y); }
+          ctx.lineWidth = 1.6; ctx.strokeStyle = si % 2 ? STEM.leaf : STEM.glow; ctx.globalAlpha = 0.75 + 0.25 * Math.sin(time * 3 + si); ctx.stroke(); ctx.globalAlpha = 1;
+        }
+        st.twigs.forEach((tw, ti) => {
           const a = stemPoint(st, tw.t, time); ctx.beginPath(); ctx.moveTo(a.x, a.y);
           const e = slotPoint({ stem: st, twig: tw, t: 1 }, time); const mx = (a.x + e.x) / 2, my = (a.y + e.y) / 2, nx = -(e.y - a.y) * 0.22 * Math.sign(tw.a), ny = (e.x - a.x) * 0.22 * Math.sign(tw.a); ctx.quadraticCurveTo(mx + nx, my + ny - 4, e.x, e.y); // กิ่งย่อยโค้ง
-          ctx.lineWidth = 3; ctx.strokeStyle = '#c45a7c'; ctx.stroke();
-          // ใบ
-          ctx.save(); ctx.translate(e.x, e.y); ctx.rotate(st.a + tw.a);
-          ctx.beginPath(); ctx.ellipse(6, 0, 9, 4, 0, 0, Math.PI * 2); ctx.fillStyle = '#4fbf86'; ctx.fill(); ctx.restore();
-        }
-      }
+          ctx.lineWidth = 3 * wk; ctx.strokeStyle = STEM.twig; ctx.stroke();
+          if (STEM.curl && (si + ti) % 2 === 0) { // ฟักทอง: มือเกาะม้วนเป็นวง
+            ctx.beginPath(); for (let k = 0; k <= 24; k++) { const ang = k * 0.45, rr = 9 - k * 0.34; ctx.lineTo(e.x + Math.cos(ang + st.a) * rr, e.y + Math.sin(ang + st.a) * rr); }
+            ctx.lineWidth = 1.6; ctx.strokeStyle = STEM.twig; ctx.stroke();
+          }
+          // ใบ (สลับ 2 สี)
+          ctx.save(); ctx.translate(e.x, e.y); ctx.rotate(st.a + tw.a + Math.sin(time * 1.2 + si + ti) * 0.08);
+          leafPath(STEM.shape, 10); ctx.fillStyle = (si + ti) % 3 === 0 ? STEM.leaf2 : STEM.leaf; ctx.fill();
+          if (STEM.shape !== 'neon') { ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.stroke(); }
+          ctx.restore();
+          // ใบเล็กกลางกิ่งย่อย
+          ctx.save(); ctx.translate(mx + nx * 0.5, my + ny * 0.5); ctx.rotate(st.a + tw.a - 0.7);
+          leafPath(STEM.shape, 6.5); ctx.fillStyle = STEM.leaf; ctx.fill(); ctx.restore();
+        });
+      });
+      if (STEM.glow) ctx.restore();
     }
     const pop = (born, now) => { const k = Math.min(1, (now - born) / 450); return k < 1 ? 1.25 * Math.sin(k * Math.PI / 2) - 0.25 * Math.sin(k * Math.PI) : 1; };
     function drawGift(img, emoji, size) {

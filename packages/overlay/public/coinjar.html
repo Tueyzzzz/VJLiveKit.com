@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Coin Jar Overlay</title>
+<style>
+  /* OBS overlay — พื้นหลังโปร่งใส */
+  @import url('https://fonts.googleapis.com/css2?family=Itim&display=swap');
+  html,body { margin:0; width:100%; height:100%; background:transparent; overflow:hidden; font-family:'Itim',sans-serif; }
+  #stage { position:fixed; inset:0; }
+  #fx { position:absolute; inset:0; z-index:5; pointer-events:none; }
+  .counter { position:absolute; top:24px; left:50%; transform:translateX(-50%); z-index:10;
+    background:rgba(255,250,252,.92); color:#f5a623; font-size:30px; padding:8px 24px; border-radius:999px;
+    border:3px solid #fff; box-shadow:0 8px 20px rgba(150,120,180,.3); font-variant-numeric:tabular-nums; }
+  .counter small { color:#9d86e8; font-size:16px; }
+
+  .machine { position:absolute; right:4%; bottom:5%; width:min(360px,42vw); aspect-ratio:1/0.95; z-index:3; }
+  .machine.shake { animation:shake .45s ease; }
+  @keyframes shake { 0%,100%{transform:translate(0,0) rotate(0);} 20%{transform:translate(-6px,3px) rotate(-1.5deg);} 40%{transform:translate(6px,-3px) rotate(1.5deg);} 60%{transform:translate(-4px,2px) rotate(-1deg);} 80%{transform:translate(3px,-1px) rotate(.8deg);} }
+  .body { position:absolute; right:0; bottom:0; width:80%; height:76%; border-radius:12% ; background:linear-gradient(145deg,#c5f0f2,#e7dafc 52%,#ffe1ef); box-shadow:20px 22px 44px rgba(150,120,180,.28),inset 0 4px 0 rgba(255,255,255,.8); border:3px solid #fff; }
+  .base { position:absolute; right:2%; bottom:-1%; width:76%; height:18%; border-radius:0 0 10% 10%; background:linear-gradient(180deg,#d2bdf7,#b49cf0); }
+  .handle { position:absolute; right:16%; top:-1%; width:20%; height:16%; border:12px solid #b9a6f2; border-bottom:none; border-radius:40% 40% 0 0; }
+  .screen { position:absolute; right:8%; bottom:19%; width:40%; height:42%; border-radius:16%; background:linear-gradient(160deg,#cbeefb,#e9ddff); border:3px solid #fff; display:grid; place-items:center; }
+  .ring { width:80%; aspect-ratio:1; border-radius:50%; background:conic-gradient(#ff6aa8 0deg,#ffffffaa 0deg); display:grid; place-items:center; }
+  .ring .inner { width:72%; aspect-ratio:1; border-radius:50%; background:#fffafc; display:grid; place-items:center; color:#ff6aa8; font-size:18px; }
+  .mouth { position:absolute; left:-2%; bottom:19%; width:33%; height:44%; border-radius:22px 10px 10px 22px; background:linear-gradient(180deg,#2c2740,#413a5e); box-shadow:inset 0 0 20px #000a,0 0 0 4px #fff; }
+  .mouth-anchor { position:absolute; left:4%; bottom:42%; width:2px; height:2px; }
+  .sticker { position:absolute; left:2%; top:30%; transform:translateY(-50%); background:#fffafc; color:#ff6aa8; padding:6px 14px; border-radius:999px; font-size:15px; z-index:5; border:2px solid #ff93c0; white-space:nowrap; }
+  .gifter { position:absolute; z-index:8; display:flex; flex-direction:column; align-items:center; gap:4px; opacity:0; transition:opacity .4s; }
+  .gifter .ava { width:54px; height:54px; border-radius:50%; display:grid; place-items:center; color:#fff; font-size:23px; border:3px solid #fff; box-shadow:0 6px 14px rgba(150,120,180,.4); }
+  .gifter .nm { background:#fffafc; color:#ff6aa8; font-size:13px; padding:2px 12px; border-radius:999px; }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <div class="counter"><span id="dia">0</span> <small>💎</small></div>
+    <canvas id="fx"></canvas>
+    <div class="gifter" id="gifter"><div class="ava" id="gAva">?</div><div class="nm" id="gNm">—</div></div>
+    <div class="machine" id="machine">
+      <div class="handle"></div><div class="body"></div><div class="base"></div>
+      <div class="mouth"></div><div class="mouth-anchor" id="mouthAnchor"></div>
+      <div class="screen"><div class="ring" id="ring"><div class="inner" id="pct">0%</div></div></div>
+      <div class="sticker">♡ COIN JAR</div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/overlay-client.js"></script>
+  <script>
+  (function () {
+    const $ = (id) => document.getElementById(id);
+    const stage = $('stage'), canvas = $('fx'), ctx = canvas.getContext('2d');
+    const machine = $('machine'), gifter = $('gifter'), mouthA = $('mouthAnchor');
+    const GOAL = parseInt(Overlay.param('goal', '10000'), 10);
+    const cols = ['#ff93c0','#b9a6f2','#8fe3cf','#ffcf5c','#ff6aa8','#9d86e8'];
+    const colOf = (nm) => cols[(nm||'?').charCodeAt(0) % cols.length];
+    let diamonds = 0;
+
+    let DPR = Math.min(2, devicePixelRatio||1), W=0, H=0;
+    function resize(){ W=stage.clientWidth; H=stage.clientHeight; canvas.width=W*DPR; canvas.height=H*DPR; canvas.style.width=W+'px'; canvas.style.height=H+'px'; ctx.setTransform(DPR,0,0,DPR,0,0); }
+    addEventListener('resize', resize); resize();
+    const at = (el)=>{ const s=stage.getBoundingClientRect(), r=el.getBoundingClientRect(); return {x:r.left-s.left+r.width/2, y:r.top-s.top+r.height/2}; };
+
+    const G=0.55, coins=[], conf=[];
+    function spawnCoin(emoji){ const m=at(mouthA); const belt=H-H*0.12;
+      coins.push({x:m.x,y:m.y,vx:-(2.2+Math.random()*3.3),vy:-(6+Math.random()*5),rot:Math.random()*6.28,vr:(Math.random()-.5)*.5,size:26+Math.random()*8,emoji,settled:false,life:1,rest:belt-Math.random()*10,t:0});
+      if(coins.length>160) coins.shift(); }
+    function spawnConf(n){ const m=at(mouthA); for(let i=0;i<n;i++) conf.push({x:m.x,y:m.y,vx:(Math.random()-.5)*12,vy:-(3+Math.random()*8),rot:Math.random()*6.28,vr:(Math.random()-.5)*.8,w:6+Math.random()*5,h:9+Math.random()*6,c:cols[Math.floor(Math.random()*cols.length)],life:1}); }
+    function loop(){ ctx.clearRect(0,0,W,H);
+      for(let i=coins.length-1;i>=0;i--){ const c=coins[i];
+        if(!c.settled){ c.vy+=G; c.x+=c.vx; c.y+=c.vy; c.rot+=c.vr; if(c.x<16){c.x=16;c.vx*=-.5;}
+          if(c.y>=c.rest){ c.y=c.rest; c.vy*=-.42; c.vx*=.7; c.vr*=.6; if(Math.abs(c.vy)<1.6){c.settled=true;} } }
+        else { c.t++; if(c.t>90) c.life-=0.02; if(c.life<=0){ coins.splice(i,1); continue; } }
+        ctx.save(); ctx.globalAlpha=c.life; ctx.translate(c.x,c.y); ctx.rotate(c.rot); const r=c.size/2;
+        const g=ctx.createRadialGradient(-r*.3,-r*.3,r*.2,0,0,r); g.addColorStop(0,'#fff6cf'); g.addColorStop(.55,'#ffcf5c'); g.addColorStop(1,'#f5a623');
+        ctx.beginPath(); ctx.arc(0,0,r,0,6.2832); ctx.fillStyle=g; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle='rgba(255,255,255,.7)'; ctx.stroke();
+        ctx.rotate(-c.rot); ctx.font=Math.round(c.size*.62)+'px serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(c.emoji,0,1); ctx.restore(); }
+      for(let i=conf.length-1;i>=0;i--){ const p=conf[i]; p.vy+=.35; p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr; p.life-=.012; if(p.life<=0||p.y>H+20){conf.splice(i,1);continue;}
+        ctx.save(); ctx.globalAlpha=Math.max(0,p.life); ctx.translate(p.x,p.y); ctx.rotate(p.rot); ctx.fillStyle=p.c; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h); ctx.restore(); }
+      requestAnimationFrame(loop); }
+    requestAnimationFrame(loop);
+
+    function updateDia(){ $('dia').textContent=(diamonds||0).toLocaleString('en-US'); const pct=Math.min(100,diamonds/GOAL*100); $('pct').textContent=pct.toFixed(0)+'%'; $('ring').style.background=`conic-gradient(#ff6aa8 ${pct*3.6}deg,#ffffffaa 0deg)`; }
+    function showGifter(nm){ $('gAva').style.background=colOf(nm); $('gAva').textContent=(nm||'?')[0]; $('gNm').textContent=nm;
+      const s=stage.getBoundingClientRect(), m=machine.getBoundingClientRect(); gifter.style.left=(m.left-s.left+m.width*.3)+'px'; gifter.style.top=Math.max(4,m.top-s.top-30)+'px'; gifter.style.opacity='1'; clearTimeout(gifter._t); gifter._t=setTimeout(()=>gifter.style.opacity='0',2600); }
+    function shake(){ machine.classList.remove('shake'); void machine.offsetWidth; machine.classList.add('shake'); }
+
+    const EMOJI = { Rose:'🌹','Finger Heart':'🫰',Perfume:'🧴',Galaxy:'🌌',Lion:'🦁',Universe:'🪐' };
+    function onGift(nm, giftName, value, count){ diamonds+=value; updateDia(); shake(); showGifter(nm);
+      const emoji=EMOJI[giftName]||'🎁'; const n=Math.min((count||1)+(value>=1000?10:2), value>=1000?16:6);
+      for(let i=0;i<n;i++) setTimeout(spawnCoin, i*70, emoji); if(value>=1000) spawnConf(40); }
+
+    // ---- ต่ออีเวนต์จริงจากเซิร์ฟเวอร์ ----
+    Overlay.on('event', (e)=>{ if(e.type==='gift' && !e.streaking){ const v=e.totalValue||(e.diamondCount||0)*(e.repeatCount||1); onGift(e.user?.nickname||e.user?.uniqueId, e.giftName, v, e.repeatCount); } });
+    Overlay.on('stats', (s)=>{ if(typeof s.diamondCount==='number'){ diamonds=s.diamondCount; updateDia(); } });
+
+    // ---- demo fallback (เมื่อเปิดไฟล์ตรง ๆ ไม่ได้ต่อเซิร์ฟเวอร์) ----
+    if (!Overlay.connected) {
+      const names=['somchai','mimi','บิ๊ก','lisa','ต้นน้ำ']; const gifts=[['Rose',1],['Finger Heart',5],['Perfume',20],['Galaxy',1000],['Lion',2999]];
+      setInterval(()=>{ const g=gifts[Math.floor(Math.random()*gifts.length)]; const c=g[1]>=1000?1:1+Math.floor(Math.random()*3); onGift(names[Math.floor(Math.random()*names.length)], g[0], g[1]*c, c); }, 1600);
+    }
+    updateDia();
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "name": "@tikfinity/overlay",
+  "version": "0.1.0",
+  "private": true,
+  "description": "หน้า overlay สำหรับ OBS (เสิร์ฟเป็น static โดย @tikfinity/server)",
+  "scripts": {
+    "build": "echo \"overlay เป็น static ไม่ต้อง build\""
+  }
+}

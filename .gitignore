@@ -1,0 +1,15 @@
+node_modules/
+dist/
+build/
+*.log
+npm-debug.log*
+.env
+.env.*
+!.env.example
+.DS_Store
+coverage/
+# Prisma
+packages/server/src/generated/
+# Editors
+.vscode/
+.idea/

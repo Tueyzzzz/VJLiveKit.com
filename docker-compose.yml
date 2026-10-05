@@ -1,0 +1,33 @@
+# บริการพื้นฐานสำหรับ dev ในเครื่อง: PostgreSQL + Redis
+# ใช้: docker compose up -d
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: tikfinity-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tikfinity
+      POSTGRES_PASSWORD: tikfinity
+      POSTGRES_DB: tikfinity
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tikfinity"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: tikfinity-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+
+volumes:
+  pgdata:
+  redisdata:

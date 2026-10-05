@@ -1,0 +1,145 @@
+// Prisma schema — สมาชิก, แพลน, การชำระเงิน, ตั้งค่า widget, token overlay
+// รัน: npm run prisma:generate แล้ว npm run prisma:migrate
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- ผู้ใช้ / Auth ----------
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String?  // null ได้ถ้า login ด้วย OAuth อย่างเดียว
+  displayName  String?
+  tiktokUsername String? // ชื่อ TikTok ที่จะเชื่อมไลฟ์
+  role         Role     @default(USER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  subscription  Subscription?
+  payments      Payment[]
+  widgetConfigs WidgetConfig[]
+  overlayTokens OverlayToken[]
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+// บัญชี OAuth (Google/TikTok ฯลฯ)
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  provider          String  // "google" | "tiktok" | ...
+  providerAccountId String
+  accessToken       String?
+  refreshToken      String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ---------- แพลน / สมาชิก ----------
+model Plan {
+  id            String         @id @default(cuid())
+  code          String         @unique // "free" | "pro"
+  name          String
+  priceCents    Int            @default(0) // ราคา/เดือน (สตางค์ หรือหน่วยย่อยของสกุลเงิน)
+  currency      String         @default("thb")
+  features      Json           // { widgets:[...], noWatermark:bool, tts:bool, ... }
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  userId               String             @unique
+  planId               String
+  status               SubscriptionStatus @default(ACTIVE)
+  provider             String?            // "stripe" | "omise"
+  providerSubId        String?            // id ฝั่ง gateway
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean            @default(false)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan                 Plan               @relation(fields: [planId], references: [id])
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELED
+  INCOMPLETE
+}
+
+// ---------- การชำระเงิน / ใบแจ้งหนี้ ----------
+model Payment {
+  id             String        @id @default(cuid())
+  userId         String
+  provider       String        // "stripe" | "omise"
+  providerRef    String        // charge/invoice id
+  amountCents    Int
+  currency       String        @default("thb")
+  status         PaymentStatus @default(PENDING)
+  rawPayload     Json?         // เก็บ payload จาก webhook ไว้ตรวจสอบ
+  createdAt      DateTime      @default(now())
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@unique([provider, providerRef])
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+// ---------- ตั้งค่า widget ของผู้ใช้ ----------
+model WidgetConfig {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // "coinjar" | "alerts" | "goal" | "chat" | "tts"
+  settings  Json     // { goal:10000, theme:"pastel", ttsLang:"th-TH", minGiftToRead:1, ... }
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@unique([userId, type])
+}
+
+// ---------- token สำหรับ URL overlay (ใส่ใน OBS) ----------
+model OverlayToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique // ใช้ประกอบ URL เช่น /overlay/coinjar?t=<token>
+  label     String?
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}

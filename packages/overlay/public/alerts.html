@@ -2,57 +2,103 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Gift Alerts Overlay</title>
+<title>Alerts Overlay</title>
+<link rel="icon" href="favicon.svg" />
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Itim&family=Mali:wght@500;700&display=swap');
-  html,body { margin:0; width:100%; height:100%; background:transparent; overflow:hidden; font-family:'Mali','Itim',sans-serif; }
-  #stage { position:fixed; top:40px; left:0; right:0; display:flex; flex-direction:column; align-items:center; gap:14px; }
-  .alert { display:flex; align-items:center; gap:14px; padding:16px 26px; border-radius:22px; color:#fff; font-family:'Itim',sans-serif; font-size:26px;
-    box-shadow:0 12px 30px rgba(120,80,150,.4); max-width:86vw; background:linear-gradient(135deg,#ff93c0,#ff6aa8);
-    animation:in .4s cubic-bezier(.2,1.4,.4,1), out .5s ease forwards 4.2s; }
-  .alert.follow { background:linear-gradient(135deg,#8fe3cf,#5fc9b0); color:#114a42; }
-  .alert.share  { background:linear-gradient(135deg,#ffcf5c,#f5a623); }
-  .alert .ava { width:54px; height:54px; border-radius:50%; display:grid; place-items:center; background:#ffffff35; font-size:26px; border:2px solid #fff6; }
-  .alert .sub { font-family:'Mali',sans-serif; font-size:17px; opacity:.95; }
-  .alert .val { background:rgba(0,0,0,.22); padding:3px 13px; border-radius:999px; font-size:19px; }
-  @keyframes in { from{transform:scale(.6) translateY(-12px);opacity:0;} to{transform:none;opacity:1;} }
-  @keyframes out { to{transform:translateY(-24px);opacity:0;} }
-  #cfx { position:fixed; inset:0; pointer-events:none; }
+  html,body{margin:0;width:100%;height:100%;background:transparent;overflow:hidden;font-family:'Mali','Itim',sans-serif}
+  #cfx{position:fixed;inset:0;pointer-events:none}
+  #slot{position:fixed;left:50%;transform:translateX(-50%);display:flex;justify-content:center}
+  #slot.top{top:6vh} #slot.center{top:50%;transform:translate(-50%,-50%)} #slot.bottom{bottom:6vh}
+  .card{display:flex;align-items:center;gap:16px;padding:14px 26px 14px 14px;border-radius:999px;
+    background:rgba(25,12,35,var(--bg,.35));border:1.5px solid rgba(255,255,255,.4);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    animation:pop .5s cubic-bezier(.2,1.6,.4,1) both;white-space:nowrap;max-width:92vw}
+  .card.out{animation:out .45s ease forwards}
+  @keyframes pop{from{opacity:0;transform:translateY(-24px) scale(.6)}to{opacity:1;transform:none}}
+  @keyframes out{to{opacity:0;transform:translateY(-20px) scale(.9)}}
+  .ava{width:64px;height:64px;border-radius:50%;flex:none;display:grid;place-items:center;color:#fff;font-size:28px;font-family:'Itim',sans-serif;
+    background-size:cover;background-position:center;border:3px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+  .txt{display:flex;flex-direction:column;min-width:0}
+  .nm{font-family:'Itim',sans-serif;font-size:26px;color:#fff;text-shadow:0 2px 5px rgba(0,0,0,.7);overflow:hidden;text-overflow:ellipsis}
+  .sub{font-size:19px;color:#ffe1ef;text-shadow:0 1px 4px rgba(0,0,0,.7)}
+  .sub b{color:#ffd76a}
+  .icon{width:76px;height:76px;flex:none;display:grid;place-items:center;font-size:52px;animation:bounce 1s ease-in-out infinite}
+  .icon img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 8px rgba(0,0,0,.35))}
+  @keyframes bounce{50%{transform:translateY(-8px) rotate(-6deg)}}
+  .card.follow{border-color:rgba(143,227,207,.8)} .card.share{border-color:rgba(255,207,92,.8)} .card.big{border-color:rgba(255,106,168,.9);box-shadow:0 0 30px rgba(255,106,168,.55)}
 </style>
 </head>
 <body>
-  <div id="stage"></div>
   <canvas id="cfx"></canvas>
+  <div id="slot"></div>
   <script src="/socket.io/socket.io.js"></script>
   <script src="js/overlay-client.js"></script>
   <script>
+  /*
+   * แจ้งเตือนของขวัญ / ติดตาม / แชร์ — ทีละรายการ (เข้าคิว) พร้อมรูปผู้ส่งและรูปของขวัญจริง
+   *   gift=1 follow=1 share=1     เลือกชนิดที่จะแจ้งเตือน
+   *   minCoins=1                  แจ้งของขวัญมูลค่า >= นี้ (เพชร)
+   *   duration=5                  วินาทีต่อการแจ้งเตือน
+   *   big=1000                    มูลค่าที่ถือว่า "ใหญ่" (มีพลุ + กรอบเรืองแสง)
+   *   pos=top|center|bottom  bg=35 (ความทึบพื้นหลัง %, 0 = ใส)
+   */
   (function(){
-    const stage=document.getElementById('stage'), canvas=document.getElementById('cfx'), ctx=canvas.getContext('2d');
+    const P=(k,d)=>Overlay.param(k,d), num=(k,d)=>{ const v=parseFloat(P(k,d)); return Number.isFinite(v)?v:d; };
+    const SHOW={ gift:P('gift','1')!=='0', follow:P('follow','1')!=='0', share:P('share','1')!=='0' };
+    const MIN=num('minCoins',1), DUR=Math.max(1.5,num('duration',5))*1000, BIG=num('big',1000);
+    const slot=document.getElementById('slot'); slot.className=['top','center','bottom'].includes(P('pos','top'))?P('pos','top'):'top';
+    document.documentElement.style.setProperty('--bg', String(Math.max(0,Math.min(100,num('bg',35)))/100));
+
     const cols=['#ff93c0','#b9a6f2','#8fe3cf','#ffcf5c','#ff6aa8','#9d86e8'];
     const colOf=(nm)=>cols[(nm||'?').charCodeAt(0)%cols.length];
-    const EMOJI={Rose:'🌹','Finger Heart':'🫰',Perfume:'🧴',Galaxy:'🌌',Lion:'🦁',Universe:'🪐'};
+    const EMOJI={Rose:'🌹','Finger Heart':'🫰',Perfume:'🧴',Galaxy:'🌌',Lion:'🦁',Universe:'🪐',Heart:'❤️',TikTok:'🎵'};
+    const safe=(u)=>/^https:\/\//.test(u||'')?u.replace(/"/g,'%22'):'';
+
+    // ---- พลุ ----
+    const canvas=document.getElementById('cfx'), ctx=canvas.getContext('2d'); const conf=[];
     function size(){ canvas.width=innerWidth; canvas.height=innerHeight; } addEventListener('resize',size); size();
-    const conf=[];
-    function burst(n){ for(let i=0;i<n;i++) conf.push({x:innerWidth/2,y:120,vx:(Math.random()-.5)*14,vy:-(4+Math.random()*9),rot:0,vr:(Math.random()-.5)*.8,w:7+Math.random()*6,h:10+Math.random()*7,c:cols[Math.floor(Math.random()*cols.length)],life:1}); }
+    function burst(n){ const r=slot.getBoundingClientRect(), x=r.left+r.width/2, y=r.top+r.height/2;
+      for(let i=0;i<n;i++) conf.push({x,y,vx:(Math.random()-.5)*16,vy:-(4+Math.random()*10),rot:0,vr:(Math.random()-.5)*.8,w:7+Math.random()*6,h:10+Math.random()*7,c:cols[i%cols.length],life:1}); }
     (function loop(){ ctx.clearRect(0,0,canvas.width,canvas.height);
-      for(let i=conf.length-1;i>=0;i--){ const p=conf[i]; p.vy+=.35;p.x+=p.vx;p.y+=p.vy;p.rot+=p.vr;p.life-=.012; if(p.life<=0||p.y>innerHeight+20){conf.splice(i,1);continue;}
+      for(let i=conf.length-1;i>=0;i--){ const p=conf[i]; p.vy+=.35;p.x+=p.vx;p.y+=p.vy;p.rot+=p.vr;p.life-=.011; if(p.life<=0||p.y>innerHeight+20){conf.splice(i,1);continue;}
         ctx.save();ctx.globalAlpha=Math.max(0,p.life);ctx.translate(p.x,p.y);ctx.rotate(p.rot);ctx.fillStyle=p.c;ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);ctx.restore(); }
       requestAnimationFrame(loop); })();
 
-    function show(html,cls,big){ const el=document.createElement('div'); el.className='alert '+(cls||''); el.innerHTML=html; stage.appendChild(el);
-      setTimeout(()=>el.remove(),4700); while(stage.children.length>4) stage.removeChild(stage.firstChild); if(big) burst(40); }
-    function gift(nm,g,count,val,img){ const em=EMOJI[g]||'🎁'; const safeImg=/^https:\/\//.test(img||'')?img.replace(/"/g,'%22'):''; const icon=safeImg?`<img src="${safeImg}" alt="" style="width:100%;height:100%;object-fit:contain">`:em; show(`<div class="ava" style="background:${colOf(nm)}">${icon}</div><div><div>${Overlay.esc(nm)}</div><div class="sub">ส่ง ${Overlay.esc(g)} ×${count}</div></div><span class="val">💎 ${Overlay.fmt(val)}</span>`,'',val>=1000); }
-    function follow(nm){ show(`<div class="ava" style="background:${colOf(nm)}">➕</div><div><div>${Overlay.esc(nm)}</div><div class="sub">กดติดตามแล้ว!</div></div>`,'follow'); }
-    function share(nm){ show(`<div class="ava" style="background:${colOf(nm)}">🔁</div><div><div>${Overlay.esc(nm)}</div><div class="sub">แชร์ไลฟ์นี้</div></div>`,'share'); }
+    // ---- คิวแจ้งเตือน ----
+    const queue=[]; let busy=false;
+    function push(a){ queue.push(a); if(queue.length>20) queue.shift(); next(); }
+    function next(){
+      if(busy||!queue.length) return; busy=true;
+      const a=queue.shift(), card=document.createElement('div');
+      card.className='card '+(a.cls||'');
+      const avaUrl=safe(a.user&&a.user.avatar), nm=(a.user&&(a.user.nickname||a.user.uniqueId))||'ผู้ชม';
+      const ava=document.createElement('div'); ava.className='ava';
+      if(avaUrl) ava.style.backgroundImage=`url("${avaUrl}")`; else { ava.style.background=colOf(nm); ava.textContent=nm[0]; }
+      const txt=document.createElement('div'); txt.className='txt';
+      txt.innerHTML=`<div class="nm"></div><div class="sub">${a.sub}</div>`; txt.querySelector('.nm').textContent=nm;
+      const icon=document.createElement('div'); icon.className='icon';
+      if(a.img) icon.innerHTML=`<img src="${a.img}" alt="">`; else icon.textContent=a.emoji;
+      card.append(ava,txt,icon); slot.innerHTML=''; slot.appendChild(card);
+      if(a.big) burst(60);
+      setTimeout(()=>{ card.classList.add('out'); setTimeout(()=>{ card.remove(); busy=false; next(); },450); }, Math.max(1500, DUR - Math.min(queue.length,6)*400)); // คิวยาว → เร็วขึ้น
+    }
 
-    Overlay.on('event',(e)=>{ const nm=e.user?(e.user.nickname||e.user.uniqueId):'';
-      if(e.type==='gift'&&!e.streaking){ const v=e.totalValue||(e.diamondCount||0)*(e.repeatCount||1); gift(nm,e.giftName,e.repeatCount||1,v,e.giftImage); }
-      else if(e.type==='follow') follow(nm); else if(e.type==='share') share(nm); });
+    Overlay.on('event',(e)=>{
+      if(e.type==='gift'&&!e.streaking&&SHOW.gift){
+        const count=e.repeatCount||1, v=e.totalValue||(e.diamondCount||0)*count;
+        if((e.diamondCount||0)<MIN) return;
+        push({ user:e.user, sub:`ส่ง <b>${Overlay.esc(e.giftName||'ของขวัญ')} ×${count}</b> · 💎 ${Overlay.fmt(v)}`, img:safe(e.giftImage), emoji:EMOJI[e.giftName]||'🎁', big:v>=BIG, cls:v>=BIG?'big':'' });
+      }
+      else if(e.type==='follow'&&SHOW.follow) push({ user:e.user, sub:'กด<b>ติดตาม</b>แล้ว! 💕', emoji:'➕', cls:'follow' });
+      else if(e.type==='share'&&SHOW.share) push({ user:e.user, sub:'<b>แชร์</b>ไลฟ์นี้ ขอบคุณนะ!', emoji:'🔁', cls:'share' });
+    });
 
     if(!Overlay.connected){ const names=['mimi','บิ๊ก','lisa','ต้นน้ำ','somchai']; const gifts=[['Rose',1],['Perfume',20],['Galaxy',1000],['Lion',2999]];
-      setInterval(()=>{ const r=Math.random(), nm=names[Math.floor(Math.random()*names.length)];
-        if(r<.6){ const g=gifts[Math.floor(Math.random()*gifts.length)]; const c=g[1]>=1000?1:1+Math.floor(Math.random()*3); gift(nm,g[0],c,g[1]*c); }
-        else if(r<.85) follow(nm); else share(nm); }, 2600); }
+      setInterval(()=>{ const r=Math.random(), u={nickname:names[Math.floor(Math.random()*names.length)]};
+        if(r<.6){ const g=gifts[Math.floor(Math.random()*gifts.length)], c=g[1]>=1000?1:1+Math.floor(Math.random()*3);
+          push({ user:u, sub:`ส่ง <b>${g[0]} ×${c}</b> · 💎 ${Overlay.fmt(g[1]*c)}`, emoji:EMOJI[g[0]], big:g[1]*c>=BIG, cls:g[1]*c>=BIG?'big':'' }); }
+        else if(r<.85) push({ user:u, sub:'กด<b>ติดตาม</b>แล้ว! 💕', emoji:'➕', cls:'follow' });
+        else push({ user:u, sub:'<b>แชร์</b>ไลฟ์นี้ ขอบคุณนะ!', emoji:'🔁', cls:'share' }); }, 3000); }
   })();
   </script>
 </body>

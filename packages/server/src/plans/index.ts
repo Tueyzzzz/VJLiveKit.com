@@ -2,7 +2,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../db/prisma.js';
 
 /** วิดเจ็ตทั้งหมดที่ระบบมี (ชื่อตรงกับไฟล์ /overlay/<type>.html) */
-export const WIDGET_TYPES = ['coinjar', 'giftjar', 'alerts', 'goal', 'chat', 'follower', 'topgifters', 'tts', 'fx'] as const;
+export const WIDGET_TYPES = ['coinjar', 'giftjar', 'alerts', 'goal', 'chat', 'follower', 'topgifters', 'toplikers', 'timer', 'tts', 'fx'] as const;
 export type WidgetType = (typeof WIDGET_TYPES)[number];
 
 export function isWidgetType(t: string): t is WidgetType {

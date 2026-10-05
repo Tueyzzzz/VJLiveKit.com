@@ -10,6 +10,20 @@ try {
   console.warn('[tiktok] ยังไม่ได้ติดตั้ง tiktok-live-connector — ใช้ได้เฉพาะ DEMO_MODE');
 }
 
+/** อันดับสะสมรายคนในห้อง (ผู้ให้ของขวัญ / ผู้กดไลค์) */
+const RoomRanking = {
+  add(map: Map<string, TopGifter>, user: NormalizedUser, value: number): void {
+    if (!value) return;
+    const id = user.uniqueId || user.userId || user.nickname;
+    const cur = map.get(id) ?? { uniqueId: user.uniqueId, nickname: user.nickname, avatar: user.avatar, value: 0 };
+    cur.value += value; cur.nickname = user.nickname || cur.nickname; cur.avatar = user.avatar || cur.avatar;
+    map.set(id, cur);
+  },
+  top(map: Map<string, TopGifter>, limit: number): TopGifter[] {
+    return [...map.values()].sort((a, b) => b.value - a.value).slice(0, limit);
+  },
+};
+
 const num = (v: unknown, fallback = 0): number => {
   const n = Number(v);
   return Number.isFinite(n) ? n : fallback;
@@ -34,6 +48,7 @@ export class TikTokRoom extends EventEmitter {
   stats: LiveStats = emptyStats();
   // อันดับผู้ให้ของขวัญตลอดไลฟ์ (overlay ที่เปิด/รีเฟรชกลางไลฟ์ได้อันดับครบทันที)
   private gifters = new Map<string, TopGifter>();
+  private likers = new Map<string, TopGifter>(); // value = จำนวนไลค์
 
   constructor(username: string) {
     super();
@@ -48,25 +63,19 @@ export class TikTokRoom extends EventEmitter {
   }
 
   isConnected(): boolean { return this.connected; }
-  getState() { return { connected: this.connected, username: this.username, stats: this.stats, topGifters: this.topGifters() }; }
+  getState() { return { connected: this.connected, username: this.username, stats: this.stats, topGifters: this.topGifters(), topLikers: this.topLikers() }; }
 
-  topGifters(limit = 20): TopGifter[] {
-    return [...this.gifters.values()].sort((a, b) => b.value - a.value).slice(0, limit);
-  }
+  topGifters(limit = 20): TopGifter[] { return RoomRanking.top(this.gifters, limit); }
+  topLikers(limit = 20): TopGifter[] { return RoomRanking.top(this.likers, limit); }
 
-  private addGifter(user: NormalizedUser, value: number): void {
-    if (!value) return;
-    const id = user.uniqueId || user.userId || user.nickname;
-    const cur = this.gifters.get(id) ?? { uniqueId: user.uniqueId, nickname: user.nickname, avatar: user.avatar, value: 0 };
-    cur.value += value; cur.nickname = user.nickname || cur.nickname; cur.avatar = user.avatar || cur.avatar;
-    this.gifters.set(id, cur);
-  }
+  private addGifter(user: NormalizedUser, value: number): void { RoomRanking.add(this.gifters, user, value); }
 
   async connect(demo = config.demoMode): Promise<void> {
     await this.disconnect();
     this.stats = emptyStats();
     this.seenMsgIds.clear();
     this.gifters.clear();
+    this.likers.clear();
     if (demo || !TikTokLiveConnection) return this.startDemo();
     return this.connectReal();
   }
@@ -149,6 +158,7 @@ export class TikTokRoom extends EventEmitter {
       }
       case 'like': {
         const inc = num(d.count ?? d.likeCount, 1);
+        RoomRanking.add(this.likers, user, inc);
         const total = num(d.total ?? d.totalLikeCount, NaN);
         this.stats.likeCount = Number.isFinite(total) && total > 0 ? total : this.stats.likeCount + inc;
         this.send('like', { user, likeCount: inc, total: this.stats.likeCount });
@@ -178,7 +188,7 @@ export class TikTokRoom extends EventEmitter {
     this.mockTimer = setInterval(() => {
       const r = Math.random();
       if (r < 0.45) { this.stats.chatCount++; this.send('chat', { user: mockUser(), comment: pick(comments) }); }
-      else if (r < 0.7) { const inc = 1 + Math.floor(Math.random() * 15); this.stats.likeCount += inc; this.send('like', { user: mockUser(), likeCount: inc, total: this.stats.likeCount }); }
+      else if (r < 0.7) { const inc = 1 + Math.floor(Math.random() * 15); this.stats.likeCount += inc; const u = mockUser(); RoomRanking.add(this.likers, u, inc); this.send('like', { user: u, likeCount: inc, total: this.stats.likeCount }); }
       else if (r < 0.85) { const g = pick(gifts); const count = g.d >= 1000 ? 1 : 1 + Math.floor(Math.random() * 3); const value = g.d * count; this.stats.giftCount += count; this.stats.diamondCount += value; const u = mockUser(); this.addGifter(u, value); this.send('gift', { user: u, giftName: g.name, repeatCount: count, diamondCount: g.d, totalValue: value, streaking: false }); }
       else if (r < 0.93) { this.stats.followCount++; this.send('follow', { user: mockUser() }); }
       else if (r < 0.97) { this.stats.shareCount++; this.send('share', { user: mockUser() }); }

@@ -12,10 +12,13 @@ import { useAuth } from '@/lib/auth';
 const PARAM_HINTS: Record<string, string> = {
   coinjar: '&goal=10000&scale=1&giftScale=1&x=0&y=0&counter=1',
   giftjar: '&scale=1&giftScale=1&x=0&y=0&alert=1&board=0&top=5&total=0&full=spill&minCoins=0&font=Kanit',
-  goal: '&type=like|follow|share|diamond|gift&target=10000&label=...',
-  chat: '&max=8',
+  goal: '&type=like|follow|share|diamond|gift&target=10000&next=0&label=...&bg=35',
+  chat: '&max=8&fade=0&pos=bl&bg=35&fontSize=17',
+  alerts: '&gift=1&follow=1&share=1&minCoins=1&duration=5&big=1000&pos=top&bg=35',
   follower: '&label=...&showCount=0',
-  topgifters: '&max=5&label=...&bg=35',
+  topgifters: '&max=5&label=...&bg=35&pos=tr',
+  toplikers: '&max=5&label=...&bg=35&pos=tr',
+  timer: '&start=60&coin=5&like=0&follow=30&share=10&max=0&label=...&fontSize=90&bg=35',
   tts: '&lang=th-TH&rate=1&readChat=1&readGift=1&minGift=1',
 };
 

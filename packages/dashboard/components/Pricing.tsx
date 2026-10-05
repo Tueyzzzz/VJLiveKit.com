@@ -13,6 +13,8 @@ export const WIDGET_LABELS: Record<string, string> = {
   chat: 'แชทสด',
   follower: 'ผู้ติดตามล่าสุด',
   topgifters: 'Top Gifters',
+  toplikers: 'อันดับยอดไลค์',
+  timer: 'นาฬิกาจับเวลา (Subathon)',
   tts: 'อ่านแชทออกเสียง (TTS)',
   fx: 'Actions & Events (FX)',
 };

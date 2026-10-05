@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Subathon Timer Overlay</title>
+<link rel="icon" href="favicon.svg" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Itim&family=Chakra+Petch:wght@600;700&display=swap');
+  html,body{margin:0;width:100%;height:100%;background:transparent;overflow:hidden;font-family:'Itim',sans-serif}
+  #box{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:4px;
+    padding:14px 30px 18px;border-radius:26px;background:rgba(25,12,35,var(--bg,.35));border:1.5px solid rgba(255,255,255,.35);
+    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+  #box.clear{border-color:transparent;backdrop-filter:none;-webkit-backdrop-filter:none}
+  #label{color:#fff;font-size:calc(var(--fs) * .32px);text-shadow:0 2px 4px rgba(0,0,0,.6);white-space:nowrap}
+  #time{font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:calc(var(--fs) * 1px);line-height:1;color:#fff;font-variant-numeric:tabular-nums;
+    text-shadow:0 3px 0 #ff6aa8,0 6px 14px rgba(0,0,0,.45);letter-spacing:2px}
+  #time.blink{animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{color:#ffd76a}}
+  #time.done{color:#ffd76a;font-size:calc(var(--fs) * .6px)}
+  .plus{position:fixed;font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:calc(var(--fs) * .4px);color:#8fe3cf;
+    text-shadow:0 2px 6px rgba(0,0,0,.6);pointer-events:none;animation:up 1.6s ease-out forwards;white-space:nowrap}
+  @keyframes up{0%{opacity:0;transform:translate(-50%,10px) scale(.7)}15%{opacity:1;transform:translate(-50%,0) scale(1.1)}100%{opacity:0;transform:translate(-50%,-60px) scale(1)}}
+</style>
+</head>
+<body>
+  <div id="box"><div id="label"></div><div id="time">--:--</div></div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/overlay-client.js"></script>
+  <script>
+  /*
+   * นาฬิกาจับเวลา (Subathon) — ผู้ชมเพิ่มเวลาด้วยของขวัญ/ไลค์/ติดตาม/แชร์
+   *   start=60      เวลาเริ่มต้น (นาที)
+   *   coin=5        วินาทีต่อ 1 เพชร        like=0     วินาทีต่อ 1 ไลค์
+   *   follow=30     วินาทีต่อการติดตาม       share=10   วินาทีต่อการแชร์
+   *   max=0         เวลาสูงสุด (นาที, 0 = ไม่จำกัด)
+   *   label=...     ข้อความบน    done=...  ข้อความเมื่อหมดเวลา    blink=60  กะพริบเมื่อเหลือ (วินาที)
+   *   fontSize=90 bg=35          ขนาดตัวเลข / ความทึบพื้นหลัง (0 = ใส)
+   *   reset=1                    เริ่มนับใหม่ (เปิดครั้งเดียวแล้วเอาออก)
+   * เวลาที่เหลือถูกจำไว้ — รีเฟรช OBS แล้วนับต่อ
+   */
+  (function () {
+    const P = (k, d) => Overlay.param(k, d);
+    const num = (k, d) => { const v = parseFloat(P(k, d)); return Number.isFinite(v) ? v : d; };
+    const START = num('start', 60) * 60e3, PER_COIN = num('coin', 5) * 1e3, PER_LIKE = num('like', 0) * 1e3;
+    const PER_FOLLOW = num('follow', 30) * 1e3, PER_SHARE = num('share', 10) * 1e3, MAX = num('max', 0) * 60e3, BLINK = num('blink', 60) * 1e3;
+    const DONE = P('done', 'หมดเวลา! 🎉');
+    const box = document.getElementById('box'), $time = document.getElementById('time');
+    document.documentElement.style.setProperty('--fs', String(num('fontSize', 90)));
+    const BG = Math.max(0, Math.min(100, num('bg', 35))) / 100;
+    box.style.setProperty('--bg', String(BG)); if (BG === 0) box.classList.add('clear');
+    document.getElementById('label').textContent = P('label', '⏳ ส่งของขวัญเพื่อเพิ่มเวลา');
+
+    const KEY = 'vjl-timer:' + (P('t', '') || P('username', 'demo')).slice(-24);
+    let end = 0;
+    try { if (P('reset', '0') !== '1') end = JSON.parse(localStorage.getItem(KEY) || '{}').end || 0; } catch { /* ignore */ }
+    if (!end) end = Date.now() + START;
+    const save = () => { try { localStorage.setItem(KEY, JSON.stringify({ end })); } catch { /* storage ปิด */ } };
+    save();
+
+    const pad = (n) => String(n).padStart(2, '0');
+    function render() {
+      const left = end - Date.now();
+      if (left <= 0) { $time.textContent = DONE; $time.className = 'done'; return; }
+      const s = Math.ceil(left / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+      $time.textContent = (h ? h + ':' + pad(m) : pad(m)) + ':' + pad(s % 60);
+      $time.className = left <= BLINK ? 'blink' : '';
+    }
+    setInterval(render, 250); render();
+
+    function addTime(ms) {
+      if (ms <= 0) return;
+      const now = Date.now();
+      end = Math.max(end, now) + ms; // หมดเวลาแล้วก็เริ่มนับใหม่จากตอนนี้
+      if (MAX > 0) end = Math.min(end, now + MAX);
+      save(); render();
+      const r = box.getBoundingClientRect(), el = document.createElement('div'); el.className = 'plus';
+      const sec = Math.round(ms / 1000);
+      el.textContent = '+' + (sec >= 60 ? Math.floor(sec / 60) + ' นาที ' + (sec % 60 ? (sec % 60) + ' วิ' : '') : sec + ' วิ');
+      el.style.left = (r.left + r.width / 2 + (Math.random() - .5) * r.width * .5) + 'px'; el.style.top = (r.top - 10) + 'px';
+      document.body.appendChild(el); setTimeout(() => el.remove(), 1700);
+    }
+
+    Overlay.on('event', (e) => {
+      if (e.type === 'gift' && !e.streaking) addTime((e.totalValue || (e.diamondCount || 0) * (e.repeatCount || 1)) * PER_COIN);
+      else if (e.type === 'like') addTime((e.likeCount || 1) * PER_LIKE);
+      else if (e.type === 'follow') addTime(PER_FOLLOW);
+      else if (e.type === 'share') addTime(PER_SHARE);
+    });
+
+    if (!Overlay.connected) setInterval(() => addTime([1, 5, 20][Math.floor(Math.random() * 3)] * PER_COIN), 2500);
+  })();
+  </script>
+</body>
+</html>

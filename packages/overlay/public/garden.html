@@ -250,7 +250,7 @@
     // ---- วาด ----
     function drawPot() {
       const w = 92, h = 96, top = POT_TOP;
-      ctx.save(); const br = Juice.breathe(performance.now() / 1000, 0.012); ctx.scale(1 + (1 - br) * 0.5, br);
+      ctx.save(); // การหายใจ (ยุบ-ยืด) ใส่ที่ frame ทั้งกลุ่ม ต้นไม้+กิ่ง+ดอกไม้ ขยับไปพร้อมกัน
       if (POT_SKIN) {
         ctx.beginPath(); ctx.ellipse(0, -4, TREE ? 170 : 125, 12, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(90,70,140,.25)'; ctx.fill();
         if (potImg.ready()) ctx.drawImage(potImg.source, POT_SKIN.x, POT_SKIN.y, POT_SKIN.w, POT_SKIN.h);
@@ -335,10 +335,14 @@
       const time = now / 1000;
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.imageSmoothingQuality = 'high';
       const o = origin(), s = S(); ctx.translate(o.x, o.y); ctx.scale(s, s);
+      // ต้นไม้/กระถาง + กิ่ง + ดอกไม้ (ของขวัญ) หายใจด้วยค่าเดียวกัน — ยุบ-ยืดรอบโคนไปพร้อมกัน
+      const br = Juice.breathe(time, 0.012), breathe = () => ctx.scale(1 + (1 - br) * 0.5, br);
+      ctx.save(); breathe();
       if (TREE) drawPot(); else if (POT_SKIN) { drawPot(); drawStems(time); drawSoilTufts(time); } else { drawStems(time); drawPot(); }
+      ctx.restore();
       tickGround();
-      drawGround(time, now);
-      drawFlowers(time, now);
+      drawGround(time, now); // กองบนพื้นอยู่นิ่ง และอยู่หน้าเนิน/กระถาง
+      ctx.save(); breathe(); drawFlowers(time, now); ctx.restore();
       fx.step(); fx.draw(ctx);
       requestAnimationFrame(frame);
     }

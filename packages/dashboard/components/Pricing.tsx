@@ -16,6 +16,7 @@ export const WIDGET_LABELS: Record<string, string> = {
   topgifters: 'Top Gifters',
   toplikers: 'อันดับยอดไลค์',
   timer: 'นาฬิกาจับเวลา (Subathon)',
+  league: 'ปลดล็อกเป้าหมายลีก (TikTok League)',
   tts: 'อ่านแชทออกเสียง (TTS)',
   fx: 'Actions & Events (FX)',
 };

@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>League Goal Overlay</title>
+  <link rel="icon" href="favicon.svg" />
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;800&display=swap" rel="stylesheet" />
+  <style>
+    html,body{margin:0;height:100%;background:transparent;overflow:hidden;font-family:'Kanit',sans-serif}
+    #fx{position:fixed;inset:0}
+  </style>
+</head>
+<body>
+  <canvas id="fx"></canvas>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/overlay-client.js"></script>
+  <script src="js/juice.js"></script>
+  <script>
+  /*
+   * ปลดล็อกเป้าหมายลีก (TikTok LIVE League) — โดมโล่พลังงาน + ตราลีก + แถบความคืบหน้า
+   * ของขวัญพุ่งเข้ามาเป็นดาวหาง ชนโล่ → เพิ่มคะแนน · ครบเป้า → ปลดล็อกระดับถัดไป (B1 → B2 → B3 → A1 ...)
+   *   tier=B level=1 levels=3          ลีกปัจจุบัน / ระดับย่อย / จำนวนระดับย่อยต่อลีก
+   *   target=44999 start=0 grow=1      เป้าหมาย / คะแนนที่มีอยู่แล้ว / ตัวคูณเป้าหมายเมื่อขึ้นระดับ
+   *   label=ปลดล็อกเป้าหมายถัดไป names=1 scale=1 x=0 y=0 minCoins=0 reset=1
+   */
+  (function () {
+    const P = (k, d) => Overlay.param(k, d);
+    const num = (k, d) => { const v = parseFloat(P(k, d)); return Number.isFinite(v) ? v : d; };
+    const SCALE = num('scale', 1), OX = num('x', 0), OY = num('y', 0), MIN_COINS = num('minCoins', 0);
+    const LABEL = P('label', 'ปลดล็อกเป้าหมายถัดไป'), NAMES = P('names', '1') !== '0';
+    const LADDER = ['D', 'C', 'B', 'A', 'S'];
+    const LEVELS = Math.max(1, Math.round(num('levels', 3))), GROW = Math.max(0.1, num('grow', 1));
+    const TIER_COL = { D: ['#f1c9a5', '#a8693e'], C: ['#eef2f8', '#7f8ba0'], B: ['#e3e9f7', '#4d5f8e'], A: ['#fff1c2', '#b98a1c'], S: ['#efe2ff', '#7a4fd0'] };
+
+    const canvas = document.getElementById('fx'), ctx = canvas.getContext('2d');
+    const DPR = Math.min(2, devicePixelRatio || 1);
+    let W = 0, H = 0;
+    const S = () => SCALE * Math.min(1.6, Math.max(0.5, H / 720));
+    const origin = () => ({ x: W / 2 + OX, y: H - 20 * SCALE + OY });
+    function resize() { W = innerWidth; H = innerHeight; canvas.width = W * DPR; canvas.height = H * DPR; canvas.style.width = W + 'px'; canvas.style.height = H + 'px'; }
+
+    // ---- สถานะ (จำไว้ในเครื่อง; เปลี่ยนค่าตั้งต้นใน Dashboard = เริ่มจากค่าใหม่) ----
+    const KEY = 'vjl-league:' + (P('t', '') || P('username', 'demo')).slice(-24);
+    const SIG = [P('tier', 'B'), P('level', '1'), P('target', '44999'), P('start', '0'), LEVELS].join('|');
+    let st = { tier: String(P('tier', 'B')).toUpperCase(), lvl: Math.round(num('level', 1)), target: Math.max(1, num('target', 44999)), pts: num('start', 0), sig: SIG };
+    try {
+      if (P('reset', '0') === '1') localStorage.removeItem(KEY);
+      const s = JSON.parse(localStorage.getItem(KEY) || 'null');
+      if (s && s.sig === SIG) st = s;
+    } catch { /* storage ปิด */ }
+    if (!LADDER.includes(st.tier)) st.tier = 'B';
+    const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch { /* storage ปิด */ } };
+
+    // ---- เรขาคณิต (หน่วยออกแบบ: 0,0 = กลางล่าง) ----
+    const DC = { x: 0, y: -235 }, R = 215;              // โดม
+    const hexes = []; const HX = 26;                     // ตาข่ายหกเหลี่ยมบนโดม
+    for (let row = 0; row < 12; row++) for (let col = -10; col <= 10; col++) {
+      const x = col * HX * 1.5, y = DC.y - row * HX * Math.sqrt(3) - (col & 1 ? HX * Math.sqrt(3) / 2 : 0);
+      if (Math.hypot(x - DC.x, y - DC.y) < R + HX) hexes.push({ x, y, glow: 0 });
+    }
+    const hexPath = (x, y, r) => { ctx.beginPath(); for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3; ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r); } ctx.closePath(); };
+    const domeClip = () => { ctx.beginPath(); ctx.arc(DC.x, DC.y, R, Math.PI, 0); ctx.ellipse(DC.x, DC.y, R, 34, 0, 0, Math.PI); ctx.closePath(); };
+
+    // ---- ลูกเล่น ----
+    const fx = new Juice.Particles(500), badgeSpring = new Juice.Spring(220, 11), barSpring = new Juice.Spring(260, 14), shake = new Juice.Spring(300, 16);
+    const comets = [], ripples = [], trail = [], floaters = [];
+    let shownPts = st.pts, unlockT = -1e9, unlockText = '';
+    const imgCache = {};
+    function giftImg(url) { if (!url || !/^https:\/\//.test(url)) return null; let im = imgCache[url]; if (!im) { im = new Image(); im.src = url; imgCache[url] = im; } return im; }
+    const EMOJI = { Rose: '🌹', 'Finger Heart': '🫰', Perfume: '🧴', Galaxy: '🌌', Lion: '🦁', Universe: '🪐', Heart: '❤️', TikTok: '🎵' };
+
+    function launch(g, value, name, delay) {
+      const side = Math.random() < 0.5 ? -1 : 1, a = side > 0 ? Math.PI * 2 - 0.2 - Math.random() * 1.1 : Math.PI + 0.2 + Math.random() * 1.1; // ชนด้านเดียวกับที่มา
+      const hit = { x: DC.x + Math.cos(a) * R, y: DC.y + Math.sin(a) * R };
+      const from = { x: side * (520 + Math.random() * 120), y: DC.y + 40 - Math.random() * 260 };
+      const ctrl = { x: (from.x + hit.x) / 2, y: Math.min(from.y, hit.y) - 80 - Math.random() * 120 };
+      const size = 26 + Math.min(1, Math.log10(g.d + 1) / 4) * 34;
+      comets.push({ g, img: giftImg(g.u), from, ctrl, hit, t: -delay, dur: 0.9 + Math.random() * 0.5, value, name, size, big: g.d >= 100, rot: 0 });
+    }
+    function impact(c) {
+      st.pts += c.value; save();
+      ripples.push({ x: c.hit.x, y: c.hit.y, age: 0, big: c.big });
+      for (const h of hexes) { const d = Math.hypot(h.x - c.hit.x, h.y - c.hit.y); if (d < (c.big ? 120 : 70)) h.glow = Math.max(h.glow, 1 - d / (c.big ? 120 : 70)); }
+      fx.sparkle(c.hit.x, c.hit.y, c.big ? 14 : 6, c.big ? '#ffe39a' : '#dff1ff');
+      shake.kick(c.big ? 9 : 2.5); barSpring.kick(4);
+      // ของเข้ามาลอยในโดมสักพัก
+      floaters.push({ g: c.g, img: c.img, x: c.hit.x * 0.8, y: c.hit.y + 18, vx: -c.hit.x * 0.004, vy: 0.4, rot: Math.random() * 6, vr: (Math.random() - 0.5) * 0.04, size: c.size * 0.8, age: 0 });
+      if (floaters.length > 28) floaters.shift();
+      while (st.pts >= st.target) levelUp();
+    }
+    function levelUp() {
+      st.pts -= st.target; st.target = Math.round(st.target * GROW); shownPts = 0; // แถบเริ่มใหม่จาก 0
+      st.lvl++; if (st.lvl > LEVELS) { st.lvl = 1; st.tier = LADDER[Math.min(LADDER.length - 1, LADDER.indexOf(st.tier) + 1)]; }
+      unlockText = 'ปลดล็อก ' + st.tier + st.lvl + ' แล้ว!'; unlockT = performance.now();
+      badgeSpring.kick(-9); fx.confetti(0, -330, 70); fx.sparkle(0, -330, 24, '#ffe39a'); save();
+    }
+
+    // ---- วาด ----
+    function drawDomeBack(time) {
+      ctx.save(); domeClip();
+      const g = ctx.createRadialGradient(DC.x, DC.y - 60, 20, DC.x, DC.y - 40, R);
+      g.addColorStop(0, 'rgba(230,240,255,.22)'); g.addColorStop(0.7, 'rgba(160,185,230,.16)'); g.addColorStop(1, 'rgba(210,225,255,.38)');
+      ctx.fillStyle = g; ctx.fill(); ctx.clip();
+      // หมอกในโดม
+      for (let i = 0; i < 4; i++) { const x = Math.sin(time * 0.3 + i * 1.7) * 110, y = DC.y - 60 - i * 30; const r = ctx.createRadialGradient(x, y, 5, x, y, 110); r.addColorStop(0, 'rgba(255,255,255,.10)'); r.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = r; ctx.fillRect(x - 110, y - 110, 220, 220); }
+      ctx.lineWidth = 2;
+      for (const h of hexes) {
+        hexPath(h.x, h.y, HX - 1);
+        if (h.glow > 0.01) { ctx.fillStyle = `rgba(180,225,255,${0.45 * h.glow})`; ctx.fill(); h.glow *= 0.94; }
+        ctx.strokeStyle = 'rgba(255,255,255,.28)'; ctx.stroke();
+      }
+      // ระลอกคลื่นตอนชน
+      for (let i = ripples.length - 1; i >= 0; i--) {
+        const r = ripples[i]; r.age += 1 / 60; const k = r.age / 0.7; if (k >= 1) { ripples.splice(i, 1); continue; }
+        ctx.beginPath(); ctx.arc(r.x, r.y, 10 + k * (r.big ? 190 : 110), 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(200,235,255,${0.8 * (1 - k)})`; ctx.lineWidth = 6 * (1 - k) + 1; ctx.stroke();
+      }
+      ctx.restore();
+      // ฐานด้านหลัง
+      ctx.beginPath(); ctx.ellipse(DC.x, DC.y, R + 8, 36, 0, Math.PI, 0); ctx.strokeStyle = 'rgba(190,210,245,.45)'; ctx.lineWidth = 6; ctx.stroke();
+    }
+    function drawFloaters(time) {
+      ctx.save(); domeClip(); ctx.clip();
+      for (const f of floaters) {
+        f.age += 1 / 60; f.x += f.vx; f.y += f.vy; f.vy += 0.01; f.vx *= 0.995; f.rot += f.vr;
+        const dx = f.x - DC.x, dy = f.y - DC.y, d = Math.hypot(dx, dy), lim = R - f.size * 0.6;
+        if (d > lim) { f.x = DC.x + dx / d * lim; f.y = DC.y + dy / d * lim; f.vx *= -0.6; f.vy *= -0.6; }
+        if (f.y > DC.y + 10) { f.y = DC.y + 10; f.vy = -Math.abs(f.vy) * 0.5 - 0.3; }
+        const a = Math.max(0, Math.min(1, (8 - f.age) / 2)); if (a <= 0) continue;
+        ctx.save(); ctx.globalAlpha = a * 0.9; ctx.translate(f.x, f.y + Math.sin(time * 2 + f.rot) * 3); ctx.rotate(f.rot); drawGift(f.img, f.g, f.size); ctx.restore();
+      }
+      for (let i = floaters.length - 1; i >= 0; i--) if (floaters[i].age > 8) floaters.splice(i, 1);
+      ctx.restore();
+    }
+    function drawGift(img, g, size) {
+      if (img && img.complete && img.naturalWidth) ctx.drawImage(img, -size / 2, -size / 2, size, size);
+      else { ctx.font = `${size * 0.85}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(g.e, 0, 2); }
+    }
+    function drawBadge(time) {
+      const [light, dark] = TIER_COL[st.tier] || TIER_COL.B;
+      const s = (1 + Math.max(-0.3, Math.min(0.4, -badgeSpring.x * 0.04))) * Juice.breathe(time, 0.015, 0.4);
+      ctx.save(); ctx.translate(0, -320); ctx.scale(s, s);
+      const pts = [[0, -78], [62, -52], [70, 10], [36, 60], [0, 72], [-36, 60], [-70, 10], [-62, -52]];
+      const path = () => { ctx.beginPath(); pts.forEach(([x, y]) => ctx.lineTo(x, y)); ctx.closePath(); };
+      ctx.shadowColor = 'rgba(160,200,255,.8)'; ctx.shadowBlur = 24;
+      path(); const g = ctx.createLinearGradient(-60, -70, 60, 70); g.addColorStop(0, '#ffffff'); g.addColorStop(0.5, light); g.addColorStop(1, '#c9d3e8');
+      ctx.fillStyle = g; ctx.globalAlpha = 0.92; ctx.fill(); ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+      ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.stroke();
+      ctx.save(); ctx.scale(0.82, 0.82); path(); ctx.lineWidth = 3; ctx.strokeStyle = dark + '88'; ctx.stroke(); ctx.restore();
+      // ไฮไลต์เพชร
+      ctx.beginPath(); ctx.moveTo(-62, -52); ctx.lineTo(0, -78); ctx.lineTo(0, -20); ctx.closePath(); ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fill();
+      ctx.font = '800 92px Kanit, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.lineWidth = 8; ctx.strokeStyle = '#ffffff'; ctx.strokeText(st.tier, 0, 4); ctx.fillStyle = dark; ctx.fillText(st.tier, 0, 4);
+      ctx.restore();
+    }
+    function drawDomeFront(time) {
+      // ขอบโดมเรืองแสง
+      ctx.save(); ctx.shadowColor = 'rgba(170,215,255,.95)'; ctx.shadowBlur = 22;
+      ctx.beginPath(); ctx.arc(DC.x, DC.y, R, Math.PI, 0); ctx.lineWidth = 7; ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.stroke(); ctx.restore();
+      ctx.beginPath(); ctx.arc(DC.x, DC.y, R - 9, Math.PI * 1.08, Math.PI * 1.45); ctx.lineWidth = 6; ctx.lineCap = 'round'; ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.stroke();
+      // ฐานด้านหน้า + ขีดบอกระดับ
+      ctx.beginPath(); ctx.ellipse(DC.x, DC.y, R + 8, 36, 0, 0, Math.PI); ctx.lineWidth = 7; ctx.strokeStyle = 'rgba(225,235,255,.9)'; ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(DC.x, DC.y + 10, R + 14, 40, 0, 0.05, Math.PI - 0.05); ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(150,175,225,.6)'; ctx.stroke();
+      ctx.strokeStyle = 'rgba(190,210,250,.7)'; ctx.lineWidth = 2;
+      for (let i = 1; i < 24; i++) { const a = Math.PI * i / 24, x = DC.x + Math.cos(a) * (R + 14), y = DC.y + 10 + Math.sin(a) * 40; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + 9); ctx.stroke(); }
+      // ป้ายระดับ
+      const label = st.tier + st.lvl; ctx.save(); ctx.translate(0, DC.y + 12);
+      ctx.beginPath(); ctx.roundRect(-64, -22, 128, 44, 22); ctx.fillStyle = 'rgba(245,248,255,.95)'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = '#9fb2dd'; ctx.stroke();
+      ctx.save(); ctx.translate(-34, 0); ctx.beginPath(); ctx.moveTo(0, -12); ctx.lineTo(12, -3); ctx.lineTo(0, 13); ctx.lineTo(-12, -3); ctx.closePath(); ctx.fillStyle = '#cfe2ff'; ctx.fill(); ctx.strokeStyle = '#7f95c8'; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
+      ctx.font = '800 28px Kanit, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = (TIER_COL[st.tier] || TIER_COL.B)[1]; ctx.fillText(label, 14, 1);
+      ctx.restore();
+      // จุดระดับย่อย (หกเหลี่ยม)
+      for (let i = 0; i < LEVELS; i++) {
+        const x = (i - (LEVELS - 1) / 2) * 32, y = DC.y + 58; ctx.save(); ctx.translate(x, y); ctx.rotate(Math.PI / 6);
+        hexPath(0, 0, 14); ctx.fillStyle = i < st.lvl ? '#7f9be0' : 'rgba(240,244,252,.95)'; ctx.fill(); ctx.lineWidth = 2.5; ctx.strokeStyle = '#c7d4ef'; ctx.stroke(); ctx.restore();
+      }
+    }
+    function drawBar() {
+      shownPts += (st.pts - shownPts) * 0.12; if (Math.abs(st.pts - shownPts) < 0.5) shownPts = st.pts;
+      const pct = Math.max(0, Math.min(1, shownPts / st.target)), w = 460, h = 44, y = DC.y + 102;
+      const bump = 1 + Math.max(-0.06, Math.min(0.08, barSpring.x * 0.02));
+      ctx.save(); ctx.translate(0, y); ctx.scale(bump, bump);
+      ctx.beginPath(); ctx.roundRect(-w / 2, -h / 2, w, h, h / 2); ctx.fillStyle = 'rgba(30,38,60,.82)'; ctx.fill(); ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(160,180,220,.8)'; ctx.stroke();
+      if (pct > 0) {
+        ctx.save(); ctx.beginPath(); ctx.roundRect(-w / 2 + 5, -h / 2 + 5, Math.max(h - 10, (w - 10) * pct), h - 10, (h - 10) / 2); ctx.clip();
+        const g = ctx.createLinearGradient(-w / 2, 0, w / 2, 0); g.addColorStop(0, '#8fb4ff'); g.addColorStop(1, '#c6a8ff'); ctx.fillStyle = g; ctx.fillRect(-w / 2, -h / 2, w, h);
+        ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.fillRect(-w / 2, -h / 2 + 5, w, 7); ctx.restore();
+      }
+      ctx.font = '600 24px Kanit, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      const txt = Overlay.fmt(shownPts) + ' / ' + Overlay.fmt(st.target) + '  ·  ' + Math.floor(pct * 100) + '%';
+      ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(10,12,25,.85)'; ctx.strokeText(txt, 0, 1); ctx.fillStyle = '#ffffff'; ctx.fillText(txt, 0, 1);
+      ctx.restore();
+      // ข้อความใต้แถบ
+      const showUnlock = performance.now() - unlockT < 3500;
+      ctx.font = '800 34px Kanit, sans-serif'; ctx.lineWidth = 7; ctx.strokeStyle = 'rgba(10,12,25,.85)';
+      const t = showUnlock ? unlockText : LABEL; ctx.strokeText(t, 0, y + 56); ctx.fillStyle = showUnlock ? '#ffe39a' : '#ffffff'; ctx.fillText(t, 0, y + 56);
+    }
+    function drawComets(dt) {
+      for (let i = comets.length - 1; i >= 0; i--) {
+        const c = comets[i]; c.t += dt / c.dur; if (c.t < 0) continue;
+        const k = Math.min(1, c.t), e = k * k * (0.6 + 0.4 * k), u = 1 - e;
+        const x = u * u * c.from.x + 2 * u * e * c.ctrl.x + e * e * c.hit.x, y = u * u * c.from.y + 2 * u * e * c.ctrl.y + e * e * c.hit.y;
+        c.rot += 0.08;
+        trail.push({ x, y, life: 1, size: c.size * (c.big ? 0.75 : 0.5), warm: c.big });
+        if (c.big) trail.push({ x: x + (Math.random() - .5) * 8, y: y + (Math.random() - .5) * 8, life: 0.8, size: c.size * 0.45, warm: true, flame: true });
+        ctx.save(); ctx.translate(x, y); ctx.rotate(Math.sin(c.rot) * 0.3);
+        if (c.big) Juice.aura(ctx, 0, 0, c.size * 0.5, c.g.d, performance.now() / 1000);
+        drawGift(c.img, c.g, c.size); ctx.restore();
+        if (NAMES && c.name) {
+          ctx.font = '600 18px Kanit, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(10,12,25,.85)';
+          ctx.strokeText(c.name, x, y + c.size * 0.55); ctx.fillStyle = '#ffffff'; ctx.fillText(c.name, x, y + c.size * 0.55);
+        }
+        if (k >= 1) { comets.splice(i, 1); impact(c); }
+      }
+    }
+    function drawTrail() {
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      for (let i = trail.length - 1; i >= 0; i--) {
+        const p = trail[i]; p.life -= p.flame ? 0.08 : 0.035; if (p.life <= 0) { trail.splice(i, 1); continue; }
+        const r = p.size * (0.4 + 0.6 * p.life), g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
+        const c = p.flame ? '255,170,70' : p.warm ? '255,235,200' : '235,242,255';
+        g.addColorStop(0, `rgba(${c},${0.45 * p.life})`); g.addColorStop(1, `rgba(${c},0)`);
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
+      }
+      if (trail.length > 900) trail.splice(0, trail.length - 900);
+      ctx.restore();
+    }
+
+    let last = performance.now();
+    function frame(now) {
+      const dt = Math.min(0.05, (now - last) / 1000); last = now; const time = now / 1000;
+      badgeSpring.step(dt); barSpring.step(dt); shake.step(dt);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.imageSmoothingQuality = 'high';
+      const o = origin(), s = S(); ctx.translate(o.x + shake.x * Math.sin(now * 0.09), o.y + shake.x * 0.5 * Math.cos(now * 0.11)); ctx.scale(s, s);
+      drawDomeBack(time); drawFloaters(time); drawBadge(time); drawDomeFront(time); drawBar();
+      drawTrail(); drawComets(dt); fx.step(); fx.draw(ctx);
+      requestAnimationFrame(frame);
+    }
+
+    function onGift(e) {
+      const count = e.repeatCount || 1, unit = e.diamondCount || 0, value = e.totalValue || unit * count;
+      if (unit < MIN_COINS || value <= 0) return;
+      const g = { u: e.giftImage || '', e: EMOJI[e.giftName] || '🎁', d: unit };
+      const n = Math.max(1, Math.min(count, 10)), u = e.user || {}, name = u.nickname || u.uniqueId || '';
+      for (let i = 0; i < n; i++) launch(g, value / n, i === 0 ? name : '', i * 0.18);
+    }
+    Overlay.on('event', (e) => { if (e.type === 'gift' && !e.streaking) onGift(e); });
+
+    addEventListener('resize', resize); resize(); requestAnimationFrame(frame);
+    // ไม่ให้ค้างเมื่อหน้าถูกซ่อน (OBS ซ่อนซีน): ดาวหางที่ค้างอยู่ให้ชนทันที
+    document.addEventListener('visibilitychange', () => { if (document.hidden) { while (comets.length) impact(comets.pop()); } });
+
+    if (!Overlay.connected) {
+      const names = ['อาร์ม', 'mimi', 'บิ๊ก', 'lisa', 'ต้นน้ำ'];
+      const gifts = [['Rose', 1], ['Rose', 1], ['Finger Heart', 5], ['Perfume', 20], ['Galaxy', 1000], ['Lion', 2999]];
+      setInterval(() => {
+        const g = gifts[Math.floor(Math.random() * gifts.length)], nm = names[Math.floor(Math.random() * names.length)];
+        onGift({ type: 'gift', user: { uniqueId: nm, nickname: nm }, giftName: g[0], diamondCount: g[1], repeatCount: g[1] >= 1000 ? 1 : 1 + Math.floor(Math.random() * 4) });
+      }, 1400);
+    }
+  })();
+  </script>
+</body>
+</html>

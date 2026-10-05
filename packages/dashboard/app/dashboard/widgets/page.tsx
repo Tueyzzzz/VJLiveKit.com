@@ -19,6 +19,7 @@ const PARAM_HINTS: Record<string, string> = {
   topgifters: '&max=5&label=...&bg=35&pos=tr',
   toplikers: '&max=5&label=...&bg=35&pos=tr',
   timer: '&start=60&coin=5&like=0&follow=30&share=10&max=0&label=...&fontSize=90&bg=35',
+  league: '&tier=B&level=1&levels=3&target=44999&start=0&label=...',
   tts: '&lang=th-TH&rate=1&readChat=1&readGift=1&minGift=1',
 };
 
@@ -36,6 +37,7 @@ const WIDGET_BLURB: Record<string, string> = {
   topgifters: 'อันดับคนส่งของขวัญ (จำทั้งไลฟ์)',
   toplikers: 'อันดับคนกดไลค์',
   timer: 'นาฬิกานับถอยหลัง ผู้ชมเติมเวลาได้',
+  league: 'โดมโล่พลังงาน ของขวัญพุ่งชน ปลดล็อกลีก B1 → B2 → A1',
   tts: 'อ่านแชท/ของขวัญออกเสียง',
   fx: 'เล่นเสียง/รูป/วิดีโอตามกฎ Actions',
 };

@@ -21,7 +21,7 @@ window.Overlay = (function () {
   let cfg = {};
   try { cfg = owner ? JSON.parse(localStorage.getItem(CFG_KEY) || '{}') : {}; } catch { cfg = {}; }
   // ปุ่ม "ล้าง/เริ่มใหม่" ใน Dashboard (resetAt เปลี่ยน) → ลบข้อมูลที่วิดเจ็ตจำไว้ (กองของขวัญ, อันดับ, เวลา)
-  const STORE_PREFIX = { giftjar: 'vjl-giftjar:', garden: 'vjl-garden:', coinjar: 'vjl-coinjar2:', timer: 'vjl-timer:', topgifters: 'vjl-rank:gifts:', toplikers: 'vjl-rank:likes:' };
+  const STORE_PREFIX = { giftjar: 'vjl-giftjar:', garden: 'vjl-garden:', coinjar: 'vjl-coinjar2:', timer: 'vjl-timer:', league: 'vjl-league:', topgifters: 'vjl-rank:gifts:', toplikers: 'vjl-rank:likes:' };
   try {
     const RESET_KEY = 'vjl-resetAt:' + widgetName + ':' + owner;
     if (cfg.resetAt && localStorage.getItem(RESET_KEY) !== String(cfg.resetAt)) {

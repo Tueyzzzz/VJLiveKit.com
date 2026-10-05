@@ -65,6 +65,25 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
       ] },
     ],
   },
+  league: {
+    resettable: 'ล้างคะแนนลีก (เริ่มจากค่าตั้งต้น)',
+    sections: [
+      { title: 'ลีกและเป้าหมาย', fields: [
+        { key: 'tier', label: 'ลีกปัจจุบัน', type: 'select', def: 'B', options: [['D', 'D'], ['C', 'C'], ['B', 'B'], ['A', 'A'], ['S', 'S']] },
+        { key: 'level', label: 'ระดับย่อยปัจจุบัน', type: 'number', min: 1, max: 9, def: 1, hint: 'เช่น B1 = 1' },
+        { key: 'levels', label: 'จำนวนระดับย่อยต่อลีก', type: 'number', min: 1, max: 9, def: 3, hint: 'ครบแล้วขึ้นลีกถัดไป เช่น B3 → A1' },
+        { key: 'target', label: 'เป้าหมายคะแนน (เพชร) ต่อระดับ', type: 'number', min: 1, def: 44999 },
+        { key: 'start', label: 'คะแนนที่มีอยู่แล้ว', type: 'number', min: 0, def: 0, hint: 'ใส่ตามที่ TikTok แสดง แล้วกดบันทึก — วิดเจ็ตนับต่อจากนี้' },
+        { key: 'grow', label: 'ตัวคูณเป้าหมายเมื่อขึ้นระดับ', type: 'range', min: 1, max: 3, step: 0.1, def: 1, unit: '×' },
+        { key: 'minCoins', label: 'นับเฉพาะของขวัญตั้งแต่ (เหรียญ)', type: 'number', min: 0, def: 0 },
+      ] },
+      { title: 'ข้อความ', fields: [
+        { key: 'label', label: 'ข้อความใต้แถบ', type: 'text', def: 'ปลดล็อกเป้าหมายถัดไป' },
+        { key: 'names', label: 'แสดงชื่อคนส่งที่หางดาวหาง', type: 'toggle', def: true },
+      ] },
+      { title: 'ขนาดและตำแหน่ง', fields: [size(), ...pos()] },
+    ],
+  },
   garden: {
     resettable: 'ล้างดอกไม้ทั้งหมด',
     sections: [

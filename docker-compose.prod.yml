@@ -9,6 +9,10 @@ services:
     environment:
       # จำกัด heap ของ Node ให้พอดีเครื่อง 1GB
       - NODE_OPTIONS=--max-old-space-size=384
+      - SNAPSHOT_DIR=/app/data/live
+    volumes:
+      # สถิติ/อันดับไลฟ์ (Top Gifters) — รีสตาร์ท/deploy กลางไลฟ์แล้วโหลดคืน
+      - appdata:/app/data
     depends_on:
       postgres:
         condition: service_healthy
@@ -54,6 +58,7 @@ services:
     logging: *logging
 
 volumes:
+  appdata:
   pgdata:
   caddy_data:
   caddy_config:

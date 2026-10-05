@@ -40,6 +40,7 @@ COPY --from=build /app/packages/server/prisma ./packages/server/prisma
 COPY --from=build /app/packages/overlay/public ./packages/overlay/public
 COPY --from=build /app/packages/dashboard/out ./packages/dashboard/out
 WORKDIR /app/packages/server
+RUN mkdir -p /app/data/live && chown -R node:node /app/data
 USER node
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \

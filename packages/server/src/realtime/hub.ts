@@ -19,6 +19,8 @@ interface RoomEntry {
   /** มีอีเวนต์ใหม่ที่ยังไม่ได้บันทึกลงฐานข้อมูล */
   dirty: boolean;
   saveTimer: NodeJS.Timeout | null;
+  /** roomId ที่โหลดสถิติที่บันทึกไว้กลับมาแล้ว (กันบวกซ้ำ) */
+  restoredFor: string | null;
 }
 
 const normalize = (username: string) => username.replace(/^@/, '').trim().toLowerCase();
@@ -101,7 +103,7 @@ export class RoomHub {
 
   private create(key: string): RoomEntry {
     const room = new TikTokRoom(key);
-    const entry: RoomEntry = { room, viewers: 0, owners: new Map(), stopTimer: null, retryTimer: null, connecting: null, dirty: false, saveTimer: null };
+    const entry: RoomEntry = { room, viewers: 0, owners: new Map(), stopTimer: null, retryTimer: null, connecting: null, dirty: false, saveTimer: null, restoredFor: null };
     const ch = RoomHub.roomChannel(key);
     room.on('event', (e) => {
       entry.dirty = true;
@@ -125,7 +127,7 @@ export class RoomHub {
 
   /** บันทึกสถิติไลฟ์ลงฐานข้อมูล (ไม่ให้ error ทำห้องล่ม) */
   private persist(entry: RoomEntry, ended = false): Promise<void> {
-    if (this.demo || !config.liveSessions || !entry.room.liveRoomId || (!entry.dirty && !ended)) return Promise.resolve();
+    if (this.demo || !entry.room.liveRoomId || (!entry.dirty && !ended)) return Promise.resolve();
     entry.dirty = false;
     return saveSession(entry.room, ended).catch((err) => console.error('[sessions] save failed', err));
   }
@@ -133,9 +135,13 @@ export class RoomHub {
   private connect(key: string, entry: RoomEntry): void {
     entry.connecting = entry.room.connect(this.demo)
       .then(async () => {
-        if (this.demo || !config.liveSessions) return;
+        if (this.demo) return;
         // ไลฟ์เดิม (เซิร์ฟเวอร์เพิ่งรีสตาร์ท/deploy) → โหลดสถิติ/อันดับที่บันทึกไว้กลับมา
-        try { await loadSession(entry.room); } catch (err) { console.error('[sessions] load failed', err); }
+        // โหลดคืนครั้งเดียวต่อไลฟ์ (TikTok หลุดแล้วต่อใหม่ในเซิร์ฟเวอร์ตัวเดิม → ข้อมูลยังอยู่ในหน่วยความจำ ห้ามบวกซ้ำ)
+        if (entry.room.liveRoomId && entry.restoredFor !== entry.room.liveRoomId) {
+          entry.restoredFor = entry.room.liveRoomId;
+          try { await loadSession(entry.room); } catch (err) { console.error('[sessions] load failed', err); }
+        }
         if (!entry.saveTimer) entry.saveTimer = setInterval(() => void this.persist(entry), this.SAVE_MS);
       })
       .catch((err: unknown) => {

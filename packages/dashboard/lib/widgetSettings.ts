@@ -20,10 +20,20 @@ const FONTS: [string, string][] = [['Kanit', 'Kanit'], ['Prompt', 'Prompt'], ['M
 const bg = (def = 35): FieldDef => ({ key: 'bg', label: 'ความทึบพื้นหลัง', type: 'range', min: 0, max: 100, step: 5, def, unit: '%', hint: '0 = ใสทั้งหมด' });
 const size = (def = 1): FieldDef => ({ key: 'scale', label: 'ขนาด', type: 'range', min: 0.4, max: 2, step: 0.05, def, unit: '×' });
 // เปลี่ยนสีภาพ 3D (หมุนเฉดสี): 0 = ชมพูเดิม · -60 ม่วง · -120 ฟ้า · 180 มิ้นต์ · 120 เขียว · 50 พีช/ทอง
+// แบบสายเท่/เกมมิ่ง (นีออนฟ้า-ชมพูบนตัวดำ) — ใช้จุดสีชุดคู่นีออนของตัวเอง
+const COOL_THEMES = new Set(['xtech', 'xcan', 'xcan2', 'xchest', 'xrobot', 'xwolf', 'xdragon', 'arcade', 'atm', 'reactor', 'sports', 'offroad', 'jdm', 'bike', 'cyber', 'tech', 'smilitary', 'sshield']);
+const isCool = (v: Values) => COOL_THEMES.has(String(v.shape ?? v.skin ?? v.car ?? ''));
+const neon = (a: string, b: string) => `linear-gradient(135deg, ${a} 50%, ${b} 50%)`;
+// เปลี่ยนสีภาพ 3D (หมุนเฉดสี) — พาสเทล: 0 = ชมพูเดิม · สายเท่: 0 = นีออนฟ้า-ชมพูเดิม (ตัวดำ/เงินคงเดิม)
 const tint = (when: (v: Values) => boolean): FieldDef[] => [
-  { key: 'hue', label: 'สีธีม', type: 'swatch', def: 0, when, hint: 'สีจริงขึ้นกับสีเดิมของภาพ (ภาพชมพู → ได้ตามจุดสี)', options: [
+  { key: 'hue', label: 'สีธีม', type: 'swatch', def: 0, when: (v) => when(v) && !isCool(v), hint: 'สีจริงขึ้นกับสีเดิมของภาพ (ภาพชมพู → ได้ตามจุดสี)', options: [
     [0, '#ffb3cf', 'ชมพู (เดิม)'], [-25, '#f6a8e6', 'บานเย็น'], [-60, '#cdb4ff', 'ม่วง'], [-95, '#b3c2ff', 'คราม'], [-120, '#a9d1ff', 'ฟ้า'],
     [180, '#a8e6d9', 'มิ้นต์'], [120, '#b6e3a1', 'เขียว'], [70, '#f3e48f', 'เหลือง'], [45, '#ffd59a', 'ทอง'], [25, '#ffc3a8', 'พีช'],
+  ] },
+  { key: 'hue', label: 'สีนีออน', type: 'swatch', def: 0, when: (v) => when(v) && isCool(v), hint: 'เปลี่ยนเฉพาะไฟนีออน ตัวเครื่อง/ตัวรถสีดำ-เงินคงเดิม', options: [
+    [0, neon('#00E5FF', '#FF2E88'), 'ฟ้า-ชมพู (เดิม)'], [-150, neon('#FF9A1F', '#00E5FF'), 'ส้ม-ฟ้า'], [-120, neon('#FFE41F', '#2E7BFF'), 'เหลือง-น้ำเงิน'],
+    [-60, neon('#1FFF6A', '#9B2EFF'), 'เขียว-ม่วง'], [60, neon('#3D4BFF', '#FF8A1F'), 'น้ำเงิน-ส้ม'], [120, neon('#E02EFF', '#8AFF1F'), 'ม่วง-เขียวมะนาว'],
+    [150, neon('#FF2E9A', '#1FFF7E'), 'ชมพู-เขียว'], [180, neon('#FF2E2E', '#1FFFC4'), 'แดง-เขียวมรกต'],
   ] },
   { key: 'sat', label: 'ความสดของสี', type: 'range', min: 0.3, max: 1.6, step: 0.05, def: 1, unit: '×', when },
   { key: 'bright', label: 'ความสว่าง', type: 'range', min: 0.7, max: 1.3, step: 0.05, def: 1, unit: '×', when },

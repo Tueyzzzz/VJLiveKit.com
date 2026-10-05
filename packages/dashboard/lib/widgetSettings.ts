@@ -8,6 +8,7 @@ export type FieldDef =
   | { key: string; label: string; type: 'number'; min?: number; max?: number; def: number; hint?: string; when?: (v: Values) => boolean }
   | { key: string; label: string; type: 'select'; /** [ค่า, ชื่อ, กลุ่ม?] — ใส่กลุ่มเพื่อจัดหมวดในรายการ */ options: [string, string, string?][]; def: string; hint?: string; when?: (v: Values) => boolean }
   | { key: string; label: string; type: 'toggle'; def: boolean; hint?: string; when?: (v: Values) => boolean }
+  | { key: string; label: string; type: 'swatch'; /** [ค่า, สีที่แสดง, ชื่อ] */ options: [number, string, string][]; def: number; hint?: string; when?: (v: Values) => boolean }
   | { key: string; label: string; type: 'color'; def: string; hint?: string; when?: (v: Values) => boolean }
   | { key: string; label: string; type: 'text'; def: string; placeholder?: string; hint?: string; when?: (v: Values) => boolean };
 
@@ -20,7 +21,10 @@ const bg = (def = 35): FieldDef => ({ key: 'bg', label: 'ความทึบ�
 const size = (def = 1): FieldDef => ({ key: 'scale', label: 'ขนาด', type: 'range', min: 0.4, max: 2, step: 0.05, def, unit: '×' });
 // เปลี่ยนสีภาพ 3D (หมุนเฉดสี): 0 = ชมพูเดิม · -60 ม่วง · -120 ฟ้า · 180 มิ้นต์ · 120 เขียว · 50 พีช/ทอง
 const tint = (when: (v: Values) => boolean): FieldDef[] => [
-  { key: 'hue', label: 'เฉดสี', type: 'range', min: -180, max: 180, step: 5, def: 0, unit: '°', hint: '0 = ชมพูเดิม · -60 ม่วง · -120 ฟ้า · 180 มิ้นต์ · 120 เขียว · 50 พีช/ทอง', when },
+  { key: 'hue', label: 'สีธีม', type: 'swatch', def: 0, when, hint: 'สีจริงขึ้นกับสีเดิมของภาพ (ภาพชมพู → ได้ตามจุดสี)', options: [
+    [0, '#ffb3cf', 'ชมพู (เดิม)'], [-25, '#f6a8e6', 'บานเย็น'], [-60, '#cdb4ff', 'ม่วง'], [-95, '#b3c2ff', 'คราม'], [-120, '#a9d1ff', 'ฟ้า'],
+    [180, '#a8e6d9', 'มิ้นต์'], [120, '#b6e3a1', 'เขียว'], [70, '#f3e48f', 'เหลือง'], [45, '#ffd59a', 'ทอง'], [25, '#ffc3a8', 'พีช'],
+  ] },
   { key: 'sat', label: 'ความสดของสี', type: 'range', min: 0.3, max: 1.6, step: 0.05, def: 1, unit: '×', when },
   { key: 'bright', label: 'ความสว่าง', type: 'range', min: 0.7, max: 1.3, step: 0.05, def: 1, unit: '×', when },
 ];

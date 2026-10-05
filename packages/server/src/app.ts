@@ -19,8 +19,9 @@ export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({ logger: true, trustProxy: true });
 
   await app.register(cors, { origin: true });
-  // จำกัดความถี่เฉพาะ route ที่ระบุ (เช่น login/register) — กัน brute force
-  await app.register(rateLimit, { global: false });
+  // เรทลิมิต: ทุก /api/* ต่อ IP 300 ครั้ง/นาที (route สำคัญเช่น login/register ตั้งเข้มกว่านี้เอง)
+  // ไฟล์ overlay/หน้าเว็บไม่นับ — OBS โหลดรูป/สคริปต์หลายไฟล์พร้อมกัน
+  await app.register(rateLimit, { global: true, max: 300, timeWindow: '1 minute', allowList: (req) => !req.url.startsWith('/api/') });
 
   // เก็บ raw body ไว้ด้วย (ใช้ตรวจลายเซ็น webhook ของ payment gateway)
   app.addContentTypeParser('application/json', { parseAs: 'buffer' }, (req, body, done) => {

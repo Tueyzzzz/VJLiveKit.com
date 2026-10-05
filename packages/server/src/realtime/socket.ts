@@ -49,6 +49,22 @@ export function setupRealtime(httpServer: HttpServer): RoomHub {
   const io = new Server(httpServer, { cors: { origin: '*' } });
   const hub = new RoomHub(io, rulesProvider, config.demoMode);
 
+  // เรทลิมิตการเชื่อมต่อต่อ IP: กันสคริปต์เปิด socket รัว ๆ (แต่ละครั้งต้องเช็ก token + DB)
+  // OBS/TikTok Studio ปกติ = ไม่กี่วิดเจ็ตต่อเครื่อง จึงตั้งเพดานเผื่อไว้กว้าง ๆ
+  const MAX_PER_MIN = 60, MAX_OPEN = 40;
+  const recent = new Map<string, number[]>(), open = new Map<string, number>();
+  const ipOf = (s: { handshake: { address: string; headers: Record<string, unknown> } }) =>
+    String(s.handshake.headers['x-forwarded-for'] ?? s.handshake.address).split(',')[0]!.trim();
+  setInterval(() => { const cut = Date.now() - 60_000; for (const [ip, ts] of recent) { const keep = ts.filter((t) => t > cut); if (keep.length) recent.set(ip, keep); else recent.delete(ip); } }, 60_000).unref();
+  io.use((socket, next) => {
+    const ip = ipOf(socket), now = Date.now();
+    const ts = (recent.get(ip) ?? []).filter((t) => t > now - 60_000);
+    if (ts.length >= MAX_PER_MIN || (open.get(ip) ?? 0) >= MAX_OPEN) return next(new Error('rate limited'));
+    ts.push(now); recent.set(ip, ts); open.set(ip, (open.get(ip) ?? 0) + 1);
+    socket.once('disconnect', () => { const n = (open.get(ip) ?? 1) - 1; if (n > 0) open.set(ip, n); else open.delete(ip); });
+    next();
+  });
+
   io.on('connection', (socket) => {
     const { token, username, widget } = socket.handshake.query as { token?: string; username?: string; widget?: string };
     socket.emit('version', OVERLAY_VERSION); // overlay เวอร์ชันเก่า → โหลดตัวเองใหม่

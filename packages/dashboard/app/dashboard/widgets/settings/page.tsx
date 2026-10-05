@@ -38,6 +38,19 @@ function FieldInput({ f, value, onChange }: { f: FieldDef; value: Values[string]
           <span className="w-16 text-right text-sm tabular-nums text-muted">{Number(value)}{f.unit ?? ''}</span>
         </div>
       );
+    case 'swatch':
+      return (
+        <div className="flex flex-wrap gap-2">
+          {f.options.map(([v, color, name]) => {
+            const on = Number(value) === v;
+            return (
+              <button key={v} type="button" title={name} aria-label={name} aria-pressed={on} onClick={() => onChange(v)}
+                className={`size-9 rounded-full border-2 shadow-sm transition ${on ? 'scale-110 border-ink ring-2 ring-pink/40' : 'border-white hover:scale-105'}`}
+                style={{ background: color }} />
+            );
+          })}
+        </div>
+      );
     case 'number':
       return <Input type="number" min={f.min} max={f.max} value={String(value)} onChange={(e) => onChange(e.target.value === '' ? 0 : Number(e.target.value))} />;
     case 'select':

@@ -426,7 +426,8 @@
     }
 
     // ---- ฟิสิกส์ (position-based) ----
-    const bodies = [], MAX = 600, G = 0.6; // MAX กันเครื่องช้าเท่านั้น
+    // จำนวนชิ้นสูงสุดตามขนาดของขวัญ (ชิ้นเล็ก = ใส่ได้มากขึ้น) · กันเครื่องช้า
+    const bodies = [], MAX = Math.round(Math.max(250, Math.min(2000, 600 / (GIFT_SCALE * GIFT_SCALE)))), G = 0.6;
     const imgCache = {};
     function giftImg(url) { if (!url || !/^https:\/\//.test(url)) return null; let im = imgCache[url]; if (!im) { im = new Image(); im.src = url; imgCache[url] = im; } return im; }
     // ของแพงใหญ่ตามราคา (Juice.sizeFor) · จำกัดไม่ให้ใหญ่เกินภาชนะเล็ก (เช่น ท้องหมู/เรือดำน้ำ)
@@ -520,10 +521,14 @@
         b.rot += vx / b.r; b.age = (b.age || 0) + 1;
       }
       for (let it = 0; it < 4; it++) {
-        for (let i = 0; i < bodies.length; i++) {
-          const a = bodies[i];
-          for (let j = i + 1; j < bodies.length; j++) {
-            const c = bodies[j], dx = c.x - a.x, dy = c.y - a.y, min = a.r + c.r;
+        // เรียงตามแกน x แล้วเช็กเฉพาะชิ้นที่ช่วง x ซ้อนกัน (เร็วพอสำหรับหลักพันชิ้น)
+        const ord = bodies.slice().sort((p, q) => p.x - q.x);
+        let maxR = 0; for (const b of bodies) if (b.r > maxR) maxR = b.r;
+        for (let i = 0; i < ord.length; i++) {
+          const a = ord[i];
+          for (let j = i + 1; j < ord.length; j++) {
+            const c = ord[j], dx = c.x - a.x, dy = c.y - a.y, min = a.r + c.r;
+            if (dx > a.r + maxR) break;
             if (Math.abs(dx) > min || Math.abs(dy) > min) continue;
             const d2 = dx * dx + dy * dy;
             if (d2 >= min * min || d2 === 0) continue;

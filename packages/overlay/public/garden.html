@@ -156,7 +156,8 @@
       return y0 + (y1 - y0) * Math.max(0, Math.min(1, (x - x0) / (x1 - x0)));
     }
     // ของขวัญที่ร่วงลงพื้น (ฟิสิกส์วงกลม: ตก → ชนเนิน/กันเอง → กลิ้ง → กองบนพื้น)
-    const ground = [], GROUND_MAX = 300; // วีเจชอบให้ดูล้น ๆ
+    // จำนวนชิ้นบนพื้นสูงสุดตามขนาดดอกไม้ (เล็ก = ใส่ได้มากขึ้น)
+    const ground = [], GROUND_MAX = Math.round(Math.max(150, Math.min(1200, 300 / (FLOWER * FLOWER))));
     function dropToGround(g, born) {
       const big = !!g.big, r = big ? 24 * FLOWER : Math.min(56, 15 * FLOWER * (Juice.sizeFor ? Juice.sizeFor(g.d, 4) : 1));
       let x, y;
@@ -182,8 +183,10 @@
         if (b.dying) { b.life -= 0.02; }
       }
       for (let it = 0; it < 3; it++) {
-        for (let i = 0; i < ground.length; i++) for (let j = i + 1; j < ground.length; j++) {
-          const a = ground[i], c = ground[j], dx = c.x - a.x, dy = c.y - a.y, m = a.r + c.r;
+        const ord = ground.slice().sort((p, q) => p.x - q.x);
+        for (let i = 0; i < ord.length; i++) for (let j = i + 1; j < ord.length; j++) {
+          const a = ord[i], c = ord[j], dx = c.x - a.x, dy = c.y - a.y, m = a.r + c.r;
+          if (dx > a.r + 60) break;
           if (Math.abs(dx) > m || Math.abs(dy) > m) continue;
           const d2 = dx * dx + dy * dy; if (d2 >= m * m || !d2) continue;
           const d = Math.sqrt(d2), k = (m - d) / d * 0.5; a.x -= dx * k; a.y -= dy * k; c.x += dx * k; c.y += dy * k;

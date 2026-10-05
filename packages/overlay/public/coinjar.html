@@ -99,7 +99,8 @@
     const toScreen = (x, y) => ({ x: TX + x * S, y: TY + y * S });
 
     // ---- ฟิสิกส์ ----
-    const bodies = [], MAX = 1000, G = 0.55; // กองได้ 1,000 ชิ้น (วีเจชอบให้ล้น ๆ)
+    // จำนวนชิ้นสูงสุดตามขนาดของขวัญ: ชิ้นเล็กลงครึ่งหนึ่ง = ใส่ได้ 4 เท่า (1× = 1,000 · 0.7× ≈ 2,000 · 1.5× ≈ 450)
+    const bodies = [], MAX = Math.round(Math.max(300, Math.min(2500, 1000 / (GIFT_SCALE * GIFT_SCALE)))), G = 0.55;
     const imgCache = {};
     function giftImg(url) { if (!url || !/^https:\/\//.test(url)) return null; let im = imgCache[url]; if (!im) { im = new Image(); im.src = url; imgCache[url] = im; } return im; }
     // ของแพงใหญ่ตามราคา · ไม่เกินความสูงช่องอุโมงค์ (ออกจากเครื่องได้เสมอ)
@@ -118,7 +119,7 @@
       bodies.push(b);
       if (mode !== 'restore') fx.sparkle(b.x, b.y, 4, b.d >= 1000 ? '#ffe08a' : '#fff6e8');
       const alive = bodies.filter((k) => !k.dying);
-      if (alive.length > MAX) alive.reduce((o, k) => (k.age > o.age ? k : o)).dying = true; // ชิ้นเก่าสุด (ลำดับในอาเรย์ถูกเรียงตาม x) · กันเครื่องช้าเท่านั้น
+      if (alive.length > MAX) alive[0].dying = true; // ชิ้นเก่าสุด · กันเครื่องช้าเท่านั้น
     }
 
     // ระยะจากจุดถึงเส้นตรง A-B
@@ -182,12 +183,13 @@
       }
       for (let it = 0; it < 4; it++) {
         // เรียงตามแกน x แล้วเช็กเฉพาะชิ้นที่ช่วง x ซ้อนกัน (เร็วพอสำหรับ 1,000 ชิ้น)
-        bodies.sort((p, q) => p.x - q.x);
-        for (let i = 0; i < bodies.length; i++) {
-          const a = bodies[i];
-          for (let j = i + 1; j < bodies.length; j++) {
-            const c = bodies[j], dx = c.x - a.x, dy = c.y - a.y, min = a.r + c.r;
-            if (dx > a.r + 75) break; // ไกลเกินรัศมีใหญ่สุดแล้ว → ชิ้นถัดไปไกลกว่านี้หมด
+        const ord = bodies.slice().sort((p, q) => p.x - q.x); // ลำดับเดิม (เก่า→ใหม่) ใช้เลือกชิ้นเก่าสุด/บันทึก
+        let maxR = 0; for (const b of bodies) if (b.r > maxR) maxR = b.r;
+        for (let i = 0; i < ord.length; i++) {
+          const a = ord[i];
+          for (let j = i + 1; j < ord.length; j++) {
+            const c = ord[j], dx = c.x - a.x, dy = c.y - a.y, min = a.r + c.r;
+            if (dx > a.r + maxR) break; // ไกลเกินรัศมีใหญ่สุดที่มีอยู่ → ชิ้นถัดไปไกลกว่านี้หมด // ไกลเกินรัศมีใหญ่สุดแล้ว → ชิ้นถัดไปไกลกว่านี้หมด
             if (Math.abs(dx) > min || Math.abs(dy) > min) continue;
             const d2 = dx * dx + dy * dy;
             if (d2 >= min * min || d2 === 0) continue;

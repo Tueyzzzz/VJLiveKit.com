@@ -65,7 +65,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
       ] },
       { title: 'ขนาดและตำแหน่ง', fields: [
         size(),
-        { key: 'giftScale', label: 'ขนาดของขวัญ', type: 'range', min: 0.5, max: 2.5, step: 0.05, def: 1, unit: '×' },
+        { key: 'giftScale', label: 'ขนาดของขวัญ', type: 'range', min: 0.5, max: 2.5, step: 0.05, def: 1, unit: '×', hint: 'ยิ่งเล็ก ยิ่งกองได้มาก — 1× ≈ 600 ชิ้น · 0.7× ≈ 1,200 · 0.55× = 2,000 (สูงสุด)' },
         ...pos(),
       ] },
       { title: 'ของขวัญ', fields: [
@@ -122,7 +122,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
       ] },
       { title: 'ขนาดและตำแหน่ง', fields: [
         size(),
-        { key: 'flowerScale', label: 'ขนาดดอกไม้', type: 'range', min: 0.5, max: 2.5, step: 0.05, def: 1, unit: '×' },
+        { key: 'flowerScale', label: 'ขนาดดอกไม้', type: 'range', min: 0.5, max: 2.5, step: 0.05, def: 1, unit: '×', hint: 'ยิ่งเล็ก ยิ่งกองบนพื้นได้มาก — 1× ≈ 300 ชิ้น · 0.5× = 1,200 (สูงสุด)' },
         ...pos(),
       ] },
       { title: 'การแสดงผล', fields: [
@@ -145,7 +145,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
       ] },
       { title: 'ขนาดและตำแหน่ง', fields: [
         size(),
-        { key: 'giftScale', label: 'ขนาดของขวัญ', type: 'range', min: 0.5, max: 2.5, step: 0.05, def: 1, unit: '×' },
+        { key: 'giftScale', label: 'ขนาดของขวัญ', type: 'range', min: 0.5, max: 2.5, step: 0.05, def: 1, unit: '×', hint: 'ยิ่งเล็ก ยิ่งกองได้มาก — 1× ≈ 1,000 ชิ้น · 0.7× ≈ 2,000 · 0.6× = 2,500 (สูงสุด)' },
         { key: 'pileMax', label: 'ความสูงกองของขวัญสูงสุด', type: 'range', min: 20, max: 90, step: 5, def: 55, unit: '%', hint: 'เทียบความสูงจอ — เกินแล้วชิ้นเก่าสุดค่อย ๆ จางไป' },
         ...pos(-80),
       ] },

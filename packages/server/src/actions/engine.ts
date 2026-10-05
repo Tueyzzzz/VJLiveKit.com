@@ -9,7 +9,7 @@ export interface RuleTrigger {
 }
 
 export interface RuleAction {
-  type: 'sound' | 'image' | 'video' | 'text';
+  type: 'sound' | 'image' | 'video' | 'text' | 'tarot';
   url?: string;
   text?: string;
   durationMs?: number;

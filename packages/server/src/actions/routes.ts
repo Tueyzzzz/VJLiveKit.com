@@ -13,7 +13,7 @@ const triggerSchema = z.object({
   keyword: z.string().optional(),
 });
 const actionSchema = z.object({
-  type: z.enum(['sound', 'image', 'video', 'text']),
+  type: z.enum(['sound', 'image', 'video', 'text', 'tarot']),
   url: z.string().url().optional(),
   text: z.string().max(200).optional(),
   durationMs: z.number().int().positive().max(60_000).optional(),

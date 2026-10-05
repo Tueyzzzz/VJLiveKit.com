@@ -9,7 +9,7 @@ import { api, ApiError, type ActionType, type Rule, type TriggerEvent } from '@/
 import { useAuth } from '@/lib/auth';
 
 const EVENT_LABELS: Record<TriggerEvent, string> = { gift: '🎁 ได้รับกิฟต์', follow: '➕ มีคนติดตาม', share: '🔁 มีคนแชร์', like: '❤️ มีคนกดไลค์', chat: '💬 แชทมีคำว่า' };
-const ACTION_LABELS: Record<ActionType, string> = { sound: '🔊 เล่นเสียง', image: '🖼️ แสดงรูป/GIF', video: '🎬 เล่นวิดีโอ', text: '✏️ แสดงข้อความ' };
+const ACTION_LABELS: Record<ActionType, string> = { sound: '🔊 เล่นเสียง', image: '🖼️ แสดงรูป/GIF', video: '🎬 เล่นวิดีโอ', text: '✏️ แสดงข้อความ', tarot: '🔮 สุ่มไพ่ทาโร่' };
 
 interface Draft {
   id?: string;
@@ -149,12 +149,12 @@ export default function ActionsPage() {
                   {Object.entries(ACTION_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                 </Select>
               </Field>
-              {draft.type !== 'text' && (
+              {draft.type !== 'text' && draft.type !== 'tarot' && (
                 <Field label="ลิงก์ไฟล์" hint="ลิงก์ตรงไปยังไฟล์ .mp3 / .png / .gif / .mp4 (https://)">
                   <Input type="url" required value={draft.url} onChange={(e) => set('url', e.target.value)} placeholder="https://..." />
                 </Field>
               )}
-              <Field label={draft.type === 'text' ? 'ข้อความ' : 'ข้อความประกอบ (ไม่บังคับ)'} hint="ใช้ {user} แทนชื่อคนที่ทำให้เกิดเหตุการณ์">
+              <Field label={draft.type === 'text' ? 'ข้อความ' : 'ข้อความประกอบ (ไม่บังคับ)'} hint={draft.type === 'tarot' ? 'สุ่มไพ่ 22 ใบ (Major Arcana) พร้อมคำทำนาย · {user} = ชื่อคนส่ง · แนะนำแสดงนาน 8 วินาที' : 'ใช้ {user} แทนชื่อคนที่ทำให้เกิดเหตุการณ์'}>
                 <Input maxLength={200} value={draft.text} onChange={(e) => set('text', e.target.value)} placeholder="ขอบคุณ {user} 💕" />
               </Field>
               <Field label="แสดงนาน (วินาที)"><Input type="number" min={1} max={60} step="0.5" value={draft.durationSec} onChange={(e) => set('durationSec', e.target.value)} /></Field>

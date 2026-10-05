@@ -83,7 +83,7 @@ export interface OverlayTokenRow { id: string; label: string | null; createdAt: 
 export interface Plan { code: string; name: string; priceCents: number; currency: string; features: Omit<Entitlements, 'plan'> }
 
 export type TriggerEvent = 'gift' | 'follow' | 'share' | 'like' | 'chat';
-export type ActionType = 'sound' | 'image' | 'video' | 'text';
+export type ActionType = 'sound' | 'image' | 'video' | 'text' | 'tarot';
 export interface Rule {
   id: string;
   name: string;

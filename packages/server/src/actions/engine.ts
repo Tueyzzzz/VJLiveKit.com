@@ -13,6 +13,8 @@ export interface RuleAction {
   url?: string;
   text?: string;
   durationMs?: number;
+  /** สุ่มไพ่ทาโร่: จำนวนใบ 1 | 3 | 7 */
+  cards?: number;
 }
 
 export interface ActionRule {

@@ -23,9 +23,10 @@ interface Draft {
   url: string;
   text: string;
   durationSec: string;
+  cards: string;
 }
 
-const EMPTY: Draft = { name: '', enabled: true, event: 'gift', giftName: '', minDiamonds: '', keyword: '', type: 'sound', url: '', text: '', durationSec: '5' };
+const EMPTY: Draft = { name: '', enabled: true, event: 'gift', giftName: '', minDiamonds: '', keyword: '', type: 'sound', url: '', text: '', durationSec: '5', cards: '1' };
 
 function toDraft(r: Rule): Draft {
   return {
@@ -33,6 +34,7 @@ function toDraft(r: Rule): Draft {
     giftName: r.trigger.giftName ?? '', minDiamonds: r.trigger.minDiamonds != null ? String(r.trigger.minDiamonds) : '',
     keyword: r.trigger.keyword ?? '', type: r.action.type, url: r.action.url ?? '', text: r.action.text ?? '',
     durationSec: r.action.durationMs ? String(r.action.durationMs / 1000) : '5',
+    cards: String(r.action.cards ?? 1),
   };
 }
 
@@ -46,6 +48,7 @@ function toBody(d: Draft) {
   const action: Rule['action'] = { type: d.type };
   if (d.type !== 'text' && d.url.trim()) action.url = d.url.trim();
   if (d.text.trim()) action.text = d.text.trim();
+  if (d.type === 'tarot') action.cards = Number(d.cards) || 1;
   const sec = Number(d.durationSec);
   if (sec > 0) action.durationMs = Math.min(60_000, Math.round(sec * 1000));
   return { name: d.name.trim(), enabled: d.enabled, trigger, action };
@@ -57,7 +60,7 @@ function describe(r: Rule): string {
   if (t.event === 'gift') s += t.giftName ? ` “${t.giftName}”` : '';
   if (t.event === 'gift' && t.minDiamonds) s += ` ≥ ${t.minDiamonds} 💎`;
   if (t.event === 'chat') s += ` “${t.keyword ?? ''}”`;
-  return `${s} → ${ACTION_LABELS[r.action.type]}${r.action.text ? ` “${r.action.text}”` : ''}`;
+  return `${s} → ${ACTION_LABELS[r.action.type]}${r.action.type === 'tarot' ? ` ${r.action.cards ?? 1} ใบ` : ''}${r.action.text ? ` “${r.action.text}”` : ''}`;
 }
 
 export default function ActionsPage() {
@@ -157,6 +160,15 @@ export default function ActionsPage() {
               <Field label={draft.type === 'text' ? 'ข้อความ' : 'ข้อความประกอบ (ไม่บังคับ)'} hint={draft.type === 'tarot' ? 'สุ่มไพ่ 22 ใบ (Major Arcana) พร้อมคำทำนาย · {user} = ชื่อคนส่ง · แนะนำแสดงนาน 8 วินาที' : 'ใช้ {user} แทนชื่อคนที่ทำให้เกิดเหตุการณ์'}>
                 <Input maxLength={200} value={draft.text} onChange={(e) => set('text', e.target.value)} placeholder="ขอบคุณ {user} 💕" />
               </Field>
+              {draft.type === 'tarot' && (
+                <Field label="จำนวนไพ่">
+                  <Select value={draft.cards} onChange={(e) => { set('cards', e.target.value); set('durationSec', e.target.value === '7' ? '20' : e.target.value === '3' ? '13' : '8'); }}>
+                    <option value="1">🃏 เปิด 1 ใบ — คำทำนายเดียว</option>
+                    <option value="3">🃏🃏🃏 เปิด 3 ใบ — อดีต · ปัจจุบัน · อนาคต</option>
+                    <option value="7">เปิด 7 ใบ — ดูดวงเต็มชุด</option>
+                  </Select>
+                </Field>
+              )}
               <Field label="แสดงนาน (วินาที)"><Input type="number" min={1} max={60} step="0.5" value={draft.durationSec} onChange={(e) => set('durationSec', e.target.value)} /></Field>
             </div>
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={draft.enabled} onChange={(e) => set('enabled', e.target.checked)} className="accent-pink" /> เปิดใช้งาน</label>

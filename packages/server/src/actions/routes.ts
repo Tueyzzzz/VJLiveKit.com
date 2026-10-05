@@ -17,6 +17,7 @@ const actionSchema = z.object({
   url: z.string().url().optional(),
   text: z.string().max(200).optional(),
   durationMs: z.number().int().positive().max(60_000).optional(),
+  cards: z.union([z.literal(1), z.literal(3), z.literal(7)]).optional(),
 });
 const ruleSchema = z.object({
   name: z.string().trim().min(1).max(80),

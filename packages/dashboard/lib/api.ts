@@ -89,7 +89,7 @@ export interface Rule {
   name: string;
   enabled: boolean;
   trigger: { event: TriggerEvent; giftName?: string; minDiamonds?: number; keyword?: string };
-  action: { type: ActionType; url?: string; text?: string; durationMs?: number };
+  action: { type: ActionType; url?: string; text?: string; durationMs?: number; cards?: number };
   createdAt: string;
 }
 export interface PaymentRow { id: string; amountCents: number; currency: string; status: string; createdAt: string; rawPayload: { hosted_invoice_url?: string; number?: string } | null }

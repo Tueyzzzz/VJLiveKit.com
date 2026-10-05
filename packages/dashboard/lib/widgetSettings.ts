@@ -1,0 +1,194 @@
+/**
+ * ฟอร์มตั้งค่าวิดเจ็ต — ชื่อ key ตรงกับพารามิเตอร์ที่ overlay อ่าน (Overlay.param)
+ * ค่าที่บันทึกถูกส่งให้ overlay ผ่าน socket → จอเปลี่ยนทันทีโดยไม่ต้องเปลี่ยนลิงก์
+ */
+
+export type FieldDef =
+  | { key: string; label: string; type: 'range'; min: number; max: number; step: number; def: number; unit?: string; hint?: string; when?: (v: Values) => boolean }
+  | { key: string; label: string; type: 'number'; min?: number; max?: number; def: number; hint?: string; when?: (v: Values) => boolean }
+  | { key: string; label: string; type: 'select'; options: [string, string][]; def: string; hint?: string; when?: (v: Values) => boolean }
+  | { key: string; label: string; type: 'toggle'; def: boolean; hint?: string; when?: (v: Values) => boolean }
+  | { key: string; label: string; type: 'color'; def: string; hint?: string; when?: (v: Values) => boolean }
+  | { key: string; label: string; type: 'text'; def: string; placeholder?: string; hint?: string; when?: (v: Values) => boolean };
+
+export type Values = Record<string, string | number | boolean>;
+export interface Section { title: string; fields: FieldDef[] }
+export interface WidgetSettingsDef { sections: Section[]; /** มีข้อมูลที่จำไว้ (กองของขวัญ/อันดับ/เวลา) ให้ล้างได้ */ resettable?: string }
+
+const FONTS: [string, string][] = [['Kanit', 'Kanit'], ['Prompt', 'Prompt'], ['Mitr', 'Mitr'], ['Sriracha', 'Sriracha (ลายมือ)'], ['Chakra Petch', 'Chakra Petch']];
+const bg = (def = 35): FieldDef => ({ key: 'bg', label: 'ความทึบพื้นหลัง', type: 'range', min: 0, max: 100, step: 5, def, unit: '%', hint: '0 = ใสทั้งหมด' });
+const size = (def = 1): FieldDef => ({ key: 'scale', label: 'ขนาด', type: 'range', min: 0.4, max: 2, step: 0.05, def, unit: '×' });
+const pos = (): FieldDef[] => [
+  { key: 'x', label: 'เลื่อนแนวนอน', type: 'range', min: -900, max: 900, step: 10, def: 0, unit: 'px' },
+  { key: 'y', label: 'เลื่อนแนวตั้ง', type: 'range', min: -500, max: 500, step: 10, def: 0, unit: 'px' },
+];
+
+export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
+  giftjar: {
+    resettable: 'ล้างของขวัญในโหลและอันดับ',
+    sections: [
+      { title: 'รูปแบบโหล', fields: [
+        { key: 'shape', label: 'ทรงโหล', type: 'select', def: 'jar', options: [['jar', 'โหลแก้วคอแคบ'], ['bowl', 'โหลกลมปากกว้าง'], ['mason', 'โหลฝาผ้าผูกโบว์']] },
+        { key: 'cloth', label: 'สีผ้าฝาโหล', type: 'color', def: '#e0452b', when: (v) => v.shape === 'mason' },
+        { key: 'full', label: 'เมื่อโหลเต็ม', type: 'select', def: 'spill', options: [['spill', 'ล้นออกมากองข้างโหล'], ['fade', 'ชิ้นเก่าสุดค่อย ๆ หายไป'], ['reset', 'ฉลอง แล้วเทโหลเริ่มใหม่']] },
+        { key: 'fullText', label: 'ข้อความตอนโหลเต็ม', type: 'text', def: 'โหลเต็มแล้ว! 🎉', when: (v) => v.full === 'reset' },
+      ] },
+      { title: 'ขนาดและตำแหน่ง', fields: [
+        size(),
+        { key: 'giftScale', label: 'ขนาดของขวัญ', type: 'range', min: 0.5, max: 2.5, step: 0.05, def: 1, unit: '×' },
+        ...pos(),
+      ] },
+      { title: 'ของขวัญ', fields: [
+        { key: 'minCoins', label: 'รับเฉพาะของขวัญตั้งแต่ (เหรียญ)', type: 'number', min: 0, def: 0, hint: '0 = รับทุกชิ้น' },
+      ] },
+      { title: 'แจ้งเตือนผู้ส่ง', fields: [
+        { key: 'alert', label: 'แสดงชื่อผู้ส่งเหนือโหล', type: 'toggle', def: true },
+        { key: 'alertSec', label: 'แสดงนาน (วินาที)', type: 'number', min: 1, max: 30, def: 5, when: (v) => !!v.alert },
+      ] },
+      { title: 'ผู้ให้สูงสุด', fields: [
+        { key: 'board', label: 'แสดงใต้โหล', type: 'toggle', def: true },
+        { key: 'top', label: 'จำนวนคน', type: 'number', min: 1, max: 10, def: 1, when: (v) => !!v.board },
+        { key: 'boardFormat', label: 'รูปแบบ', type: 'select', def: 'full', options: [['full', 'รูป + ชื่อ + เหรียญ'], ['name', 'ชื่ออย่างเดียว']], when: (v) => !!v.board },
+        { key: 'total', label: 'แสดงยอดเหรียญรวมเหนือโหล', type: 'toggle', def: false },
+      ] },
+      { title: 'ตัวอักษร', fields: [
+        { key: 'font', label: 'ฟอนต์', type: 'select', def: 'Kanit', options: FONTS },
+        { key: 'fontSize', label: 'ขนาดตัวอักษร', type: 'range', min: 30, max: 90, step: 2, def: 50 },
+      ] },
+    ],
+  },
+  coinjar: {
+    resettable: 'ล้างกองของขวัญ',
+    sections: [
+      { title: 'เครื่องและเป้าหมาย', fields: [
+        { key: 'goal', label: 'เป้าหมาย (เหรียญ)', type: 'number', min: 1, def: 10000, hint: 'แถบบนจอเครื่องจะเต็มเมื่อถึงเป้า' },
+        { key: 'counter', label: 'แสดงจำนวนเหรียญบนเครื่อง', type: 'toggle', def: true },
+      ] },
+      { title: 'ขนาดและตำแหน่ง', fields: [
+        size(),
+        { key: 'giftScale', label: 'ขนาดของขวัญ', type: 'range', min: 0.5, max: 2.5, step: 0.05, def: 1, unit: '×' },
+        ...pos(),
+      ] },
+    ],
+  },
+  alerts: {
+    sections: [
+      { title: 'แจ้งเตือนเมื่อ', fields: [
+        { key: 'gift', label: 'มีคนส่งของขวัญ', type: 'toggle', def: true },
+        { key: 'minCoins', label: 'ของขวัญตั้งแต่ (เหรียญ)', type: 'number', min: 1, def: 1, when: (v) => !!v.gift },
+        { key: 'big', label: 'ของขวัญใหญ่ (มีพลุ) ตั้งแต่', type: 'number', min: 1, def: 1000, when: (v) => !!v.gift },
+        { key: 'follow', label: 'มีคนกดติดตาม', type: 'toggle', def: true },
+        { key: 'share', label: 'มีคนแชร์ไลฟ์', type: 'toggle', def: true },
+      ] },
+      { title: 'การแสดงผล', fields: [
+        { key: 'duration', label: 'แสดงนาน (วินาที)', type: 'number', min: 2, max: 30, def: 5 },
+        { key: 'pos', label: 'ตำแหน่ง', type: 'select', def: 'top', options: [['top', 'ด้านบน'], ['center', 'กลางจอ'], ['bottom', 'ด้านล่าง']] },
+        bg(),
+      ] },
+    ],
+  },
+  chat: {
+    sections: [
+      { title: 'แชท', fields: [
+        { key: 'max', label: 'จำนวนข้อความบนจอ', type: 'number', min: 1, max: 30, def: 8 },
+        { key: 'fade', label: 'ข้อความหายไปหลัง (วินาที)', type: 'number', min: 0, max: 120, def: 0, hint: '0 = ไม่หาย' },
+        { key: 'pos', label: 'ชิดมุม', type: 'select', def: 'bl', options: [['bl', 'ล่างซ้าย'], ['br', 'ล่างขวา']] },
+        { key: 'fontSize', label: 'ขนาดตัวอักษร', type: 'range', min: 12, max: 32, step: 1, def: 17, unit: 'px' },
+        bg(),
+      ] },
+    ],
+  },
+  goal: {
+    sections: [
+      { title: 'เป้าหมาย', fields: [
+        { key: 'type', label: 'นับจาก', type: 'select', def: 'like', options: [['like', '❤️ ไลค์'], ['follow', '➕ ผู้ติดตาม'], ['share', '🔁 แชร์'], ['diamond', '💎 เพชร'], ['gift', '🎁 จำนวนของขวัญ']] },
+        { key: 'target', label: 'เป้าหมาย', type: 'number', min: 1, def: 10000 },
+        { key: 'next', label: 'ถึงเป้าแล้วเพิ่มเป้าถัดไปอีก', type: 'number', min: 0, def: 0, hint: '0 = ไม่เพิ่ม' },
+        { key: 'label', label: 'หัวข้อ', type: 'text', def: '', placeholder: 'เว้นว่าง = ตามชนิด' },
+        bg(),
+      ] },
+    ],
+  },
+  follower: {
+    sections: [
+      { title: 'ผู้ติดตามล่าสุด', fields: [
+        { key: 'label', label: 'หัวข้อ', type: 'text', def: 'ผู้ติดตามล่าสุด' },
+        { key: 'showCount', label: 'แสดงจำนวนผู้ติดตามในไลฟ์', type: 'toggle', def: true },
+      ] },
+    ],
+  },
+  topgifters: {
+    resettable: 'ล้างอันดับ',
+    sections: [
+      { title: 'อันดับผู้ให้ของขวัญ', fields: [
+        { key: 'max', label: 'จำนวนอันดับ', type: 'number', min: 1, max: 20, def: 5 },
+        { key: 'label', label: 'หัวข้อ', type: 'text', def: '🏆 Top Gifters' },
+        { key: 'pos', label: 'มุมจอ', type: 'select', def: 'tr', options: [['tr', 'บนขวา'], ['tl', 'บนซ้าย'], ['br', 'ล่างขวา'], ['bl', 'ล่างซ้าย']] },
+        bg(),
+      ] },
+    ],
+  },
+  toplikers: {
+    resettable: 'ล้างอันดับ',
+    sections: [
+      { title: 'อันดับยอดไลค์', fields: [
+        { key: 'max', label: 'จำนวนอันดับ', type: 'number', min: 1, max: 20, def: 5 },
+        { key: 'label', label: 'หัวข้อ', type: 'text', def: '❤️ อันดับยอดไลค์' },
+        { key: 'pos', label: 'มุมจอ', type: 'select', def: 'tr', options: [['tr', 'บนขวา'], ['tl', 'บนซ้าย'], ['br', 'ล่างขวา'], ['bl', 'ล่างซ้าย']] },
+        bg(),
+      ] },
+    ],
+  },
+  timer: {
+    resettable: 'เริ่มนับเวลาใหม่',
+    sections: [
+      { title: 'เวลา', fields: [
+        { key: 'start', label: 'เวลาเริ่มต้น (นาที)', type: 'number', min: 1, def: 60 },
+        { key: 'max', label: 'เวลาสูงสุด (นาที)', type: 'number', min: 0, def: 0, hint: '0 = ไม่จำกัด' },
+        { key: 'blink', label: 'กะพริบเมื่อเหลือ (วินาที)', type: 'number', min: 0, def: 60 },
+      ] },
+      { title: 'เพิ่มเวลาเมื่อ (วินาที)', fields: [
+        { key: 'coin', label: 'ต่อ 1 เหรียญของขวัญ', type: 'number', min: 0, def: 5 },
+        { key: 'like', label: 'ต่อ 1 ไลค์', type: 'number', min: 0, def: 0 },
+        { key: 'follow', label: 'ต่อการติดตาม', type: 'number', min: 0, def: 30 },
+        { key: 'share', label: 'ต่อการแชร์', type: 'number', min: 0, def: 10 },
+      ] },
+      { title: 'การแสดงผล', fields: [
+        { key: 'label', label: 'ข้อความด้านบน', type: 'text', def: '⏳ ส่งของขวัญเพื่อเพิ่มเวลา' },
+        { key: 'done', label: 'ข้อความเมื่อหมดเวลา', type: 'text', def: 'หมดเวลา! 🎉' },
+        { key: 'fontSize', label: 'ขนาดตัวเลข', type: 'range', min: 40, max: 160, step: 2, def: 90 },
+        bg(),
+      ] },
+    ],
+  },
+  tts: {
+    sections: [
+      { title: 'อ่านออกเสียง', fields: [
+        { key: 'readChat', label: 'อ่านแชท', type: 'toggle', def: true },
+        { key: 'readGift', label: 'อ่านของขวัญ', type: 'toggle', def: true },
+        { key: 'minGift', label: 'อ่านของขวัญตั้งแต่ (เหรียญ)', type: 'number', min: 1, def: 1, when: (v) => !!v.readGift },
+        { key: 'tmplChat', label: 'รูปแบบประโยคแชท', type: 'text', def: '{name} พูดว่า {text}' },
+        { key: 'tmplGift', label: 'รูปแบบประโยคของขวัญ', type: 'text', def: '{name} ส่ง {gift}' },
+      ] },
+      { title: 'เสียง', fields: [
+        { key: 'voice', label: 'เสียง (Google)', type: 'select', def: 'th-TH-Neural2-C', options: [['th-TH-Neural2-C', 'หญิง (Neural2)'], ['th-TH-Standard-A', 'หญิง (มาตรฐาน)']] },
+        { key: 'rate', label: 'ความเร็ว', type: 'range', min: 0.5, max: 2, step: 0.05, def: 1, unit: '×' },
+        { key: 'pitch', label: 'ระดับเสียง', type: 'range', min: 0.5, max: 1.5, step: 0.05, def: 1 },
+      ] },
+    ],
+  },
+};
+
+/** ค่าเริ่มต้นของทุกช่อง */
+export function defaultsOf(def: WidgetSettingsDef): Values {
+  const v: Values = {};
+  for (const s of def.sections) for (const f of s.fields) v[f.key] = f.def;
+  return v;
+}
+
+/** แปลงเป็นค่าที่ overlay อ่าน (toggle → '1'/'0') */
+export function toOverlayParams(values: Values): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(values)) out[k] = typeof v === 'boolean' ? (v ? '1' : '0') : String(v);
+  return out;
+}

@@ -162,3 +162,24 @@ model ActionRule {
 
   @@index([userId])
 }
+
+// ---------- ไลฟ์ (สถิติ/อันดับต่อไลฟ์ — รอดการรีสตาร์ท/deploy และใช้ทำหน้าสถิติย้อนหลัง) ----------
+model LiveSession {
+  id             String    @id @default(cuid())
+  roomId         String    @unique // รหัสห้องไลฟ์ของ TikTok (ไลฟ์ใหม่ = roomId ใหม่)
+  tiktokUsername String    // ชื่อ TikTok ของห้อง (ตัวพิมพ์เล็ก ไม่มี @)
+  startedAt      DateTime  @default(now())
+  lastSeenAt     DateTime  @updatedAt
+  endedAt        DateTime?
+  diamonds       Int       @default(0)
+  gifts          Int       @default(0)
+  likes          Int       @default(0)
+  follows        Int       @default(0)
+  shares         Int       @default(0)
+  chats          Int       @default(0)
+  peakViewers    Int       @default(0)
+  topGifters     Json      @default("[]") // [{ uniqueId, nickname, avatar, value }]
+  topLikers      Json      @default("[]")
+
+  @@index([tiktokUsername, startedAt])
+}

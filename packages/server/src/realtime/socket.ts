@@ -68,6 +68,14 @@ export function setupRealtime(httpServer: HttpServer): RoomHub {
       const { username: room, ownerId } = viewer;
       socket.join(RoomHub.roomChannel(room));
       if (ownerId) socket.join(RoomHub.ownerChannel(ownerId, room));
+      // ตั้งค่าวิดเจ็ตที่บันทึกจาก Dashboard → ส่งให้ overlay (แก้ใน Dashboard แล้วจอเปลี่ยนทันที ไม่ต้องเปลี่ยนลิงก์)
+      if (ownerId && widget && isWidgetType(widget)) {
+        socket.join(RoomHub.configChannel(ownerId, widget));
+        try {
+          const cfg = await prisma.widgetConfig.findUnique({ where: { userId_type: { userId: ownerId, type: widget } }, select: { settings: true } });
+          socket.emit('config', cfg?.settings ?? {});
+        } catch (err) { console.error('[socket] load widget config failed', err); }
+      }
       const state = await hub.attach(room, ownerId);
       // หลุดไประหว่างรอเชื่อมต่อ -> คืนที่นั่งทันที
       if (socket.disconnected) { hub.detach(room, ownerId); return; }

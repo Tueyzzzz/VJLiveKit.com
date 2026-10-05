@@ -6,6 +6,8 @@ export const config = {
   nodeEnv: process.env.NODE_ENV ?? 'development',
   isProd: process.env.NODE_ENV === 'production',
   demoMode: process.env.DEMO_MODE === 'true',
+  /** บันทึกสถิติไลฟ์ลงตาราง LiveSession — เปิดหลังรัน migration ของตารางนี้แล้วเท่านั้น */
+  liveSessions: process.env.LIVE_SESSIONS === 'true',
 
   databaseUrl: process.env.DATABASE_URL ?? '',
   redisUrl: process.env.REDIS_URL,

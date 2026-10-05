@@ -1,6 +1,8 @@
 import { TikTokRoom } from '../tiktok/manager.js';
 import { evaluate, type ActionRule } from '../actions/engine.js';
 import type { Server } from 'socket.io';
+import { loadSession, saveSession } from './sessions.js';
+import { config } from '../config/index.js';
 
 /** โหลดกฎ Actions ที่เปิดใช้ของผู้ใช้หนึ่งคน */
 export type RulesProvider = (userId: string) => Promise<ActionRule[]>;
@@ -14,6 +16,9 @@ interface RoomEntry {
   stopTimer: NodeJS.Timeout | null;
   retryTimer: NodeJS.Timeout | null;
   connecting: Promise<void> | null;
+  /** มีอีเวนต์ใหม่ที่ยังไม่ได้บันทึกลงฐานข้อมูล */
+  dirty: boolean;
+  saveTimer: NodeJS.Timeout | null;
 }
 
 const normalize = (username: string) => username.replace(/^@/, '').trim().toLowerCase();
@@ -35,6 +40,7 @@ export class RoomHub {
   private readonly RULES_TTL = 30_000;
   private readonly IDLE_STOP_MS = 60_000;
   private readonly RETRY_MS = 30_000;
+  private readonly SAVE_MS = 20_000;
 
   constructor(private io: Server, private rulesProvider?: RulesProvider, private demo = false) {
     current = this;
@@ -42,6 +48,12 @@ export class RoomHub {
 
   static roomChannel(username: string) { return `room:${normalize(username)}`; }
   static ownerChannel(userId: string, username: string) { return `owner:${userId}:${normalize(username)}`; }
+  static configChannel(userId: string, widget: string) { return `cfg:${userId}:${widget}`; }
+
+  /** ส่งตั้งค่าวิดเจ็ตใหม่ให้ overlay ที่เปิดอยู่ของผู้ใช้ (หลังบันทึกใน Dashboard) */
+  pushConfig(userId: string, widget: string, settings: unknown): void {
+    this.io.to(RoomHub.configChannel(userId, widget)).emit('config', settings ?? {});
+  }
 
   private async getRules(userId: string): Promise<ActionRule[]> {
     if (!this.rulesProvider) return [];
@@ -89,9 +101,10 @@ export class RoomHub {
 
   private create(key: string): RoomEntry {
     const room = new TikTokRoom(key);
-    const entry: RoomEntry = { room, viewers: 0, owners: new Map(), stopTimer: null, retryTimer: null, connecting: null };
+    const entry: RoomEntry = { room, viewers: 0, owners: new Map(), stopTimer: null, retryTimer: null, connecting: null, dirty: false, saveTimer: null };
     const ch = RoomHub.roomChannel(key);
     room.on('event', (e) => {
+      entry.dirty = true;
       this.io.to(ch).emit('tiktok-event', e);
       for (const ownerId of entry.owners.keys()) {
         void this.getRules(ownerId).then((rules) => {
@@ -103,14 +116,28 @@ export class RoomHub {
     room.on('stats', (s) => this.io.to(ch).emit('stats', s));
     room.on('status', (s) => {
       this.io.to(ch).emit('status', s);
-      // หลุด/ไลฟ์จบ -> ลองต่อใหม่ถ้ายังมีคนดู
+      // หลุด/ไลฟ์จบ -> บันทึกสถิติ แล้วลองต่อใหม่ถ้ายังมีคนดู
+      if (s.type === 'disconnected' || s.type === 'streamEnd') void this.persist(entry, s.type === 'streamEnd');
       if ((s.type === 'disconnected' || s.type === 'streamEnd') && entry.viewers > 0) this.scheduleRetry(key, entry);
     });
     return entry;
   }
 
+  /** บันทึกสถิติไลฟ์ลงฐานข้อมูล (ไม่ให้ error ทำห้องล่ม) */
+  private persist(entry: RoomEntry, ended = false): Promise<void> {
+    if (this.demo || !config.liveSessions || !entry.room.liveRoomId || (!entry.dirty && !ended)) return Promise.resolve();
+    entry.dirty = false;
+    return saveSession(entry.room, ended).catch((err) => console.error('[sessions] save failed', err));
+  }
+
   private connect(key: string, entry: RoomEntry): void {
     entry.connecting = entry.room.connect(this.demo)
+      .then(async () => {
+        if (this.demo || !config.liveSessions) return;
+        // ไลฟ์เดิม (เซิร์ฟเวอร์เพิ่งรีสตาร์ท/deploy) → โหลดสถิติ/อันดับที่บันทึกไว้กลับมา
+        try { await loadSession(entry.room); } catch (err) { console.error('[sessions] load failed', err); }
+        if (!entry.saveTimer) entry.saveTimer = setInterval(() => void this.persist(entry), this.SAVE_MS);
+      })
       .catch((err: unknown) => {
         const message = err instanceof Error ? err.message : String(err);
         this.io.to(RoomHub.roomChannel(key)).emit('status', {
@@ -138,6 +165,8 @@ export class RoomHub {
     this.rooms.delete(key);
     if (entry.stopTimer) clearTimeout(entry.stopTimer);
     if (entry.retryTimer) clearTimeout(entry.retryTimer);
+    if (entry.saveTimer) clearInterval(entry.saveTimer);
+    await this.persist(entry); // ปิดเซิร์ฟเวอร์ (deploy) → บันทึกให้ทันก่อน
     await entry.room.disconnect();
   }
 

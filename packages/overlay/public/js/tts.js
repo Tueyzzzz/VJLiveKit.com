@@ -16,7 +16,7 @@
  */
 window.TTS = (function () {
   const synth = window.speechSynthesis;
-  const P = (k, def) => { const v = new URLSearchParams(location.search).get(k); return v == null ? def : v; };
+  const P = (k, def) => (window.Overlay ? Overlay.param(k, def) : (new URLSearchParams(location.search).get(k) ?? def));
 
   const cfg = {
     lang: P('lang', 'th-TH'),

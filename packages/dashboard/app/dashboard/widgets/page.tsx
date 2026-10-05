@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { Check, Copy, ExternalLink, Lock, Plus, Trash2 } from 'lucide-react';
+import { Check, Copy, ExternalLink, Lock, Plus, Settings, Trash2 } from 'lucide-react';
 import { WIDGET_LABELS } from '@/components/Pricing';
 import { Alert, Badge, Button, Card, Input, PageHeader, Spinner } from '@/components/ui';
 import { api, ApiError, type OverlayTokenRow } from '@/lib/api';
@@ -130,7 +130,7 @@ export default function WidgetsPage() {
                         {WIDGET_LABELS[w.type] ?? w.type}
                         {w.locked && <Badge tone="pink"><Lock className="size-3" /> Pro</Badge>}
                       </div>
-                      {PARAM_HINTS[w.type] && <div className="mt-0.5 truncate text-xs text-muted" title={PARAM_HINTS[w.type]}>เสริม: {PARAM_HINTS[w.type]}</div>}
+                      {PARAM_HINTS[w.type] && <div className="mt-0.5 truncate text-xs text-muted" title={`ปรับผ่านลิงก์ได้ด้วย: ${PARAM_HINTS[w.type]}`}>กด “ตั้งค่า” เพื่อปรับแต่ง</div>}
                     </div>
                     {w.locked ? (
                       <Link href="/dashboard/billing/" className="text-sm text-pink hover:underline">อัปเกรดเป็น Pro เพื่อใช้วิดเจ็ตนี้</Link>
@@ -138,6 +138,9 @@ export default function WidgetsPage() {
                       <>
                         <code className="min-w-0 flex-1 truncate rounded-lg bg-canvas px-3 py-2 text-xs text-muted blur-[3px] transition hover:blur-none">{w.url}</code>
                         <CopyButton text={w.url} />
+                        <Link href={`/dashboard/widgets/settings/?type=${w.type}`} aria-label="ตั้งค่าวิดเจ็ต">
+                          <Button variant="secondary" className="px-3"><Settings className="size-4" /><span className="hidden sm:inline">ตั้งค่า</span></Button>
+                        </Link>
                         <a href={w.url} target="_blank" rel="noreferrer" aria-label="เปิดดูตัวอย่าง">
                           <Button variant="ghost" className="px-3"><ExternalLink className="size-4" /></Button>
                         </a>

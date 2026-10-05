@@ -7,6 +7,7 @@ import { requireUser, getUser } from '../auth/middleware.js';
 import { signOverlayToken } from './tokens.js';
 import { config } from '../config/index.js';
 import { WIDGET_TYPES, isWidgetType, getEntitlements } from '../plans/index.js';
+import { getHub } from '../realtime/hub.js';
 
 /** URL overlay ทุกตัวสำหรับ token หนึ่ง พร้อมบอกว่าแพลนปัจจุบันใช้ได้ไหม */
 function widgetUrls(jwtToken: string, allowed: readonly string[]) {
@@ -76,6 +77,7 @@ export async function widgetRoutes(app: FastifyInstance): Promise<void> {
       create: { userId: claims.userId, type, settings },
       update: { settings },
     });
+    getHub()?.pushConfig(claims.userId, type, cfg.settings);
     return { config: cfg.settings };
   });
 }

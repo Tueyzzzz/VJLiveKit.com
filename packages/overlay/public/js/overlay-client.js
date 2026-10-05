@@ -12,8 +12,31 @@ window.Overlay = (function () {
   const handlers = { event: [], stats: [], status: [], state: [], action: [] };
   const fire = (k, d) => handlers[k].forEach((fn) => fn(d));
 
+  // ---- ตั้งค่าจาก Dashboard (บันทึกในบัญชี) ----
+  // ลำดับความสำคัญ: พารามิเตอร์ใน URL > ตั้งค่าใน Dashboard > ค่าเริ่มต้นของวิดเจ็ต
+  // เก็บสำเนาไว้ในเครื่องเพื่อให้วิดเจ็ตอ่านได้ทันทีตอนโหลด; เซิร์ฟเวอร์ส่งค่าใหม่มา → โหลดหน้าใหม่
+  const widgetName = (location.pathname.split('/').pop() || '').replace(/\.html$/, '');
+  const owner = (params.get('t') || '').slice(-24);
+  const CFG_KEY = 'vjl-cfg:' + widgetName + ':' + owner;
+  let cfg = {};
+  try { cfg = owner ? JSON.parse(localStorage.getItem(CFG_KEY) || '{}') : {}; } catch { cfg = {}; }
+  // ปุ่ม "ล้าง/เริ่มใหม่" ใน Dashboard (resetAt เปลี่ยน) → ลบข้อมูลที่วิดเจ็ตจำไว้ (กองของขวัญ, อันดับ, เวลา)
+  const STORE_PREFIX = { giftjar: 'vjl-giftjar:', coinjar: 'vjl-coinjar2:', timer: 'vjl-timer:', topgifters: 'vjl-rank:gifts:', toplikers: 'vjl-rank:likes:' };
+  try {
+    const RESET_KEY = 'vjl-resetAt:' + widgetName + ':' + owner;
+    if (cfg.resetAt && localStorage.getItem(RESET_KEY) !== String(cfg.resetAt)) {
+      const prefix = STORE_PREFIX[widgetName];
+      if (prefix) Object.keys(localStorage).filter((k) => k.startsWith(prefix)).forEach((k) => localStorage.removeItem(k));
+      localStorage.setItem(RESET_KEY, String(cfg.resetAt));
+    }
+  } catch { /* storage ปิด */ }
+
   const api = {
-    param: (k, def) => (params.get(k) == null ? def : params.get(k)),
+    param: (k, def) => {
+      if (params.get(k) != null) return params.get(k);
+      if (cfg[k] !== undefined && cfg[k] !== null && cfg[k] !== '') return String(cfg[k]);
+      return def;
+    },
     on(type, fn) { if (handlers[type]) handlers[type].push(fn); return api; },
     esc: (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'),
     fmt: (n) => (Math.round(n) || 0).toLocaleString('en-US'),
@@ -32,7 +55,7 @@ window.Overlay = (function () {
   // เชื่อม Socket.IO
   if (typeof io === 'function') {
     // ชื่อวิดเจ็ตจากชื่อไฟล์ (เช่น /overlay/tts.html -> tts) ให้เซิร์ฟเวอร์ตรวจสิทธิ์ตามแพลน
-    const widget = (location.pathname.split('/').pop() || '').replace(/\.html$/, '');
+    const widget = widgetName;
     const query = token ? { token, widget } : { username, widget };
     const socket = io({ query });
     // แสดงข้อความ error มุมจอ (ช่วยผู้ใช้ debug ใน OBS) — ซ่อนเองเมื่อเชื่อมต่อได้
@@ -58,6 +81,12 @@ window.Overlay = (function () {
       if (!v) return;
       if (version === null) { version = v; return; }
       if (v !== version) setTimeout(() => location.reload(), 1500 + Math.random() * 3000);
+    });
+    socket.on('config', (c) => {
+      const next = JSON.stringify(c || {});
+      if (next === JSON.stringify(cfg)) return;
+      try { localStorage.setItem(CFG_KEY, next); } catch { /* storage ปิด */ }
+      location.reload(); // ใช้ตั้งค่าใหม่
     });
     socket.on('tiktok-event', (e) => fire('event', e));
     socket.on('stats', (s) => fire('stats', s));

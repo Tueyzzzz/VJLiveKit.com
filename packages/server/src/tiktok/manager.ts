@@ -67,6 +67,35 @@ export class TikTokRoom extends EventEmitter {
   isConnected(): boolean { return this.connected; }
   getState() { return { connected: this.connected, username: this.username, roomId: this.roomId, stats: this.stats, topGifters: this.topGifters(), topLikers: this.topLikers() }; }
 
+  /** รหัสห้องไลฟ์ปัจจุบัน (null = ยังไม่ได้ต่อ / โหมดเดโม) */
+  get liveRoomId(): string | null { return this.roomId; }
+  peakViewers = 0;
+
+  /** สำหรับบันทึกลงฐานข้อมูล */
+  snapshot() {
+    return { stats: { ...this.stats }, peakViewers: this.peakViewers, topGifters: this.topGifters(200), topLikers: this.topLikers(200) };
+  }
+
+  /** โหลดสถิติที่บันทึกไว้ของไลฟ์เดียวกัน (หลังรีสตาร์ท/deploy) แล้วรวมกับที่นับได้ตั้งแต่เพิ่งต่อ */
+  restore(snap: { stats: Partial<LiveStats>; peakViewers: number; topGifters: TopGifter[]; topLikers: TopGifter[] }): void {
+    const s = snap.stats;
+    this.stats.diamondCount += s.diamondCount ?? 0;
+    this.stats.giftCount += s.giftCount ?? 0;
+    this.stats.followCount += s.followCount ?? 0;
+    this.stats.shareCount += s.shareCount ?? 0;
+    this.stats.chatCount += s.chatCount ?? 0;
+    this.stats.likeCount = Math.max(this.stats.likeCount, s.likeCount ?? 0); // TikTok ส่งยอดรวมจริงมา
+    this.peakViewers = Math.max(this.peakViewers, snap.peakViewers ?? 0);
+    const merge = (map: Map<string, TopGifter>, list: TopGifter[]) => {
+      for (const g of list ?? []) {
+        const id = g.uniqueId || g.nickname, cur = map.get(id);
+        if (cur) cur.value += g.value; else map.set(id, { ...g });
+      }
+    };
+    merge(this.gifters, snap.topGifters); merge(this.likers, snap.topLikers);
+    this.emit('stats', this.stats);
+  }
+
   topGifters(limit = 20): TopGifter[] { return RoomRanking.top(this.gifters, limit); }
   topLikers(limit = 20): TopGifter[] { return RoomRanking.top(this.likers, limit); }
 
@@ -78,6 +107,7 @@ export class TikTokRoom extends EventEmitter {
     this.seenMsgIds.clear();
     this.gifters.clear();
     this.likers.clear();
+    this.peakViewers = 0;
     if (demo || !TikTokLiveConnection) return this.startDemo();
     return this.connectReal();
   }
@@ -170,7 +200,7 @@ export class TikTokRoom extends EventEmitter {
       case 'follow': this.stats.followCount++; this.send('follow', { user }); break;
       case 'share': this.stats.shareCount++; this.send('share', { user }); break;
       case 'member': this.send('member', { user }); break;
-      case 'roomUser': this.stats.viewerCount = num(d.total ?? d.viewerCount); this.send('roomUser', { viewerCount: this.stats.viewerCount }); break;
+      case 'roomUser': this.stats.viewerCount = num(d.total ?? d.viewerCount); this.peakViewers = Math.max(this.peakViewers, this.stats.viewerCount); this.send('roomUser', { viewerCount: this.stats.viewerCount }); break;
     }
   }
 

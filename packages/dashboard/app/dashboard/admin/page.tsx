@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/auth';
 
 interface Overview {
   users: number; signupsToday: number; signups7d: number; paidActive: number; inTrial: number; liveNow: number;
+  tiktok: { day: string; attempts: number; success: number; failed: number; signKey: boolean };
   server: { uptimeMin: number; rssMB: number; heapMB: number; load1: number; cpus: number; freeMemMB: number; totalMemMB: number };
 }
 interface UserRow {
@@ -20,7 +21,12 @@ interface Reports {
   revenueByMonth: { month: string; baht: number }[];
   topReferrers: { email: string; tiktok: string | null; referred: number }[];
 }
-interface Room { username: string; connected: boolean; widgets: number; owners: number; diamonds: number; gifts: number; likes: number; viewers: number; topGifter: string | null }
+interface Room {
+  username: string; connected: boolean; widgets: number; owners: number; diamonds: number; gifts: number; likes: number; viewers: number; topGifter: string | null;
+  attempts: number; connectedAt: number | null; lastError: string | null; lastErrorAt: number | null; retrying: boolean;
+}
+const ago = (t: number | null) => { if (!t) return '-'; const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'เมื่อกี้' : m < 60 ? `${m} นาทีที่แล้ว` : `${Math.floor(m / 60)} ชม. ${m % 60} นาที`; };
+const EULER_DAILY = 2500; // โควตาแพ็กเกจฟรีของ EulerStream (คำขอ/วัน)
 
 const d = (s: string | null | undefined) => (s ? new Date(s).toLocaleDateString('th-TH', { dateStyle: 'medium' }) : '-');
 const PLAN: Record<string, [string, 'pink' | 'mint' | 'gray']> = { pro: ['Pro', 'pink'], trial: ['ทดลองฟรี', 'mint'], free: ['Free', 'gray'] };
@@ -94,6 +100,21 @@ export default function AdminPage() {
               <Card key={String(l)} className="p-4"><div className="text-xs text-muted">{l}</div><div className="mt-1 font-display text-3xl">{Number(v).toLocaleString('th-TH')}</div></Card>
             ))}
           </div>
+          <Card>
+            <h2 className="mb-2 font-medium">การเชื่อมต่อ TikTok วันนี้</h2>
+            <div className="grid gap-2 text-sm sm:grid-cols-4">
+              <div>พยายามต่อ <b>{ov.tiktok.attempts.toLocaleString('th-TH')}</b> ครั้ง</div>
+              <div>สำเร็จ <b className="text-mint">{ov.tiktok.success.toLocaleString('th-TH')}</b></div>
+              <div>ไม่สำเร็จ <b className="text-pink">{ov.tiktok.failed.toLocaleString('th-TH')}</b> <span className="text-xs text-muted">(ส่วนใหญ่ = ยังไม่ขึ้นไลฟ์)</span></div>
+              <div>Sign key {ov.tiktok.signKey ? <Badge tone="mint">ตั้งแล้ว</Badge> : <Badge tone="pink">ยังไม่ตั้ง</Badge>}</div>
+            </div>
+            {(() => { const used = Math.min(1, (ov.tiktok.attempts * 1.5) / EULER_DAILY); return (
+              <>
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-canvas"><div className={`h-full ${used > 0.8 ? 'bg-pink' : 'bg-violet'}`} style={{ width: `${used * 100}%` }} /></div>
+                <p className="mt-1 text-xs text-muted">โควตา EulerStream โดยประมาณ ~{Math.round(ov.tiktok.attempts * 1.5).toLocaleString('th-TH')} / {EULER_DAILY.toLocaleString('th-TH')} คำขอ (แพ็กเกจฟรี · นับจากเซิร์ฟเวอร์เปิดวันนี้) — ยอดจริงดูที่ dashboard ของ EulerStream</p>
+              </>
+            ); })()}
+          </Card>
           <Card>
             <h2 className="mb-2 font-medium">เซิร์ฟเวอร์</h2>
             <div className="grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-4">
@@ -207,13 +228,14 @@ export default function AdminPage() {
         <Card className="overflow-x-auto p-0">
           <table className="w-full text-sm">
             <thead className="border-b border-line text-left text-xs text-muted">
-              <tr><th className="px-4 py-3 font-normal">TikTok</th><th className="px-4 py-3 font-normal">สถานะ</th><th className="px-4 py-3 font-normal">วิดเจ็ตเปิด</th><th className="px-4 py-3 font-normal">คนดู</th><th className="px-4 py-3 font-normal">เพชร</th><th className="px-4 py-3 font-normal">ไลค์</th><th className="px-4 py-3 font-normal">ส่งเยอะสุด</th></tr>
+              <tr><th className="px-4 py-3 font-normal">TikTok</th><th className="px-4 py-3 font-normal">สถานะ</th><th className="px-4 py-3 font-normal">การเชื่อมต่อ</th><th className="px-4 py-3 font-normal">วิดเจ็ตเปิด</th><th className="px-4 py-3 font-normal">คนดู</th><th className="px-4 py-3 font-normal">เพชร</th><th className="px-4 py-3 font-normal">ไลค์</th><th className="px-4 py-3 font-normal">ส่งเยอะสุด</th></tr>
             </thead>
             <tbody className="divide-y divide-line">
               {rooms.map((r) => (
                 <tr key={r.username}>
                   <td className="px-4 py-3 font-medium">@{r.username}</td>
-                  <td className="px-4 py-3"><Badge tone={r.connected ? 'mint' : 'gray'}>{r.connected ? 'ไลฟ์อยู่' : 'รอไลฟ์'}</Badge></td>
+                  <td className="px-4 py-3"><Badge tone={r.connected ? 'mint' : r.lastError ? 'pink' : 'gray'}>{r.connected ? 'ไลฟ์อยู่' : r.retrying ? 'รอไลฟ์ (ลองใหม่อัตโนมัติ)' : 'กำลังต่อ'}</Badge></td>
+                  <td className="max-w-xs px-4 py-3 text-xs">{r.connected ? <>ต่อได้ {ago(r.connectedAt)}</> : r.lastError ? <span className="text-pink" title={r.lastError}>{r.lastError.slice(0, 80)} · {ago(r.lastErrorAt)}</span> : '-'}<div className="text-muted">พยายามต่อ {r.attempts} ครั้ง</div></td>
                   <td className="px-4 py-3">{r.widgets}</td>
                   <td className="px-4 py-3">{r.viewers.toLocaleString('th-TH')}</td>
                   <td className="px-4 py-3">💎 {r.diamonds.toLocaleString('th-TH')}</td>

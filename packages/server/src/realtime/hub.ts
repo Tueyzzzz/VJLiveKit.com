@@ -2,6 +2,7 @@ import { TikTokRoom } from '../tiktok/manager.js';
 import { evaluate, type ActionRule } from '../actions/engine.js';
 import type { Server } from 'socket.io';
 import { loadSession, saveSession } from './sessions.js';
+import { connStats } from './connstats.js';
 import { config } from '../config/index.js';
 
 /** โหลดกฎ Actions ที่เปิดใช้ของผู้ใช้หนึ่งคน */
@@ -19,6 +20,10 @@ interface RoomEntry {
   /** มีอีเวนต์ใหม่ที่ยังไม่ได้บันทึกลงฐานข้อมูล */
   dirty: boolean;
   saveTimer: NodeJS.Timeout | null;
+  attempts: number;
+  connectedAt: number | null;
+  lastError: string | null;
+  lastErrorAt: number | null;
   /** roomId ที่โหลดสถิติที่บันทึกไว้กลับมาแล้ว (กันบวกซ้ำ) */
   restoredFor: string | null;
 }
@@ -103,7 +108,7 @@ export class RoomHub {
 
   private create(key: string): RoomEntry {
     const room = new TikTokRoom(key);
-    const entry: RoomEntry = { room, viewers: 0, owners: new Map(), stopTimer: null, retryTimer: null, connecting: null, dirty: false, saveTimer: null, restoredFor: null };
+    const entry: RoomEntry = { room, viewers: 0, owners: new Map(), stopTimer: null, retryTimer: null, connecting: null, dirty: false, saveTimer: null, restoredFor: null, attempts: 0, connectedAt: null, lastError: null, lastErrorAt: null };
     const ch = RoomHub.roomChannel(key);
     room.on('event', (e) => {
       entry.dirty = true;
@@ -133,12 +138,16 @@ export class RoomHub {
   }
 
   private connect(key: string, entry: RoomEntry): void {
+    if (!this.demo) connStats.bump('attempt');
+    entry.attempts++;
     entry.connecting = entry.room.connect(this.demo)
       .then(async () => {
+        entry.connectedAt = Date.now(); entry.lastError = null;
         if (this.demo) return;
+        connStats.bump('success');
         // ไลฟ์เดิม (เซิร์ฟเวอร์เพิ่งรีสตาร์ท/deploy) → โหลดสถิติ/อันดับที่บันทึกไว้กลับมา
-        // โหลดคืนครั้งเดียวต่อไลฟ์ (TikTok หลุดแล้วต่อใหม่ในเซิร์ฟเวอร์ตัวเดิม → ข้อมูลยังอยู่ในหน่วยความจำ ห้ามบวกซ้ำ)
-        if (entry.room.liveRoomId && entry.restoredFor !== entry.room.liveRoomId) {
+        // room.connect() ล้างสถิติในหน่วยความจำทุกครั้ง → โหลดของไลฟ์เดิมคืนทุกครั้งที่ต่อสำเร็จ (ไม่บวกซ้ำ)
+        if (entry.room.liveRoomId) {
           entry.restoredFor = entry.room.liveRoomId;
           try { await loadSession(entry.room); } catch (err) { console.error('[sessions] load failed', err); }
         }
@@ -146,6 +155,8 @@ export class RoomHub {
       })
       .catch((err: unknown) => {
         const message = err instanceof Error ? err.message : String(err);
+        entry.lastError = message.slice(0, 300); entry.lastErrorAt = Date.now(); entry.connectedAt = null;
+        if (!this.demo) connStats.bump('failed');
         this.io.to(RoomHub.roomChannel(key)).emit('status', {
           type: 'offline', message: `ยังเชื่อมต่อ @${key} ไม่ได้ (ยังไม่ได้ไลฟ์?) จะลองใหม่ใน ${this.RETRY_MS / 1000} วินาที`, detail: message,
         });
@@ -181,7 +192,8 @@ export class RoomHub {
     return [...this.rooms.entries()].map(([key, e]) => {
       const st = e.room.getState();
       return { username: key, connected: st.connected, roomId: st.roomId, widgets: e.viewers, owners: e.owners.size,
-        diamonds: st.stats.diamondCount, gifts: st.stats.giftCount, likes: st.stats.likeCount, viewers: st.stats.viewerCount ?? 0, topGifter: st.topGifters[0]?.nickname ?? null };
+        diamonds: st.stats.diamondCount, gifts: st.stats.giftCount, likes: st.stats.likeCount, viewers: st.stats.viewerCount ?? 0, topGifter: st.topGifters[0]?.nickname ?? null,
+        attempts: e.attempts, connectedAt: e.connectedAt, lastError: e.lastError, lastErrorAt: e.lastErrorAt, retrying: !!e.retryTimer };
     }).sort((a, b) => Number(b.connected) - Number(a.connected) || b.diamonds - a.diamonds);
   }
 

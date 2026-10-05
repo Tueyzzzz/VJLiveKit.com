@@ -8,6 +8,7 @@ import { config } from '../config/index.js';
 import { getEntitlements, trialEndOf } from '../plans/index.js';
 import { grantDays } from '../referrals/routes.js';
 import { getHub } from '../realtime/hub.js';
+import { connStats } from '../realtime/connstats.js';
 
 /** แอดมิน = role ADMIN ในฐานข้อมูล หรืออีเมลอยู่ใน ADMIN_EMAILS */
 export function isAdmin(req: FastifyRequest): boolean {
@@ -37,6 +38,7 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
     return {
       users, signupsToday: today_, signups7d: week, paidActive: paid, inTrial: trial,
       liveNow: getHub()?.liveCount() ?? 0,
+      tiktok: { day: connStats.day, attempts: connStats.attempts, success: connStats.success, failed: connStats.failed, signKey: !!config.signApiKey },
       server: {
         uptimeMin: Math.round(process.uptime() / 60), rssMB: Math.round(mem.rss / 1048576), heapMB: Math.round(mem.heapUsed / 1048576),
         load1: Number(os.loadavg()[0].toFixed(2)), cpus: os.cpus().length,

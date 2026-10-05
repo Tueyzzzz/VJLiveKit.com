@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { Alert, Badge, Button, Card, Field, Input, PageHeader, Select, Spinner } from '@/components/ui';
+import { GiftPicker } from '@/components/GiftPicker';
 import { api, ApiError, type ActionType, type Rule, type TriggerEvent } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 
@@ -134,7 +135,7 @@ export default function ActionsPage() {
               </Field>
               {draft.event === 'gift' && (
                 <>
-                  <Field label="ชื่อกิฟต์ (เว้นว่าง = ทุกกิฟต์)"><Input value={draft.giftName} onChange={(e) => set('giftName', e.target.value)} placeholder="Rose" /></Field>
+                  <Field label="กิฟต์"><GiftPicker value={draft.giftName} onChange={(v) => set('giftName', v)} /></Field>
                   <Field label="มูลค่าขั้นต่ำ (เพชร)"><Input type="number" min={0} value={draft.minDiamonds} onChange={(e) => set('minDiamonds', e.target.value)} placeholder="เช่น 100" /></Field>
                 </>
               )}

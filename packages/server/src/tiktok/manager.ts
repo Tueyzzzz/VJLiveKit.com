@@ -1,4 +1,5 @@
 import { EventEmitter } from 'node:events';
+import { recordGift } from './giftCatalog.js';
 import { config } from '../config/index.js';
 import { emptyStats, type LiveStats, type NormalizedUser, type TikTokEvent, type TikTokEventType, type TopGifter } from './types.js';
 
@@ -202,6 +203,7 @@ export class TikTokRoom extends EventEmitter {
         this.stats.giftCount += count; this.stats.diamondCount += value;
         this.addGifter(user, value);
         this.send('gift', { user, giftName, giftId, giftImage, repeatCount: count, diamondCount: diamonds, totalValue: value, streaking: false });
+        recordGift(giftName, giftId || undefined, giftImage, diamonds); // คลังของขวัญ (ดรอปดาวน์ใน Dashboard)
         break;
       }
       case 'like': {

@@ -14,6 +14,7 @@ import { adminRoutes } from './admin/routes.js';
 import { config } from './config/index.js';
 import { OVERLAY_DIR, OVERLAY_VERSION } from './overlay-version.js';
 import { runtime } from './runtime.js';
+import { listGifts } from './tiktok/giftCatalog.js';
 
 /** ที่อยู่ไฟล์ Dashboard (Next.js static export) */
 const DASHBOARD_DIR = config.dashboardDir ?? path.resolve(process.cwd(), '../dashboard/out');
@@ -71,6 +72,9 @@ export async function buildApp(): Promise<FastifyInstance> {
   } else {
     app.log.warn(`ไม่พบ Dashboard ที่ ${DASHBOARD_DIR} — เสิร์ฟเฉพาะ API/overlay`);
   }
+
+  // คลังของขวัญ (ชื่อ/รูป/ราคา) สำหรับดรอปดาวน์เลือกกิฟต์
+  app.get('/api/gifts', async () => ({ gifts: listGifts() }));
 
   app.get('/healthz', async () => ({ ok: true, live: runtime.liveRooms() }));
 

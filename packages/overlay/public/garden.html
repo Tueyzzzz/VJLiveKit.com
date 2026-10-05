@@ -37,7 +37,7 @@
    *   scale=1 flowerScale=1 x=0 y=0   ขนาด/ตำแหน่ง
    *   big=1000                        ของขวัญมูลค่าตั้งแต่นี้ = ดอกใหญ่บนยอด
    *   sway=1                          ความแรงลม (0 = นิ่ง)
-   *   skin=image|classic              กระถางรูป 3D (ค่าเริ่มต้น) หรือแบบวาดด้วยโค้ด
+   *   skin=image|tree|classic         กระถางรูป 3D (ค่าเริ่มต้น) / ต้นไม้ใหญ่ (ดอกไม้บานบนพุ่มใบ) / วาดด้วยโค้ด
    *   hue=0 sat=1 bright=1            เปลี่ยนสีกระถางรูป 3D
    *   pot=#f3e6cc                     สีกระถาง (แบบ classic)
    *   alert=1 board=1 minCoins=0 reset=1
@@ -59,7 +59,12 @@
     // ---- ต้นไม้: กิ่งหลักแผ่เป็นพัดจากปากกระถาง + กิ่งย่อย (สุ่มแบบคงที่ เหมือนกันทุกครั้งที่โหลด) ----
     let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     // กระถางรูป 3D: พิกัดวัดจากรูป (k = หน่วย/พิกเซล, จุด 0,0 = กลางดินแนวนอน, ก้นกระถาง)
-    const POT_SKIN = P('skin', 'image') === 'classic' ? null : { src: 'themes/pot-heart.webp', k: 0.24, x: -151.9, y: -219.8, w: 303.8, h: 219.8 };
+    const SKIN_NAME = P('skin', 'image');
+    // ต้นไม้ใหญ่ (ภาพ 3D): จุดติดดอกวัดจากพุ่มใบในภาพ (slots = ดอกเล็ก, bigs = ดอกใหญ่)
+    const TREE = SKIN_NAME === 'tree' ? { src: 'themes/tree-pastel.webp', x: -281.5, y: -480.0, w: 561.3, h: 480.0,
+      slots: [[83.9,-393.6],[-134.3,-403.4],[-228.4,-302.5],[183.1,-279.8],[133.9,-358.5],[-122.4,-344.0],[177.5,-333.7],[164.3,-313.2],[-61.6,-340.1],[89.8,-342.2],[-106.1,-282.4],[192.1,-357.6],[-210.5,-271.2],[-146.7,-332.8],[-0.9,-429.5],[151.0,-282.4],[-32.5,-461.6],[83.9,-237.4],[135.2,-242.6],[-110.4,-396.6],[-153.6,-206.2],[-190.4,-341.4],[130.9,-397.4],[-179.3,-195.9],[-93.7,-369.6],[-61.2,-441.9],[-120.6,-375.6],[-160.0,-298.2],[237.4,-207.1],[-154.0,-358.5],[107.0,-417.5],[53.9,-332.4],[-68.4,-243.0],[-129.6,-198.9],[54.8,-240.0],[-255.8,-235.7],[-90.3,-315.7],[192.9,-172.8],[64.6,-375.6],[-171.1,-240.0],[-22.7,-409.0],[-201.5,-220.7],[58.2,-309.3],[-45.8,-419.3],[-216.5,-324.3],[-27.8,-437.6],[-75.7,-278.5],[189.1,-305.9],[41.5,-355.5],[98.8,-375.2],[110.8,-352.1],[-43.6,-248.1],[166.8,-372.2],[224.6,-227.2],[144.2,-328.1],[210.9,-328.6],[-71.4,-364.1],[-184.4,-287.1],[-116.4,-314.4],[-30.4,-314.9],[98.8,-256.3],[-166.4,-386.3],[-232.7,-220.7],[-94.1,-345.7],[-9.8,-454.8],[-237.4,-278.1],[20.1,-336.7],[-69.3,-420.5],[201.9,-219.5],[219.5,-187.4],[-64.2,-314.4],[160.9,-350.4],[219.9,-307.6],[133.0,-298.6],[-143.3,-380.3],[81.3,-320.9],[68.9,-350.4],[-129.2,-276.8],[-204.9,-304.6],[21.0,-456.0],[-90.3,-260.5],[-88.6,-407.3],[204.1,-269.9],[-177.1,-313.2],[-149.7,-184.0],[107.8,-234.9],[-38.9,-338.0],[-25.2,-234.4],[-173.7,-217.8],[36.4,-318.7],[44.5,-280.6],[-176.3,-359.4],[146.3,-381.2],[121.1,-376.9],[-49.6,-358.9],[-112.9,-261.0],[73.2,-257.1]],
+      bigs: [[-27.8,-437.6],[-143.3,-380.3],[121.1,-376.9],[-61.6,-340.1],[53.9,-332.4],[164.3,-313.2],[-204.9,-304.6]] } : null;
+    const POT_SKIN = SKIN_NAME === 'classic' ? null : TREE || { src: 'themes/pot-heart.webp', k: 0.24, x: -151.9, y: -219.8, w: 303.8, h: 219.8 };
     const potImg = POT_SKIN ? Juice.skin(POT_SKIN.src, num('hue', 0), num('sat', 1), num('bright', 1)) : null;
     const POT_TOP = POT_SKIN ? -179.2 : -96; // กิ่งงอกจากกลางดิน
     const stems = [];
@@ -78,8 +83,10 @@
       else { const tw = st.twigs[(r - 8) % st.twigs.length]; slots.push({ stem: st, twig: tw, t: .45 + (r - 8) * .18 + rnd() * .05, off: (rnd() - .5) * 8 }); }
     }
 
-    const BIG_SPOTS = [5, 4, 6, 3, 7, 2, 8, 1, 9, 0, 10].map((i) => ({ stem: stems[i] }))
+    const BIG_SPOTS = TREE ? TREE.bigs.map(([x, y]) => ({ tree: true, x, y, t: rnd() }))
+      : [5, 4, 6, 3, 7, 2, 8, 1, 9, 0, 10].map((i) => ({ stem: stems[i] }))
       .concat(stems.flatMap((st) => st.twigs.map((tw) => ({ stem: st, twig: tw }))));
+    if (TREE) slots.splice(0, slots.length, ...TREE.slots.map(([x, y]) => ({ tree: true, x, y, t: rnd() })));
     // ตำแหน่งบนกิ่ง ณ เวลา time (มีลมแกว่ง)
     function stemPoint(st, t, time) {
       const sway = Math.sin(time * 0.9 + st.phase) * 0.06 * SWAY * t;
@@ -95,6 +102,7 @@
       return { x: base.x + Math.cos(a) * st.len * t, y: base.y + Math.sin(a) * st.len * t, a };
     }
     function slotPoint(sl, time) {
+      if (sl.tree) return { x: sl.x + Math.sin(time * 0.9 + sl.y * 0.02) * 3 * SWAY * (-sl.y / 400), y: sl.y }; // พุ่มใบไหวตามลม
       if (!sl.twig) { const p = stemPoint(sl.stem, sl.t, time); return { x: p.x + sl.off, y: p.y }; }
       const p0 = stemPoint(sl.stem, sl.twig.t, time);
       const a = p0.a + sl.twig.a + Math.sin(time * 1.3 + sl.stem.phase + sl.twig.t * 5) * 0.08 * SWAY;
@@ -121,7 +129,7 @@
       const w = 92, h = 96, top = POT_TOP;
       ctx.save(); const br = Juice.breathe(performance.now() / 1000, 0.012); ctx.scale(1 + (1 - br) * 0.5, br);
       if (POT_SKIN) {
-        ctx.beginPath(); ctx.ellipse(0, -4, 125, 12, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(90,70,140,.25)'; ctx.fill();
+        ctx.beginPath(); ctx.ellipse(0, -4, TREE ? 170 : 125, 12, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(90,70,140,.25)'; ctx.fill();
         if (potImg.ready()) ctx.drawImage(potImg.source, POT_SKIN.x, POT_SKIN.y, POT_SKIN.w, POT_SKIN.h);
         ctx.restore(); return;
       }
@@ -183,9 +191,9 @@
       bigs.forEach((b, i) => {
         // ตำแหน่งดอกใหญ่: ยอดกิ่งหลัก (กลางก่อน) → ปลายกิ่งย่อย · เกินแล้ววนซ้ำแบบเหลื่อมนิด ๆ (ไม่ซ้อนเป็นเสา)
         const k = i % BIG_SPOTS.length, lap = Math.floor(i / BIG_SPOTS.length), sp = BIG_SPOTS[k];
-        const p0 = sp.twig ? slotPoint({ stem: sp.stem, twig: sp.twig, t: 1 }, time) : stemPoint(sp.stem, 1, time);
-        const px = p0.x + (lap ? b.jx : 0), py = p0.y - (sp.twig ? 8 : 26) + (lap ? b.jy : 0);
-        const s = pop(b.born, now), R = 46 * FLOWER * (sp.twig ? 0.72 : 1);
+        const p0 = sp.tree ? slotPoint(sp, time) : sp.twig ? slotPoint({ stem: sp.stem, twig: sp.twig, t: 1 }, time) : stemPoint(sp.stem, 1, time);
+        const px = p0.x + (lap ? b.jx : 0), py = p0.y - (sp.tree ? 0 : sp.twig ? 8 : 26) + (lap ? b.jy : 0);
+        const s = pop(b.born, now), R = 46 * FLOWER * (sp.twig ? 0.72 : sp.tree ? 0.85 : 1);
         Juice.aura(ctx, px, py, R * 0.9, b.g.d || 1000, time);
         if (!b.sparkled) { b.sparkled = true; if (b.born > 0) { fx.sparkle(px, py, 10, '#ffe08a'); fx.confetti(px, py, 30); } }
         ctx.save(); ctx.translate(px, py); ctx.scale(s, s); ctx.rotate(Math.sin(time * .7 + i) * .1 * SWAY);
@@ -202,7 +210,7 @@
       const time = now / 1000;
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.imageSmoothingQuality = 'high';
       const o = origin(), s = S(); ctx.translate(o.x, o.y); ctx.scale(s, s);
-      if (POT_SKIN) { drawPot(); drawStems(time); drawSoilTufts(time); } else { drawStems(time); drawPot(); }
+      if (TREE) drawPot(); else if (POT_SKIN) { drawPot(); drawStems(time); drawSoilTufts(time); } else { drawStems(time); drawPot(); }
       drawFlowers(time, now);
       fx.step(); fx.draw(ctx);
       requestAnimationFrame(frame);
@@ -212,7 +220,7 @@
     const $alert = document.getElementById('alert'), $board = document.getElementById('board');
     function layoutUi() {
       const o = origin(), s = S();
-      $alert.style.left = o.x + 'px'; $alert.style.top = Math.max(4, o.y - (470 - 96 - POT_TOP) * s) + 'px';
+      $alert.style.left = o.x + 'px'; $alert.style.top = Math.max(4, o.y - (TREE ? 560 : 470 - 96 - POT_TOP) * s) + 'px';
       $board.style.left = o.x + 'px'; $board.style.top = (o.y + 10) + 'px';
     }
     let alertT = null, ranking = {};

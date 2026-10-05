@@ -109,6 +109,11 @@
         openY: -297.1, openHW: 130.9, rimHW: 152.6, topY: -380.0, fullY: -257.1, maxHW: 186.5, floor: -22.7,
         image: { src: 'themes/orb-front.webp', back: 'themes/orb-back.webp', x: -229.2, y: -380.0, w: 458.7, h: 380.0 },
       },
+      tank: { // ตู้ปลา (ภาพ 3D) — ปากเปิด: ของขวัญตกผ่านราวบน ลงน้ำ (จมช้า มีฟองอากาศ) กองบนพื้นทราย
+        hw: () => 210.2,
+        openY: -257.9, openHW: 210.2, rimHW: 247.9, topY: -300.0, fullY: -217.9, maxHW: 210.2, floor: -57.3, water: -217.7,
+        image: { src: 'themes/tank-front.webp', back: 'themes/tank-back.webp', x: -299.8, y: -300.0, w: 599.2, h: 300.0 },
+      },
       snow: { // ลูกแก้วหิมะ (ภาพ 3D) — โดมปิด: ของขวัญตกลงบนหิมะหน้าบ้าน อยู่หลังกระจก · เต็มแล้วชิ้นเก่าจางออก
         hw: (y) => Math.sqrt(Math.max(0, 147.7 ** 2 - (y - (-243.2)) ** 2)),
         openY: -378.9, openHW: 90, rimHW: 120, topY: -400.0, fullY: -320.9, maxHW: 147.7, closed: true, floor: -135.4, fullMode: 'fade',
@@ -387,8 +392,11 @@
     function step() {
       const VMAX = 14;
       for (const b of bodies) {
-        const vx = Math.max(-VMAX, Math.min(VMAX, (b.x - b.px) * 0.985)), vy = Math.max(-VMAX, Math.min(VMAX, (b.y - b.py) * 0.985));
-        b.px = b.x; b.py = b.y; b.x += vx; b.y += vy + G; b.vin = vy + G;
+        const wet = SH.water != null && !b.out && b.y > SH.water, damp = wet ? 0.9 : 0.985, g = wet ? G * 0.45 : G; // ในน้ำ: จมช้า
+        const vx = Math.max(-VMAX, Math.min(VMAX, (b.x - b.px) * damp)), vy = Math.max(-VMAX, Math.min(VMAX, (b.y - b.py) * damp));
+        if (SH.water != null && !b.out && b.py <= SH.water && b.y > SH.water && vy > 2) { fx.sparkle(b.x, SH.water, 5, '#d8f1ff'); fx.dust(b.x, SH.water, 4); } // ตูม!
+        if (wet && Math.random() < 0.012) fx.push({ kind: 'dust', x: b.x + (Math.random() - .5) * b.r, y: b.y - b.r, vx: 0, vy: -1.2, g: -0.02, life: 1, decay: 0.012, size: 2 + Math.random() * 3, color: 'rgba(235,248,255,.8)' }); // ฟองอากาศ
+        b.px = b.x; b.py = b.y; b.x += vx; b.y += vy + g; b.vin = vy + g;
         b.rot += vx / b.r; b.age = (b.age || 0) + 1;
       }
       for (let it = 0; it < 4; it++) {

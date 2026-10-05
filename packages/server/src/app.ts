@@ -9,6 +9,7 @@ import { widgetRoutes } from './widgets/routes.js';
 import { billingRoutes } from './billing/routes.js';
 import { actionRoutes } from './actions/routes.js';
 import { ttsRoutes } from './tts/routes.js';
+import { transferRoutes } from './billing/transfer.js';
 import { config } from './config/index.js';
 import { OVERLAY_DIR, OVERLAY_VERSION } from './overlay-version.js';
 
@@ -66,6 +67,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(billingRoutes);
   await app.register(actionRoutes);
   await app.register(ttsRoutes);
+  await app.register(transferRoutes);
 
   // 404: API ตอบ JSON, หน้าเว็บตอบหน้า 404 ของ Dashboard
   const notFoundPage = path.join(DASHBOARD_DIR, '404.html');

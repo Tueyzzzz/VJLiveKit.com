@@ -31,6 +31,18 @@ export const config = {
     publicKey: process.env.OMISE_PUBLIC_KEY,
   },
 
+  /** รับเงินโอนตรง (บัญชีธนาคาร/พร้อมเพย์) + อัปสลิป — ตั้งเลขบัญชีหรือพร้อมเพย์อย่างใดอย่างหนึ่ง = เปิดใช้ */
+  transfer: {
+    bankName: process.env.TRANSFER_BANK_NAME || '',
+    accountName: process.env.TRANSFER_ACCOUNT_NAME || '',
+    accountNo: (process.env.TRANSFER_ACCOUNT_NO || '').replace(/[^0-9]/g, ''),
+    promptpay: (process.env.PROMPTPAY_ID || '').replace(/[^0-9]/g, ''),
+  },
+  /** ตรวจสลิปอัตโนมัติด้วย EasySlip (ไม่ตั้ง = แอดมินกดอนุมัติเอง) */
+  easySlipKey: process.env.EASYSLIP_API_KEY || undefined,
+  /** อีเมลแอดมิน คั่นด้วย , — เข้าหน้าตรวจสลิปได้ */
+  adminEmails: (process.env.ADMIN_EMAILS || '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean),
+
   publicBaseUrl: (process.env.PUBLIC_BASE_URL ?? 'http://localhost:8080').replace(/\/+$/, ''),
 
   /** โฟลเดอร์ไฟล์ static ของ Dashboard (Next.js static export) — ไม่มีก็ข้าม */

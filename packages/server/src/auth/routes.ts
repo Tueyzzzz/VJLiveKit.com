@@ -4,6 +4,7 @@ import { prisma } from '../db/prisma.js';
 import { hashPassword, verifyPassword, signSession } from './service.js';
 import { requireUser, getUser } from './middleware.js';
 import { getEntitlements } from '../plans/index.js';
+import { isAdmin } from '../billing/transfer.js';
 import { getHub } from '../realtime/hub.js';
 
 /** ชื่อ TikTok: ตัวอักษร/ตัวเลข/จุด/ขีดล่าง (ตัด @ นำหน้าให้) */
@@ -62,7 +63,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     const claims = getUser(req)!;
     const user = await prisma.user.findUnique({ where: { id: claims.userId }, select: publicUser });
     if (!user) return reply.code(401).send({ error: 'ไม่พบผู้ใช้' });
-    return { user, entitlements: await getEntitlements(user.id) };
+    return { user, entitlements: await getEntitlements(user.id), isAdmin: isAdmin(req) };
   });
 
   // แก้โปรไฟล์ (ชื่อที่แสดง, ชื่อ TikTok ที่จะเชื่อมไลฟ์)

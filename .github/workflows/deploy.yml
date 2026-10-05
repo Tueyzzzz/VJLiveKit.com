@@ -63,13 +63,19 @@ jobs:
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
           STRIPE_PRICE_PRO_MONTHLY: ${{ vars.STRIPE_PRICE_PRO_MONTHLY }}
+          TRANSFER_BANK_NAME: ${{ vars.TRANSFER_BANK_NAME }}
+          TRANSFER_ACCOUNT_NAME: ${{ vars.TRANSFER_ACCOUNT_NAME }}
+          TRANSFER_ACCOUNT_NO: ${{ vars.TRANSFER_ACCOUNT_NO }}
+          PROMPTPAY_ID: ${{ vars.PROMPTPAY_ID }}
+          ADMIN_EMAILS: ${{ vars.ADMIN_EMAILS }}
+          EASYSLIP_API_KEY: ${{ secrets.EASYSLIP_API_KEY }}
         with:
           host: ${{ secrets.VULTR_HOST }}
           username: ${{ secrets.VULTR_USER || 'root' }}
           key: ${{ secrets.VULTR_SSH_KEY }}
           password: ${{ secrets.VULTR_PASSWORD }}
           command_timeout: 20m
-          envs: APP_IMAGE,GHCR_USER,GHCR_TOKEN,DOMAIN,DEMO_MODE,BILLING_PROVIDER,SIGN_API_KEY,GOOGLE_TTS_API_KEY,STRIPE_SECRET_KEY,STRIPE_WEBHOOK_SECRET,STRIPE_PRICE_PRO_MONTHLY
+          envs: APP_IMAGE,GHCR_USER,GHCR_TOKEN,DOMAIN,DEMO_MODE,BILLING_PROVIDER,SIGN_API_KEY,GOOGLE_TTS_API_KEY,STRIPE_SECRET_KEY,STRIPE_WEBHOOK_SECRET,STRIPE_PRICE_PRO_MONTHLY,TRANSFER_BANK_NAME,TRANSFER_ACCOUNT_NAME,TRANSFER_ACCOUNT_NO,PROMPTPAY_ID,ADMIN_EMAILS,EASYSLIP_API_KEY
           script: |
             set -e
             if [ "$(id -u)" -eq 0 ]; then SUDO=""; else SUDO="sudo -E"; fi

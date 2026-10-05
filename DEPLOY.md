@@ -46,8 +46,18 @@ repo → **Settings → Secrets and variables → Actions**
 | `GOOGLE_TTS_API_KEY` | API key Google Cloud (เปิด Cloud Text-to-Speech API) — อ่านแชทออกเสียงใน OBS | แนะนำ |
 | `STRIPE_SECRET_KEY` | `sk_live_…` / `sk_test_…` | ตอนเปิดรับเงิน |
 | `STRIPE_WEBHOOK_SECRET` | `whsec_…` | ตอนเปิดรับเงิน |
+| `EASYSLIP_API_KEY` | key จาก easyslip.com — ตรวจสลิปโอนเงินอัตโนมัติ | ทางเลือก |
 
 **Variables** (แท็บ Variables):
+
+| ชื่อ | ค่า |
+|------|-----|
+| `TRANSFER_BANK_NAME` | ชื่อธนาคาร เช่น `กสิกรไทย` |
+| `TRANSFER_ACCOUNT_NAME` | ชื่อบัญชี |
+| `TRANSFER_ACCOUNT_NO` | เลขบัญชี (รับโอน) |
+| `PROMPTPAY_ID` | เบอร์มือถือ/เลขบัตรประชาชนพร้อมเพย์ (สร้าง QR ตามยอดให้อัตโนมัติ) |
+| `ADMIN_EMAILS` | อีเมลแอดมิน คั่นด้วย `,` — เข้าหน้าตรวจสลิป |
+
 
 | ชื่อ | ค่า |
 |------|-----|

@@ -31,8 +31,27 @@ window.Overlay = (function () {
 
   // เชื่อม Socket.IO
   if (typeof io === 'function') {
-    const query = token ? { token } : { username };
+    // ชื่อวิดเจ็ตจากชื่อไฟล์ (เช่น /overlay/tts.html -> tts) ให้เซิร์ฟเวอร์ตรวจสิทธิ์ตามแพลน
+    const widget = (location.pathname.split('/').pop() || '').replace(/\.html$/, '');
+    const query = token ? { token, widget } : { username, widget };
     const socket = io({ query });
+    // แสดงข้อความ error มุมจอ (ช่วยผู้ใช้ debug ใน OBS) — ซ่อนเองเมื่อเชื่อมต่อได้
+    let badge = null;
+    const showBadge = (text) => {
+      if (!badge) {
+        badge = document.createElement('div');
+        badge.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:99999;max-width:90vw;padding:6px 12px;border-radius:10px;' +
+          'background:rgba(40,20,50,.85);color:#fff;font:14px/1.4 sans-serif;pointer-events:none';
+        document.body.appendChild(badge);
+      }
+      badge.textContent = 'VJLiveKit: ' + text;
+      badge.style.display = 'block';
+    };
+    socket.on('status', (s) => {
+      if (s && (s.type === 'error' || s.type === 'offline')) showBadge(s.message);
+      else if (s && s.type === 'connected' && badge) badge.style.display = 'none';
+    });
+    socket.on('state', (s) => { if (s && s.connected && badge) badge.style.display = 'none'; });
     socket.on('tiktok-event', (e) => fire('event', e));
     socket.on('stats', (s) => fire('stats', s));
     socket.on('status', (s) => fire('status', s));

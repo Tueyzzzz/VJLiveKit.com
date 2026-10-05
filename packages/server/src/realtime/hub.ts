@@ -2,68 +2,146 @@ import { TikTokRoom } from '../tiktok/manager.js';
 import { evaluate, type ActionRule } from '../actions/engine.js';
 import type { Server } from 'socket.io';
 
-export type RulesProvider = (username: string) => Promise<ActionRule[]>;
+/** โหลดกฎ Actions ที่เปิดใช้ของผู้ใช้หนึ่งคน */
+export type RulesProvider = (userId: string) => Promise<ActionRule[]>;
+
+interface RoomEntry {
+  room: TikTokRoom;
+  /** จำนวน socket ที่ดูห้องนี้อยู่ */
+  viewers: number;
+  /** ผู้ใช้ (เจ้าของ overlay token) ที่ดูห้องนี้ -> จำนวน socket — ใช้ยิง Actions แยกรายคน */
+  owners: Map<string, number>;
+  stopTimer: NodeJS.Timeout | null;
+  retryTimer: NodeJS.Timeout | null;
+  connecting: Promise<void> | null;
+}
+
+const normalize = (username: string) => username.replace(/^@/, '').trim().toLowerCase();
+
+let current: RoomHub | null = null;
+/** เข้าถึง hub จาก route อื่น (เช่น ล้างแคชกฎหลังแก้ไข) — null ถ้ายังไม่ได้เปิด realtime */
+export function getHub(): RoomHub | null { return current; }
 
 /**
- * จัดการหลายห้องไลฟ์พร้อมกัน (หนึ่ง username = หนึ่งห้อง)
- * - relay อีเวนต์ไปยัง socket channel ของ username
- * - ประเมิน Actions & Events แล้วยิง 'action' ให้ overlay fx
+ * จัดการหลายห้องไลฟ์พร้อมกัน (หนึ่ง TikTok username = หนึ่งการเชื่อมต่อ)
+ * - relay อีเวนต์ไปยัง channel `room:<username>`
+ * - ประเมิน Actions & Events ของ "เจ้าของ overlay แต่ละคน" แล้วยิง 'action' ไปที่ `owner:<userId>:<username>`
+ * - ไม่มีคนดู -> ปิดการเชื่อมต่อหลัง grace period, ต่อไม่ติด (ยังไม่ไลฟ์) -> retry เป็นระยะ
  * หมายเหตุ: in-memory — ถ้าสเกลหลาย instance ให้ใช้ Redis adapter
  */
 export class RoomHub {
-  private rooms = new Map<string, TikTokRoom>();
-  // แคชกฎต่อ username (กัน query DB ทุกอีเวนต์)
+  private rooms = new Map<string, RoomEntry>();
   private rulesCache = new Map<string, { rules: ActionRule[]; at: number }>();
-  private RULES_TTL = 30_000;
+  private readonly RULES_TTL = 30_000;
+  private readonly IDLE_STOP_MS = 60_000;
+  private readonly RETRY_MS = 30_000;
 
-  constructor(private io: Server, private rulesProvider?: RulesProvider) {}
+  constructor(private io: Server, private rulesProvider?: RulesProvider, private demo = false) {
+    current = this;
+  }
 
-  private channel(username: string) { return `room:${username}`; }
+  static roomChannel(username: string) { return `room:${normalize(username)}`; }
+  static ownerChannel(userId: string, username: string) { return `owner:${userId}:${normalize(username)}`; }
 
-  private async getRules(username: string): Promise<ActionRule[]> {
+  private async getRules(userId: string): Promise<ActionRule[]> {
     if (!this.rulesProvider) return [];
-    const cached = this.rulesCache.get(username);
+    const cached = this.rulesCache.get(userId);
     if (cached && Date.now() - cached.at < this.RULES_TTL) return cached.rules;
     let rules: ActionRule[] = [];
-    try { rules = await this.rulesProvider(username); } catch { rules = []; }
-    this.rulesCache.set(username, { rules, at: Date.now() });
+    try { rules = await this.rulesProvider(userId); } catch { rules = []; }
+    this.rulesCache.set(userId, { rules, at: Date.now() });
     return rules;
   }
 
-  async ensure(username: string, demo?: boolean): Promise<TikTokRoom> {
-    const key = username.replace(/^@/, '').trim();
-    let room = this.rooms.get(key);
-    if (room) return room;
+  /** ล้างแคชกฎของผู้ใช้ (เรียกหลัง CRUD /api/actions ให้มีผลทันที) */
+  invalidateRules(userId: string): void { this.rulesCache.delete(userId); }
 
-    room = new TikTokRoom(key);
-    const ch = this.channel(key);
-    room.on('event', (e) => {
-      this.io.to(ch).emit('tiktok-event', e);
-      // ประเมิน Actions & Events
-      void this.getRules(key).then((rules) => {
-        if (!rules.length) return;
-        for (const fire of evaluate(rules, e)) this.io.to(ch).emit('action', fire);
-      });
-    });
-    room.on('stats', (s) => this.io.to(ch).emit('stats', s));
-    room.on('status', (s) => this.io.to(ch).emit('status', s));
-    this.rooms.set(key, room);
-    await room.connect(demo);
-    return room;
+  /** มี socket เข้ามาดูห้อง — สร้าง/เชื่อมต่อถ้ายังไม่มี แล้วคืน state ปัจจุบัน */
+  async attach(username: string, ownerId?: string): Promise<ReturnType<TikTokRoom['getState']>> {
+    const key = normalize(username);
+    let entry = this.rooms.get(key);
+    if (!entry) {
+      entry = this.create(key);
+      this.rooms.set(key, entry);
+    }
+    if (entry.stopTimer) { clearTimeout(entry.stopTimer); entry.stopTimer = null; }
+    entry.viewers++;
+    if (ownerId) entry.owners.set(ownerId, (entry.owners.get(ownerId) ?? 0) + 1);
+    if (!entry.room.isConnected() && !entry.connecting && !entry.retryTimer) this.connect(key, entry);
+    if (entry.connecting) await entry.connecting;
+    return entry.room.getState();
   }
 
-  invalidateRules(username: string): void { this.rulesCache.delete(username.replace(/^@/, '').trim()); }
+  /** socket ออกจากห้อง — ถ้าไม่เหลือใครดูจะปิดหลัง IDLE_STOP_MS */
+  detach(username: string, ownerId?: string): void {
+    const key = normalize(username);
+    const entry = this.rooms.get(key);
+    if (!entry) return;
+    entry.viewers = Math.max(0, entry.viewers - 1);
+    if (ownerId) {
+      const n = (entry.owners.get(ownerId) ?? 1) - 1;
+      if (n <= 0) entry.owners.delete(ownerId); else entry.owners.set(ownerId, n);
+    }
+    if (entry.viewers === 0 && !entry.stopTimer) {
+      entry.stopTimer = setTimeout(() => void this.stop(key), this.IDLE_STOP_MS);
+    }
+  }
 
-  get(username: string): TikTokRoom | undefined { return this.rooms.get(username.replace(/^@/, '').trim()); }
+  private create(key: string): RoomEntry {
+    const room = new TikTokRoom(key);
+    const entry: RoomEntry = { room, viewers: 0, owners: new Map(), stopTimer: null, retryTimer: null, connecting: null };
+    const ch = RoomHub.roomChannel(key);
+    room.on('event', (e) => {
+      this.io.to(ch).emit('tiktok-event', e);
+      for (const ownerId of entry.owners.keys()) {
+        void this.getRules(ownerId).then((rules) => {
+          if (!rules.length) return;
+          for (const fire of evaluate(rules, e)) this.io.to(RoomHub.ownerChannel(ownerId, key)).emit('action', fire);
+        });
+      }
+    });
+    room.on('stats', (s) => this.io.to(ch).emit('stats', s));
+    room.on('status', (s) => {
+      this.io.to(ch).emit('status', s);
+      // หลุด/ไลฟ์จบ -> ลองต่อใหม่ถ้ายังมีคนดู
+      if ((s.type === 'disconnected' || s.type === 'streamEnd') && entry.viewers > 0) this.scheduleRetry(key, entry);
+    });
+    return entry;
+  }
+
+  private connect(key: string, entry: RoomEntry): void {
+    entry.connecting = entry.room.connect(this.demo)
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : String(err);
+        this.io.to(RoomHub.roomChannel(key)).emit('status', {
+          type: 'offline', message: `ยังเชื่อมต่อ @${key} ไม่ได้ (ยังไม่ได้ไลฟ์?) จะลองใหม่ใน ${this.RETRY_MS / 1000} วินาที`, detail: message,
+        });
+        this.scheduleRetry(key, entry);
+      })
+      .finally(() => { entry.connecting = null; });
+  }
+
+  private scheduleRetry(key: string, entry: RoomEntry): void {
+    if (entry.retryTimer || this.rooms.get(key) !== entry) return;
+    entry.retryTimer = setTimeout(() => {
+      entry.retryTimer = null;
+      if (this.rooms.get(key) === entry && entry.viewers > 0 && !entry.room.isConnected()) this.connect(key, entry);
+    }, this.RETRY_MS);
+  }
+
+  get(username: string): TikTokRoom | undefined { return this.rooms.get(normalize(username))?.room; }
 
   async stop(username: string): Promise<void> {
-    const key = username.replace(/^@/, '').trim();
-    const room = this.rooms.get(key);
-    if (room) { await room.disconnect(); this.rooms.delete(key); }
+    const key = normalize(username);
+    const entry = this.rooms.get(key);
+    if (!entry) return;
+    this.rooms.delete(key);
+    if (entry.stopTimer) clearTimeout(entry.stopTimer);
+    if (entry.retryTimer) clearTimeout(entry.retryTimer);
+    await entry.room.disconnect();
   }
 
   async stopAll(): Promise<void> {
-    await Promise.all([...this.rooms.values()].map((r) => r.disconnect()));
-    this.rooms.clear();
+    await Promise.all([...this.rooms.keys()].map((k) => this.stop(k)));
   }
 }

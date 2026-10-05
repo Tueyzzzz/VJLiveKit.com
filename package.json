@@ -8,13 +8,15 @@
   ],
   "scripts": {
     "dev": "npm run dev --workspace @vjlivekit/server",
-    "build": "npm run build --workspace @vjlivekit/server",
+    "build": "npm run build --workspace @vjlivekit/server && npm run build --workspace @vjlivekit/dashboard",
     "start": "npm run start --workspace @vjlivekit/server",
     "prisma:generate": "npm run prisma:generate --workspace @vjlivekit/server",
     "prisma:migrate": "npm run prisma:migrate --workspace @vjlivekit/server",
-    "typecheck": "tsc -p packages/server/tsconfig.json --noEmit",
+    "typecheck": "tsc -p packages/server/tsconfig.json --noEmit && npm run typecheck --workspace @vjlivekit/dashboard",
     "infra:up": "docker compose up -d",
-    "infra:down": "docker compose down"
+    "infra:down": "docker compose down",
+    "dev:dashboard": "npm run dev --workspace @vjlivekit/dashboard",
+    "prisma:deploy": "npm run prisma:deploy --workspace @vjlivekit/server"
   },
   "devDependencies": {
     "typescript": "^5.6.3"

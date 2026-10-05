@@ -6,6 +6,7 @@ npm-debug.log*
 .env
 .env.*
 !.env.example
+!.env.prod.example
 .DS_Store
 coverage/
 # Prisma
@@ -13,3 +14,8 @@ packages/server/src/generated/
 # Editors
 .vscode/
 .idea/
+# Next.js (dashboard)
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts

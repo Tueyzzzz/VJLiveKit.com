@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../db/prisma.js';
 import { requireUser, getUser } from '../auth/middleware.js';
+import { getEntitlements } from '../plans/index.js';
+import { getHub } from '../realtime/hub.js';
 
 const triggerSchema = z.object({
   event: z.enum(['gift', 'follow', 'share', 'like', 'chat']),
@@ -13,11 +15,11 @@ const triggerSchema = z.object({
 const actionSchema = z.object({
   type: z.enum(['sound', 'image', 'video', 'text']),
   url: z.string().url().optional(),
-  text: z.string().optional(),
-  durationMs: z.number().int().positive().optional(),
+  text: z.string().max(200).optional(),
+  durationMs: z.number().int().positive().max(60_000).optional(),
 });
 const ruleSchema = z.object({
-  name: z.string().min(1),
+  name: z.string().trim().min(1).max(80),
   enabled: z.boolean().optional().default(true),
   trigger: triggerSchema,
   action: actionSchema,
@@ -25,7 +27,7 @@ const ruleSchema = z.object({
 
 /**
  * CRUD กฎ Actions & Events
- * หมายเหตุ: การเปลี่ยนกฎจะมีผลกับไลฟ์ภายใน ~30 วินาที (ตาม cache TTL ใน RoomHub)
+ * แก้ไขแล้วล้างแคชกฎใน RoomHub ให้มีผลกับไลฟ์ทันที
  */
 export async function actionRoutes(app: FastifyInstance): Promise<void> {
   app.get('/api/actions', { preHandler: requireUser }, async (req) => {
@@ -39,9 +41,15 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
     const parsed = ruleSchema.safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: 'กฎไม่ถูกต้อง', issues: parsed.error.issues });
     const { name, enabled, trigger, action } = parsed.data;
+    const ent = await getEntitlements(claims.userId);
+    const count = await prisma.actionRule.count({ where: { userId: claims.userId } });
+    if (count >= ent.maxActionRules) {
+      return reply.code(403).send({ error: `แพลน ${ent.plan} สร้างกฎได้สูงสุด ${ent.maxActionRules} ข้อ — อัปเกรดเป็น Pro เพื่อเพิ่ม`, upgrade: true });
+    }
     const rule = await prisma.actionRule.create({
       data: { userId: claims.userId, name, enabled, trigger: trigger as Prisma.InputJsonValue, action: action as Prisma.InputJsonValue },
     });
+    getHub()?.invalidateRules(claims.userId);
     return reply.code(201).send({ rule });
   });
 
@@ -49,7 +57,7 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
     const claims = getUser(req)!;
     const id = (req.params as { id: string }).id;
     const parsed = ruleSchema.partial().safeParse(req.body);
-    if (!parsed.success) return reply.code(400).send({ error: 'กฎไม่ถูกต้อง' });
+    if (!parsed.success) return reply.code(400).send({ error: 'กฎไม่ถูกต้อง', issues: parsed.error.issues });
     const existing = await prisma.actionRule.findFirst({ where: { id, userId: claims.userId } });
     if (!existing) return reply.code(404).send({ error: 'ไม่พบกฎนี้' });
     const d = parsed.data;
@@ -62,6 +70,7 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
         ...(d.action ? { action: d.action as Prisma.InputJsonValue } : {}),
       },
     });
+    getHub()?.invalidateRules(claims.userId);
     return { rule };
   });
 
@@ -71,6 +80,7 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
     const existing = await prisma.actionRule.findFirst({ where: { id, userId: claims.userId } });
     if (!existing) return reply.code(404).send({ error: 'ไม่พบกฎนี้' });
     await prisma.actionRule.delete({ where: { id } });
+    getHub()?.invalidateRules(claims.userId);
     return { ok: true };
   });
 }

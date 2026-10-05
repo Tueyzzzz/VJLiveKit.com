@@ -5,6 +5,9 @@ on:
     branches: [main, 'claude/**']
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -18,3 +21,57 @@ jobs:
       - run: npm run prisma:generate
       - run: npm run typecheck
       - run: npm run build
+
+  # build Docker image จริง + smoke test (migrate + เปิดหน้าเว็บ) ก่อนปล่อย
+  # บน main: push image ขึ้น GHCR ให้ workflow Deploy ดึงไปใช้
+  image:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: vjlivekit
+          POSTGRES_PASSWORD: vjlivekit
+          POSTGRES_DB: vjlivekit
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U vjlivekit" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Image name (lowercase)
+        id: img
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: vjlivekit:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Smoke test
+        run: |
+          docker run -d --name app --network host \
+            -e NODE_ENV=production -e PORT=8080 -e DEMO_MODE=true \
+            -e JWT_SECRET=ci-secret-ci-secret-ci-secret-ci-secret \
+            -e DATABASE_URL="postgresql://vjlivekit:vjlivekit@localhost:5432/vjlivekit?schema=public" \
+            vjlivekit:ci
+          for i in $(seq 1 30); do curl -fs http://localhost:8080/healthz && break; sleep 2; done
+          docker logs app | tail -20
+          for p in /healthz / /dashboard/ /login/ /overlay/coinjar.html /api/billing/plans; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:8080$p")
+            echo "$p -> $code"; [ "$code" = "200" ] || exit 1
+          done
+      - name: Push to GHCR (main only)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          docker tag vjlivekit:ci ${{ steps.img.outputs.name }}:latest
+          docker tag vjlivekit:ci ${{ steps.img.outputs.name }}:${{ github.sha }}
+          docker push ${{ steps.img.outputs.name }}:latest
+          docker push ${{ steps.img.outputs.name }}:${{ github.sha }}

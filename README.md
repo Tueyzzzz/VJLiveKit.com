@@ -34,17 +34,18 @@
 
 ## 📁 โครงสร้าง (monorepo)
 ```
-tikfinity/
+vjlivekit/
 ├── docker-compose.yml        # Postgres + Redis สำหรับ dev
 ├── .github/workflows/ci.yml
 ├── packages/
-│   ├── server/               # @tikfinity/server (API + Socket.IO + ingest)
+│   ├── server/               # @vjlivekit/server (API + Socket.IO + ingest)
 │   │   ├── prisma/schema.prisma
 │   │   └── src/
 │   │       ├── config/  db/  tiktok/  realtime/
 │   │       ├── auth/    billing/  widgets/
 │   │       ├── app.ts   index.ts
-│   └── overlay/              # @tikfinity/overlay (หน้า OBS static)
+│   ├── dashboard/            # @vjlivekit/dashboard (Next.js static export — หน้าเว็บ + Dashboard)
+│   └── overlay/              # @vjlivekit/overlay (หน้า OBS static)
 │       └── public/ coinjar.html + js/{overlay-client,tts}.js
 └── legacy/                   # เวอร์ชันเดโมเดิม (อ้างอิง)
 ```

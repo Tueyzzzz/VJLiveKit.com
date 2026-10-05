@@ -23,7 +23,7 @@
     const chat=document.getElementById('chat'); const MAX=parseInt(Overlay.param('max','8'),10);
     const cols=['#ff93c0','#b9a6f2','#8fe3cf','#ffcf5c','#ff6aa8','#9d86e8']; const colOf=(nm)=>cols[(nm||'?').charCodeAt(0)%cols.length];
     function add(nm,text){ const b=document.createElement('div'); b.className='bubble';
-      b.innerHTML=`<div class="ava" style="background:${colOf(nm)}">${(nm||'?')[0]}</div><div class="msg"><span class="who">${Overlay.esc(nm)}</span>${Overlay.esc(text)}</div>`;
+      b.innerHTML=`<div class="ava" style="background:${colOf(nm)}">${Overlay.esc((nm||'?')[0])}</div><div class="msg"><span class="who">${Overlay.esc(nm)}</span>${Overlay.esc(text)}</div>`;
       chat.appendChild(b); while(chat.children.length>MAX) chat.removeChild(chat.firstChild); }
     Overlay.on('event',(e)=>{ if(e.type==='chat') add(e.user?(e.user.nickname||e.user.uniqueId):'', e.comment||''); });
     if(!Overlay.connected){ const names=['mimi','บิ๊ก','lisa','ต้นน้ำ','somchai','เฟิร์น']; const msgs=['สวัสดีครับ','เก่งมาก!','สู้ๆ','กดไลค์ให้แล้ว','555','ปังมาก','น่ารักอะ','รักเลย 💕'];

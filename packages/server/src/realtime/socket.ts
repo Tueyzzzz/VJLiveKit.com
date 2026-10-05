@@ -4,54 +4,74 @@ import { RoomHub, type RulesProvider } from './hub.js';
 import { verifyOverlayToken } from '../widgets/tokens.js';
 import { config } from '../config/index.js';
 import { prisma } from '../db/prisma.js';
+import { getEntitlements, isWidgetType } from '../plans/index.js';
 import type { ActionRule, RuleTrigger, RuleAction } from '../actions/engine.js';
 
-/** โหลดกฎ Actions ของผู้ใช้จาก DB ตามชื่อ TikTok (best-effort) */
-const rulesProvider: RulesProvider = async (username) => {
-  try {
-    const user = await prisma.user.findFirst({ where: { tiktokUsername: username }, select: { id: true } });
-    if (!user) return [];
-    const rules = await prisma.actionRule.findMany({ where: { userId: user.id, enabled: true } });
-    return rules.map((r): ActionRule => ({
-      id: r.id, name: r.name, enabled: r.enabled,
-      trigger: r.trigger as unknown as RuleTrigger,
-      action: r.action as unknown as RuleAction,
-    }));
-  } catch {
-    return [];
-  }
+/** โหลดกฎ Actions ที่เปิดใช้ของผู้ใช้ */
+const rulesProvider: RulesProvider = async (userId) => {
+  const rules = await prisma.actionRule.findMany({ where: { userId, enabled: true } });
+  return rules.map((r): ActionRule => ({
+    id: r.id, name: r.name, enabled: r.enabled,
+    trigger: r.trigger as unknown as RuleTrigger,
+    action: r.action as unknown as RuleAction,
+  }));
 };
+
+interface Viewer { username: string; ownerId?: string }
+
+/** ตรวจสิทธิ์การเชื่อมต่อ: token ต้องยังไม่ถูกเพิกถอน และแพลนต้องเปิดวิดเจ็ตนี้ */
+async function resolveViewer(token: string | undefined, username: string | undefined, widget: string | undefined): Promise<Viewer | { error: string }> {
+  if (token) {
+    const payload = verifyOverlayToken(token);
+    if (!payload?.tid || !payload.userId) return { error: 'token ไม่ถูกต้องหรือหมดอายุ' };
+    const record = await prisma.overlayToken.findUnique({ where: { id: payload.tid }, select: { revoked: true, userId: true } });
+    if (!record || record.revoked || record.userId !== payload.userId) return { error: 'token ถูกเพิกถอนแล้ว — สร้างลิงก์ใหม่ใน Dashboard' };
+    const user = await prisma.user.findUnique({ where: { id: payload.userId }, select: { tiktokUsername: true } });
+    if (!user?.tiktokUsername) return { error: 'ยังไม่ได้ตั้งชื่อ TikTok ใน Dashboard' };
+    if (widget && isWidgetType(widget)) {
+      const ent = await getEntitlements(payload.userId);
+      if (!ent.widgets.includes(widget)) return { error: `วิดเจ็ต ${widget} ใช้ได้เฉพาะแพลน Pro` };
+    }
+    // ใช้ชื่อ TikTok ปัจจุบันของผู้ใช้ (เปลี่ยนชื่อแล้วลิงก์เดิมยังใช้ได้)
+    return { username: user.tiktokUsername, ownerId: payload.userId };
+  }
+  if (username && config.demoMode) return { username: username.replace(/^@/, '').trim() };
+  return { error: 'ไม่มี token หรือ username ที่ถูกต้อง' };
+}
 
 /**
  * ตั้งค่า Socket.IO:
- * - overlay/dashboard เชื่อมต่อพร้อม query { token } หรือ { username }
- * - token (จาก OverlayToken) จะ resolve เป็น username ของเจ้าของ แล้ว join ห้องนั้น
- * - ในโหมดเดโม อนุญาตให้ส่ง username ตรง ๆ ได้
+ * - overlay เชื่อมต่อพร้อม query { token, widget } (หรือ { username } ในโหมดเดโม)
+ * - join `room:<username>` (อีเวนต์ไลฟ์) + `owner:<userId>:<username>` (Actions ของเจ้าของ token)
  */
 export function setupRealtime(httpServer: HttpServer): RoomHub {
   const io = new Server(httpServer, { cors: { origin: '*' } });
-  const hub = new RoomHub(io, rulesProvider);
+  const hub = new RoomHub(io, rulesProvider, config.demoMode);
 
-  io.on('connection', async (socket) => {
-    const { token, username } = socket.handshake.query as { token?: string; username?: string };
+  io.on('connection', (socket) => {
+    const { token, username, widget } = socket.handshake.query as { token?: string; username?: string; widget?: string };
 
-    let room: string | null = null;
-    if (token) {
-      const payload = verifyOverlayToken(token);
-      if (payload?.username) room = payload.username;
-    } else if (username && config.demoMode) {
-      room = username.replace(/^@/, '').trim();
-    }
+    void (async () => {
+      let viewer: Viewer | { error: string };
+      try { viewer = await resolveViewer(token, username, widget); }
+      catch (err) { viewer = { error: 'เซิร์ฟเวอร์ขัดข้อง' }; console.error('[socket] resolve failed', err); }
 
-    if (!room) {
-      socket.emit('status', { type: 'error', message: 'ไม่มี token หรือ username ที่ถูกต้อง' });
-      socket.disconnect(true);
-      return;
-    }
+      if ('error' in viewer) {
+        socket.emit('status', { type: 'error', message: viewer.error });
+        socket.disconnect(true);
+        return;
+      }
+      if (socket.disconnected) return;
 
-    socket.join(`room:${room}`);
-    const live = await hub.ensure(room, config.demoMode);
-    socket.emit('state', live.getState());
+      const { username: room, ownerId } = viewer;
+      socket.join(RoomHub.roomChannel(room));
+      if (ownerId) socket.join(RoomHub.ownerChannel(ownerId, room));
+      const state = await hub.attach(room, ownerId);
+      // หลุดไประหว่างรอเชื่อมต่อ -> คืนที่นั่งทันที
+      if (socket.disconnected) { hub.detach(room, ownerId); return; }
+      socket.once('disconnect', () => hub.detach(room, ownerId));
+      socket.emit('state', state);
+    })();
   });
 
   return hub;

@@ -1,26 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+import { ensurePlans } from '../src/plans/index.js';
+import { disconnectDb } from '../src/db/prisma.js';
 
-const prisma = new PrismaClient();
-
-/** สร้างแพลนเริ่มต้น: Free / Pro */
-async function main(): Promise<void> {
-  await prisma.plan.upsert({
-    where: { code: 'free' },
-    update: {},
-    create: {
-      code: 'free', name: 'Free', priceCents: 0, currency: 'thb',
-      features: { widgets: ['coinjar'], noWatermark: false, tts: false, maxTokens: 1 },
-    },
-  });
-  await prisma.plan.upsert({
-    where: { code: 'pro' },
-    update: {},
-    create: {
-      code: 'pro', name: 'Pro', priceCents: 14900, currency: 'thb', // 149 บาท/เดือน (ตัวอย่าง)
-      features: { widgets: ['coinjar', 'alerts', 'goal', 'chat', 'tts'], noWatermark: true, tts: true, maxTokens: 20 },
-    },
-  });
-  console.log('seeded plans: free, pro');
-}
-
-main().finally(() => prisma.$disconnect());
+/** สร้าง/อัปเดตแพลนเริ่มต้น (Free / Pro) — เซิร์ฟเวอร์ก็เรียก ensurePlans() เองตอนสตาร์ทอยู่แล้ว */
+ensurePlans()
+  .then(() => console.log('seeded plans: free, pro'))
+  .finally(() => disconnectDb());

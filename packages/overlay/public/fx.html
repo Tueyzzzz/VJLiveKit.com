@@ -29,20 +29,30 @@
   (function(){
     const fx=document.getElementById('fx'), armBtn=document.getElementById('armBtn');
     let audioArmed=false;
+    armBtn.style.display='none';
     armBtn.addEventListener('click',()=>{ audioArmed=true; armBtn.textContent='✅ พร้อมเล่น FX'; armBtn.disabled=true; setTimeout(()=>armBtn.style.display='none',1200); });
 
     function clearLater(el,ms){ setTimeout(()=>{ el.style.animation='fade .4s forwards'; setTimeout(()=>el.remove(),400); }, ms||4000); }
 
-    function play(a){
+    // แทน {user} ด้วยชื่อคนที่ทำให้เกิดเหตุการณ์
+    function fill(text,ev){ const u=ev&&ev.user?(ev.user.nickname||ev.user.uniqueId):''; return String(text||'').replace(/\{user\}/g,u); }
+    function showText(text,dur){ const t=document.createElement('div'); t.className='text'; t.textContent=text; fx.appendChild(t); clearLater(t,dur); }
+
+    function play(a,ev){
       const dur=a.durationMs||5000;
-      if(a.type==='sound' && a.url){ if(!audioArmed) return; const au=new Audio(a.url); au.play().catch(()=>{}); return; }
-      if(a.type==='image' && a.url){ const img=document.createElement('img'); img.src=a.url; img.className='media'; fx.appendChild(img); clearLater(img,dur); }
-      else if(a.type==='video' && a.url){ const v=document.createElement('video'); v.src=a.url; v.autoplay=true; v.muted=!audioArmed; v.className='media'; fx.appendChild(v); v.onended=()=>v.remove(); clearLater(v,dur); }
-      else if(a.type==='text' && a.text){ const t=document.createElement('div'); t.className='text'; t.textContent=a.text; fx.appendChild(t); clearLater(t,dur); }
+      const text=fill(a.text,ev);
+      if(a.type==='sound' && a.url){
+        // OBS อนุญาต autoplay อยู่แล้ว — ถ้าเบราว์เซอร์บล็อกค่อยให้กดปุ่มเปิดเสียง
+        const au=new Audio(a.url); au.play().catch(()=>{ if(!audioArmed) armBtn.style.display='block'; });
+      }
+      else if(a.type==='image' && a.url){ const img=document.createElement('img'); img.src=a.url; img.className='media'; fx.appendChild(img); clearLater(img,dur); }
+      else if(a.type==='video' && a.url){ const v=document.createElement('video'); v.src=a.url; v.autoplay=true; v.playsInline=true; v.className='media'; fx.appendChild(v);
+        v.play().catch(()=>{ v.muted=true; v.play().catch(()=>{}); if(!audioArmed) armBtn.style.display='block'; }); v.onended=()=>v.remove(); clearLater(v,dur); }
+      if(text) showText(text,dur);
     }
 
     // รับ action จากเซิร์ฟเวอร์ (Actions & Events engine)
-    Overlay.on('action',(fire)=>play(fire.action));
+    Overlay.on('action',(fire)=>play(fire.action,fire.event));
 
     // demo fallback — จำลองกฎ "ได้ Galaxy -> โชว์ข้อความ"
     if(!Overlay.connected){

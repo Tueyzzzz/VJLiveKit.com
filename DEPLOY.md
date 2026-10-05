@@ -1,127 +1,99 @@
-# 🚀 Deploy VJLiveKit (Vultr + Docker + Caddy HTTPS)
+# 🚀 Deploy VJLiveKit (Vultr + Docker + Caddy HTTPS) — ผ่าน GitHub Actions
 
-คู่มือนำ VJLiveKit ขึ้นเซิร์ฟเวอร์จริง ใช้ Docker Compose + Caddy (ออก HTTPS ให้อัตโนมัติ)
+ระบบ deploy ทำงานแบบนี้:
+
+```
+push ขึ้น main ─► CI: typecheck + build ─► build Docker image + smoke test ─► push image ขึ้น GHCR
+                                                                            │
+                         Deploy workflow (SSH เข้า Vultr) ◄─────────────────┘
+                         └─ deploy/bootstrap.sh: swap, Docker, firewall, .env (สุ่มรหัส), pull image, up -d
+```
+
+เครื่อง 1GB ไม่ต้อง build อะไรเลย แค่ดึง image สำเร็จรูปมารัน และ **ไม่ต้อง SSH เข้าไปตั้งค่าเอง** เพราะ bootstrap ติดตั้งให้หมด
 
 ---
 
-## ขั้นที่ 1 — ตั้ง DNS ที่ Dynadot (ชี้โดเมนมาที่เครื่อง)
-1. เข้า Dynadot → **My Domains** → `vjlivekit.com` → **DNS Settings**
-2. เลือกใช้ **Dynadot DNS** (หรือ DNS Hosting) แล้วเพิ่ม 2 records:
+## ✅ สิ่งที่ต้องทำเอง (ครั้งเดียว)
 
-| Type | Host / Subdomain | Value (IP) |
-|------|------------------|------------|
-| A | (เว้นว่าง หรือ `@`) | `45.77.26.217` |
+### 1) ตั้ง DNS ที่ Dynadot
+Dynadot → **My Domains** → `vjlivekit.com` → **DNS Settings** → เลือก **Dynadot DNS** แล้วเพิ่ม:
+
+| Type | Host | Value |
+|------|------|-------|
+| A | (เว้นว่าง / `@`) | `45.77.26.217` |
 | A | `www` | `45.77.26.217` |
 
-3. บันทึก แล้วรอ DNS propagate (ปกติ 5–30 นาที)
-   เช็กได้: `nslookup vjlivekit.com` ต้องได้ IP `45.77.26.217`
+ลบ record เก่าที่ชี้ไปที่อื่น (เช่น parking / forwarding) ออก แล้วรอ 5–30 นาที
+เช็ก: `nslookup vjlivekit.com` ต้องได้ `45.77.26.217`
 
-> ⚠️ ต้องให้ DNS ชี้มาก่อน Caddy ถึงจะขอใบรับรอง HTTPS สำเร็จ
+> ⚠️ ต้องให้ DNS ชี้ถูกก่อน Caddy ถึงจะออกใบรับรอง HTTPS ได้ (ถ้า deploy ก่อน DNS พร้อม ไม่เป็นไร Caddy จะลองใหม่เอง)
 
----
+### 2) เปลี่ยนรหัส root บน Vultr
+รหัสเดิมหลุดในแชทแล้ว → Vultr panel → เครื่อง → **Settings → Reset root password** หรือ View Console แล้วพิมพ์ `passwd`
 
-## ขั้นที่ 2 — เตรียมเครื่อง (SSH เข้า Vultr)
-```bash
-ssh root@45.77.26.217
-passwd                     # ⚠️ เปลี่ยนรหัส root ใหม่ทันที (อันเก่าหลุดแล้ว)
-```
-ถ้ายังไม่มี Docker/swap (ไม่ได้ใช้ Startup Script) ให้รัน:
-```bash
-# swap 2GB (จำเป็นบนเครื่อง 1GB)
-fallocate -l 2G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile
-echo '/swapfile none swap sw 0 0' >> /etc/fstab
-# docker + git + firewall
-curl -fsSL https://get.docker.com | sh
-apt-get install -y git ufw
-ufw allow OpenSSH && ufw allow 80 && ufw allow 443 && ufw --force enable
-```
+### 3) ใส่ Secrets / Variables ที่ GitHub
+repo → **Settings → Secrets and variables → Actions**
 
----
+**Secrets** (แท็บ Secrets → New repository secret):
 
-## ขั้นที่ 3 — ดึงโค้ด
-repo เป็น private → ใช้ Personal Access Token (github.com/settings/tokens) ตอน clone:
-```bash
-cd /opt
-git clone https://github.com/Tueyzzzz/VJLiveKit.com.git vjlivekit
-cd vjlivekit
-# Username: Tueyzzzz, Password: <วาง Personal Access Token>
-```
+| ชื่อ | ค่า | จำเป็น |
+|------|-----|--------|
+| `VULTR_HOST` | `45.77.26.217` | ✅ |
+| `VULTR_PASSWORD` | รหัส root **ใหม่** | ✅ (หรือใช้ `VULTR_SSH_KEY` แทน — ปลอดภัยกว่า) |
+| `VULTR_SSH_KEY` | private key ทั้งไฟล์ (ถ้าใช้ key) | ทางเลือก |
+| `VULTR_USER` | ไม่ใส่ = `root` | – |
+| `SIGN_API_KEY` | key จาก eulerstream.com (ต่อไลฟ์จริง) | แนะนำ |
+| `STRIPE_SECRET_KEY` | `sk_live_…` / `sk_test_…` | ตอนเปิดรับเงิน |
+| `STRIPE_WEBHOOK_SECRET` | `whsec_…` | ตอนเปิดรับเงิน |
 
----
+**Variables** (แท็บ Variables):
 
-## ขั้นที่ 4 — ตั้งค่า .env
-```bash
-cp .env.prod.example .env
-nano .env
-```
-แก้อย่างน้อย 3 ค่า:
-- `POSTGRES_PASSWORD` + `DATABASE_URL` → ใช้รหัสเดียวกัน (ยาว ๆ)
-- `JWT_SECRET` → สุ่มด้วย `openssl rand -hex 32`
-- (อยากทดสอบ overlay ก่อนต่อไลฟ์จริง ตั้ง `DEMO_MODE=true`)
+| ชื่อ | ค่า |
+|------|-----|
+| `DEPLOY_ENABLED` | `true` ← สวิตช์เปิด deploy |
+| `DOMAIN` | `vjlivekit.com` (ไม่ใส่ก็ได้) |
+| `DEMO_MODE` | `true` = อีเวนต์ปลอมไว้ทดสอบ, `false` = ไลฟ์จริง |
+| `BILLING_PROVIDER` | `stripe` เมื่อพร้อมรับเงิน (ไม่ใส่ = ปิดระบบจ่ายเงิน) |
+| `STRIPE_PRICE_PRO_MONTHLY` | (ออปชัน) price id — ไม่ใส่จะใช้ราคา 149฿ จากโค้ด |
 
-> ต่อ TikTok จริงต้องใส่ `SIGN_API_KEY` (ขอฟรีที่ eulerstream.com)
-
----
-
-## ขั้นที่ 5 — รัน!
-```bash
-docker compose -f docker-compose.prod.yml up -d --build
-docker compose -f docker-compose.prod.yml logs -f app   # ดู log (Ctrl+C ออก)
-```
-Caddy จะขอ HTTPS ให้อัตโนมัติ (รอสักครู่หลัง DNS ชี้ถูก)
+### 4) กด Deploy
+- **Actions → Deploy → Run workflow** (ครั้งแรก) — หรือ merge/push เข้า `main` แล้วจะ deploy เองหลัง CI เขียว
+- ครั้งแรกใช้ ~3–5 นาที (ติดตั้ง Docker + swap)
 
 ### ✅ เช็กว่าขึ้นแล้ว
 - https://vjlivekit.com/healthz → `{"ok":true}`
-- https://vjlivekit.com/overlay/coinjar.html?username=test (ถ้า DEMO_MODE=true)
+- https://vjlivekit.com → หน้าแรก + สมัครสมาชิก → Dashboard
+
+> ⚠️ ถ้า Deploy ล้มที่ขั้น "Bootstrap" เพราะ pull image ไม่ได้ (`manifest unknown`) แปลว่ายังไม่เคยมี CI รันบน `main` หลัง merge โค้ดชุดนี้ — push/merge เข้า main ก่อน 1 ครั้ง
 
 ---
 
-## อัปเดตเวอร์ชันใหม่ (ครั้งถัดไป)
+## 💳 เปิดรับเงินด้วย Stripe
+1. สมัคร/เข้า https://dashboard.stripe.com → เปิดบัญชีไทย (รองรับ THB)
+2. **Developers → API keys** → คัดลอก Secret key → ใส่ secret `STRIPE_SECRET_KEY`
+3. **Developers → Webhooks → Add endpoint**
+   - URL: `https://vjlivekit.com/api/billing/webhook`
+   - Events: `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid`, `invoice.payment_failed`
+   - คัดลอก Signing secret (`whsec_…`) → ใส่ secret `STRIPE_WEBHOOK_SECRET`
+4. **Settings → Billing → Customer portal** → กด Activate (ให้ผู้ใช้ยกเลิก/เปลี่ยนบัตรเองได้)
+5. ตั้ง variable `BILLING_PROVIDER=stripe` แล้ว Run workflow Deploy อีกครั้ง
+
+ทดสอบด้วย test key ก่อน: บัตร `4242 4242 4242 4242` วันหมดอายุอนาคต CVC อะไรก็ได้
+
+---
+
+## 🛠️ ดูแลเครื่อง (ถ้า SSH เข้าได้)
 ```bash
 cd /opt/vjlivekit
-git pull
-docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml ps          # สถานะ
+docker compose -f docker-compose.prod.yml logs -f app # log แอป
+nano .env && docker compose -f docker-compose.prod.yml up -d   # แก้ค่าแล้วรีสตาร์ท
+# สำรองฐานข้อมูล
+docker compose -f docker-compose.prod.yml exec -T postgres pg_dump -U vjlivekit vjlivekit | gzip > backup-$(date +%F).sql.gz
 ```
-
-## คำสั่งที่ใช้บ่อย
-```bash
-docker compose -f docker-compose.prod.yml ps        # สถานะ
-docker compose -f docker-compose.prod.yml logs -f   # ดู log
-docker compose -f docker-compose.prod.yml down      # หยุด
-```
-
----
+ไฟล์ `.env` บนเครื่องถูกสร้างครั้งแรกพร้อม `POSTGRES_PASSWORD`/`JWT_SECRET` แบบสุ่ม — deploy ครั้งต่อไปจะไม่ทับ (ยกเว้นค่าที่ส่งมาจาก GitHub Secrets/Variables)
 
 ## หมายเหตุเครื่อง 1GB RAM
-- ต้องมี **swap** (ขั้นที่ 2) ไม่งั้น build/migrate อาจ OOM
-- ถ้า build บนเครื่องช้า/หนัก → พิจารณา build image ผ่าน GitHub Actions แล้ว pull ลงมา
-- มีคนใช้เยอะขึ้น → กด **resize** เป็น `vhf-1c-2gb` บน Vultr ได้เลย
-
----
-
-## ⚙️ CI/CD อัตโนมัติ (GitHub Actions)
-Workflow 2 ตัว:
-- **CI** (`ci.yml`) — ทุก push/PR: ติดตั้ง, prisma generate, typecheck, build
-- **Deploy** (`deploy.yml`) — เมื่อ CI ผ่านบน `main`: SSH ไป Vultr แล้ว `git pull` + `docker compose up -d --build`
-
-### เปิดใช้งาน auto-deploy (ทำครั้งเดียว)
-1. **เพิ่ม SSH deploy key** บนเครื่อง (ให้ GitHub Actions ใช้ล็อกอิน):
-   ```bash
-   # บนเครื่อง Vultr: อนุญาต public key ของ Actions
-   # (ง่ายสุด: ใช้ private key ตัวที่คุณ SSH อยู่แล้ว เอา private key ไปใส่เป็น secret)
-   ```
-2. ที่ GitHub repo → **Settings → Secrets and variables → Actions**:
-   - **Secrets** → เพิ่ม:
-     - `VULTR_HOST` = `45.77.26.217`
-     - `VULTR_USER` = `root`
-     - `VULTR_SSH_KEY` = เนื้อหา **private key** (เช่น `~/.ssh/id_ed25519` ทั้งไฟล์)
-   - **Variables** → เพิ่ม `DEPLOY_ENABLED` = `true`  ← สวิตช์เปิด deploy
-3. ให้ `git pull` บนเครื่องทำงานแบบไม่ถาม: ครั้งแรกตั้ง credential ให้จำ
-   ```bash
-   cd /opt/vjlivekit && git config credential.helper store && git pull   # ใส่ PAT ครั้งเดียว
-   ```
-   (หรือใช้ GitHub **Deploy Key** แบบ read-only จะปลอดภัยกว่า)
-
-เสร็จแล้ว ทุกครั้งที่ push ขึ้น `main` และ CI เขียว → เครื่องจะอัปเดตเองอัตโนมัติ 🎉
-
-> 💡 เครื่อง 1GB: การ build บนเครื่องอาจช้า/กินแรม — ถ้าเริ่มมีปัญหา ค่อยเปลี่ยนไปใช้ **build image บน GitHub Actions แล้ว push ขึ้น GHCR** ให้เครื่องแค่ `docker compose pull` (เบากว่ามาก) — บอกผมได้เมื่อถึงจุดนั้น
+- bootstrap สร้าง swap 2GB ให้อัตโนมัติ, จำกัด heap Node 384MB, Postgres `shared_buffers=64MB`
+- ยังไม่รัน Redis (โค้ด v1 ยังไม่ใช้) — ประหยัด RAM
+- คนใช้เยอะขึ้น → Vultr **resize** เป็น `vhf-1c-2gb` ได้เลย ไม่ต้องแก้อะไร

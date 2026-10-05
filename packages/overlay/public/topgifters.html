@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Top Gifters Overlay</title>
+<link rel="icon" href="favicon.svg" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Itim&family=Mali:wght@500;700&display=swap');
+  html,body { margin:0; width:100%; height:100%; background:transparent; overflow:hidden; font-family:'Mali','Itim',sans-serif; }
+  #board { position:fixed; top:20px; right:20px; width:min(340px,80vw); background:rgba(255,250,252,.95); border:3px solid #fff;
+    border-radius:22px; padding:14px 16px; box-shadow:0 10px 26px rgba(150,120,180,.3); }
+  .tt { font-family:'Itim',sans-serif; font-size:20px; color:#5f4a66; margin:0 0 8px; }
+  ol { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:7px; }
+  li { display:flex; align-items:center; gap:10px; padding:6px 8px; border-radius:14px; background:#f8f1fb; transition:transform .3s; }
+  li.bump { animation:bump .5s ease; }
+  @keyframes bump { 50%{transform:scale(1.04);background:#ffe9f3;} }
+  .rk { width:26px; text-align:center; font-family:'Itim',sans-serif; font-size:18px; }
+  .ava { width:34px; height:34px; border-radius:50%; display:grid; place-items:center; color:#fff; font-family:'Itim',sans-serif; background-size:cover; background-position:center; flex:none; }
+  .nm { flex:1; min-width:0; font-size:16px; color:#5f4a66; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .val { font-family:'Itim',sans-serif; font-size:15px; color:#f5a623; font-variant-numeric:tabular-nums; }
+  .empty { font-size:14px; color:#ab96b5; padding:6px 2px; }
+</style>
+</head>
+<body>
+  <div id="board">
+    <div class="tt" id="title">🏆 Top Gifters</div>
+    <ol id="list"><li class="empty">ยังไม่มีใครส่งของขวัญ</li></ol>
+  </div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/overlay-client.js"></script>
+  <script>
+  (function(){
+    // ?max=5 จำนวนอันดับ  ?label=หัวข้อ
+    // นับเพชรสะสมตั้งแต่เปิด overlay (รีเฟรช = เริ่มใหม่)
+    const MAX=Math.max(1,Math.min(20,parseInt(Overlay.param('max','5'),10)||5));
+    document.getElementById('title').textContent=Overlay.param('label','🏆 Top Gifters');
+    const cols=['#ff93c0','#b9a6f2','#8fe3cf','#ffcf5c','#ff6aa8','#9d86e8']; const colOf=(nm)=>cols[(nm||'?').charCodeAt(0)%cols.length];
+    const MEDAL=['🥇','🥈','🥉'];
+    const totals=new Map(); // uniqueId -> {nm, avatar, value}
+    const list=document.getElementById('list');
+    function render(bumpId){
+      const top=[...totals.entries()].sort((a,b)=>b[1].value-a[1].value).slice(0,MAX);
+      if(!top.length) return;
+      list.innerHTML='';
+      top.forEach(([id,g],i)=>{
+        const li=document.createElement('li'); if(id===bumpId) li.className='bump';
+        const ava=document.createElement('div'); ava.className='ava';
+        if(g.avatar&&/^https:\/\//.test(g.avatar)) ava.style.backgroundImage=`url("${g.avatar.replace(/"/g,'')}")`;
+        else { ava.style.background=colOf(g.nm); ava.textContent=(g.nm||'?')[0]; }
+        const rk=document.createElement('span'); rk.className='rk'; rk.textContent=MEDAL[i]||String(i+1);
+        const nm=document.createElement('span'); nm.className='nm'; nm.textContent=g.nm;
+        const val=document.createElement('span'); val.className='val'; val.textContent='💎 '+Overlay.fmt(g.value);
+        li.append(rk,ava,nm,val); list.appendChild(li);
+      });
+    }
+    function add(user,value){
+      if(!value) return;
+      const id=user?(user.uniqueId||user.userId||user.nickname):'?';
+      const cur=totals.get(id)||{nm:user?(user.nickname||user.uniqueId):'ผู้ชม',avatar:user&&user.avatar,value:0};
+      cur.value+=value; totals.set(id,cur); render(id);
+    }
+    Overlay.on('event',(e)=>{ if(e.type==='gift'&&!e.streaking) add(e.user, e.totalValue||(e.diamondCount||0)*(e.repeatCount||1)); });
+    if(!Overlay.connected){ const names=['mimi','บิ๊ก','lisa','ต้นน้ำ','somchai','เฟิร์น','gamer_x']; const vals=[1,5,20,99,1000];
+      setInterval(()=>{ const nm=names[Math.floor(Math.random()*names.length)]; add({uniqueId:nm,nickname:nm}, vals[Math.floor(Math.random()*vals.length)]); }, 1400); }
+  })();
+  </script>
+</body>
+</html>

@@ -19,17 +19,22 @@
 - Overlay: **vanilla JS + Canvas** (เบา เหมาะ OBS)
 - Deploy: **Docker + Caddy (HTTPS อัตโนมัติ)** บน Vultr
 - CI/CD: **GitHub Actions** (ci.yml + deploy.yml)
-- Dashboard (ยังไม่ทำ): วางแผนใช้ Next.js + Tailwind + shadcn
+- Dashboard: **Next.js 16 (static export) + Tailwind 4** — Fastify เสิร์ฟที่ `/` (ไม่ต้องมี Node server แยก)
+- Billing จริง: **Stripe** (Checkout + Customer Portal + webhooks)
 
 ## 3) โครงสร้าง
 ```
 packages/server/   # API + Socket.IO + ingest (TS)
   src/ config db tiktok realtime auth billing widgets actions app.ts index.ts
   prisma/schema.prisma  (+ seed.ts)
+  src/plans/  # นิยามแพลน Free/Pro + entitlements (gating)
+  prisma/migrations/  # migration (prisma migrate deploy ตอนสตาร์ท container)
+packages/dashboard/        # Next.js (static export -> out/) หน้าเว็บ+Dashboard
+  app/ (หน้าแรก+pricing, login, register, dashboard/{widgets,actions,billing}, billing/{success,cancel})
 packages/overlay/public/   # หน้า OBS (static)
-  coinjar.html alerts.html goal.html chat.html tts.html fx.html
+  coinjar.html alerts.html goal.html chat.html tts.html fx.html follower.html topgifters.html
   js/overlay-client.js  js/tts.js  favicon.svg
-Dockerfile  docker-compose.prod.yml  deploy/Caddyfile
+Dockerfile  docker-compose.prod.yml  deploy/Caddyfile  deploy/bootstrap.sh
 .github/workflows/ ci.yml deploy.yml
 DEPLOY.md  README.md  .env.example  .env.prod.example
 legacy/            # เดโมเวอร์ชันแรก (อ้างอิง)
@@ -44,7 +49,13 @@ legacy/            # เดโมเวอร์ชันแรก (อ้าง
 - Billing abstraction + Stripe stub + webhook sync
 - Rebrand → VJLiveKit + logo.svg + favicon
 - Deploy (Docker+Caddy) + DEPLOY.md
-- CI/CD: ci.yml (เขียว ✅) + deploy.yml (auto-deploy, เปิดด้วย DEPLOY_ENABLED)
+- CI/CD: ci.yml (typecheck+build + build Docker image + smoke test + push GHCR บน main) + deploy.yml (SSH -> bootstrap.sh)
+- **[รอบ 2]** Prisma migration แรก (เดิมไม่มี -> prod จะไม่มีตาราง), แพลน sync อัตโนมัติตอนสตาร์ท (ensurePlans)
+- **[รอบ 2]** Dashboard ครบ: สมัคร/ล็อกอิน, ตั้งชื่อ TikTok, สร้าง/เพิกถอนลิงก์ overlay, CRUD กฎ Actions, หน้าแพลน/อัปเกรด/จัดการสมาชิก/ประวัติจ่ายเงิน
+- **[รอบ 2]** Stripe จริง + gating: Free = 5 วิดเจ็ต/3 กฎ/2 ลิงก์, Pro = ครบ 8 วิดเจ็ต/100 กฎ/20 ลิงก์ (ตรวจทั้ง API และตอน overlay ต่อ socket)
+- **[รอบ 2]** วิดเจ็ตใหม่: follower (ผู้ติดตามล่าสุด), topgifters; fx รองรับ `{user}` + ไม่ต้องกดปุ่มเสียงใน OBS
+- **[รอบ 2]** แก้บั๊ก realtime: ต่อ TikTok ไม่ติด (ยังไม่ไลฟ์) เคยทำ process ล่ม -> ตอนนี้ retry ทุก 30 วิ, ปิดห้องเมื่อไม่มีคนดู, Actions แยกตามเจ้าของ token, overlay token เพิกถอนได้จริง
+- **[รอบ 2]** rate limit login/register, JWT_SECRET ต้อง >= 32 ตัวใน prod
 
 ## 5) Infra & การตัดสินใจ
 - **Server:** Vultr `vhf-1c-1gb` (High Frequency), Ubuntu 26.04 LTS, **Tokyo**, IP `45.77.26.217` (จะ resize ขยายทีหลัง)
@@ -54,11 +65,12 @@ legacy/            # เดโมเวอร์ชันแรก (อ้าง
 - ต้องมี **SIGN_API_KEY** (EulerStream) ถึงจะต่อ TikTok จริง (เดโมไม่ต้อง)
 
 ## 6) ยังไม่ทำ / ถัดไป (TODO)
-- [ ] Deploy ขึ้นเครื่องจริงครั้งแรก (ตั้ง DNS Dynadot → `docker compose up`)
-- [ ] เปิด auto-deploy: ใส่ secrets `VULTR_HOST/USER/SSH_KEY` + variable `DEPLOY_ENABLED=true`
-- [ ] **Dashboard** (Next.js): login, ตั้งกฎ Actions, จัดการแพลน, คัดลอก URL widget
-- [ ] **Stripe/Omise จริง** + หน้า pricing + gating ฟีเจอร์ตามแพลน
-- [ ] วิดเจ็ตเสริม: Top Gifters, Latest Follower
+- [ ] **(ผู้ใช้ทำ)** DNS Dynadot A `@`/`www` -> 45.77.26.217, เปลี่ยนรหัส root, ใส่ secrets + `DEPLOY_ENABLED=true`, merge เข้า main แล้ว Run Deploy — ดู DEPLOY.md
+- [ ] **(ผู้ใช้ทำ)** Stripe: keys + webhook endpoint + เปิด Customer Portal + `BILLING_PROVIDER=stripe`
+- [ ] หน้าตั้งค่าวิดเจ็ตแบบมี preview ใน Dashboard (ตอนนี้ปรับผ่านพารามิเตอร์ URL; API `/api/widgets/:type/config` มีแล้วแต่ overlay ยังไม่อ่าน)
+- [ ] ลืมรหัสผ่าน / ยืนยันอีเมล (ต้องมีผู้ให้บริการส่งอีเมล)
+- [ ] Omise/PromptPay (Stripe subscription ไม่รองรับ PromptPay)
+- [ ] เทสต์อัตโนมัติ (ตอนนี้ทดสอบ e2e ด้วยมือ + smoke test ใน CI)
 - [ ] (ออปชัน) อัปเกรด overlay เป็น PixiJS/WebGL
 - [ ] (สเกล) Redis adapter สำหรับหลาย instance
 
@@ -66,9 +78,12 @@ legacy/            # เดโมเวอร์ชันแรก (อ้าง
 ```bash
 npm install
 cp .env.example .env            # DEMO_MODE=true เล่นได้เลย
+cp .env packages/server/.env    # ให้ prisma CLI เห็น DATABASE_URL
 docker compose up -d            # Postgres + Redis
 npm run prisma:generate && npm run prisma:migrate
+npm run build --workspace @vjlivekit/dashboard   # (ครั้งแรก) ให้ server เสิร์ฟ dashboard ที่ /
 npm run dev                     # http://localhost:8080
+# หรือแก้ dashboard แบบ hot reload: npm run dev:dashboard (พอร์ต 3000, ตั้ง NEXT_PUBLIC_API_BASE)
 # overlay: /overlay/coinjar.html?username=test
 ```
 Deploy production: ดู **DEPLOY.md**
@@ -96,17 +111,23 @@ typecheck ✅ · build ✅ · overlay ทั้ง 6 + favicon เสิร์�
 GET    /healthz                       # health check
 POST   /api/auth/register             # สมัคร -> {token,user}
 POST   /api/auth/login                # ล็อกอิน -> {token,user}
-GET    /api/auth/me                   # ข้อมูลผู้ใช้ (Bearer token)
-POST   /api/overlay-tokens            # สร้าง token + คืน URL overlay ทุกตัว
+GET    /api/auth/me                   # ข้อมูลผู้ใช้ + entitlements (Bearer token)
+PATCH  /api/auth/me                   # แก้ displayName / tiktokUsername
+GET    /api/overlay-tokens            # ลิงก์ที่ใช้อยู่ + URL ทุกวิดเจ็ต (locked ตามแพลน)
+POST   /api/overlay-tokens            # สร้างลิงก์ชุดใหม่ (จำกัดตามแพลน)
+DELETE /api/overlay-tokens/:id        # เพิกถอน
 GET    /api/widgets/:type/config      # อ่าน config widget
 PUT    /api/widgets/:type/config      # บันทึก config widget
 GET    /api/actions                   # list กฎ Actions
 POST   /api/actions                   # สร้างกฎ
 PUT    /api/actions/:id               # แก้กฎ
 DELETE /api/actions/:id               # ลบกฎ
-POST   /api/billing/checkout          # เริ่มจ่ายเงิน (ตาม provider)
-POST   /api/billing/webhook           # webhook จาก gateway
-# Socket.IO: client ต่อด้วย query ?t=<jwt> (prod) หรือ ?username= (demo)
+GET    /api/billing/plans             # แพลน (สาธารณะ)
+POST   /api/billing/checkout          # -> {redirectUrl} Stripe Checkout
+POST   /api/billing/portal            # -> {redirectUrl} Stripe Customer Portal
+GET    /api/billing/payments          # ประวัติการชำระเงิน
+POST   /api/billing/webhook           # webhook จาก Stripe (ตรวจลายเซ็น)
+# Socket.IO: query { token, widget } (prod) หรือ { username } (demo) — overlay-client.js ส่งให้เอง
 #   events: tiktok-event, stats, status, state, action
 # Static overlay: /overlay/<name>.html
 ```
@@ -119,7 +140,10 @@ POST   /api/billing/webhook           # webhook จาก gateway
 /overlay/goal.html      ?type=like|follow|share|diamond|gift  &target=10000  &label=...
 /overlay/chat.html      ?max=8
 /overlay/tts.html       ?lang=th-TH &rate=1 &pitch=1 &readChat=1 &readGift=1 &minGift=1
-/overlay/fx.html        (ขับเคลื่อนด้วย Actions & Events)
+/overlay/fx.html        (ขับเคลื่อนด้วย Actions & Events — ข้อความใช้ {user} ได้)  [Pro]
+/overlay/follower.html  ?label=... &showCount=0
+/overlay/topgifters.html ?max=5 &label=...                                        [Pro]
+# tts = Pro
 ```
 
 ## 12) ลิงก์เดโม (artifacts — พรีวิวเร็ว ไม่ต้องรันเซิร์ฟเวอร์)

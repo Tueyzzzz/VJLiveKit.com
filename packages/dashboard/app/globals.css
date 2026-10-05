@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "IBM Plex Sans Thai", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Itim", "IBM Plex Sans Thai", sans-serif;
+  --color-ink: #3d2f45;
+  --color-muted: #8b7a94;
+  --color-line: #eee4f3;
+  --color-canvas: #fcf8fd;
+  --color-pink: #ff6aa8;
+  --color-pink-soft: #ffe3ef;
+  --color-violet: #9d86e8;
+  --color-violet-soft: #efeafd;
+  --color-mint: #5fc9b0;
+  --color-mint-soft: #e2f7f1;
+  --color-gold: #f5a623;
+}
+
+html, body { background: var(--color-canvas); color: var(--color-ink); }
+body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+.brand-gradient { background-image: linear-gradient(120deg, #ff93c0, #b9a6f2 55%, #8fe3cf); }
+.text-gradient { background-image: linear-gradient(120deg, #ff6aa8, #9d86e8 60%, #5fc9b0); -webkit-background-clip: text; background-clip: text; color: transparent; }

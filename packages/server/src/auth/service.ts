@@ -23,8 +23,8 @@ export async function verifyPassword(password: string, stored: string): Promise<
 
 export interface SessionClaims { userId: string; email: string; role: string; }
 
-export function signSession(claims: SessionClaims): string {
-  return jwt.sign(claims, config.jwtSecret, { expiresIn: '30d' });
+export function signSession(claims: SessionClaims, expiresIn: '1d' | '30d' | '90d' = '30d'): string {
+  return jwt.sign(claims, config.jwtSecret, { expiresIn });
 }
 
 export function verifySession(token: string): SessionClaims | null {

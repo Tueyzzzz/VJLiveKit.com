@@ -4,12 +4,12 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
 const TOKEN_KEY = 'vjl_token';
 
 export function getToken(): string | null {
-  try { return localStorage.getItem(TOKEN_KEY); } catch { return null; }
+  try { return localStorage.getItem(TOKEN_KEY) ?? sessionStorage.getItem(TOKEN_KEY); } catch { return null; }
 }
-export function setToken(token: string | null): void {
+export function setToken(token: string | null, remember = true): void {
   try {
-    if (token) localStorage.setItem(TOKEN_KEY, token);
-    else localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(TOKEN_KEY); sessionStorage.removeItem(TOKEN_KEY);
+    if (token) (remember ? localStorage : sessionStorage).setItem(TOKEN_KEY, token);
   } catch { /* storage ถูกบล็อก */ }
 }
 

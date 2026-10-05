@@ -53,7 +53,8 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     if (!user?.passwordHash || !(await verifyPassword(password, user.passwordHash))) {
       return reply.code(401).send({ error: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' });
     }
-    const token = signSession({ userId: user.id, email: user.email, role: user.role });
+    const remember = (req.body as { remember?: boolean } | undefined)?.remember !== false; // ค่าเริ่มต้น = จำไว้
+    const token = signSession({ userId: user.id, email: user.email, role: user.role }, remember ? '90d' : '1d');
     return reply.send({ token, user: { id: user.id, email: user.email, displayName: user.displayName } });
   });
 

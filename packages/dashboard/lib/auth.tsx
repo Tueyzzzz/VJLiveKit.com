@@ -8,7 +8,7 @@ interface AuthState {
   entitlements: Entitlements | null;
   loading: boolean;
   refresh: () => Promise<void>;
-  login: (token: string) => Promise<void>;
+  login: (token: string, remember?: boolean) => Promise<void>;
   logout: () => void;
 }
 
@@ -35,8 +35,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => { void refresh(); }, [refresh]);
 
-  const login = useCallback(async (token: string) => {
-    setToken(token);
+  const login = useCallback(async (token: string, remember = true) => {
+    setToken(token, remember);
     setLoading(true);
     await refresh();
   }, [refresh]);

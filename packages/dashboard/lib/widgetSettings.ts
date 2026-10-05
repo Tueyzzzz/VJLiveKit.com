@@ -6,7 +6,7 @@
 export type FieldDef =
   | { key: string; label: string; type: 'range'; min: number; max: number; step: number; def: number; unit?: string; hint?: string; when?: (v: Values) => boolean }
   | { key: string; label: string; type: 'number'; min?: number; max?: number; def: number; hint?: string; when?: (v: Values) => boolean }
-  | { key: string; label: string; type: 'select'; options: [string, string][]; def: string; hint?: string; when?: (v: Values) => boolean }
+  | { key: string; label: string; type: 'select'; /** [ค่า, ชื่อ, กลุ่ม?] — ใส่กลุ่มเพื่อจัดหมวดในรายการ */ options: [string, string, string?][]; def: string; hint?: string; when?: (v: Values) => boolean }
   | { key: string; label: string; type: 'toggle'; def: boolean; hint?: string; when?: (v: Values) => boolean }
   | { key: string; label: string; type: 'color'; def: string; hint?: string; when?: (v: Values) => boolean }
   | { key: string; label: string; type: 'text'; def: string; placeholder?: string; hint?: string; when?: (v: Values) => boolean };
@@ -34,7 +34,13 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
     resettable: 'ล้างของขวัญในโหลและอันดับ',
     sections: [
       { title: 'รูปแบบโหล', fields: [
-        { key: 'shape', label: 'ทรงโหล', type: 'select', def: 'heart', options: [['heart', 'โหลหัวใจ (ภาพ 3D)'], ['orb', 'โหลกลมห่วงชมพู (ภาพ 3D)'], ['tank', 'ตู้ปลา (ภาพ 3D)'], ['pig', 'หมูท้องใส งับของขวัญ (ภาพ 3D)'], ['jar', 'โหลแก้วคอแคบ'], ['bowl', 'โหลกลมปากกว้าง'], ['mason', 'โหลฝาผ้าผูกโบว์'], ['car', 'รถพาสเทล (ของกองบนหลังคา)'], ['globe', 'ลูกแก้วหิมะ'], ['snow', 'ลูกแก้วหิมะ (ภาพ 3D)'], ['van', 'รถหัวใจ (ภาพ 3D)']] },
+        { key: 'shape', label: 'ทรงโหล', type: 'select', def: 'heart', options: [
+          ['heart', 'โหลหัวใจ', '🫙 โหลและตู้ (ภาพ 3D)'], ['orb', 'โหลกลมห่วงชมพู', '🫙 โหลและตู้ (ภาพ 3D)'], ['tank', 'ตู้ปลา', '🫙 โหลและตู้ (ภาพ 3D)'],
+          ['pig', 'หมูท้องใส งับของขวัญ', '🐷 ตัวละคร (ภาพ 3D)'],
+          ['snow', 'ลูกแก้วหิมะ (ภาพ 3D)', '❄️ ลูกแก้วหิมะ'], ['globe', 'ลูกแก้วหิมะ (วาดด้วยโค้ด)', '❄️ ลูกแก้วหิมะ'],
+          ['van', 'รถหัวใจ (ภาพ 3D)', '🚐 รถ'], ['car', 'รถพาสเทล (วาดด้วยโค้ด)', '🚐 รถ'],
+          ['jar', 'โหลแก้วคอแคบ', '✏️ โหลแบบวาดด้วยโค้ด'], ['bowl', 'โหลกลมปากกว้าง', '✏️ โหลแบบวาดด้วยโค้ด'], ['mason', 'โหลฝาผ้าผูกโบว์', '✏️ โหลแบบวาดด้วยโค้ด'],
+        ] },
         { key: 'body', label: 'สีรถ', type: 'color', def: '#bfe9e6', when: (v) => v.shape === 'car' },
         ...tint((v) => ['heart', 'orb', 'tank', 'pig', 'snow', 'van'].includes(String(v.shape))),
         { key: 'cloth', label: 'สีผ้าฝาโหล', type: 'color', def: '#e0452b', when: (v) => v.shape === 'mason' },
@@ -90,7 +96,10 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
       { title: 'ต้นไม้', fields: [
         { key: 'sway', label: 'ความแรงลม (กิ่งแกว่ง)', type: 'range', min: 0, max: 3, step: 0.1, def: 1, hint: '0 = นิ่ง' },
         { key: 'big', label: 'ของขวัญที่เป็นดอกใหญ่บนยอด ตั้งแต่ (เหรียญ)', type: 'number', min: 1, def: 1000 },
-        { key: 'skin', label: 'แบบกระถาง', type: 'select', def: 'image', options: [['image', 'กระถางหัวใจมีปีก (ภาพ 3D)'], ['tree', 'ต้นไม้ใหญ่ (ภาพ 3D)'], ['sakura', 'ต้นซากุระ (ภาพ 3D)'], ['night', 'ต้นไม้ดวงดาว (ภาพ 3D)'], ['heart', 'ต้นหัวใจ (ภาพ 3D)'], ['classic', 'กระถางเซรามิก (วาดด้วยโค้ด)']] },
+        { key: 'skin', label: 'แบบกระถาง', type: 'select', def: 'image', options: [
+          ['tree', 'ต้นไม้ใหญ่', '🌳 ต้นไม้ (ภาพ 3D)'], ['sakura', 'ต้นซากุระ', '🌳 ต้นไม้ (ภาพ 3D)'], ['night', 'ต้นไม้ดวงดาว', '🌳 ต้นไม้ (ภาพ 3D)'], ['heart', 'ต้นหัวใจ', '🌳 ต้นไม้ (ภาพ 3D)'],
+          ['image', 'กระถางหัวใจมีปีก (ภาพ 3D)', '🪴 กระถาง'], ['classic', 'กระถางเซรามิก (วาดด้วยโค้ด)', '🪴 กระถาง'],
+        ] },
         ...tint((v) => v.skin !== 'classic'),
         { key: 'pot', label: 'สีกระถาง', type: 'color', def: '#f3e6cc', when: (v) => v.skin === 'classic' },
         { key: 'minCoins', label: 'รับเฉพาะของขวัญตั้งแต่ (เหรียญ)', type: 'number', min: 0, def: 0 },

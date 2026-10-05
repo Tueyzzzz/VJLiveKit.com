@@ -25,6 +25,15 @@ const PARAM_HINTS: Record<string, string> = {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
 
+/** จัดหมวดวิดเจ็ตในแกลเลอรี (ประเภทเดียวกันอยู่ด้วยกัน) */
+const WIDGET_GROUPS: [string, string[]][] = [
+  ['🎁 สะสมของขวัญ — โหล ตู้ ต้นไม้ เครื่องจักร', ['giftjar', 'garden', 'coinjar']],
+  ['🏆 เป้าหมายและลีก', ['league', 'goal', 'timer']],
+  ['🔔 แจ้งเตือนและแชท', ['alerts', 'chat', 'follower', 'tts']],
+  ['🥇 อันดับผู้ชม', ['topgifters', 'toplikers']],
+  ['✨ เอฟเฟกต์', ['fx']],
+];
+
 /** คำอธิบายสั้นในแกลเลอรี */
 const WIDGET_BLURB: Record<string, string> = {
   coinjar: 'เครื่องจักรพาสเทล ของขวัญวิ่งบนสายพานแล้วกองเป็นภูเขา',
@@ -142,8 +151,17 @@ export default function WidgetsPage() {
       )}
 
       <h2 className="mb-3 text-sm font-semibold text-violet">ตัวอย่างวิดเจ็ตทั้งหมด</h2>
-      <div className="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {(tokens?.[0]?.urls ?? Object.keys(WIDGET_BLURB).map((type) => ({ type, url: '', locked: false }))).map((w) => (
+      {(() => {
+        const all = tokens?.[0]?.urls ?? Object.keys(WIDGET_BLURB).map((type) => ({ type, url: '', locked: false }));
+        const grouped = new Set(WIDGET_GROUPS.flatMap(([, t]) => t));
+        const groups: [string, typeof all][] = WIDGET_GROUPS.map(([title, types]) => [title, types.flatMap((t) => all.filter((w) => w.type === t))]);
+        const rest = all.filter((w) => !grouped.has(w.type));
+        if (rest.length) groups.push(['อื่น ๆ', rest]);
+        return groups.filter(([, list]) => list.length).map(([title, list]) => (
+      <section key={title} className="mb-8">
+      <h3 className="mb-3 text-sm font-semibold">{title}</h3>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {list.map((w) => (
           <Card key={w.type} className="p-3">
             <WidgetPreview type={w.type} />
             <div className="mt-3 flex items-start justify-between gap-2">
@@ -164,6 +182,9 @@ export default function WidgetsPage() {
           </Card>
         ))}
       </div>
+      </section>
+        ));
+      })()}
       {tokens && tokens.length === 0 && <p className="-mt-5 mb-6 text-xs text-muted">สร้างลิงก์ชุดแรกด้านล่างก่อน จึงจะมีปุ่มคัดลอกลิงก์ในแต่ละการ์ด</p>}
 
       <h2 className="mb-3 text-sm font-semibold text-violet">ชุดลิงก์ของคุณ</h2>

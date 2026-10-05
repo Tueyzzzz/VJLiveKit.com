@@ -11,6 +11,17 @@ import { WIDGET_SETTINGS, defaultsOf, toOverlayParams, type FieldDef, type Value
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
 
+/** จัดตัวเลือกเป็นกลุ่มตามลำดับที่เจอ (ตัวเลือกที่ไม่มีกลุ่มอยู่นอก optgroup) */
+function groupOptions(options: [string, string, string?][]): [string, [string, string, string?][]][] {
+  const out: [string, [string, string, string?][]][] = [];
+  for (const o of options) {
+    const g = o[2] ?? '';
+    const hit = out.find(([k]) => k === g);
+    if (hit) hit[1].push(o); else out.push([g, [o]]);
+  }
+  return out;
+}
+
 function FieldInput({ f, value, onChange }: { f: FieldDef; value: Values[string]; onChange: (v: Values[string]) => void }) {
   switch (f.type) {
     case 'toggle':
@@ -30,7 +41,13 @@ function FieldInput({ f, value, onChange }: { f: FieldDef; value: Values[string]
     case 'number':
       return <Input type="number" min={f.min} max={f.max} value={String(value)} onChange={(e) => onChange(e.target.value === '' ? 0 : Number(e.target.value))} />;
     case 'select':
-      return <Select value={String(value)} onChange={(e) => onChange(e.target.value)}>{f.options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Select>;
+      return (
+        <Select value={String(value)} onChange={(e) => onChange(e.target.value)}>
+          {groupOptions(f.options).map(([g, opts]) => g
+            ? <optgroup key={g} label={g}>{opts.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</optgroup>
+            : opts.map(([v, l]) => <option key={v} value={v}>{l}</option>))}
+        </Select>
+      );
     case 'color':
       return <input type="color" value={String(value)} onChange={(e) => onChange(e.target.value)} className="h-9 w-16 cursor-pointer rounded-lg border border-line bg-white" />;
     case 'text':

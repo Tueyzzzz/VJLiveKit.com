@@ -23,6 +23,8 @@
     #board .rk{width:22px;text-align:center;font-weight:600}
     #board img{width:30px;height:30px;border-radius:50%;object-fit:cover;background:#b9a6f2}
     #board .c{margin-left:auto;padding-left:10px;color:#ffd76a;font-weight:600}
+    #full{position:fixed;transform:translate(-50%,-50%) scale(.6);opacity:0;transition:opacity .4s,transform .4s;font-weight:600;font-size:calc(var(--fs) * .9px);color:#fff;pointer-events:none;white-space:nowrap}
+    #full.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
     #total{position:fixed;transform:translateX(-50%);font-weight:600;font-size:calc(var(--fs) * .5px);color:#ffd76a;pointer-events:none}
   </style>
 </head>
@@ -31,6 +33,7 @@
   <div id="alert" class="shadow"><img class="ava" alt="" /><div><div class="nm"></div><div class="sub"></div></div><img class="gift" alt="" /></div>
   <div id="board" class="shadow"></div>
   <div id="total" class="shadow"></div>
+  <div id="full" class="shadow"></div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="js/overlay-client.js"></script>
@@ -40,9 +43,11 @@
    * พารามิเตอร์ URL:
    *   scale=1 giftScale=1 x=0 y=0          ขนาด/ตำแหน่งโหล (x,y = เลื่อนเป็น px จากกึ่งกลางล่าง)
    *   alert=1 alertSec=5                    แจ้งเตือนชื่อผู้ส่ง
-   *   board=1 top=5 boardFormat=full|name   อันดับผู้ให้ (full = รูป+ชื่อ+เหรียญ)
+   *   board=0 top=5 boardFormat=full|name   อันดับผู้ให้ (ปิดเป็นค่าเริ่มต้น; full = รูป+ชื่อ+เหรียญ)
    *   total=0                               แสดงยอดเหรียญรวมเหนือโหล
    *   minCoins=0                            รับเฉพาะของขวัญมูลค่า >= นี้
+   *   full=spill|fade|reset fullText=...    โหลเต็มแล้ว: spill = ล้นออกกองรอบโหล (ไม่หาย, ค่าเริ่มต้น)
+   *                                         fade = ชิ้นเก่าสุดจางออก, reset = ฉลองแล้วเทโหลเริ่มใหม่
    *   font=Kanit fontSize=50                ฟอนต์ (Kanit/Prompt/Mitr/Sriracha/Chakra Petch) และขนาด
    *   reset=1                               ล้างโหลที่จำไว้
    */
@@ -51,8 +56,9 @@
     const num = (k, d) => { const v = parseFloat(P(k, d)); return Number.isFinite(v) ? v : d; };
     const SCALE = num('scale', 1), GIFT_SCALE = num('giftScale', 1), OX = num('x', 0), OY = num('y', 0);
     const SHOW_ALERT = P('alert', '1') !== '0', ALERT_MS = num('alertSec', 5) * 1000;
-    const SHOW_BOARD = P('board', '1') !== '0', TOP = Math.max(1, Math.min(10, num('top', 5))), BOARD_FULL = P('boardFormat', 'full') !== 'name';
+    const SHOW_BOARD = P('board', '0') === '1', TOP = Math.max(1, Math.min(10, num('top', 5))), BOARD_FULL = P('boardFormat', 'full') !== 'name';
     const SHOW_TOTAL = P('total', '0') === '1', MIN_COINS = num('minCoins', 0);
+    const FULL_MODE = P('full', 'spill'), FULL_TEXT = P('fullText', 'โหลเต็มแล้ว! 🎉');
     document.documentElement.style.setProperty('--font', `'${P('font', 'Kanit')}'`);
     document.documentElement.style.setProperty('--fs', String(num('fontSize', 50)));
 
@@ -106,23 +112,40 @@
     }
 
     // ---- ฟิสิกส์ (position-based) ----
-    const bodies = [], MAX = 180, G = 0.6;
+    const bodies = [], MAX = 600, G = 0.6; // MAX กันเครื่องช้าเท่านั้น
     const imgCache = {};
     function giftImg(url) { if (!url || !/^https:\/\//.test(url)) return null; let im = imgCache[url]; if (!im) { im = new Image(); im.src = url; imgCache[url] = im; } return im; }
     const radiusFor = (diamonds) => 18 * GIFT_SCALE * (1 + Math.min(1, Math.log10((diamonds || 1) + 1) / 4) * 0.9);
 
     function addBody(g, dropFromTop = true) {
       const r = radiusFor(g.d);
+      // โหลเต็ม (โหมด spill) → ชิ้นใหม่ทะลักออกปากโหลไปกองข้าง ๆ
+      const out = g.o === 1 || (dropFromTop && spilling);
+      const side = Math.random() < .5 ? -1 : 1;
       const b = { x: (Math.random() - .5) * (NECK_HW - r) * 1.4, y: dropFromTop ? LID_TOP - 40 - Math.random() * 60 : BODY_TOP + Math.random() * 200,
-        r, rot: Math.random() * 6.28, img: giftImg(g.img), emoji: g.e || '🎁', d: g.d || 1, src: g, life: 1 };
+        r, rot: Math.random() * 6.28, img: giftImg(g.img), emoji: g.e || '🎁', d: g.d || 1, src: out ? { ...g, o: 1 } : g, life: 1, out };
+      if (out && !dropFromTop) { b.x = side * (BODY_HW + 20 + Math.random() * 260); b.y = -r - Math.random() * 120; }
       b.px = b.x + (Math.random() - .5) * 2; b.py = b.y - 2;
+      if (out && dropFromTop) b.px = b.x - side * (3 + Math.random() * 4); // พุ่งออกด้านข้าง
       bodies.push(b);
       const alive = bodies.filter((k) => !k.dying);
       if (alive.length > MAX) alive[0].dying = true;
     }
 
     function wallHalfWidth(y) { return y < BODY_TOP + 20 ? NECK_HW : BODY_HW; }
+    function constrainOutside(b) {
+      if (b.y + b.r > -3) b.y = -3 - b.r; // พื้น (ระดับก้นโหล)
+      const s = S(), o = origin(), left = -o.x / s, right = (W - o.x) / s;
+      if (b.x - b.r < left) b.x = left + b.r;
+      if (b.x + b.r > right) b.x = right - b.r;
+      // ตัวโหลเป็นสิ่งกีดขวาง: ใต้ขอบปากโหลให้ไถลออกด้านข้าง
+      if (b.y + b.r > LID_TOP) {
+        const hw = (b.y < BODY_TOP + 20 ? LID_HW : BODY_HW) + 4;
+        if (Math.abs(b.x) < hw + b.r) b.x = Math.sign(b.x || 1) * (hw + b.r);
+      }
+    }
     function constrain(b) {
+      if (b.out) return constrainOutside(b);
       const hw = wallHalfWidth(b.y) - 3;
       if (b.x - b.r < -hw) b.x = -hw + b.r;
       if (b.x + b.r > hw) b.x = hw - b.r;
@@ -140,7 +163,7 @@
       for (const b of bodies) {
         const vx = Math.max(-VMAX, Math.min(VMAX, (b.x - b.px) * 0.985)), vy = Math.max(-VMAX, Math.min(VMAX, (b.y - b.py) * 0.985));
         b.px = b.x; b.py = b.y; b.x += vx; b.y += vy + G;
-        b.rot += vx / b.r;
+        b.rot += vx / b.r; b.age = (b.age || 0) + 1;
       }
       for (let it = 0; it < 4; it++) {
         for (let i = 0; i < bodies.length; i++) {
@@ -158,7 +181,41 @@
       }
       for (let i = bodies.length - 1; i >= 0; i--) {
         const b = bodies[i];
-        if (b.dying) { b.life -= 0.04; if (b.life <= 0) bodies.splice(i, 1); }
+        if (b.dying) { b.life -= 0.04; if (b.life <= 0) { bodies.splice(i, 1); save(); } }
+      }
+      checkFull();
+    }
+
+    // ---- โหลเต็ม ----
+    // เต็ม = มีชิ้นที่นิ่งแล้วกองสูงถึงไหล่โหล
+    let fadeCooldown = 0, resetting = false, spilling = false;
+    const conf = [];
+    function checkFull() {
+      if (resetting) return;
+      // ชิ้นในโหลที่ไม่ได้กำลังตก (อายุ > 2 วิ) กองสูงถึงไหล่โหล = เต็ม
+      const full = bodies.some((b) => !b.out && !b.dying && b.age > 120 && b.y - b.r < BODY_TOP + 10);
+      spilling = full && FULL_MODE === 'spill';
+      if (!full || FULL_MODE === 'spill') return;
+      if (FULL_MODE === 'reset') return resetJar();
+      if (fadeCooldown-- > 0) return;
+      fadeCooldown = 8;
+      const old = bodies.find((b) => !b.dying && b.age > 90); // ชิ้นเก่าสุด (มักอยู่ก้นโหล) → กองยุบลงเอง
+      if (old) old.dying = true;
+    }
+    function resetJar() {
+      resetting = true;
+      const cols = ['#ff6aa8', '#ffcf5c', '#8fe3cf', '#b9a6f2', '#ffffff'];
+      for (let i = 0; i < 140; i++) conf.push({ x: (Math.random() - .5) * 120, y: LID_TOP, vx: (Math.random() - .5) * 14, vy: -(4 + Math.random() * 12),
+        rot: Math.random() * 6.28, vr: (Math.random() - .5) * .6, w: 8 + Math.random() * 6, h: 12 + Math.random() * 8, c: cols[i % cols.length], life: 1 });
+      $full.textContent = FULL_TEXT; $full.classList.add('show');
+      setTimeout(() => bodies.forEach((b, i) => setTimeout(() => { b.dying = true; }, i * 12)), 1500);
+      setTimeout(() => { $full.classList.remove('show'); resetting = false; }, 4500);
+    }
+    function drawConfetti() {
+      for (let i = conf.length - 1; i >= 0; i--) {
+        const p = conf[i]; p.vy += .35; p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.life -= .01;
+        if (p.life <= 0) { conf.splice(i, 1); continue; }
+        ctx.save(); ctx.globalAlpha = p.life; ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.fillStyle = p.c; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); ctx.restore();
       }
     }
     function drawBody(b) {
@@ -172,23 +229,33 @@
       }
       ctx.restore();
     }
+    // ฟิสิกส์เดินตามเวลาจริง (ชดเชยเฟรมที่หาย เช่น OBS ซ่อน source / แท็บถูกพัก)
+    let lastT = performance.now(), acc = 0;
+    function tick() {
+      const now = performance.now(); acc += Math.min(4000, now - lastT); lastT = now;
+      let n = 0; while (acc >= 16.7 && n < 240) { step(); acc -= 16.7; n++; }
+      if (n === 240) acc = 0;
+    }
+    setInterval(() => { if (document.hidden) tick(); }, 250);
     function frame() {
-      step();
+      tick();
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H);
       const o = origin(), s = S();
       ctx.translate(o.x, o.y); ctx.scale(s, s);
       drawJarBack();
       for (const b of bodies) drawBody(b);
       drawJarFront();
+      drawConfetti();
       requestAnimationFrame(frame);
     }
 
     // ---- UI: แจ้งเตือน / อันดับ / ยอดรวม ----
-    const $alert = document.getElementById('alert'), $board = document.getElementById('board'), $total = document.getElementById('total');
+    const $alert = document.getElementById('alert'), $board = document.getElementById('board'), $total = document.getElementById('total'), $full = document.getElementById('full');
     function layoutUi() {
       const o = origin(), s = S();
       $alert.style.left = o.x + 'px'; $alert.style.top = Math.max(4, o.y + (LID_TOP - 130) * s) + 'px';
       $board.style.left = Math.max(8, o.x - (BODY_HW + 20) * s - 260) + 'px'; $board.style.top = (o.y + BODY_TOP * s) + 'px';
+      $full.style.left = o.x + 'px'; $full.style.top = (o.y + (BODY_TOP + 140) * s) + 'px';
       $total.style.left = o.x + 'px'; $total.style.top = Math.max(4, o.y + (LID_TOP - 60) * s) + 'px';
     }
     let alertTimer = null;

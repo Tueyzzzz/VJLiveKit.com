@@ -11,7 +11,7 @@ import { useAuth } from '@/lib/auth';
 /** พารามิเตอร์เสริมที่ต่อท้าย URL ได้ (แสดงเป็นคำแนะนำ) */
 const PARAM_HINTS: Record<string, string> = {
   coinjar: '&goal=10000',
-  giftjar: '&scale=1&giftScale=1&x=0&y=0&alert=1&board=1&top=5&total=0&minCoins=0&font=Kanit',
+  giftjar: '&scale=1&giftScale=1&x=0&y=0&alert=1&board=0&top=5&total=0&full=spill&minCoins=0&font=Kanit',
   goal: '&type=like|follow|share|diamond|gift&target=10000&label=...',
   chat: '&max=8',
   follower: '&label=...&showCount=0',

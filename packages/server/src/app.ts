@@ -10,7 +10,7 @@ import { billingRoutes } from './billing/routes.js';
 import { actionRoutes } from './actions/routes.js';
 import { ttsRoutes } from './tts/routes.js';
 import { config } from './config/index.js';
-import { OVERLAY_DIR } from './overlay-version.js';
+import { OVERLAY_DIR, OVERLAY_VERSION } from './overlay-version.js';
 
 /** ที่อยู่ไฟล์ Dashboard (Next.js static export) */
 const DASHBOARD_DIR = config.dashboardDir ?? path.resolve(process.cwd(), '../dashboard/out');
@@ -34,6 +34,20 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(fastifyStatic, {
     root: OVERLAY_DIR, prefix: '/overlay/', cacheControl: false,
     setHeaders: (res) => { res.setHeader('cache-control', 'no-cache, no-store, must-revalidate'); },
+  });
+
+  // หน้า overlay (.html): ฝังเลขเวอร์ชันในหน้า + ต่อ ?v= ให้ไฟล์ js → แอปที่จำแคชเก่า (TikTok Live Studio) รู้ตัวว่าเก่าแล้วโหลดใหม่ได้
+  app.get<{ Params: { page: string } }>('/overlay/:page', async (req, reply) => {
+    const { page } = req.params;
+    reply.header('cache-control', 'no-cache, no-store, must-revalidate');
+    if (!/^[\w-]+\.html$/.test(page)) return reply.sendFile(page);
+    let html: string;
+    try { html = await fs.promises.readFile(path.join(OVERLAY_DIR, page), 'utf8'); }
+    catch { return reply.code(404).send({ error: 'ไม่พบ' }); }
+    html = html.replace(/src="(js\/[\w.-]+\.js)"/g, `src="$1?v=${OVERLAY_VERSION}"`)
+      .replace('<script', `<script>window.VJL_VERSION=${JSON.stringify(OVERLAY_VERSION)}</script>
+  <script`);
+    return reply.type('text/html; charset=utf-8').send(html);
   });
 
   // เสิร์ฟ Dashboard ที่ / (ถ้า build แล้ว)

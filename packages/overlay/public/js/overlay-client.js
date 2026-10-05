@@ -75,12 +75,17 @@ window.Overlay = (function () {
       else if (s && s.type === 'connected' && badge) badge.style.display = 'none';
     });
     socket.on('state', (s) => { if (s && s.connected && badge) badge.style.display = 'none'; });
-    // อัปเดตตัวเองอัตโนมัติ: เวอร์ชันแรกที่ได้ = ของหน้านี้, หลัง deploy เซิร์ฟเวอร์ส่งเวอร์ชันใหม่มา → โหลดหน้าใหม่
-    let version = null;
+    // อัปเดตตัวเองอัตโนมัติ: เวอร์ชันของหน้านี้ฝังมากับ HTML (window.VJL_VERSION)
+    // ไม่ตรงกับเซิร์ฟเวอร์ = หน้านี้มาจากแคชเก่า หรือเพิ่ง deploy → โหลดใหม่ด้วย URL ใหม่ (&_v=) บังคับข้ามแคช
+    let version = window.VJL_VERSION || null;
     socket.on('version', (v) => {
       if (!v) return;
       if (version === null) { version = v; return; }
-      if (v !== version) setTimeout(() => location.reload(), 1500 + Math.random() * 3000);
+      if (v === version) return;
+      const u = new URL(location.href);
+      if (u.searchParams.get('_v') === v) return; // โหลดใหม่แล้วยังเก่า → ไม่วนลูป
+      u.searchParams.set('_v', v);
+      setTimeout(() => location.replace(u.toString()), window.VJL_VERSION ? 300 : 1500 + Math.random() * 3000);
     });
     socket.on('config', (c) => {
       const next = JSON.stringify(c || {});

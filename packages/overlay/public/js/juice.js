@@ -88,7 +88,7 @@ window.Juice = (function () {
   function skin(src, hue, sat, bright) {
     const img = new Image(), out = { source: null, ready: () => !!out.source };
     img.onload = () => { out.source = tinted(img, hue, sat, bright); };
-    img.src = src;
+    img.src = window.VJL_VERSION ? src + (src.includes('?') ? '&' : '?') + 'v=' + window.VJL_VERSION : src; // เวอร์ชันใหม่ = URL ใหม่ → ไม่ใช้รูปเก่าในแคช
     return out;
   }
 

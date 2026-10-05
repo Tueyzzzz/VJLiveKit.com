@@ -83,7 +83,14 @@
     // ตำแหน่งบนกิ่ง ณ เวลา time (มีลมแกว่ง)
     function stemPoint(st, t, time) {
       const sway = Math.sin(time * 0.9 + st.phase) * 0.06 * SWAY * t;
-      const a = st.a + st.bend * t * 0.6 + sway;
+      // กิ่งโค้งแบบน้ำพุ: โคนตั้งขึ้น ปลายโค้งออกด้านข้าง (มุมเปลี่ยนต่อเนื่องตามความยาว = โค้งจริง)
+      const c = Math.cos(st.a) * 1.9 + st.bend * 1.8, a0 = st.a - Math.cos(st.a) * 0.95 - st.bend * 0.6 + sway;
+      if (Math.abs(c) > 1e-3) {
+        const base = POT_SKIN ? { x: Math.cos(st.a) * 46, y: POT_TOP + 8 - Math.abs(Math.cos(st.a)) * 6 } : { x: Math.cos(st.a) * 14, y: POT_TOP + 4 };
+        const L = st.len / c, a1 = a0 + c * t;
+        return { x: base.x + L * (Math.sin(a1) - Math.sin(a0)), y: base.y - L * (Math.cos(a1) - Math.cos(a0)), a: a1 };
+      }
+      const a = a0;
       const base = POT_SKIN ? { x: Math.cos(st.a) * 46, y: POT_TOP + 8 - Math.abs(Math.cos(st.a)) * 6 } : { x: Math.cos(st.a) * 14, y: POT_TOP + 4 };
       return { x: base.x + Math.cos(a) * st.len * t, y: base.y + Math.sin(a) * st.len * t, a };
     }
@@ -146,12 +153,14 @@
     function drawStems(time) {
       ctx.lineCap = 'round';
       for (const st of stems) {
-        ctx.beginPath(); const p0 = stemPoint(st, 0, time); ctx.moveTo(p0.x, p0.y);
-        for (let t = .1; t <= 1.001; t += .1) { const p = stemPoint(st, t, time); ctx.lineTo(p.x, p.y); }
-        ctx.lineWidth = 5; ctx.strokeStyle = '#b5486b'; ctx.stroke();
+        ctx.strokeStyle = '#b5486b'; let prev = stemPoint(st, 0, time);
+        for (let t = .05; t <= 1.001; t += .05) { // เส้นเรียวจากโคนหนาไปปลายบาง
+          const p = stemPoint(st, t, time); ctx.beginPath(); ctx.moveTo(prev.x, prev.y); ctx.lineTo(p.x, p.y);
+          ctx.lineWidth = 7.5 - 5 * t; ctx.stroke(); prev = p;
+        }
         for (const tw of st.twigs) {
           const a = stemPoint(st, tw.t, time); ctx.beginPath(); ctx.moveTo(a.x, a.y);
-          const e = slotPoint({ stem: st, twig: tw, t: 1 }, time); ctx.quadraticCurveTo((a.x + e.x) / 2, (a.y + e.y) / 2 - 6, e.x, e.y);
+          const e = slotPoint({ stem: st, twig: tw, t: 1 }, time); const mx = (a.x + e.x) / 2, my = (a.y + e.y) / 2, nx = -(e.y - a.y) * 0.22 * Math.sign(tw.a), ny = (e.x - a.x) * 0.22 * Math.sign(tw.a); ctx.quadraticCurveTo(mx + nx, my + ny - 4, e.x, e.y); // กิ่งย่อยโค้ง
           ctx.lineWidth = 3; ctx.strokeStyle = '#c45a7c'; ctx.stroke();
           // ใบ
           ctx.save(); ctx.translate(e.x, e.y); ctx.rotate(st.a + tw.a);

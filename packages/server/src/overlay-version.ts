@@ -19,7 +19,7 @@ function computeVersion(dir: string): string {
     for (const e of entries) {
       const p = path.join(d, e.name);
       if (e.isDirectory()) walk(p);
-      else if (/\.(html|js|css|svg)$/.test(e.name)) { hash.update(e.name); hash.update(fs.readFileSync(p)); }
+      else if (/\.(html|js|css|svg|webp|png|jpe?g)$/.test(e.name)) { hash.update(e.name); hash.update(fs.readFileSync(p)); }
     }
   };
   walk(dir);

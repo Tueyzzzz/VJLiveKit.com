@@ -55,16 +55,38 @@
 
     // ---- สกินรูปภาพ (เรนเดอร์/AI) — ?skin=classic เพื่อใช้ตู้วาดด้วยโค้ดแบบเดิม ----
     // พิกัดจุดสำคัญวัดจากรูปต้นฉบับ (พิกเซล) แล้วแปลงเป็นพิกัดออกแบบ: ช่องอุโมงค์, ผิวสายพาน, จอ, แผงตัวเลข
-    const SKIN = Overlay.param('skin', 'image') === 'classic' ? null
-      : { src: 'themes/machine-pink.webp', w: 1249, h: 1241, k: 380 / 1249, x0: 860, y0: 327.6, counter: { px: 915, py: 985 } };
+    // ทุกสกิน: m = ตัวเครื่อง [x0, x1, y0], mouth = ช่องอุโมงค์ [x0, x1, y0, y1], screen = จอ, belt = ผิวบนสายพาน [ขอบหลังปลาย, ขอบหลังฝั่งเครื่อง, ขอบหน้าปลาย, ขอบหน้าฝั่งเครื่อง]
+    const SKINS = {
+      image: { label: 'ตู้ชมพู', src: 'themes/machine-pink.webp', w: 1249, h: 1241, k: 380 / 1249, x0: 860, y0: 327.6, counter: { px: 915, py: 985 },
+        m: [299, 1220, 370], mouth: [319, 559, 469, 771], screen: [789, 999, 521, 702], belt: [[60, 812], [545, 762], [72, 858], [545, 826]] },
+      cupcake: { label: 'ตู้คัพเค้ก', src: 'themes/machine-cupcake.webp', w: 1312, h: 1199, k: 0.28963, x0: 860.0, y0: 374.2, counter: { px: 830, py: 922 },
+        m: [330, 1240, 470], mouth: [345, 530, 665, 860], screen: [720, 1025, 665, 820], belt: [[70, 895], [525, 838], [70, 940], [525, 882]] },
+      cat: { label: 'ตู้หัวแมว', src: 'themes/machine-cat.webp', w: 1312, h: 1199, k: 0.28963, x0: 860.0, y0: 377.1, counter: { px: 890, py: 895 },
+        m: [280, 1270, 420], mouth: [280, 395, 600, 795], screen: [720, 960, 130, 230], belt: [[45, 810], [375, 775], [45, 855], [375, 818]] },
+      house: { label: 'บ้านขนมปังขิง', src: 'themes/machine-house.webp', w: 1312, h: 1199, k: 0.28963, x0: 860.0, y0: 364.7, counter: { px: 1185, py: 665 },
+        m: [325, 1285, 420], mouth: [340, 525, 605, 815], screen: [720, 1110, 560, 790], belt: [[60, 818], [515, 778], [60, 850], [515, 812]] },
+      rocket: { label: 'ตู้จรวด', src: 'themes/machine-rocket.webp', w: 1312, h: 1199, k: 0.28963, x0: 860.0, y0: 379.2, counter: { px: 780, py: 845 },
+        m: [330, 1250, 600], mouth: [350, 465, 655, 820], screen: [640, 900, 360, 620], belt: [[90, 880], [460, 790], [90, 935], [460, 845]] },
+      gacha: { label: 'ตู้กาชาปอง', src: 'themes/machine-gacha.webp', w: 1312, h: 1199, k: 0.28963, x0: 860.0, y0: 365.3, counter: { px: 840, py: 1015 },
+        m: [330, 1150, 640], mouth: [335, 465, 795, 930], screen: [690, 920, 710, 790], belt: [[180, 940], [455, 885], [180, 980], [455, 935]] },
+      gift: { label: 'ตู้กล่องของขวัญ', src: 'themes/machine-gift.webp', w: 1312, h: 1199, k: 0.28963, x0: 860.0, y0: 365.5, counter: { px: 930, py: 818 },
+        m: [270, 1265, 290], mouth: [285, 440, 645, 875], screen: [735, 1110, 520, 700], belt: [[70, 885], [425, 850], [70, 935], [425, 905]] },
+      icecream: { label: 'ร้านไอศกรีม', src: 'themes/machine-icecream.webp', w: 1310, h: 1200, k: 0.29008, x0: 860.0, y0: 363.9, counter: { px: 1090, py: 640 },
+        m: [310, 1255, 540], mouth: [330, 465, 645, 840], screen: [640, 940, 600, 770], belt: [[70, 872], [455, 812], [70, 915], [455, 862]] },
+      bear: { label: 'หมีน้อยถือกล่อง', src: 'themes/machine-bear.webp', w: 1312, h: 1199, k: 0.28963, x0: 860.0, y0: 362.4, counter: { px: 980, py: 905 },
+        m: [405, 1290, 660], mouth: [430, 550, 835, 960], screen: [730, 900, 555, 640], belt: [[60, 1000], [525, 945], [60, 1045], [525, 990]] },
+    };
+    const SKIN = Overlay.param('skin', 'image') === 'classic' ? null : SKINS[Overlay.param('skin', 'image')] || SKINS.image;
     // เปลี่ยนสีตู้: ?hue=-180..180 ?sat=1 ?bright=1
     const skinImg = SKIN ? Juice.skin(SKIN.src, num('hue', 0), num('sat', 1), num('bright', 1)) : null;
     const fromSkin = (px, py) => ({ x: SKIN.x0 + px * SKIN.k, y: SKIN.y0 + py * SKIN.k });
     if (SKIN) {
-      Object.assign(M, { x0: 951, x1: 1231, y0: 440, y1: 700, depth: 0 });
-      Object.assign(MOUTH, { x0: 957, x1: 1030, y0: 470, y1: 562 }); // เผื่อด้านบนอุโมงค์ ของขวัญที่เด้งจะไม่ถูกดันขึ้นหลังคา
-      Object.assign(SCREEN, { x0: 1100, x1: 1164, y0: 486, y1: 541 });
-      Object.assign(BELT_A, fromSkin(540, 756)); Object.assign(BELT_B, fromSkin(50, 810));
+      const P0 = (px, py) => fromSkin(px, py);
+      Object.assign(M, { x0: P0(SKIN.m[0], 0).x, x1: P0(SKIN.m[1], 0).x, y0: P0(0, SKIN.m[2]).y, y1: 700, depth: 0 });
+      Object.assign(MOUTH, { x0: P0(SKIN.mouth[0], 0).x, x1: P0(SKIN.mouth[1], 0).x, y0: P0(0, SKIN.mouth[2]).y, y1: P0(0, SKIN.mouth[3]).y }); // เผื่อด้านบนอุโมงค์ ของขวัญที่เด้งจะไม่ถูกดันขึ้นหลังคา
+      Object.assign(SCREEN, { x0: P0(SKIN.screen[0], 0).x, x1: P0(SKIN.screen[1], 0).x, y0: P0(0, SKIN.screen[2]).y, y1: P0(0, SKIN.screen[3]).y });
+      const [bb0, bb1] = SKIN.belt;
+      Object.assign(BELT_A, fromSkin(bb1[0] - 5, bb1[1] - 6)); Object.assign(BELT_B, fromSkin(bb0[0] - 10, bb0[1] - 2));
       BELT_TH = 40;
     }
 
@@ -212,7 +234,7 @@
       ctx.drawImage(skinImg.source, SKIN.x0, SKIN.y0, W2, H2);
       // สายพานเลื่อน: ตัดผิวสายพานจากรูปแล้วเลื่อนวนทีละช่วงแผ่น (~60px ในรูป) ให้แผ่นสายพานจริงขยับไปทางปลาย
       {
-        const b0 = fromSkin(60, 812), b1 = fromSkin(545, 762), f0 = fromSkin(72, 858), f1 = fromSkin(545, 826);
+        const [b0, b1, f0, f1] = SKIN.belt.map(([px, py]) => fromSkin(px, py));
         const len = Math.hypot(b1.x - b0.x, b1.y - b0.y), dx = (b1.x - b0.x) / len, dy = (b1.y - b0.y) / len;
         const PERIOD = 60 * SKIN.k, o = ((beltOffset % PERIOD) + PERIOD) % PERIOD, cut = 1 - o / len;
         const lerp = (p, q, t) => ({ x: p.x + (q.x - p.x) * t, y: p.y + (q.y - p.y) * t });

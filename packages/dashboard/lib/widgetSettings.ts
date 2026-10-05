@@ -90,7 +90,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
       { title: 'ต้นไม้', fields: [
         { key: 'sway', label: 'ความแรงลม (กิ่งแกว่ง)', type: 'range', min: 0, max: 3, step: 0.1, def: 1, hint: '0 = นิ่ง' },
         { key: 'big', label: 'ของขวัญที่เป็นดอกใหญ่บนยอด ตั้งแต่ (เหรียญ)', type: 'number', min: 1, def: 1000 },
-        { key: 'skin', label: 'แบบกระถาง', type: 'select', def: 'image', options: [['image', 'กระถางหัวใจมีปีก (ภาพ 3D)'], ['tree', 'ต้นไม้ใหญ่ (ภาพ 3D)'], ['sakura', 'ต้นซากุระ (ภาพ 3D)'], ['classic', 'กระถางเซรามิก (วาดด้วยโค้ด)']] },
+        { key: 'skin', label: 'แบบกระถาง', type: 'select', def: 'image', options: [['image', 'กระถางหัวใจมีปีก (ภาพ 3D)'], ['tree', 'ต้นไม้ใหญ่ (ภาพ 3D)'], ['sakura', 'ต้นซากุระ (ภาพ 3D)'], ['night', 'ต้นไม้ดวงดาว (ภาพ 3D)'], ['classic', 'กระถางเซรามิก (วาดด้วยโค้ด)']] },
         ...tint((v) => v.skin !== 'classic'),
         { key: 'pot', label: 'สีกระถาง', type: 'color', def: '#f3e6cc', when: (v) => v.skin === 'classic' },
         { key: 'minCoins', label: 'รับเฉพาะของขวัญตั้งแต่ (เหรียญ)', type: 'number', min: 0, def: 0 },

@@ -52,25 +52,29 @@ const WIDGET_BLURB: Record<string, string> = {
 };
 
 /** พรีวิวสดของวิดเจ็ต (โหมดเดโม) — ย่อจาก 1920×1080 ให้พอดีการ์ด, โหลดเฉพาะตอนเลื่อนมาเห็น */
+/** ความกว้างจอจำลองของตัวอย่าง (ยิ่งแคบ = วิดเจ็ตดูใหญ่ขึ้น) — วิดเจ็ตเล็ก ๆ ไม่ต้องย่อจากจอ 1920 */
+const PREVIEW_W: Record<string, number> = { goal: 760, chat: 820, follower: 640, alerts: 900, timer: 760, topgifters: 900, toplikers: 900, tts: 900, fx: 1100, league: 1400 };
+
 function WidgetPreview({ type }: { type: string }) {
+  const FW = PREVIEW_W[type] ?? 1920, FH = Math.round(FW * 9 / 16);
   const ref = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0);
   const [visible, setVisible] = useState(false);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const ro = new ResizeObserver(() => setScale(el.clientWidth / 1920));
+    const ro = new ResizeObserver(() => setScale(el.clientWidth / FW));
     const io = new IntersectionObserver(([e]) => setVisible(!!e?.isIntersecting), { rootMargin: '200px' });
     ro.observe(el); io.observe(el);
     return () => { ro.disconnect(); io.disconnect(); };
-  }, []);
+  }, [FW]);
   return (
     <div ref={ref} className="relative aspect-video overflow-hidden rounded-xl"
       style={{ background: 'radial-gradient(circle at 30% 20%, #3a2d52, #17121f 70%)' }}>
       {visible && scale > 0 && (
         <iframe src={`${API_BASE}/overlay/${type}.html?demo=1&reset=1`} title={`ตัวอย่าง ${type}`} loading="lazy"
-          className="pointer-events-none absolute left-0 top-0 h-[1080px] w-[1920px] origin-top-left border-0"
-          style={{ transform: `scale(${scale})` }} />
+          className="pointer-events-none absolute left-0 top-0 origin-top-left border-0"
+          style={{ width: FW, height: FH, transform: `scale(${scale})` }} />
       )}
     </div>
   );

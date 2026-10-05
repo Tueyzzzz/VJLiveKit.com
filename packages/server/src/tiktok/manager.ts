@@ -151,6 +151,21 @@ export class TikTokRoom extends EventEmitter {
     };
   }
 
+  // ไลค์รวมเป็นชุดทุก 300ms ต่อคน: คนเคาะจอรัว ๆ หลายพันครั้ง → ส่งต่อให้วิดเจ็ตไม่กี่ข้อความ (ยอดรวมยังตรงทุกไลค์)
+  private likeQueue = new Map<string, { user: TikTokEvent['user']; inc: number }>();
+  private likeTimer: NodeJS.Timeout | null = null;
+  private queueLike(user: TikTokEvent['user'], inc: number): void {
+    const key = user?.uniqueId || user?.nickname || '?';
+    const row = this.likeQueue.get(key);
+    if (row) { row.inc += inc; row.user = user; } else this.likeQueue.set(key, { user, inc });
+    if (!this.likeTimer) this.likeTimer = setTimeout(() => this.flushLikes(), 300);
+  }
+  private flushLikes(): void {
+    this.likeTimer = null;
+    const rows = [...this.likeQueue.values()]; this.likeQueue.clear();
+    for (const r of rows) this.send('like', { user: r.user, likeCount: r.inc, total: this.stats.likeCount });
+  }
+
   private send(type: TikTokEventType, payload: Partial<TikTokEvent>): void {
     this.emit('event', { type, ts: Date.now(), ...payload });
     this.emit('stats', this.stats);
@@ -194,7 +209,7 @@ export class TikTokRoom extends EventEmitter {
         RoomRanking.add(this.likers, user, inc);
         const total = num(d.total ?? d.totalLikeCount, NaN);
         this.stats.likeCount = Number.isFinite(total) && total > 0 ? total : this.stats.likeCount + inc;
-        this.send('like', { user, likeCount: inc, total: this.stats.likeCount });
+        this.queueLike(user, inc);
         break;
       }
       case 'follow': this.stats.followCount++; this.send('follow', { user }); break;
@@ -230,6 +245,7 @@ export class TikTokRoom extends EventEmitter {
   }
 
   async disconnect(): Promise<void> {
+    if (this.likeTimer) { clearTimeout(this.likeTimer); this.flushLikes(); }
     if (this.mockTimer) { clearInterval(this.mockTimer); this.mockTimer = null; }
     if (this.connection) { try { await this.connection.disconnect(); } catch { /* ignore */ } this.connection = null; }
     this.connected = false;

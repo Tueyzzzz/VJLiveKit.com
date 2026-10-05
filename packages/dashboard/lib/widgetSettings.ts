@@ -122,6 +122,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
       ] },
       { title: 'ขนาดและตำแหน่ง', fields: [
         size(),
+        { key: 'pileMax', label: 'ความสูงกองบนพื้นสูงสุด', type: 'range', min: 15, max: 90, step: 5, def: 40, unit: '%', hint: 'ดอกเต็มต้นแล้วของขวัญร่วงกองพื้น — เกินความสูงนี้ชิ้นเก่าสุดค่อย ๆ จางไป' },
         { key: 'flowerScale', label: 'ขนาดดอกไม้', type: 'range', min: 0.5, max: 2.5, step: 0.05, def: 1, unit: '×', hint: 'ยิ่งเล็ก ยิ่งกองบนพื้นได้มาก — 1× ≈ 300 ชิ้น · 0.5× = 1,200 (สูงสุด)' },
         ...pos(),
       ] },

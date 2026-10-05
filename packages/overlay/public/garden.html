@@ -175,11 +175,21 @@
         flowers.push({ g, img: giftImg(g.u), born, sl: slots[flowers.length], jx: 0, jy: 0 });
       }
     }
+    // เพดานกองบนพื้น: ยอดกองสูงเกิน PILE_MAX ของความสูงจอ → ชิ้นเก่าสุดค่อย ๆ จางไป (ล้นได้ แต่ไม่ท่วมจอ)
+    const PILE_MAX = Math.max(0.15, Math.min(0.9, num('pileMax', 40) / 100));
+    let gCheck = 0;
+    function trimGround() {
+      const limitY = GROUND_Y - (H / S()) * PILE_MAX;
+      const over = ground.filter((b) => !b.dying && b.age > 180 && b.y - b.r < limitY).length; // อยู่มาเกิน 3 วิ (ไม่นับชิ้นที่กำลังร่วง)
+      if (!over) return;
+      ground.filter((b) => !b.dying).slice(0, Math.min(6, over)).forEach((b) => { b.dying = true; }); // ground เรียงเก่า→ใหม่
+    }
     function stepGround() {
+      if (++gCheck % 30 === 0) trimGround();
       const left = -origin().x / S(), right = (W - origin().x) / S();
       for (const b of ground) {
-        const vx = (b.x - b.px) * 0.99, vy = (b.y - b.py) * 0.99; b.px = b.x; b.py = b.y;
-        b.x += vx; b.y += vy + 0.5; b.rot += vx / b.r;
+        const VM = 14, vx = Math.max(-VM, Math.min(VM, (b.x - b.px) * 0.99)), vy = Math.max(-VM, Math.min(VM, (b.y - b.py) * 0.99)); b.px = b.x; b.py = b.y; // จำกัดความเร็ว กันกระเด็นตอนซ้อนกันเยอะ
+        b.x += vx; b.y += vy + 0.5; b.rot += vx / b.r; b.age = (b.age || 0) + 1;
         if (b.dying) { b.life -= 0.02; }
       }
       for (let it = 0; it < 3; it++) {
@@ -208,7 +218,11 @@
         drawGift(b.img, b.g.e, b.r * 2); ctx.restore();
       }
     }
+    // ฟิสิกส์เดินตามเวลาจริง (OBS ซ่อน source / แท็บไม่แสดง → rAF หยุด แต่กองยังร่วงต่อ)
     let gAcc = 0, gLast = performance.now();
+    function tickGround() { const now = performance.now(); gAcc += Math.min(4000, now - gLast); gLast = now; let n = 0; while (gAcc >= 16.7 && n < 240) { stepGround(); gAcc -= 16.7; n++; } if (n === 240) gAcc = 0; }
+    setInterval(tickGround, 200);
+    if (P('debug', '0') === '1') window.__garden = { ground, floorAt, get limitY() { return GROUND_Y - (H / S()) * PILE_MAX; } };
 
     // ---- วาด ----
     function drawPot() {
@@ -299,8 +313,7 @@
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.imageSmoothingQuality = 'high';
       const o = origin(), s = S(); ctx.translate(o.x, o.y); ctx.scale(s, s);
       if (TREE) drawPot(); else if (POT_SKIN) { drawPot(); drawStems(time); drawSoilTufts(time); } else { drawStems(time); drawPot(); }
-      gAcc += Math.min(500, now - gLast); gLast = now; let gn = 0;
-      while (gAcc >= 16.7 && gn < 30) { stepGround(); gAcc -= 16.7; gn++; }
+      tickGround();
       drawGround(time, now);
       drawFlowers(time, now);
       fx.step(); fx.draw(ctx);

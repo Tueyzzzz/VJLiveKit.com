@@ -74,11 +74,18 @@
       for(let n=0;n<60;n++){ if(k>0 && h(k-1)+step<h(k)) k--; else if(k<maxK && h(k+1)+step<h(k)) k++; else break; }
       c.x=k*COL+COL/2+(Math.random()-.5)*6; c.y=floorY()-h(k)-c.size*0.4; heights[k]=h(k)+c.size*0.55;
       c.col=k; c.settled=true; c.vr=0; }
-    function spawnCoin(emoji, img, preSettled){ const m=at(mouthA); const size=26+Math.random()*8;
-      const c={x:m.x,y:m.y,vx:-(2.2+Math.random()*3.3),vy:-(6+Math.random()*5),rot:Math.random()*6.28,vr:(Math.random()-.5)*.5,size,emoji,img,settled:false,life:1};
+    function spawnCoin(emoji, imgUrl, preSettled){ const m=at(mouthA); const size=26+Math.random()*8;
+      const c={x:m.x,y:m.y,vx:-(2.2+Math.random()*3.3),vy:-(6+Math.random()*5),rot:Math.random()*6.28,vr:(Math.random()-.5)*.5,size,emoji,img:giftImg(imgUrl),u:imgUrl||'',settled:false,life:1};
       if(preSettled){ c.x=16+Math.random()*Math.max(40,m.x-40); c.rot=(Math.random()-.5)*.8; settle(c); }
       coins.push(c);
-      if(coins.filter(k=>!k.dying).length>MAX_COINS){ const old=coins.find(k=>k.settled&&!k.dying); if(old) old.dying=true; } }
+      if(coins.filter(k=>!k.dying).length>MAX_COINS){ const old=coins.find(k=>k.settled&&!k.dying); if(old) old.dying=true; }
+      save(); }
+    // จำของขวัญในกองไว้ (รีเฟรช OBS แล้วกองเดิมพร้อมรูปของขวัญจริงกลับมา) — ?reset=1 เพื่อล้าง
+    const KEY='vjl-coinjar:'+(Overlay.param('t','')||Overlay.param('username','demo')).slice(-24);
+    let saveT=null;
+    function save(){ clearTimeout(saveT); saveT=setTimeout(()=>{ try{ localStorage.setItem(KEY, JSON.stringify(coins.filter(k=>!k.dying).map(k=>({e:k.emoji,u:k.u})))); }catch{ /* storage ปิดอยู่ */ } },500); }
+    function restore(){ if(Overlay.param('reset','0')==='1'){ try{ localStorage.removeItem(KEY); }catch{} return false; }
+      try{ const list=JSON.parse(localStorage.getItem(KEY)||'[]'); list.slice(-MAX_COINS).forEach(g=>spawnCoin(g.e,g.u,true)); return list.length>0; }catch{ return false; } }
     // ขนาดจอเปลี่ยน (เช่น ปรับ Browser Source ใน OBS) → จัดกองใหม่
     addEventListener('resize', ()=>{ heights={}; coins.filter(c=>c.settled&&!c.dying).forEach(settle); });
     function spawnConf(n){ const m=at(mouthA); for(let i=0;i<n;i++) conf.push({x:m.x,y:m.y,vx:(Math.random()-.5)*12,vy:-(3+Math.random()*8),rot:Math.random()*6.28,vr:(Math.random()-.5)*.8,w:6+Math.random()*5,h:9+Math.random()*6,c:cols[Math.floor(Math.random()*cols.length)],life:1}); }
@@ -105,11 +112,13 @@
 
     const EMOJI = { Rose:'🌹','Finger Heart':'🫰',Perfume:'🧴',Galaxy:'🌌',Lion:'🦁',Universe:'🪐' };
     function onGift(nm, giftName, value, count, imgUrl){ diamonds+=value; updateDia(); shake(); showGifter(nm);
-      const emoji=EMOJI[giftName]||'🎁', img=giftImg(imgUrl); const n=Math.min((count||1)+(value>=1000?10:2), value>=1000?16:6);
-      for(let i=0;i<n;i++) setTimeout(spawnCoin, i*70, emoji, img); if(value>=1000) spawnConf(40); }
+      const emoji=EMOJI[giftName]||'🎁'; const n=Math.min((count||1)+(value>=1000?10:2), value>=1000?16:6);
+      for(let i=0;i<n;i++) setTimeout(spawnCoin, i*70, emoji, imgUrl); if(value>=1000) spawnConf(40); }
 
     // เปิด/รีเฟรช overlay กลางไลฟ์ → เติมกองตามยอดเพชรที่สะสมแล้ว
     let prefilled=false;
+    // หน้าแรกที่ยังไม่มีของในความจำ → เติมกองตามยอดเพชร (เป็นเหรียญ เพราะไม่รู้ว่าเป็นของขวัญอะไร)
+    setTimeout(()=>{ if(restore()) prefilled=true; },0);
     function prefill(total){ if(prefilled) return; prefilled=true; if(!total || coins.length) return;
       const n=Math.min(Math.round(MAX_COINS*0.6), Math.ceil(Math.sqrt(total)*2));
       for(let i=0;i<n;i++) spawnCoin('🪙', null, true); }

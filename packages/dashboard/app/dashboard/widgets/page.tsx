@@ -7,6 +7,7 @@ import { WIDGET_LABELS } from '@/components/Pricing';
 import { Alert, Badge, Button, Card, Input, PageHeader, Spinner } from '@/components/ui';
 import { api, ApiError, type OverlayTokenRow } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { WIDGET_SETTINGS } from '@/lib/widgetSettings';
 
 /** พารามิเตอร์เสริมที่ต่อท้าย URL ได้ (แสดงเป็นคำแนะนำ) */
 const PARAM_HINTS: Record<string, string> = {
@@ -69,26 +70,52 @@ function configQuery(config?: Record<string, unknown>): string {
   return str ? '&' + str : '';
 }
 
-function WidgetPreview({ type, config }: { type: string; config?: Record<string, unknown> }) {
+/** รูปนิ่งของแบบที่เลือกไว้ (จากตัวเลือกที่มีรูปย่อในหน้าตั้งค่า) */
+function posterOf(type: string, config?: Record<string, unknown>): string | null {
+  const def = WIDGET_SETTINGS[type];
+  if (!def) return null;
+  for (const sec of def.sections) for (const f of sec.fields) {
+    if (f.type !== 'select' || !f.options.some((o) => o[3])) continue;
+    const v = String(config?.[f.key] ?? f.def);
+    const opt = f.options.find((o) => o[0] === v) ?? f.options.find((o) => o[3]);
+    if (opt?.[3]) return `${API_BASE}/overlay/themes/thumbs/${opt[3]}.webp`;
+  }
+  return null;
+}
+const ICON: Record<string, string> = { league: '🏆', goal: '🎯', timer: '⏱️', alerts: '🔔', chat: '💬', follower: '➕', topgifters: '🥇', toplikers: '💗', tts: '🔊', fx: '✨' };
+
+/**
+ * ตัวอย่างวิดเจ็ต: ปกติแสดงรูปนิ่ง (เบา ไม่หน่วงหน้าเว็บ) — ชี้เมาส์/กดเล่น ถึงจะเปิดตัวอย่างจริง ทีละใบ
+ * (ตัวอย่างจริงทุกใบรันฟิสิกส์ในเธรดเดียวกับหน้านี้ ถ้าเปิดพร้อมกันหมดหน้าจะค้าง)
+ */
+function WidgetPreview({ type, config, live, onLive }: { type: string; config?: Record<string, unknown>; live: boolean; onLive: (on: boolean) => void }) {
   const FW = PREVIEW_W[type] ?? 1920, FH = Math.round(FW * 9 / 16);
   const ref = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0);
-  const [visible, setVisible] = useState(false);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     const ro = new ResizeObserver(() => setScale(el.clientWidth / FW));
-    const io = new IntersectionObserver(([e]) => setVisible(!!e?.isIntersecting), { rootMargin: '200px' });
-    ro.observe(el); io.observe(el);
-    return () => { ro.disconnect(); io.disconnect(); };
+    ro.observe(el);
+    return () => ro.disconnect();
   }, [FW]);
+  const poster = posterOf(type, config);
   return (
-    <div ref={ref} className="relative aspect-video overflow-hidden rounded-xl"
+    <div ref={ref} className="group relative aspect-video overflow-hidden rounded-xl"
+      onMouseEnter={() => onLive(true)} onMouseLeave={() => onLive(false)}
       style={{ background: 'radial-gradient(circle at 30% 20%, #3a2d52, #17121f 70%)' }}>
-      {visible && scale > 0 && (
-        <iframe src={`${API_BASE}/overlay/${type}.html?demo=1&reset=1${configQuery(config)}`} title={`ตัวอย่าง ${type}`} loading="lazy"
+      {live && scale > 0 ? (
+        <iframe src={`${API_BASE}/overlay/${type}.html?demo=1&reset=1${configQuery(config)}`} title={`ตัวอย่าง ${type}`}
           className="pointer-events-none absolute left-0 top-0 origin-top-left border-0"
           style={{ width: FW, height: FH, transform: `scale(${scale})` }} />
+      ) : (
+        <button type="button" onClick={() => onLive(true)} aria-label="เล่นตัวอย่าง"
+          className="absolute inset-0 grid place-items-center">
+          {poster
+            ? <img src={poster} alt="" loading="lazy" className="h-4/5 w-auto object-contain drop-shadow-lg" />
+            : <span className="text-5xl">{ICON[type] ?? '🎁'}</span>}
+          <span className="absolute bottom-2 right-2 rounded-full bg-black/45 px-2.5 py-1 text-[11px] text-white opacity-80 group-hover:opacity-100">▶ ดูตัวอย่าง</span>
+        </button>
       )}
     </div>
   );
@@ -116,6 +143,7 @@ export default function WidgetsPage() {
   const [error, setError] = useState<{ text: string; upgrade?: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
   const [configs, setConfigs] = useState<Record<string, Record<string, unknown>>>({});
+  const [livePreview, setLivePreview] = useState<string | null>(null); // เล่นตัวอย่างจริงทีละใบ
   useEffect(() => { api<{ configs: Record<string, Record<string, unknown>> }>('/api/widgets/configs').then((r) => setConfigs(r.configs)).catch(() => {}); }, []);
 
   const load = useCallback(async () => {
@@ -183,7 +211,8 @@ export default function WidgetsPage() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {list.map((w) => (
           <Card key={w.type} className="p-3">
-            <WidgetPreview type={w.type} config={configs[w.type]} />
+            <WidgetPreview type={w.type} config={configs[w.type]} live={livePreview === w.type}
+              onLive={(on) => setLivePreview((cur) => (on ? w.type : cur === w.type ? null : cur))} />
             <div className="mt-3 flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 text-sm font-medium">

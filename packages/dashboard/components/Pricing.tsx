@@ -7,6 +7,7 @@ import { Badge, Card, cx } from './ui';
 
 export const WIDGET_LABELS: Record<string, string> = {
   coinjar: 'Coin Jar',
+  giftjar: 'โหลแก้วของขวัญ',
   alerts: 'แจ้งเตือนกิฟต์/ติดตาม',
   goal: 'แถบเป้าหมาย',
   chat: 'แชทสด',

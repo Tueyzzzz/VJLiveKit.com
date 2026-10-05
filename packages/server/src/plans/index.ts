@@ -27,13 +27,15 @@ interface PlanDef { code: string; name: string; priceCents: number; currency: st
  * นิยามแพลน — โค้ดคือแหล่งความจริง: sync ลง DB ทุกครั้งที่เซิร์ฟเวอร์สตาร์ท (ensurePlans)
  * แก้ราคา/ฟีเจอร์ที่นี่แล้ว deploy ได้เลย ไม่ต้องรัน seed เอง
  */
+// ช่วงเปิดทดสอบ: Free ได้ทุกฟีเจอร์เท่า Pro — ตั้งเป็น false เพื่อกลับไปใช้ลิมิต Free ปกติ
+const FREE_UNLOCKED_FOR_TESTING = true;
+
 export const PLAN_DEFS: PlanDef[] = [
   {
     code: 'free', name: 'Free', priceCents: 0, currency: 'thb',
-    features: {
-      widgets: ['coinjar', 'alerts', 'goal', 'chat', 'follower'],
-      maxActionRules: 3, maxTokens: 2, noWatermark: false,
-    },
+    features: FREE_UNLOCKED_FOR_TESTING
+      ? { widgets: [...WIDGET_TYPES], maxActionRules: 100, maxTokens: 20, noWatermark: true }
+      : { widgets: ['coinjar', 'alerts', 'goal', 'chat', 'follower'], maxActionRules: 3, maxTokens: 2, noWatermark: false },
   },
   {
     code: 'pro', name: 'Pro', priceCents: 14900, currency: 'thb', // 149 บาท/เดือน

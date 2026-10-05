@@ -123,6 +123,10 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
       { title: 'รถ', fields: [
         { key: 'car', label: 'แบบรถ', type: 'select', def: 'van', options: [
           ['van', 'รถหัวใจ', '🚗 รถลากของขวัญ (ภาพ 3D)', 'gj-van'],
+          ['beetle', 'รถเต่างานแต่ง', '🚗 รถลากของขวัญ (ภาพ 3D)', 'car-beetle'],
+          ['minivan', 'รถตู้วินเทจ', '🚗 รถลากของขวัญ (ภาพ 3D)', 'car-minivan'],
+          ['convertible', 'รถเปิดประทุน', '🚗 รถลากของขวัญ (ภาพ 3D)', 'car-convertible'],
+          ['pickup', 'รถกระบะ', '🚗 รถลากของขวัญ (ภาพ 3D)', 'car-pickup'],
         ] },
         ...tint(() => true),
         { key: 'alert', label: 'แสดงชื่อคนส่ง', type: 'toggle', def: true },

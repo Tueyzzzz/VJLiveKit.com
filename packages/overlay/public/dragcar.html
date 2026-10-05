@@ -42,6 +42,10 @@
     // รถ (ภาพมุมหลัง) — พิกัดหน่วยออกแบบ: 0,0 = กลางล่างของรถ · hook = ตะขอกลางกันชนท้าย
     const CARS = {
       van: { src: 'themes/car-heart.webp', x: -209.3, y: -360, w: 418, h: 360, hook: { x: -2, y: -54 } },
+      beetle: { src: 'themes/car-beetle.webp', x: -207.1, y: -360.0, w: 414.2, h: 360.0, hook: { x: -0.7, y: -59.1 } },
+      minivan: { src: 'themes/car-minivan.webp', x: -191.1, y: -360.0, w: 382.2, h: 360.0, hook: { x: -0.7, y: -48.1 } },
+      convertible: { src: 'themes/car-convertible.webp', x: -216.5, y: -360.0, w: 433.0, h: 360.0, hook: { x: -0.6, y: -39.3 } },
+      pickup: { src: 'themes/car-pickup.webp', x: -209.4, y: -360.0, w: 418.9, h: 360.0, hook: { x: 0.0, y: -49.6 } },
     };
     const CAR = CARS[P('car', 'van')] || CARS.van;
     const carImg = Juice.skin(CAR.src, num('hue', 0), num('sat', 1), num('bright', 1));

@@ -51,7 +51,7 @@
    *   board=1 top=1 boardFormat=full|name   ผู้ให้สูงสุดใต้โหล (top = จำนวนคน, board=0 ซ่อน; full = รูป+ชื่อ+เหรียญ)
    *   total=0                               แสดงยอดเหรียญรวมเหนือโหล
    *   minCoins=0                            รับเฉพาะของขวัญมูลค่า >= นี้
-   *   shape=jar|bowl|mason|car|globe cloth=#e0452b body=#bfe9e6   ทรง: jar = คอแคบ, bowl = กลมปากกว้าง, mason = ฝาผ้า (สีผ้า), car = รถพาสเทล (สีรถ)
+   *   shape=heart|jar|bowl|mason|car|globe cloth=#e0452b body=#bfe9e6   ทรง: jar = คอแคบ, bowl = กลมปากกว้าง, mason = ฝาผ้า (สีผ้า), car = รถพาสเทล (สีรถ)
    *   full=spill|fade|reset fullText=...    โหลเต็มแล้ว: spill = ล้นออกกองรอบโหล (ไม่หาย, ค่าเริ่มต้น)
    *                                         fade = ชิ้นเก่าสุดจางออก, reset = ฉลองแล้วเทโหลเริ่มใหม่
    *   font=Kanit fontSize=50                ฟอนต์ (Kanit/Prompt/Mitr/Sriracha/Chakra Petch) และขนาด
@@ -74,6 +74,12 @@
 
     // ---- ทรงโหล (หน่วย local, จุด 0,0 = กึ่งกลางก้นโหล, y ติดลบ = ขึ้นด้านบน) ----
     // hw(y) = ครึ่งความกว้างด้านในที่ความสูง y · openY = ระดับปากโหล · fullY = ถึงระดับนี้ถือว่าเต็ม
+    // โปรไฟล์ความกว้างแบบตาราง [y, hw] (เรียง y จากบนลงล่าง) → ประมาณค่าระหว่างจุด
+    function profileHW(prof, y) {
+      if (y <= prof[0][0]) return prof[0][1];
+      for (let i = 1; i < prof.length; i++) if (y <= prof[i][0]) { const [y0, w0] = prof[i - 1], [y1, w1] = prof[i]; return w0 + (w1 - w0) * (y - y0) / (y1 - y0); }
+      return prof[prof.length - 1][1];
+    }
     const SHAPES = {
       jar: { // โหลแก้วคอแคบ (ค่าเริ่มต้น)
         hw: (y) => y > -40 ? 90 + Math.sqrt(Math.max(0, 1600 - (y + 40) ** 2)) : y > -260 ? 130 : y > -300 ? 92 + 38 * (0.5 + 0.5 * Math.cos(Math.PI * (-260 - y) / 40)) : 92,
@@ -91,6 +97,12 @@
         hw: (y) => Math.sqrt(Math.max(0, 170 * 170 - (y + 250) ** 2)),
         openY: -392, openHW: 90, rimHW: 120, topY: -420, fullY: -330, maxHW: 170, closed: true, floor: -112, globe: true, fullMode: 'fade',
       },
+      heart: { // โหลหัวใจ (ภาพ 3D จาก AI) — ฝาปิด: ของขวัญโผล่ใต้ฝา เต็มแล้วชิ้นเก่าจางออก · ความกว้างด้านในวัดจากภาพ
+        prof: [[-249.1,132.6],[-247.0,135.0],[-245.0,137.0],[-243.0,139.0],[-241.0,141.1],[-238.9,142.6],[-236.9,144.3],[-234.9,145.8],[-232.9,147.3],[-230.8,148.5],[-228.8,149.8],[-226.8,150.9],[-224.8,152.2],[-222.7,153.2],[-220.7,154.2],[-218.7,155.1],[-216.7,155.9],[-214.6,156.8],[-212.6,157.6],[-210.6,158.4],[-208.6,159.0],[-206.5,159.6],[-204.5,160.3],[-202.5,160.6],[-200.5,161.3],[-198.4,161.7],[-196.4,162.2],[-194.4,162.7],[-192.4,163.0],[-190.3,163.3],[-188.3,163.7],[-186.3,164.0],[-184.3,164.4],[-182.2,164.4],[-180.2,164.7],[-178.2,164.7],[-176.2,164.9],[-174.1,165.0],[-172.1,165.0],[-170.1,165.0],[-168.1,165.2],[-166.0,165.2],[-164.0,165.2],[-162.0,165.0],[-160.0,165.0],[-157.9,164.9],[-155.9,164.7],[-153.9,164.5],[-151.9,164.4],[-149.8,164.2],[-147.8,164.0],[-145.8,163.8],[-143.8,163.5],[-141.7,163.2],[-139.7,162.8],[-137.7,162.5],[-135.7,162.2],[-133.6,161.7],[-131.6,161.3],[-129.6,160.8],[-127.6,160.3],[-125.5,159.8],[-123.5,159.3],[-121.5,158.8],[-119.5,158.3],[-117.4,157.6],[-115.4,157.1],[-113.4,156.4],[-111.4,155.7],[-109.3,154.9],[-107.3,154.2],[-105.3,153.4],[-103.3,152.7],[-101.2,151.9],[-99.2,151.2],[-97.2,150.0],[-95.2,149.2],[-93.1,148.3],[-91.1,147.3],[-89.1,146.3],[-87.1,145.3],[-85.0,144.3],[-83.0,143.3],[-81.0,142.2],[-79.0,141.1],[-76.9,140.1],[-74.9,138.7],[-72.9,137.5],[-70.9,136.3],[-68.8,135.2],[-66.8,133.8],[-64.8,132.5],[-62.8,131.1],[-60.7,129.9],[-58.7,128.4],[-56.7,127.1],[-54.7,125.9],[-52.6,124.2],[-50.6,122.8],[-48.6,121.5],[-46.6,120.1],[-44.5,118.8],[-42.5,117.4],[-40.5,116.1],[-38.5,114.4],[-36.4,112.9],[-34.4,111.0],[-32.4,109.3],[-30.4,107.3],[-28.3,105.3],[-26.3,102.9],[-24.3,100.4],[-22.3,97.7],[-20.2,94.2],[-18.2,90.8]],
+        hw: (y) => profileHW(SHAPES.heart.prof, y),
+        openY: -249.1, openHW: 120, rimHW: 150, topY: -380.0, fullY: -209.1, maxHW: 165.2, closed: true, floor: -17.5, fullMode: 'fade',
+        image: { src: 'themes/jar-heart.webp', x: -206.2, y: -380.0, w: 412.4, h: 380.0 },
+      },
       car: { // รถพาสเทล (มุมหลัง) — ของขวัญกองบนหลังคาแล้วไหลลงข้างรถ (ตัวรถทึบ ไม่มีของข้างใน)
         hw: () => 152, openY: -282, openHW: 100, rimHW: 112, topY: -300, fullY: -300, maxHW: 152, solid: true,
         // ตัวรถเป็นกล่องสี่เหลี่ยมมุมมน 2 ชั้น + ราวหลังคา (กันของตก)
@@ -98,8 +110,9 @@
         body: P('body', '#bfe9e6'),
       },
     };
-    const SH = SHAPES[P('shape', 'jar')] || SHAPES.jar;
+    const SH = SHAPES[P('shape', 'heart')] || SHAPES.heart;
     if (SH.fullMode) FULL_MODE = SH.fullMode;
+    const shapeImg = SH.image ? Object.assign(new Image(), { src: SH.image.src }) : null;
     // เว้นที่ใต้โหลไว้ให้ป้ายผู้ให้สูงสุด
     const BOARD_SPACE = SHOW_BOARD ? (TOP === 1 ? 70 : TOP * 46 + 14) : 0;
     const origin = () => ({ x: W / 2 + OX, y: H - 24 * SCALE - BOARD_SPACE + OY });
@@ -112,6 +125,11 @@
       for (let i = N; i >= 0; i--) ctx.lineTo(SH.hw(Math.min(-0.5, yAt(i))), yAt(i));
     }
     function drawJarBack() {
+      if (SH.image) {
+        ctx.beginPath(); ctx.ellipse(0, -2, SH.maxHW * 0.9, 12, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(90,70,140,.25)'; ctx.fill();
+        if (shapeImg.complete && shapeImg.naturalWidth) { ctx.save(); ctx.globalAlpha = 0.35; ctx.drawImage(shapeImg, SH.image.x, SH.image.y, SH.image.w, SH.image.h); ctx.restore(); } // ผนังหลัง
+        return;
+      }
       if (SH.solid) return drawCar();
       if (SH.globe) return drawGlobeBack();
       jarPath(); ctx.closePath();
@@ -121,6 +139,7 @@
       ctx.beginPath(); ctx.ellipse(0, -6, SH.hw(-6) - 14, 10, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fill();
     }
     function drawJarFront() {
+      if (SH.image) { if (shapeImg.complete && shapeImg.naturalWidth) ctx.drawImage(shapeImg, SH.image.x, SH.image.y, SH.image.w, SH.image.h); return; }
       if (SH.solid) return;
       if (SH.globe) return drawGlobeFront();
       jarPath();

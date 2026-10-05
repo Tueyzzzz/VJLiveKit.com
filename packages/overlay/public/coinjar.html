@@ -45,9 +45,9 @@
     const DW = 1280, DH = 720, FLOOR = 700;
 
     // ---- เรขาคณิต (พิกัดออกแบบ) ----
-    const M = { x0: 975, x1: 1195, y0: 380, y1: 640, depth: 30 };   // ตัวเครื่อง (หน้า)
+    const M = { x0: 975, x1: 1195, y0: 420, y1: 640, depth: 30 };   // ตัวเครื่อง (หน้า) — สี่เหลี่ยมจัตุรัส 220×220
     const MOUTH = { x0: 985, x1: 1050, y0: 470, y1: 612 };          // ช่องปล่อยของขวัญ
-    const SCREEN = { x0: 1070, x1: 1180, y0: 410, y1: 520 };
+    const SCREEN = { x0: 1068, x1: 1182, y0: 462, y1: 552 };
     const BELT_A = { x: 1012, y: 612 }, BELT_B = { x: 640, y: 652 }; // ผิวบนสายพาน (จากเครื่อง -> ปลาย)
     const BELT_T = 22, BELT_V = 1.9;
 
@@ -177,7 +177,8 @@
       // เงา
       ctx.beginPath(); ctx.ellipse(x0 + w / 2 + d / 2, FLOOR - 2, w * .62, 12, 0, 0, 6.2832); ctx.fillStyle = 'rgba(120,90,160,.18)'; ctx.fill();
       // ขา
-      for (const fx of [x0 + 22, x1 - 22]) { rr(fx - 14, y1, 28, FLOOR - y1 - 2, 8); ctx.fillStyle = '#b9a6f2'; ctx.fill(); }
+      // ขาหลัง 2 ขา (เยื้องตามความลึก) — วาดก่อนตัวตู้ สีเข้มกว่า
+      for (const fx of [x0 + 22, x1 - 22]) { rr(fx - 13 + d * 0.8, y1 - d * 0.8, 26, FLOOR - y1 - 10, 8); ctx.fillStyle = '#a593e6'; ctx.fill(); }
       // ตัวตู้ 3 มิติ: ซ้อนชั้นมุมโค้งจากด้านหลังมาด้านหน้า (มุมโค้งเท่ากันทุกด้าน)
       for (let i = d; i > 0; i -= 1.5) {
         rr(x0 + i, y0 - i, w, h, 26);
@@ -188,6 +189,8 @@
       ctx.beginPath(); ctx.moveTo(x0 + 70, y0 - d / 2); ctx.lineTo(x0 + 70, y0 - 62); ctx.quadraticCurveTo(x0 + 70, y0 - 82, x0 + 92, y0 - 82);
       ctx.lineTo(x0 + 128, y0 - 82); ctx.quadraticCurveTo(x0 + 150, y0 - 82, x0 + 150, y0 - 62); ctx.lineTo(x0 + 150, y0 - d / 2);
       ctx.lineWidth = 16; ctx.lineCap = 'round'; ctx.strokeStyle = '#b9a6f2'; ctx.stroke();
+      // ขาหน้า 2 ขา
+      for (const fx of [x0 + 22, x1 - 22]) { rr(fx - 14, y1 - 12, 28, FLOOR - y1 + 10, 8); ctx.fillStyle = '#b9a6f2'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.stroke(); }
       // หน้า
       rr(x0, y0, w, h, 26);
       const g = ctx.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, '#c5f0f2'); g.addColorStop(.5, '#e7dafc'); g.addColorStop(1, '#ffe1ef');
@@ -213,7 +216,7 @@
       if (SHOW_COUNTER) {
         const label = '💎 ' + Overlay.fmt(diamonds);
         ctx.font = '22px Itim, sans-serif'; const tw = ctx.measureText(label).width;
-        const cx = (SCREEN.x0 + SCREEN.x1) / 2, cy = SCREEN.y1 + 32;
+        const cx = (SCREEN.x0 + SCREEN.x1) / 2, cy = SCREEN.y1 + 28;
         rr(cx - tw / 2 - 14, cy - 17, tw + 28, 34, 17); ctx.fillStyle = '#fffafc'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#ffcf5c'; ctx.stroke();
         ctx.fillStyle = '#f5a623'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, cx, cy + 1);
       }

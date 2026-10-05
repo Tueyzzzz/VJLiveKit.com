@@ -48,7 +48,7 @@
    *   board=1 top=1 boardFormat=full|name   ผู้ให้สูงสุดใต้โหล (top = จำนวนคน, board=0 ซ่อน; full = รูป+ชื่อ+เหรียญ)
    *   total=0                               แสดงยอดเหรียญรวมเหนือโหล
    *   minCoins=0                            รับเฉพาะของขวัญมูลค่า >= นี้
-   *   shape=jar|bowl|mason cloth=#e0452b    ทรงโหล: jar = คอแคบ, bowl = กลมปากกว้าง, mason = ฝาผ้าผูกเชือก (สีผ้า)
+   *   shape=jar|bowl|mason|car cloth=#e0452b body=#bfe9e6   ทรง: jar = คอแคบ, bowl = กลมปากกว้าง, mason = ฝาผ้า (สีผ้า), car = รถพาสเทล (สีรถ)
    *   full=spill|fade|reset fullText=...    โหลเต็มแล้ว: spill = ล้นออกกองรอบโหล (ไม่หาย, ค่าเริ่มต้น)
    *                                         fade = ชิ้นเก่าสุดจางออก, reset = ฉลองแล้วเทโหลเริ่มใหม่
    *   font=Kanit fontSize=50                ฟอนต์ (Kanit/Prompt/Mitr/Sriracha/Chakra Petch) และขนาด
@@ -84,6 +84,12 @@
         hw: (y) => y > -30 ? 95 + Math.sqrt(Math.max(0, 900 - (y + 30) ** 2)) : y > -250 ? 125 : y > -280 ? 105 + 20 * (0.5 + 0.5 * Math.cos(Math.PI * (-250 - y) / 30)) : 105,
         openY: -292, openHW: 105, rimHW: 138, topY: -342, fullY: -252, maxHW: 125, closed: true, cloth: P('cloth', '#e0452b'),
       },
+      car: { // รถพาสเทล (มุมหลัง) — ของขวัญกองบนหลังคาแล้วไหลลงข้างรถ (ตัวรถทึบ ไม่มีของข้างใน)
+        hw: () => 152, openY: -282, openHW: 100, rimHW: 112, topY: -300, fullY: -300, maxHW: 152, solid: true,
+        // ตัวรถเป็นกล่องสี่เหลี่ยมมุมมน 2 ชั้น + ราวหลังคา (กันของตก)
+        rects: [[-152, 152, -172, 0], [-112, 112, -268, -172], [-112, -104, -284, -268], [104, 112, -284, -268]],
+        body: P('body', '#bfe9e6'),
+      },
     };
     const SH = SHAPES[P('shape', 'jar')] || SHAPES.jar;
     // เว้นที่ใต้โหลไว้ให้ป้ายผู้ให้สูงสุด
@@ -98,6 +104,7 @@
       for (let i = N; i >= 0; i--) ctx.lineTo(SH.hw(Math.min(-0.5, yAt(i))), yAt(i));
     }
     function drawJarBack() {
+      if (SH.solid) return drawCar();
       jarPath(); ctx.closePath();
       const g = ctx.createLinearGradient(-SH.maxHW, 0, SH.maxHW, 0);
       g.addColorStop(0, 'rgba(210,235,255,.22)'); g.addColorStop(.5, 'rgba(255,255,255,.06)'); g.addColorStop(1, 'rgba(210,235,255,.2)');
@@ -105,6 +112,7 @@
       ctx.beginPath(); ctx.ellipse(0, -6, SH.hw(-6) - 14, 10, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fill();
     }
     function drawJarFront() {
+      if (SH.solid) return;
       jarPath();
       ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.stroke();
       ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(150,190,230,.6)'; ctx.stroke();
@@ -131,6 +139,39 @@
       lg.addColorStop(0, 'rgba(255,255,255,.55)'); lg.addColorStop(1, 'rgba(200,225,250,.3)');
       ctx.fillStyle = lg; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.stroke();
       for (let i = 1; i <= 2; i++) { ctx.beginPath(); ctx.moveTo(-SH.rimHW + 4, SH.topY + i * 8); ctx.lineTo(SH.rimHW - 4, SH.topY + i * 8); ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.stroke(); }
+    }
+    function drawCar() { // รถพาสเทลมุมหลัง (แสงซ้ายบน · เงาอมม่วง)
+      const rr = (x, y, w, h, r) => { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); };
+      ctx.beginPath(); ctx.ellipse(0, -2, 190, 14, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(90,70,140,.25)'; ctx.fill(); // เงาพื้น
+      ctx.fillStyle = '#3b3550'; rr(-142, -46, 44, 46, 12); ctx.fill(); rr(98, -46, 44, 46, 12); ctx.fill(); // ล้อ
+      // ห้องโดยสาร
+      rr(-116, -274, 232, 112, 38);
+      let g = ctx.createLinearGradient(0, -274, 0, -162); g.addColorStop(0, '#fffaf0'); g.addColorStop(1, '#f6e7d0');
+      ctx.fillStyle = g; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(120,95,150,.35)'; ctx.stroke();
+      rr(-82, -252, 164, 62, 20); // กระจกหลัง
+      g = ctx.createLinearGradient(-82, -252, 82, -190); g.addColorStop(0, '#6f86b8'); g.addColorStop(1, '#3e4f80');
+      ctx.fillStyle = g; ctx.fill(); ctx.lineWidth = 4; ctx.strokeStyle = '#ffffff'; ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-60, -244); ctx.lineTo(-30, -198); ctx.lineWidth = 8; ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.stroke();
+      // ตัวรถ
+      rr(-156, -182, 312, 150, 44);
+      g = ctx.createLinearGradient(0, -182, 0, -32); g.addColorStop(0, '#ffffff'); g.addColorStop(.25, SH.body); g.addColorStop(1, '#8fc9cf');
+      ctx.fillStyle = g; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(90,110,150,.35)'; ctx.stroke();
+      rr(-156, -128, 312, 14, 7); ctx.fillStyle = '#ffb5c8'; ctx.fill(); // แถบชมพู
+      for (const sx of [-1, 1]) { // ไฟท้าย
+        ctx.beginPath(); ctx.arc(sx * 122, -96, 17, 0, Math.PI * 2);
+        const lg = ctx.createRadialGradient(sx * 122 - 5, -101, 2, sx * 122, -96, 17); lg.addColorStop(0, '#ffe3ea'); lg.addColorStop(.5, '#ff7a9c'); lg.addColorStop(1, '#d94f78');
+        ctx.fillStyle = lg; ctx.fill(); ctx.lineWidth = 4; ctx.strokeStyle = '#ffffff'; ctx.stroke();
+      }
+      rr(-62, -102, 124, 36, 9); ctx.fillStyle = '#fffaf0'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = '#c9b8ff'; ctx.stroke(); // ป้ายทะเบียน
+      ctx.font = '600 20px Kanit, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#ff6aa8'; ctx.fillText('VJLiveKit', 0, -84);
+      rr(-164, -50, 328, 24, 12); // กันชน
+      g = ctx.createLinearGradient(0, -50, 0, -26); g.addColorStop(0, '#ffffff'); g.addColorStop(1, '#c9c3dc'); ctx.fillStyle = g; ctx.fill();
+      // ราวหลังคา
+      ctx.fillStyle = '#c9b6f5'; rr(-112, -286, 8, 16, 3); ctx.fill(); rr(104, -286, 8, 16, 3); ctx.fill(); rr(-112, -290, 224, 6, 3); ctx.fill();
+      // ธง
+      ctx.beginPath(); ctx.moveTo(126, -270); ctx.lineTo(126, -350); ctx.lineWidth = 4; ctx.strokeStyle = '#b0a7c8'; ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(128, -350); ctx.lineTo(176, -336); ctx.lineTo(128, -322); ctx.closePath(); ctx.fillStyle = '#ffd76a'; ctx.fill();
+      ctx.font = '16px serif'; ctx.fillText('💗', 146, -336);
     }
     function drawCloth() { // ฝาผ้า + เชือกผูกโบว์
       const top = SH.topY, hem = -262, R = SH.rimHW;
@@ -170,15 +211,17 @@
     function addBody(g, dropFromTop = true) {
       const r = radiusFor(g.d);
       // โหลเต็ม (โหมด spill) → ชิ้นใหม่ทะลักออกปากโหลไปกองข้าง ๆ
-      const out = g.o === 1 || (dropFromTop && spilling);
+      const out = SH.solid || g.o === 1 || (dropFromTop && spilling);
       const side = Math.random() < .5 ? -1 : 1;
       // โหลปิดฝา (mason) → ของขวัญใหม่โผล่ใต้ฝา · ล้น → ออกเหนือฝาแล้วไหลลงข้าง
       const dropY = out || !SH.closed ? SH.topY - 40 - Math.random() * 60 : SH.openY + r + 4;
       const b = { x: (Math.random() - .5) * (SH.openHW - r) * 1.4, y: dropFromTop ? dropY : SH.fullY + 20 + Math.random() * (-SH.fullY - 40),
-        r, rot: Math.random() * 6.28, img: giftImg(g.img), emoji: g.e || '🎁', d: g.d || 1, src: out ? { ...g, o: 1 } : g, life: 1, out };
+        r, rot: Math.random() * 6.28, img: giftImg(g.img), emoji: g.e || '🎁', d: g.d || 1, src: out && !SH.solid ? { ...g, o: 1 } : g, life: 1, out };
       if (out && !dropFromTop) { b.x = side * (SH.maxHW + 20 + Math.random() * 260); b.y = -r - Math.random() * 120; }
       b.px = b.x + (Math.random() - .5) * 2; b.py = b.y - 2;
-      if (out && dropFromTop) b.px = b.x - side * (1.5 + Math.random() * 2.5); // พุ่งออกด้านข้าง
+      if (out && dropFromTop && !SH.solid) b.px = b.x - side * (1.5 + Math.random() * 2.5); // พุ่งออกด้านข้าง
+      if (SH.solid && dropFromTop) { b.x = (Math.random() - .5) * 170; b.px = b.x; }
+      if (SH.solid && !dropFromTop && !g.o) { b.x = (Math.random() - .5) * 180; b.y = SH.topY - 20 - Math.random() * 200; b.px = b.x; b.py = b.y; }
       bodies.push(b);
       const alive = bodies.filter((k) => !k.dying);
       if (alive.length > MAX) alive[0].dying = true;
@@ -189,6 +232,15 @@
       const s = S(), o = origin(), left = -o.x / s, right = (W - o.x) / s;
       if (b.x - b.r < left) b.x = left + b.r;
       if (b.x + b.r > right) b.x = right - b.r;
+      if (SH.rects) { // ชนกับกล่องตัวรถ (จุดใกล้สุดบนสี่เหลี่ยม)
+        for (const [x0, x1, y0, y1] of SH.rects) {
+          const cx = Math.max(x0, Math.min(x1, b.x)), cy = Math.max(y0, Math.min(y1, b.y)), dx = b.x - cx, dy = b.y - cy, d = Math.hypot(dx, dy);
+          if (d >= b.r) continue;
+          if (d > 0) { b.x = cx + dx / d * b.r; b.y = cy + dy / d * b.r; } else b.y = y0 - b.r;
+          if (dy < 0 && -dy > Math.abs(dx)) b.px = b.x - (b.x - b.px) * 0.5; // วางบนหลังคา → เสียดทาน
+        }
+        return;
+      }
       // ตัวโหลเป็นสิ่งกีดขวาง: ใต้ขอบบนสุดให้ไถลออกด้านข้างตามความโค้งของโหล
       if (b.y + b.r > SH.topY) {
         const hw = (b.y < SH.openY ? SH.rimHW : Math.max(SH.hw(Math.min(-0.5, b.y)), SH.hw(Math.min(-0.5, b.y + b.r * 0.75)))) + 6;
@@ -238,7 +290,7 @@
     let fadeCooldown = 0, resetting = false, spilling = false;
     const conf = [];
     function checkFull() {
-      if (resetting) return;
+      if (resetting || SH.solid) return;
       // ชิ้นในโหลที่ไม่ได้กำลังตก (อายุ > 2 วิ) กองสูงถึงไหล่โหล = เต็ม
       const full = bodies.some((b) => !b.out && !b.dying && b.age > 120 && b.y - b.r < SH.fullY);
       spilling = full && FULL_MODE === 'spill';

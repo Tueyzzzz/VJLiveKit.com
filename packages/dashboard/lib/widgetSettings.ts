@@ -28,9 +28,10 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
     resettable: 'ล้างของขวัญในโหลและอันดับ',
     sections: [
       { title: 'รูปแบบโหล', fields: [
-        { key: 'shape', label: 'ทรงโหล', type: 'select', def: 'jar', options: [['jar', 'โหลแก้วคอแคบ'], ['bowl', 'โหลกลมปากกว้าง'], ['mason', 'โหลฝาผ้าผูกโบว์']] },
+        { key: 'shape', label: 'ทรงโหล', type: 'select', def: 'jar', options: [['jar', 'โหลแก้วคอแคบ'], ['bowl', 'โหลกลมปากกว้าง'], ['mason', 'โหลฝาผ้าผูกโบว์'], ['car', 'รถพาสเทล (ของกองบนหลังคา)']] },
+        { key: 'body', label: 'สีรถ', type: 'color', def: '#bfe9e6', when: (v) => v.shape === 'car' },
         { key: 'cloth', label: 'สีผ้าฝาโหล', type: 'color', def: '#e0452b', when: (v) => v.shape === 'mason' },
-        { key: 'full', label: 'เมื่อโหลเต็ม', type: 'select', def: 'spill', options: [['spill', 'ล้นออกมากองข้างโหล'], ['fade', 'ชิ้นเก่าสุดค่อย ๆ หายไป'], ['reset', 'ฉลอง แล้วเทโหลเริ่มใหม่']] },
+        { key: 'full', label: 'เมื่อโหลเต็ม', type: 'select', when: (v) => v.shape !== 'car', def: 'spill', options: [['spill', 'ล้นออกมากองข้างโหล'], ['fade', 'ชิ้นเก่าสุดค่อย ๆ หายไป'], ['reset', 'ฉลอง แล้วเทโหลเริ่มใหม่']] },
         { key: 'fullText', label: 'ข้อความตอนโหลเต็ม', type: 'text', def: 'โหลเต็มแล้ว! 🎉', when: (v) => v.full === 'reset' },
       ] },
       { title: 'ขนาดและตำแหน่ง', fields: [

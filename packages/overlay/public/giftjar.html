@@ -115,7 +115,7 @@
     const bodies = [], MAX = 600, G = 0.6; // MAX กันเครื่องช้าเท่านั้น
     const imgCache = {};
     function giftImg(url) { if (!url || !/^https:\/\//.test(url)) return null; let im = imgCache[url]; if (!im) { im = new Image(); im.src = url; imgCache[url] = im; } return im; }
-    const radiusFor = (diamonds) => 18 * GIFT_SCALE * (1 + Math.min(1, Math.log10((diamonds || 1) + 1) / 4) * 0.9);
+    const radiusFor = (diamonds) => 14.4 * GIFT_SCALE * (1 + Math.min(1, Math.log10((diamonds || 1) + 1) / 4) * 0.9);
 
     function addBody(g, dropFromTop = true) {
       const r = radiusFor(g.d);

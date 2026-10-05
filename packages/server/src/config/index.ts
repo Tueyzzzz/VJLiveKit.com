@@ -15,6 +15,9 @@ export const config = {
 
   signApiKey: process.env.SIGN_API_KEY || undefined,
 
+  /** Google Cloud Text-to-Speech (อ่านแชทออกเสียงเป็น mp3) — ไม่ตั้ง = ปิด */
+  googleTtsKey: process.env.GOOGLE_TTS_API_KEY || undefined,
+
   billingProvider: (process.env.BILLING_PROVIDER ?? 'none') as 'none' | 'stripe' | 'omise',
   stripe: {
     secretKey: process.env.STRIPE_SECRET_KEY,

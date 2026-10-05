@@ -43,6 +43,7 @@ repo → **Settings → Secrets and variables → Actions**
 | `VULTR_SSH_KEY` | private key ทั้งไฟล์ (ถ้าใช้ key) | ทางเลือก |
 | `VULTR_USER` | ไม่ใส่ = `root` | – |
 | `SIGN_API_KEY` | key จาก eulerstream.com (ต่อไลฟ์จริง) | แนะนำ |
+| `GOOGLE_TTS_API_KEY` | API key Google Cloud (เปิด Cloud Text-to-Speech API) — อ่านแชทออกเสียงใน OBS | แนะนำ |
 | `STRIPE_SECRET_KEY` | `sk_live_…` / `sk_test_…` | ตอนเปิดรับเงิน |
 | `STRIPE_WEBHOOK_SECRET` | `whsec_…` | ตอนเปิดรับเงิน |
 

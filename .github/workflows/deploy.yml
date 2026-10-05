@@ -59,6 +59,7 @@ jobs:
           DEMO_MODE: ${{ vars.DEMO_MODE }}
           BILLING_PROVIDER: ${{ vars.BILLING_PROVIDER }}
           SIGN_API_KEY: ${{ secrets.SIGN_API_KEY }}
+          GOOGLE_TTS_API_KEY: ${{ secrets.GOOGLE_TTS_API_KEY }}
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
           STRIPE_PRICE_PRO_MONTHLY: ${{ vars.STRIPE_PRICE_PRO_MONTHLY }}
@@ -68,7 +69,7 @@ jobs:
           key: ${{ secrets.VULTR_SSH_KEY }}
           password: ${{ secrets.VULTR_PASSWORD }}
           command_timeout: 20m
-          envs: APP_IMAGE,GHCR_USER,GHCR_TOKEN,DOMAIN,DEMO_MODE,BILLING_PROVIDER,SIGN_API_KEY,STRIPE_SECRET_KEY,STRIPE_WEBHOOK_SECRET,STRIPE_PRICE_PRO_MONTHLY
+          envs: APP_IMAGE,GHCR_USER,GHCR_TOKEN,DOMAIN,DEMO_MODE,BILLING_PROVIDER,SIGN_API_KEY,GOOGLE_TTS_API_KEY,STRIPE_SECRET_KEY,STRIPE_WEBHOOK_SECRET,STRIPE_PRICE_PRO_MONTHLY
           script: |
             set -e
             if [ "$(id -u)" -eq 0 ]; then SUDO=""; else SUDO="sudo -E"; fi

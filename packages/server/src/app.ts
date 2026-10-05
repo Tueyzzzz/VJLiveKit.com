@@ -8,6 +8,7 @@ import { authRoutes } from './auth/routes.js';
 import { widgetRoutes } from './widgets/routes.js';
 import { billingRoutes } from './billing/routes.js';
 import { actionRoutes } from './actions/routes.js';
+import { ttsRoutes } from './tts/routes.js';
 import { config } from './config/index.js';
 
 /** ที่อยู่โฟลเดอร์ overlay (เสิร์ฟไฟล์วิดเจ็ตให้ OBS) */
@@ -46,6 +47,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(widgetRoutes);
   await app.register(billingRoutes);
   await app.register(actionRoutes);
+  await app.register(ttsRoutes);
 
   // 404: API ตอบ JSON, หน้าเว็บตอบหน้า 404 ของ Dashboard
   const notFoundPage = path.join(DASHBOARD_DIR, '404.html');

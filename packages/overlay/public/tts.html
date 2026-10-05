@@ -34,13 +34,12 @@
     const dot=document.getElementById('dot'), last=document.getElementById('last'), btn=document.getElementById('startBtn');
     let armed=false;
     // ห่อ say เพื่ออัปเดต UI + สถานะพูด
-    const origSay=TTS.say;
-    TTS.say=function(t){ last.innerHTML=t; dot.classList.add('speaking'); origSay(t); };
-    setInterval(()=>{ if(!speechSynthesis.speaking) dot.classList.remove('speaking'); }, 300);
+    TTS.onSay=function(t){ last.textContent=t; dot.classList.add('speaking'); };
+    setInterval(()=>{ if(!TTS.isSpeaking()) dot.classList.remove('speaking'); }, 300);
 
     TTS.attach(Overlay);
     btn.addEventListener('click',()=>{ TTS.unlock(); armed=true; dot.classList.add('on'); btn.textContent='✅ เปิดเสียงแล้ว'; btn.disabled=true;
-      document.getElementById('hint').textContent='กำลังอ่านแชท/กิฟต์อัตโนมัติ · ภาษา: '+TTS.cfg.lang; });
+      document.getElementById('hint').textContent='กำลังอ่านแชท/กิฟต์อัตโนมัติ · เสียง: '+TTS.cfg.voice; });
 
     if(!Overlay.connected){ const names=['mimi','บิ๊ก','lisa']; const msgs=['สวัสดีครับ','เก่งมาก','สู้ๆนะ'];
       setInterval(()=>{ if(!armed) return; const nm=names[Math.floor(Math.random()*names.length)];

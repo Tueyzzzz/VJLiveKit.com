@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # VJLiveKit — ติดตั้ง/อัปเดตบนเซิร์ฟเวอร์ (Ubuntu) แบบ idempotent: รันซ้ำกี่ครั้งก็ปลอดภัย
 # GitHub Actions (deploy.yml) เป็นคนเรียกไฟล์นี้ผ่าน SSH พร้อม env:
-#   APP_IMAGE, GHCR_USER, GHCR_TOKEN, DOMAIN, (ออปชัน) DEMO_MODE SIGN_API_KEY BILLING_PROVIDER STRIPE_*
+#   APP_IMAGE, GHCR_USER, GHCR_TOKEN, DOMAIN, (ออปชัน) DEMO_MODE SIGN_API_KEY GOOGLE_TTS_API_KEY BILLING_PROVIDER STRIPE_*
 # รันเองบนเครื่องก็ได้: sudo APP_IMAGE=ghcr.io/<owner>/<repo>:latest DOMAIN=vjlivekit.com bash deploy/bootstrap.sh
 set -euo pipefail
 
@@ -54,6 +54,7 @@ DATABASE_URL=postgresql://vjlivekit:${PGPASS}@postgres:5432/vjlivekit?schema=pub
 JWT_SECRET=$(openssl rand -hex 32)
 OVERLAY_TOKEN_TTL_DAYS=365
 SIGN_API_KEY=
+GOOGLE_TTS_API_KEY=
 BILLING_PROVIDER=none
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
@@ -76,6 +77,7 @@ set_env PUBLIC_BASE_URL "https://${DOMAIN}"
 set_env APP_IMAGE "$APP_IMAGE"
 set_env DEMO_MODE "${DEMO_MODE:-}"
 set_env SIGN_API_KEY "${SIGN_API_KEY:-}"
+set_env GOOGLE_TTS_API_KEY "${GOOGLE_TTS_API_KEY:-}"
 set_env BILLING_PROVIDER "${BILLING_PROVIDER:-}"
 set_env STRIPE_SECRET_KEY "${STRIPE_SECRET_KEY:-}"
 set_env STRIPE_WEBHOOK_SECRET "${STRIPE_WEBHOOK_SECRET:-}"

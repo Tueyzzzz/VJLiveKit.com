@@ -12,8 +12,10 @@
     #fx{position:fixed;inset:0}
     .shadow{text-shadow:0 2px 4px rgba(0,0,0,.65),0 0 2px rgba(0,0,0,.8)}
     #alert{position:fixed;display:flex;align-items:center;gap:10px;padding:8px 14px 8px 8px;border-radius:999px;
-      background:rgba(20,10,30,.55);backdrop-filter:blur(4px);opacity:0;transform:translate(-50%,10px);transition:opacity .35s,transform .35s;white-space:nowrap;pointer-events:none}
-    #alert.show{opacity:1;transform:translate(-50%,0)}
+      background:rgba(20,10,30,.55);backdrop-filter:blur(4px);opacity:0;transform:translate(-50%,10px) scale(.7);transition:opacity .3s,transform .45s cubic-bezier(.2,1.6,.4,1);white-space:nowrap;pointer-events:none}
+    #alert.show{opacity:1;transform:translate(-50%,0) scale(1)}
+    #total.bump,#board.bump{animation:punch .4s cubic-bezier(.2,1.6,.4,1)}
+    @keyframes punch{30%{scale:1.18}}
     #alert img.ava{width:44px;height:44px;border-radius:50%;object-fit:cover;background:#b9a6f2}
     #alert img.gift{width:36px;height:36px;object-fit:contain}
     #alert .nm{font-weight:600;font-size:calc(var(--fs) * .36px)}
@@ -39,6 +41,7 @@
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="js/overlay-client.js"></script>
+  <script src="js/juice.js"></script>
   <script>
   /*
    * โหลแก้ว (Gift Jar) — ของขวัญจริงจาก TikTok ตกลงโหลแก้วและกองซ้อนกันด้วยฟิสิกส์
@@ -277,6 +280,7 @@
       if (SH.solid && dropFromTop) { b.x = (Math.random() - .5) * 170; b.px = b.x; }
       if (SH.solid && !dropFromTop && !g.o) { b.x = (Math.random() - .5) * 180; b.y = SH.topY - 20 - Math.random() * 200; b.px = b.x; b.py = b.y; }
       bodies.push(b);
+      if (dropFromTop) fx.sparkle(b.x, b.y, 5, b.d >= 1000 ? '#ffe08a' : '#fff6e8');
       const alive = bodies.filter((k) => !k.dying);
       if (alive.length > MAX) alive[0].dying = true;
     }
@@ -311,11 +315,13 @@
       if (b.x - b.r < -hw) b.x = -hw + b.r;
       if (b.x + b.r > hw) b.x = hw - b.r;
     }
+    // ---- juice: สปริงโหลสั่น + อนุภาค ----
+    const fx = new Juice.Particles(), jarWobble = new Juice.Spring(140, 7);
     function step() {
       const VMAX = 14;
       for (const b of bodies) {
         const vx = Math.max(-VMAX, Math.min(VMAX, (b.x - b.px) * 0.985)), vy = Math.max(-VMAX, Math.min(VMAX, (b.y - b.py) * 0.985));
-        b.px = b.x; b.py = b.y; b.x += vx; b.y += vy + G;
+        b.px = b.x; b.py = b.y; b.x += vx; b.y += vy + G; b.vin = vy + G;
         b.rot += vx / b.r; b.age = (b.age || 0) + 1;
       }
       for (let it = 0; it < 4; it++) {
@@ -333,6 +339,17 @@
         }
         for (const b of bodies) constrain(b); // เหนือปากโหลก็มีผนัง (ช่องทางเข้า) กันกระเด็นออกนอกโหล
       }
+      // ตกกระทบ = ความเร็วลงหายไปมากในเฟรมเดียว → ยุบตัว + ฝุ่น (+ โหลสั่นถ้าของใหญ่)
+      for (const b of bodies) {
+        const vout = b.y - b.py;
+        if (b.vin > 4 && vout < b.vin * 0.35 && b.age > 3) {
+          (b.sq ||= new Juice.Spring(260, 13)).kick(-Math.min(b.vin, 14) * 0.9);
+          if (b.vin > 7) fx.dust(b.x, b.y + b.r * 0.8, 3);
+          if (b.d >= 1000) jarWobble.kick(Math.min(b.vin, 14) * 0.012 * (Math.random() < 0.5 ? -1 : 1));
+        }
+        if (b.sq) b.sq.step(1 / 60);
+      }
+      fx.step(); jarWobble.step(1 / 60);
       for (let i = bodies.length - 1; i >= 0; i--) {
         const b = bodies[i];
         if (b.dying) { b.life -= 0.04; if (b.life <= 0) { bodies.splice(i, 1); save(); } }
@@ -383,7 +400,9 @@
       }
     }
     function drawBody(b) {
-      ctx.save(); ctx.globalAlpha = b.life; ctx.translate(b.x, b.y); ctx.rotate(b.rot);
+      if (b.life > 0.5) Juice.aura(ctx, b.x, b.y, b.r, b.d, nowT);
+      const q = b.sq ? Math.max(-0.35, Math.min(0.35, b.sq.x)) : 0;
+      ctx.save(); ctx.globalAlpha = b.life; ctx.translate(b.x, b.y + b.r * -q * 0.5); ctx.scale(1 - q, 1 + q); ctx.rotate(b.rot);
       if (b.img && b.img.complete && b.img.naturalWidth) { const s = b.r * 2.2; ctx.drawImage(b.img, -s / 2, -s / 2, s, s); }
       else {
         const r = b.r, g = ctx.createRadialGradient(-r * .3, -r * .3, r * .2, 0, 0, r);
@@ -394,7 +413,7 @@
       ctx.restore();
     }
     // ฟิสิกส์เดินตามเวลาจริง (ชดเชยเฟรมที่หาย เช่น OBS ซ่อน source / แท็บถูกพัก)
-    let lastT = performance.now(), acc = 0;
+    let lastT = performance.now(), acc = 0, nowT = 0;
     function tick() {
       const now = performance.now(); acc += Math.min(4000, now - lastT); lastT = now;
       let n = 0; while (acc >= 16.7 && n < 240) { step(); acc -= 16.7; n++; }
@@ -405,10 +424,13 @@
       tick();
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H);
       const o = origin(), s = S();
+      nowT = performance.now() / 1000;
       ctx.translate(o.x, o.y); ctx.scale(s, s);
+      ctx.rotate(jarWobble.x); ctx.scale(1, Juice.breathe(nowT, 0.005)); // โหลสั่น + หายใจ (หมุนรอบก้นโหล)
       drawJarBack();
       for (const b of bodies) drawBody(b);
       drawJarFront();
+      fx.draw(ctx);
       drawConfetti();
       requestAnimationFrame(frame);
     }
@@ -476,6 +498,9 @@
       row.c += value; row.n = u.nickname || row.n; row.a = u.avatar || row.a; ranking[id] = row;
       totalCoins += value;
       renderBoard(); showAlert(e, count); save();
+      // ของแพง: พลุ + โหลสะเทือน · ตัวเลข/ป้ายเด้ง
+      if (unit >= 1000) { fx.confetti(0, SH.topY - 20, 50); jarWobble.kick(0.06); }
+      for (const el of [$total, $board]) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
     }
 
     Overlay.on('event', (e) => { if (e.type === 'gift' && !e.streaking) onGift(e); });

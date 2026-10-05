@@ -51,7 +51,8 @@
     };
     const CAR = CARS[P('car', 'van')] || CARS.van;
     const carImg = Juice.skin(CAR.src, num('hue', 0), num('sat', 1), num('bright', 1));
-    const CAR_Y = -150; // รถยกขึ้นจากขอบล่าง → ของขวัญลากอยู่ด้านหน้า (ใกล้กล้อง)
+    const CAR_Y = -250; // รถยกขึ้นจากขอบล่าง → ของขวัญลากอยู่ด้านหน้า (ใกล้กล้อง) เชือกยาวแบบรถงานแต่ง
+    const ROPE = Math.max(40, num('rope', 90)); // ระยะเว้นจากท้ายรถถึงแถวแรก (ยิ่งมาก เชือกยิ่งยาว)
 
     const canvas = document.getElementById('fx'), ctx = canvas.getContext('2d');
     const DPR = Math.min(2, devicePixelRatio || 1);
@@ -64,10 +65,10 @@
     const hook = () => ({ x: CAR.hook.x, y: CAR_Y + CAR.hook.y });
     const slots = [];
     // แถวบนพื้นจากท้ายรถลงมาหาขอบล่าง แต่ละแถวกางออกด้านข้างกว้างขึ้นเรื่อย ๆ (จำนวนรอบจำกัด → จบแน่นอน)
-    for (let j = 0; j < 8; j++) {
-      const y = CAR_Y - 6 + j * 21; if (y > -10) break;
+    for (let j = 0; j < 12; j++) {
+      const y = CAR_Y + ROPE + j * 22; if (y > -10) break;
       for (let m = 0; m < 34; m++) for (const sgn of m ? [-1, 1] : [1]) {
-        const x = sgn * (m * 30 + (j % 2 ? 15 : 0));
+        const x = sgn * (m * 32 + (j % 2 ? 16 : 0));
         slots.push({ x, y, k: j, ph: (x * 0.13 + y * 0.07 + 6.28) % 6.28 });
       }
     }
@@ -145,7 +146,7 @@
       ctx.lineCap = 'round';
       for (const { b, p } of list) {
         if (b.born > 0 && !b.landed) continue;
-        const tx = p.x, ty = p.y - b.r * 0.55 * p.depth, mx = (h.x + tx) / 2, my = Math.max(hy, ty) + 18;
+        const tx = p.x, ty = p.y - b.r * 0.55 * p.depth, mx = (h.x + tx) / 2, my = Math.max(hy, ty) + 14 + Math.abs(tx - h.x) * 0.05; // เชือกหย่อนตามความยาว
         ctx.globalAlpha = b.life;
         ctx.beginPath(); ctx.moveTo(h.x, hy); ctx.quadraticCurveTo(mx, my, tx, ty);
         ctx.lineWidth = 2.6; ctx.strokeStyle = 'rgba(90,60,120,.35)'; ctx.stroke();
@@ -170,7 +171,7 @@
 
     // ---- แจ้งเตือนชื่อคนส่ง ----
     const $alert = document.getElementById('alert');
-    function layoutUi() { const o = origin(), s = S(); $alert.style.left = o.x + 'px'; $alert.style.top = Math.max(4, o.y - 560 * s) + 'px'; }
+    function layoutUi() { const o = origin(), s = S(); $alert.style.left = o.x + 'px'; $alert.style.top = Math.max(4, o.y - 680 * s) + 'px'; }
     let alertT = null;
     function showAlert(e, count) {
       if (!SHOW_ALERT) return;

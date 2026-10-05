@@ -137,6 +137,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
       { title: 'ขนาดและตำแหน่ง', fields: [
         size(),
         { key: 'giftScale', label: 'ขนาดของขวัญ', type: 'range', min: 0.5, max: 2.5, step: 0.05, def: 1, unit: '×' },
+        { key: 'rope', label: 'ความยาวเชือก', type: 'range', min: 40, max: 200, step: 10, def: 90, unit: '', hint: 'ระยะจากท้ายรถถึงของขวัญแถวแรก' },
         { key: 'max', label: 'ลากได้สูงสุด (ชิ้น)', type: 'number', min: 30, max: 400, def: 140, hint: 'เกินแล้วชิ้นเก่าสุดค่อย ๆ จางไป — ของขวัญเล็กลงจะลากได้มากขึ้น' },
         ...pos(),
       ] },

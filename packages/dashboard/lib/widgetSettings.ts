@@ -82,6 +82,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
     resettable: 'ล้างกองของขวัญ',
     sections: [
       { title: 'เครื่องและเป้าหมาย', fields: [
+        { key: 'skin', label: 'หน้าตาเครื่อง', type: 'select', def: 'image', options: [['image', 'ตู้หัวใจชมพู (ภาพ 3D)'], ['classic', 'ตู้พาสเทล (วาดด้วยโค้ด)']] },
         { key: 'goal', label: 'เป้าหมาย (เหรียญ)', type: 'number', min: 1, def: 10000, hint: 'แถบบนจอเครื่องจะเต็มเมื่อถึงเป้า' },
         { key: 'counter', label: 'แสดงจำนวนเหรียญบนเครื่อง', type: 'toggle', def: true },
       ] },

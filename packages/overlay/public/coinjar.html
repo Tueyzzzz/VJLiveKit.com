@@ -51,6 +51,21 @@
     const SCREEN = { x0: 1068, x1: 1182, y0: 462, y1: 552 };
     const BELT_A = { x: 1012, y: 612 }, BELT_B = { x: 640, y: 652 }; // ผิวบนสายพาน (จากเครื่อง -> ปลาย)
     const BELT_T = 22, BELT_V = 1.9;
+    let BELT_TH = BELT_T;
+
+    // ---- สกินรูปภาพ (เรนเดอร์/AI) — ?skin=classic เพื่อใช้ตู้วาดด้วยโค้ดแบบเดิม ----
+    // พิกัดจุดสำคัญวัดจากรูปต้นฉบับ (พิกเซล) แล้วแปลงเป็นพิกัดออกแบบ: ช่องอุโมงค์, ผิวสายพาน, จอ, แผงตัวเลข
+    const SKIN = Overlay.param('skin', 'image') === 'classic' ? null
+      : { src: 'themes/machine-pink.webp', w: 1249, h: 1241, k: 380 / 1249, x0: 860, y0: 327.6, counter: { px: 915, py: 985 } };
+    const skinImg = SKIN ? Object.assign(new Image(), { src: SKIN.src }) : null;
+    const fromSkin = (px, py) => ({ x: SKIN.x0 + px * SKIN.k, y: SKIN.y0 + py * SKIN.k });
+    if (SKIN) {
+      Object.assign(M, { x0: 951, x1: 1231, y0: 440, y1: 700, depth: 0 });
+      Object.assign(MOUTH, { x0: 957, x1: 1030, y0: 505, y1: 562 });
+      Object.assign(SCREEN, { x0: 1100, x1: 1164, y0: 486, y1: 541 });
+      Object.assign(BELT_A, fromSkin(540, 756)); Object.assign(BELT_B, fromSkin(50, 810));
+      BELT_TH = 40;
+    }
 
     function resize() {
       W = innerWidth; H = innerHeight;
@@ -70,6 +85,7 @@
       const r = radiusFor(g.d);
       const b = { r, rot: Math.random() * 6.28, img: giftImg(g.u), e: g.e || '🎁', d: g.d || 1, src: g, life: 1, age: 0 };
       if (mode === 'restore') { b.x = BELT_B.x - 50 + Math.random() * 60; b.y = FLOOR - 150 - Math.random() * 500; }
+      else if (SKIN) { b.x = MOUTH.x1 - 22 - Math.random() * 12; b.y = MOUTH.y0 + 10 + Math.random() * 12; }
       else { b.x = MOUTH.x0 + 18 + Math.random() * 20; b.y = MOUTH.y0 + 40 + Math.random() * 50; }
       b.px = b.x + (mode === 'restore' ? 0 : 1.5 + Math.random()); b.py = b.y;
       bodies.push(b);
@@ -85,13 +101,13 @@
       const cx = A.x + vx * t, cy = A.y + vy * t, dx = px - cx, dy = py - cy;
       return { t, dx, dy, dist: Math.hypot(dx, dy) };
     }
-    const beltCA = { x: BELT_A.x, y: BELT_A.y + BELT_T / 2 }, beltCB = { x: BELT_B.x, y: BELT_B.y + BELT_T / 2 };
+    const beltCA = { x: BELT_A.x, y: BELT_A.y + BELT_TH / 2 }, beltCB = { x: BELT_B.x, y: BELT_B.y + BELT_TH / 2 };
     const beltLen = Math.hypot(BELT_B.x - BELT_A.x, BELT_B.y - BELT_A.y);
     const beltDir = { x: (BELT_B.x - BELT_A.x) / beltLen, y: (BELT_B.y - BELT_A.y) / beltLen };
 
     function constrain(b) {
       // สายพาน = แคปซูลหนา BELT_T
-      const s = segInfo(b.x, b.y, beltCA, beltCB), lim = b.r + BELT_T / 2;
+      const s = segInfo(b.x, b.y, beltCA, beltCB), lim = b.r + BELT_TH / 2;
       if (s.dist < lim && s.dist > 0) {
         const nx = s.dx / s.dist, ny = s.dy / s.dist, k = lim - s.dist;
         b.x += nx * k; b.y += ny * k;
@@ -183,6 +199,31 @@
         ctx.save(); ctx.translate(x, y); ctx.rotate(-beltOffset / 9); ctx.beginPath(); ctx.moveTo(-6, 0); ctx.lineTo(6, 0); ctx.strokeStyle = '#8f7bc0'; ctx.stroke(); ctx.restore();
       }
     }
+    function drawMachineImage() {
+      let sx = 0, sy = 0;
+      if (shakeT > 0) { sx = (Math.random() - .5) * 4; sy = (Math.random() - .5) * 3; }
+      const W2 = SKIN.w * SKIN.k, H2 = SKIN.h * SKIN.k, bx = SKIN.x0 + W2 * 0.55;
+      ctx.save(); ctx.translate(sx, sy);
+      ctx.beginPath(); ctx.ellipse(bx, FLOOR - 2, W2 * 0.42, 12, 0, 0, 6.2832); ctx.fillStyle = 'rgba(120,90,160,.2)'; ctx.fill(); // เงาพื้น
+      const sc = Juice.breathe(nowT, 0.01) + machinePunch.x;
+      ctx.translate(bx, FLOOR); ctx.scale(1 - (sc - 1) * 0.5, sc); ctx.translate(-bx, -FLOOR);
+      ctx.drawImage(skinImg, SKIN.x0, SKIN.y0, W2, H2);
+      // จอ: รูปของขวัญล่าสุดเรืองแสง (ยังไม่มีของขวัญ = โชว์หัวใจพิกเซลในรูป)
+      if (screenImg && screenImg.complete && screenImg.naturalWidth) {
+        const cx = (SCREEN.x0 + SCREEN.x1) / 2, cy = (SCREEN.y0 + SCREEN.y1) / 2, sz = 44;
+        rr(SCREEN.x0, SCREEN.y0, SCREEN.x1 - SCREEN.x0, SCREEN.y1 - SCREEN.y0, 6); ctx.fillStyle = 'rgba(40,30,70,.85)'; ctx.fill();
+        Juice.aura(ctx, cx, cy, sz * 0.45, 1000, nowT);
+        ctx.drawImage(screenImg, cx - sz / 2, cy - sz / 2, sz, sz);
+      }
+      // แผงหัวใจ: ยอดเพชร
+      if (SHOW_COUNTER) {
+        const c = fromSkin(SKIN.counter.px, SKIN.counter.py), label = '💎 ' + Overlay.fmt(diamonds);
+        ctx.font = '20px Itim, sans-serif'; const tw = ctx.measureText(label).width;
+        rr(c.x - tw / 2 - 12, c.y - 15, tw + 24, 30, 15); ctx.fillStyle = 'rgba(255,250,252,.95)'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#ff9ec7'; ctx.stroke();
+        ctx.fillStyle = '#e8579b'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, c.x, c.y + 1);
+      }
+      ctx.restore();
+    }
     function drawMachine() {
       const { x0, x1, y0, y1, depth: d } = M, w = x1 - x0, h = y1 - y0;
       let sx = 0, sy = 0;
@@ -269,9 +310,14 @@
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H);
       ctx.translate(TX, TY); ctx.scale(S, S);
       nowT = performance.now() / 1000;
-      drawBelt();
-      for (const b of bodies) drawBody(b);
-      drawMachine();
+      if (SKIN && skinImg.complete && skinImg.naturalWidth) {
+        drawMachineImage();
+        for (const b of bodies) drawBody(b);
+      } else {
+        drawBelt();
+        for (const b of bodies) drawBody(b);
+        drawMachine();
+      }
       fx.draw(ctx);
       requestAnimationFrame(frame);
     }

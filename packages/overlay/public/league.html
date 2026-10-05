@@ -134,7 +134,9 @@
       ctx.restore();
     }
     function drawGift(img, g, size) {
-      if (img && img.complete && img.naturalWidth) ctx.drawImage(img, -size / 2, -size / 2, size, size);
+      const st = Juice.sticker ? Juice.sticker(img, size * S() * DPR) : null; // สติกเกอร์คมชัด ขอบขาว + เงานุ่ม
+      if (st) { const s = size * Juice.STICKER_PAD; ctx.drawImage(st, -s / 2, -s / 2, s, s); }
+      else if (img && img.complete && img.naturalWidth) ctx.drawImage(img, -size / 2, -size / 2, size, size);
       else { ctx.font = `${size * 0.85}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(g.e, 0, 2); }
     }
     function drawBadge(time) {

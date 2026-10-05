@@ -327,7 +327,9 @@
       if (b.life > 0.5) Juice.aura(ctx, b.x, b.y, b.r, b.d, nowT);
       const q = b.sq ? Math.max(-0.35, Math.min(0.35, b.sq.x)) : 0;
       ctx.save(); ctx.globalAlpha = b.life; ctx.translate(b.x, b.y + b.r * -q * 0.5); ctx.scale(1 - q, 1 + q); ctx.rotate(b.rot);
-      if (b.img && b.img.complete && b.img.naturalWidth) { const s = b.r * 2.2; ctx.drawImage(b.img, -s / 2, -s / 2, s, s); }
+      const st = Juice.sticker ? Juice.sticker(b.img, b.r * 2.2 * S * DPR) : null; // สติกเกอร์คมชัด ขอบขาว + เงานุ่ม
+      if (st) { const s = b.r * 2.2 * Juice.STICKER_PAD; ctx.drawImage(st, -s / 2, -s / 2, s, s); }
+      else if (b.img && b.img.complete && b.img.naturalWidth) { const s = b.r * 2.2; ctx.drawImage(b.img, -s / 2, -s / 2, s, s); }
       else {
         const r = b.r, g = ctx.createRadialGradient(-r * .3, -r * .3, r * .2, 0, 0, r);
         g.addColorStop(0, '#fff6cf'); g.addColorStop(.55, '#ffcf5c'); g.addColorStop(1, '#f5a623');

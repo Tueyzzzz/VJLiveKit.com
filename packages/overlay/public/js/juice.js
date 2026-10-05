@@ -97,5 +97,39 @@ window.Juice = (function () {
     return out;
   }
 
-  return { Spring, Particles, aura, auraColor, sizeFor, breathe, easeOutBack, tinted, skin };
+  /**
+   * สติกเกอร์คุณภาพสูงของรูปของขวัญ: ย่อแบบหลายขั้น (คมกว่าย่อทีเดียว) ที่ขนาดพิกเซลจริงบนจอ
+   * + ขอบขาวแบบสติกเกอร์ + เงาม่วงนุ่ม → แยกชิ้นชัดเวลากองกัน · แคชตามรูป+ขนาด (สร้างครั้งเดียว)
+   * px = ความกว้างบนจอเป็นพิกเซลจริง · คืน canvas (ขนาด = px * PAD) หรือ null ถ้ารูปยังไม่พร้อม
+   */
+  const STICKER_PAD = 1.3, stickerCache = new Map();
+  function sticker(img, px) {
+    if (!img || !img.complete || !img.naturalWidth) return null;
+    const size = Math.max(16, Math.min(512, Math.ceil(px / 8) * 8)), key = img.src + '|' + size;
+    let c = stickerCache.get(key); if (c) return c;
+    // ย่อทีละครึ่งจนใกล้ขนาดเป้าหมาย
+    let src = img, w = img.naturalWidth, h = img.naturalHeight;
+    while (w / 2 >= size * 1.1) {
+      const t = document.createElement('canvas'); t.width = Math.round(w / 2); t.height = Math.round(h / 2);
+      const tg = t.getContext('2d'); tg.imageSmoothingQuality = 'high'; tg.drawImage(src, 0, 0, t.width, t.height); src = t; w = t.width; h = t.height;
+    }
+    const k = size / Math.max(w, h), iw = w * k, ih = h * k;
+    const shape = document.createElement('canvas'); shape.width = shape.height = size;
+    const sg = shape.getContext('2d'); sg.imageSmoothingQuality = 'high'; sg.drawImage(src, (size - iw) / 2, (size - ih) / 2, iw, ih);
+    const full = Math.ceil(size * STICKER_PAD), off = (full - size) / 2;
+    // เงาของรูปร่าง (สีขาวทึบ) สำหรับขอบสติกเกอร์
+    const sil = document.createElement('canvas'); sil.width = sil.height = size;
+    const lg = sil.getContext('2d'); lg.drawImage(shape, 0, 0); lg.globalCompositeOperation = 'source-in'; lg.fillStyle = '#ffffff'; lg.fillRect(0, 0, size, size);
+    c = document.createElement('canvas'); c.width = c.height = full;
+    const g = c.getContext('2d'), rim = Math.max(1.5, size * 0.035);
+    g.save(); g.shadowColor = 'rgba(80,50,130,.32)'; g.shadowBlur = size * 0.05; g.shadowOffsetY = size * 0.04;
+    for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6; g.drawImage(sil, off + Math.cos(a) * rim, off + Math.sin(a) * rim); } // ขอบขาว + เงา
+    g.restore();
+    g.drawImage(shape, off, off);
+    if (stickerCache.size > 400) stickerCache.delete(stickerCache.keys().next().value);
+    stickerCache.set(key, c);
+    return c;
+  }
+
+  return { Spring, Particles, aura, auraColor, sizeFor, sticker, STICKER_PAD, breathe, easeOutBack, tinted, skin };
 })();

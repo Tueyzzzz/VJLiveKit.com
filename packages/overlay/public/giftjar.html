@@ -195,7 +195,17 @@
       // ชิ้นในโหลที่ไม่ได้กำลังตก (อายุ > 2 วิ) กองสูงถึงไหล่โหล = เต็ม
       const full = bodies.some((b) => !b.out && !b.dying && b.age > 120 && b.y - b.r < BODY_TOP + 10);
       spilling = full && FULL_MODE === 'spill';
-      if (!full || FULL_MODE === 'spill') return;
+      if (FULL_MODE === 'spill') {
+        // ชิ้นที่ค้างเหนือปากโหล (เช่น ของเก่าที่โหลดกลับมาตอนรีเฟรช) → ทะลักออกข้าง
+        for (const b of bodies) {
+          if (b.out || b.dying || b.age < 60 || b.y > NECK_TOP) continue;
+          const side = b.x < 0 ? -1 : 1;
+          b.out = true; b.src = { ...b.src, o: 1 }; b.px = b.x - side * (3 + Math.random() * 3);
+          save();
+        }
+        return;
+      }
+      if (!full) return;
       if (FULL_MODE === 'reset') return resetJar();
       if (fadeCooldown-- > 0) return;
       fadeCooldown = 8;

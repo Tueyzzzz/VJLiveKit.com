@@ -4,137 +4,312 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Coin Jar Overlay</title>
+<link rel="icon" href="favicon.svg" />
 <style>
   /* OBS overlay — พื้นหลังโปร่งใส */
   @import url('https://fonts.googleapis.com/css2?family=Itim&display=swap');
   html,body { margin:0; width:100%; height:100%; background:transparent; overflow:hidden; font-family:'Itim',sans-serif; }
-  #stage { position:fixed; inset:0; }
-  #fx { position:absolute; inset:0; z-index:5; pointer-events:none; }
-  .counter { position:absolute; top:24px; left:50%; transform:translateX(-50%); z-index:10;
-    background:rgba(255,250,252,.92); color:#f5a623; font-size:30px; padding:8px 24px; border-radius:999px;
-    border:3px solid #fff; box-shadow:0 8px 20px rgba(150,120,180,.3); font-variant-numeric:tabular-nums; }
-  .counter small { color:#9d86e8; font-size:16px; }
-
-  .machine { position:absolute; right:4%; bottom:5%; width:min(360px,42vw); aspect-ratio:1/0.95; z-index:3; }
-  .machine.shake { animation:shake .45s ease; }
-  @keyframes shake { 0%,100%{transform:translate(0,0) rotate(0);} 20%{transform:translate(-6px,3px) rotate(-1.5deg);} 40%{transform:translate(6px,-3px) rotate(1.5deg);} 60%{transform:translate(-4px,2px) rotate(-1deg);} 80%{transform:translate(3px,-1px) rotate(.8deg);} }
-  .body { position:absolute; right:0; bottom:0; width:80%; height:76%; border-radius:12% ; background:linear-gradient(145deg,#c5f0f2,#e7dafc 52%,#ffe1ef); box-shadow:20px 22px 44px rgba(150,120,180,.28),inset 0 4px 0 rgba(255,255,255,.8); border:3px solid #fff; }
-  .base { position:absolute; right:2%; bottom:-1%; width:76%; height:18%; border-radius:0 0 10% 10%; background:linear-gradient(180deg,#d2bdf7,#b49cf0); }
-  .handle { position:absolute; right:16%; top:-1%; width:20%; height:16%; border:12px solid #b9a6f2; border-bottom:none; border-radius:40% 40% 0 0; }
-  .screen { position:absolute; right:8%; bottom:19%; width:40%; height:42%; border-radius:16%; background:linear-gradient(160deg,#cbeefb,#e9ddff); border:3px solid #fff; display:grid; place-items:center; }
-  .ring { width:80%; aspect-ratio:1; border-radius:50%; background:conic-gradient(#ff6aa8 0deg,#ffffffaa 0deg); display:grid; place-items:center; }
-  .ring .inner { width:72%; aspect-ratio:1; border-radius:50%; background:#fffafc; display:grid; place-items:center; color:#ff6aa8; font-size:18px; }
-  .mouth { position:absolute; left:-2%; bottom:19%; width:33%; height:44%; border-radius:22px 10px 10px 22px; background:linear-gradient(180deg,#2c2740,#413a5e); box-shadow:inset 0 0 20px #000a,0 0 0 4px #fff; }
-  .mouth-anchor { position:absolute; left:4%; bottom:42%; width:2px; height:2px; }
-  .sticker { position:absolute; left:2%; top:30%; transform:translateY(-50%); background:#fffafc; color:#ff6aa8; padding:6px 14px; border-radius:999px; font-size:15px; z-index:5; border:2px solid #ff93c0; white-space:nowrap; }
-  .gifter { position:absolute; z-index:8; display:flex; flex-direction:column; align-items:center; gap:4px; opacity:0; transition:opacity .4s; }
-  .gifter .ava { width:54px; height:54px; border-radius:50%; display:grid; place-items:center; color:#fff; font-size:23px; border:3px solid #fff; box-shadow:0 6px 14px rgba(150,120,180,.4); }
-  .gifter .nm { background:#fffafc; color:#ff6aa8; font-size:13px; padding:2px 12px; border-radius:999px; }
+  #fx { position:fixed; inset:0; }
+  .counter { position:fixed; z-index:10; transform:translateX(-50%);
+    background:rgba(255,250,252,.92); color:#f5a623; font-size:26px; padding:6px 20px; border-radius:999px;
+    border:3px solid #fff; box-shadow:0 8px 20px rgba(150,120,180,.3); font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .counter small { color:#9d86e8; font-size:15px; }
+  .gifter { position:fixed; z-index:8; display:flex; flex-direction:column; align-items:center; gap:4px; opacity:0; transform:translate(-50%,8px); transition:opacity .4s, transform .4s; pointer-events:none; }
+  .gifter.show { opacity:1; transform:translate(-50%,0); }
+  .gifter .ava { width:56px; height:56px; border-radius:50%; display:grid; place-items:center; color:#fff; font-size:23px; border:3px solid #fff; box-shadow:0 6px 14px rgba(150,120,180,.4); background-size:cover; background-position:center; }
+  .gifter .nm { background:#fffafc; color:#ff6aa8; font-size:13px; padding:2px 12px; border-radius:999px; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 </style>
 </head>
 <body>
-  <div id="stage">
-    <div class="counter"><span id="dia">0</span> <small>💎</small></div>
-    <canvas id="fx"></canvas>
-    <div class="gifter" id="gifter"><div class="ava" id="gAva">?</div><div class="nm" id="gNm">—</div></div>
-    <div class="machine" id="machine">
-      <div class="handle"></div><div class="body"></div><div class="base"></div>
-      <div class="mouth"></div><div class="mouth-anchor" id="mouthAnchor"></div>
-      <div class="screen"><div class="ring" id="ring"><div class="inner" id="pct">0%</div></div></div>
-      <div class="sticker">♡ COIN JAR</div>
-    </div>
-  </div>
+  <canvas id="fx"></canvas>
+  <div class="counter" id="counter"><span id="dia">0</span> <small>💎</small></div>
+  <div class="gifter" id="gifter"><div class="ava" id="gAva">?</div><div class="nm" id="gNm">—</div></div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="js/overlay-client.js"></script>
   <script>
+  /*
+   * Coin Jar (เครื่องจักร + สายพาน) — ของขวัญจริงออกจากเครื่อง วิ่งบนสายพาน แล้วตกกองบนพื้นด้วยฟิสิกส์
+   * พารามิเตอร์: goal=10000 scale=1 giftScale=1 x=0 y=0 counter=1 reset=1
+   */
   (function () {
-    const $ = (id) => document.getElementById(id);
-    const stage = $('stage'), canvas = $('fx'), ctx = canvas.getContext('2d');
-    const machine = $('machine'), gifter = $('gifter'), mouthA = $('mouthAnchor');
-    const GOAL = parseInt(Overlay.param('goal', '10000'), 10);
-    const cols = ['#ff93c0','#b9a6f2','#8fe3cf','#ffcf5c','#ff6aa8','#9d86e8'];
-    const colOf = (nm) => cols[(nm||'?').charCodeAt(0) % cols.length];
+    const P = (k, d) => Overlay.param(k, d);
+    const num = (k, d) => { const v = parseFloat(P(k, d)); return Number.isFinite(v) ? v : d; };
+    const GOAL = Math.max(1, num('goal', 10000)), SCALE = num('scale', 1), GIFT_SCALE = num('giftScale', 1), OX = num('x', 0), OY = num('y', 0);
+    if (P('counter', '1') === '0') document.getElementById('counter').style.display = 'none';
+
+    const canvas = document.getElementById('fx'), ctx = canvas.getContext('2d');
+    const DPR = Math.min(2, devicePixelRatio || 1);
+    let W = 0, H = 0, S = 1, TX = 0, TY = 0; // แปลงพิกัดออกแบบ (1280x720) -> จอ
+    const DW = 1280, DH = 720, FLOOR = 700;
+
+    // ---- เรขาคณิต (พิกัดออกแบบ) ----
+    const M = { x0: 975, x1: 1195, y0: 380, y1: 640, depth: 30 };   // ตัวเครื่อง (หน้า)
+    const MOUTH = { x0: 985, x1: 1050, y0: 470, y1: 612 };          // ช่องปล่อยของขวัญ
+    const SCREEN = { x0: 1070, x1: 1180, y0: 410, y1: 520 };
+    const BELT_A = { x: 1012, y: 612 }, BELT_B = { x: 640, y: 652 }; // ผิวบนสายพาน (จากเครื่อง -> ปลาย)
+    const BELT_T = 22, BELT_V = 1.9;
+
+    function resize() {
+      W = innerWidth; H = innerHeight;
+      canvas.width = W * DPR; canvas.height = H * DPR; canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+      S = Math.min(W / DW, H / DH) * SCALE;
+      TX = W - DW * S + OX; TY = H - DH * S + OY; // ชิดขวาล่าง
+      const c = toScreen(M.x0 - 150, M.y0 - 10); // ตัวเลขเพชรอยู่ซ้ายบนของเครื่อง (ไม่ทับรูปผู้ส่ง)
+      const counter = document.getElementById('counter'); counter.style.left = c.x + 'px'; counter.style.top = Math.max(4, c.y) + 'px';
+    }
+    const toScreen = (x, y) => ({ x: TX + x * S, y: TY + y * S });
+
+    // ---- ฟิสิกส์ ----
+    const bodies = [], MAX = 600, G = 0.55;
+    const imgCache = {};
+    function giftImg(url) { if (!url || !/^https:\/\//.test(url)) return null; let im = imgCache[url]; if (!im) { im = new Image(); im.src = url; imgCache[url] = im; } return im; }
+    const radiusFor = (d) => 15 * GIFT_SCALE * (1 + Math.min(1, Math.log10((d || 1) + 1) / 4) * 0.9);
+
+    function addBody(g, mode) {
+      const r = radiusFor(g.d);
+      const b = { r, rot: Math.random() * 6.28, img: giftImg(g.u), e: g.e || '🎁', d: g.d || 1, src: g, life: 1, age: 0 };
+      if (mode === 'restore') { b.x = BELT_B.x - 260 + Math.random() * 300; b.y = FLOOR - 200 - Math.random() * 300; }
+      else { b.x = MOUTH.x0 + 18 + Math.random() * 20; b.y = MOUTH.y0 + 40 + Math.random() * 50; }
+      b.px = b.x + (mode === 'restore' ? 0 : 1.5 + Math.random()); b.py = b.y;
+      bodies.push(b);
+      const alive = bodies.filter((k) => !k.dying);
+      if (alive.length > MAX) alive[0].dying = true; // กันเครื่องช้าเท่านั้น
+    }
+
+    // ระยะจากจุดถึงเส้นตรง A-B
+    function segInfo(px, py, A, B) {
+      const vx = B.x - A.x, vy = B.y - A.y, len2 = vx * vx + vy * vy;
+      let t = ((px - A.x) * vx + (py - A.y) * vy) / len2; t = Math.max(0, Math.min(1, t));
+      const cx = A.x + vx * t, cy = A.y + vy * t, dx = px - cx, dy = py - cy;
+      return { t, dx, dy, dist: Math.hypot(dx, dy) };
+    }
+    const beltCA = { x: BELT_A.x, y: BELT_A.y + BELT_T / 2 }, beltCB = { x: BELT_B.x, y: BELT_B.y + BELT_T / 2 };
+    const beltLen = Math.hypot(BELT_B.x - BELT_A.x, BELT_B.y - BELT_A.y);
+    const beltDir = { x: (BELT_B.x - BELT_A.x) / beltLen, y: (BELT_B.y - BELT_A.y) / beltLen };
+
+    function constrain(b) {
+      // สายพาน = แคปซูลหนา BELT_T
+      const s = segInfo(b.x, b.y, beltCA, beltCB), lim = b.r + BELT_T / 2;
+      if (s.dist < lim && s.dist > 0) {
+        const nx = s.dx / s.dist, ny = s.dy / s.dist, k = lim - s.dist;
+        b.x += nx * k; b.y += ny * k;
+        if (ny < -0.5) { // อยู่บนสายพาน → ถูกพาไปทางปลาย
+          const vx = b.x - b.px, vy = b.y - b.py, along = vx * beltDir.x + vy * beltDir.y;
+          const dv = (BELT_V - along) * 0.25;
+          b.px -= beltDir.x * dv; b.py -= beltDir.y * dv;
+        }
+      }
+      // ตัวเครื่อง (ยกเว้นช่องปล่อย)
+      const inMouthZone = b.x < MOUTH.x1 && b.y > MOUTH.y0 && b.y < MOUTH.y1;
+      if (!inMouthZone && b.x + b.r > M.x0 && b.x - b.r < M.x1 + M.depth && b.y + b.r > M.y0 - M.depth) {
+        const pl = b.x + b.r - M.x0, pt = b.y + b.r - (M.y0 - M.depth);
+        if (pl < pt) b.x -= pl; else b.y -= pt;
+      }
+      if (inMouthZone && b.x + b.r > MOUTH.x1) b.x = MOUTH.x1 - b.r;
+      // พื้น + ขอบจอ
+      if (b.y + b.r > FLOOR) { b.y = FLOOR - b.r; b.px = b.x - (b.x - b.px) * 0.5; } // แรงเสียดทานพื้น → กองเป็นภูเขา
+      const left = -TX / S, right = (W - TX) / S;
+      if (b.x - b.r < left) b.x = left + b.r;
+      if (b.x + b.r > right) b.x = right - b.r;
+    }
+
+    function step() {
+      const VMAX = 14;
+      for (const b of bodies) {
+        const vx = Math.max(-VMAX, Math.min(VMAX, (b.x - b.px) * 0.985)), vy = Math.max(-VMAX, Math.min(VMAX, (b.y - b.py) * 0.985));
+        b.px = b.x; b.py = b.y; b.x += vx; b.y += vy + G; b.rot += vx / b.r; b.age++;
+      }
+      for (let it = 0; it < 4; it++) {
+        for (let i = 0; i < bodies.length; i++) {
+          const a = bodies[i];
+          for (let j = i + 1; j < bodies.length; j++) {
+            const c = bodies[j], dx = c.x - a.x, dy = c.y - a.y, min = a.r + c.r;
+            if (Math.abs(dx) > min || Math.abs(dy) > min) continue;
+            const d2 = dx * dx + dy * dy;
+            if (d2 >= min * min || d2 === 0) continue;
+            const d = Math.sqrt(d2), push = (min - d) / d * 0.5;
+            a.x -= dx * push; a.y -= dy * push; c.x += dx * push; c.y += dy * push;
+            if (dy * dy > dx * dx * 0.5) { const f = 0.08; a.px += (a.x - a.px) * f; c.px += (c.x - c.px) * f; } // ทับกัน → หน่วงให้กองนิ่ง
+          }
+        }
+        for (const b of bodies) constrain(b);
+      }
+      for (let i = bodies.length - 1; i >= 0; i--) {
+        const b = bodies[i];
+        if (b.dying) { b.life -= 0.04; if (b.life <= 0) { bodies.splice(i, 1); save(); } }
+      }
+    }
+
+    // ---- วาด ----
+    let beltOffset = 0, shakeT = 0, screenImg = null, screenEmoji = '🎁';
+    function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+    function drawBelt() {
+      const a = BELT_A, b = BELT_B;
+      // ขา
+      ctx.lineCap = 'round';
+      for (const t of [0.15, 0.55, 0.92]) {
+        const x = a.x + (b.x - a.x) * t, y = a.y + (b.y - a.y) * t + BELT_T;
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, FLOOR - 6); ctx.lineWidth = 7; ctx.strokeStyle = '#f4a9c7'; ctx.stroke();
+        rr(x - 9, FLOOR - 10, 18, 8, 4); ctx.fillStyle = '#8fe3cf'; ctx.fill();
+      }
+      // ตัวสายพาน
+      ctx.beginPath(); ctx.moveTo(beltCA.x, beltCA.y); ctx.lineTo(beltCB.x, beltCB.y);
+      ctx.lineWidth = BELT_T + 10; ctx.strokeStyle = '#f7bcd6'; ctx.stroke();
+      ctx.lineWidth = BELT_T; ctx.strokeStyle = '#3b3550'; ctx.stroke();
+      // ลายสายพานเลื่อน
+      ctx.setLineDash([10, 12]); ctx.lineDashOffset = -beltOffset;
+      ctx.lineWidth = BELT_T - 8; ctx.strokeStyle = '#4d4666'; ctx.stroke();
+      ctx.setLineDash([]);
+      // ลูกกลิ้ง
+      for (let i = 0; i <= 4; i++) {
+        const t = i / 4, x = beltCA.x + (beltCB.x - beltCA.x) * t, y = beltCA.y + (beltCB.y - beltCA.y) * t + BELT_T / 2 + 6;
+        ctx.beginPath(); ctx.arc(x, y, 9, 0, 6.2832);
+        const g = ctx.createRadialGradient(x - 3, y - 3, 1, x, y, 9); g.addColorStop(0, '#ffffff'); g.addColorStop(1, '#b99fe6');
+        ctx.fillStyle = g; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#8f7bc0'; ctx.stroke();
+        ctx.save(); ctx.translate(x, y); ctx.rotate(-beltOffset / 9); ctx.beginPath(); ctx.moveTo(-6, 0); ctx.lineTo(6, 0); ctx.strokeStyle = '#8f7bc0'; ctx.stroke(); ctx.restore();
+      }
+    }
+    function drawMachine() {
+      const { x0, x1, y0, y1, depth: d } = M, w = x1 - x0, h = y1 - y0;
+      let sx = 0, sy = 0;
+      if (shakeT > 0) { sx = (Math.random() - .5) * 4; sy = (Math.random() - .5) * 3; }
+      ctx.save(); ctx.translate(sx, sy);
+      // เงา
+      ctx.beginPath(); ctx.ellipse(x0 + w / 2 + d / 2, FLOOR - 2, w * .62, 12, 0, 0, 6.2832); ctx.fillStyle = 'rgba(120,90,160,.18)'; ctx.fill();
+      // ขา
+      for (const fx of [x0 + 22, x1 - 22]) { rr(fx - 14, y1, 28, FLOOR - y1 - 2, 8); ctx.fillStyle = '#b9a6f2'; ctx.fill(); }
+      // ด้านข้าง
+      ctx.beginPath(); ctx.moveTo(x1, y0); ctx.lineTo(x1 + d, y0 - d); ctx.lineTo(x1 + d, y1 - d); ctx.lineTo(x1, y1); ctx.closePath();
+      ctx.fillStyle = '#c9b6f5'; ctx.fill();
+      // ด้านบน
+      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0 + d, y0 - d); ctx.lineTo(x1 + d, y0 - d); ctx.lineTo(x1, y0); ctx.closePath();
+      ctx.fillStyle = '#ffe1ef'; ctx.fill();
+      // หูหิ้ว
+      ctx.beginPath(); ctx.moveTo(x0 + 70, y0 - d / 2); ctx.lineTo(x0 + 70, y0 - 62); ctx.quadraticCurveTo(x0 + 70, y0 - 82, x0 + 92, y0 - 82);
+      ctx.lineTo(x0 + 128, y0 - 82); ctx.quadraticCurveTo(x0 + 150, y0 - 82, x0 + 150, y0 - 62); ctx.lineTo(x0 + 150, y0 - d / 2);
+      ctx.lineWidth = 16; ctx.lineCap = 'round'; ctx.strokeStyle = '#b9a6f2'; ctx.stroke();
+      // หน้า
+      rr(x0, y0, w, h, 26);
+      const g = ctx.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, '#c5f0f2'); g.addColorStop(.5, '#e7dafc'); g.addColorStop(1, '#ffe1ef');
+      ctx.fillStyle = g; ctx.fill(); ctx.lineWidth = 4; ctx.strokeStyle = '#ffffff'; ctx.stroke();
+      // แถบฐาน
+      rr(x0 + 8, y1 - 34, w - 16, 26, 12); ctx.fillStyle = '#d2bdf7'; ctx.fill();
+      // ช่องปล่อย
+      rr(MOUTH.x0, MOUTH.y0, MOUTH.x1 - MOUTH.x0, MOUTH.y1 - MOUTH.y0, 18);
+      const mg = ctx.createLinearGradient(0, MOUTH.y0, 0, MOUTH.y1); mg.addColorStop(0, '#2c2740'); mg.addColorStop(1, '#4a4268');
+      ctx.fillStyle = mg; ctx.fill(); ctx.lineWidth = 5; ctx.strokeStyle = '#ffffff'; ctx.stroke();
+      // จอ
+      rr(SCREEN.x0, SCREEN.y0, SCREEN.x1 - SCREEN.x0, SCREEN.y1 - SCREEN.y0, 18);
+      const sg = ctx.createLinearGradient(0, SCREEN.y0, 0, SCREEN.y1); sg.addColorStop(0, '#d9f4ff'); sg.addColorStop(1, '#efe4ff');
+      ctx.fillStyle = sg; ctx.fill(); ctx.lineWidth = 4; ctx.strokeStyle = '#ffffff'; ctx.stroke();
+      const scx = (SCREEN.x0 + SCREEN.x1) / 2, scy = (SCREEN.y0 + SCREEN.y1) / 2 - 6;
+      if (screenImg && screenImg.complete && screenImg.naturalWidth) ctx.drawImage(screenImg, scx - 32, scy - 32, 64, 64);
+      else { ctx.font = '44px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(screenEmoji, scx, scy); }
+      // แถบเป้าหมาย
+      const pct = Math.min(1, diamonds / GOAL);
+      rr(SCREEN.x0 + 12, SCREEN.y1 - 20, SCREEN.x1 - SCREEN.x0 - 24, 10, 5); ctx.fillStyle = 'rgba(157,134,232,.25)'; ctx.fill();
+      if (pct > 0) { rr(SCREEN.x0 + 12, SCREEN.y1 - 20, (SCREEN.x1 - SCREEN.x0 - 24) * pct, 10, 5); ctx.fillStyle = '#ff6aa8'; ctx.fill(); }
+      // ปุ่ม
+      [['#ff93c0', 0], ['#8fe3cf', 1], ['#ffcf5c', 2]].forEach(([c, i]) => { ctx.beginPath(); ctx.arc(SCREEN.x0 + 22 + i * 30, SCREEN.y1 + 32, 9, 0, 6.2832); ctx.fillStyle = c; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke(); });
+      // ป้าย
+      rr(x0 + 14, y0 + 14, 120, 30, 15); ctx.fillStyle = '#fffafc'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#ff93c0'; ctx.stroke();
+      ctx.font = '16px Itim, sans-serif'; ctx.fillStyle = '#ff6aa8'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('♡ VJLiveKit', x0 + 74, y0 + 30);
+      ctx.restore();
+    }
+    function drawBody(b) {
+      ctx.save(); ctx.globalAlpha = b.life; ctx.translate(b.x, b.y); ctx.rotate(b.rot);
+      if (b.img && b.img.complete && b.img.naturalWidth) { const s = b.r * 2.2; ctx.drawImage(b.img, -s / 2, -s / 2, s, s); }
+      else {
+        const r = b.r, g = ctx.createRadialGradient(-r * .3, -r * .3, r * .2, 0, 0, r);
+        g.addColorStop(0, '#fff6cf'); g.addColorStop(.55, '#ffcf5c'); g.addColorStop(1, '#f5a623');
+        ctx.beginPath(); ctx.arc(0, 0, r, 0, 6.2832); ctx.fillStyle = g; ctx.fill();
+        ctx.font = Math.round(r * 1.2) + 'px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(b.e, 0, 1);
+      }
+      ctx.restore();
+    }
+
+    // ฟิสิกส์เดินตามเวลาจริง (ชดเชยเฟรมที่หาย เช่น OBS ซ่อน source)
+    let lastT = performance.now(), acc = 0;
+    function tick() {
+      const now = performance.now(); acc += Math.min(4000, now - lastT); lastT = now;
+      let n = 0; while (acc >= 16.7 && n < 240) { step(); beltOffset += BELT_V; if (shakeT > 0) shakeT--; acc -= 16.7; n++; }
+      if (n === 240) acc = 0;
+    }
+    setInterval(() => { if (document.hidden) tick(); }, 250);
+    function frame() {
+      tick();
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H);
+      ctx.translate(TX, TY); ctx.scale(S, S);
+      drawBelt();
+      for (const b of bodies) drawBody(b);
+      drawMachine();
+      requestAnimationFrame(frame);
+    }
+
+    // ---- ตัวเลข / ผู้ส่ง ----
     let diamonds = 0;
+    const $dia = document.getElementById('dia'), $gifter = document.getElementById('gifter'), $ava = document.getElementById('gAva'), $nm = document.getElementById('gNm');
+    const cols = ['#ff93c0', '#b9a6f2', '#8fe3cf', '#ffcf5c', '#ff6aa8', '#9d86e8'];
+    function updateDia() { $dia.textContent = Overlay.fmt(diamonds); }
+    let gifterT = null;
+    function showGifter(user) {
+      const nm = (user && (user.nickname || user.uniqueId)) || 'ผู้ชม';
+      const ava = user && /^https:\/\//.test(user.avatar || '') ? user.avatar : '';
+      $ava.style.backgroundImage = ava ? `url("${ava.replace(/"/g, '')}")` : '';
+      $ava.style.backgroundColor = ava ? '#fff' : cols[nm.charCodeAt(0) % cols.length];
+      $ava.textContent = ava ? '' : nm[0];
+      $nm.textContent = nm;
+      const p = toScreen((SCREEN.x0 + SCREEN.x1) / 2, M.y0 - 130);
+      $gifter.style.left = p.x + 'px'; $gifter.style.top = Math.max(4, p.y) + 'px';
+      $gifter.classList.add('show'); clearTimeout(gifterT); gifterT = setTimeout(() => $gifter.classList.remove('show'), 2800);
+    }
 
-    let DPR = Math.min(2, devicePixelRatio||1), W=0, H=0;
-    function resize(){ W=stage.clientWidth; H=stage.clientHeight; canvas.width=W*DPR; canvas.height=H*DPR; canvas.style.width=W+'px'; canvas.style.height=H+'px'; ctx.setTransform(DPR,0,0,DPR,0,0); }
-    addEventListener('resize', resize); resize();
-    const at = (el)=>{ const s=stage.getBoundingClientRect(), r=el.getBoundingClientRect(); return {x:r.left-s.left+r.width/2, y:r.top-s.top+r.height/2}; };
+    // ---- จำกองไว้ (รีเฟรช OBS แล้วกองเดิมกลับมา) ----
+    const KEY = 'vjl-coinjar2:' + (P('t', '') || P('username', 'demo')).slice(-24);
+    let saveT = null;
+    function save() { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(bodies.filter((b) => !b.dying).map((b) => b.src))); } catch { /* storage ปิด */ } }, 500); }
+    function restore() {
+      if (P('reset', '0') === '1') { try { localStorage.removeItem(KEY); } catch { /* ignore */ } return false; }
+      try { const list = JSON.parse(localStorage.getItem(KEY) || '[]'); list.slice(-MAX).forEach((g, i) => setTimeout(() => addBody(g, 'restore'), i * 6)); return list.length > 0; }
+      catch { return false; }
+    }
 
-    // ของขวัญกองค้างไว้เป็นภูเขา (heightmap ต่อคอลัมน์) — เกิน MAX_COINS ค่อยจางชิ้นเก่าสุดออก
-    const G=0.55, coins=[], conf=[], MAX_COINS=220, COL=22;
-    let heights={};
-    const imgCache={};
-    function giftImg(url){ if(!url) return null; let im=imgCache[url]; if(!im){ im=new Image(); im.src=url; imgCache[url]=im; } return im; }
-    const floorY=()=>H-H*0.12, colAt=(x)=>Math.max(0,Math.floor(x/COL));
-    const landY=(x)=>floorY()-(heights[colAt(x)]||0);
-    // ไหลลงเนินไปคอลัมน์ที่ต่ำกว่า (ไม่เลยปากเครื่องไปทางขวา) → กองเป็นภูเขาลาดเอียง
-    function settle(c){ let k=colAt(c.x); const h=(i)=>heights[i]||0, maxK=colAt(at(mouthA).x), step=c.size*0.5;
-      for(let n=0;n<60;n++){ if(k>0 && h(k-1)+step<h(k)) k--; else if(k<maxK && h(k+1)+step<h(k)) k++; else break; }
-      c.x=k*COL+COL/2+(Math.random()-.5)*6; c.y=floorY()-h(k)-c.size*0.4; heights[k]=h(k)+c.size*0.55;
-      c.col=k; c.settled=true; c.vr=0; }
-    function spawnCoin(emoji, imgUrl, preSettled){ const m=at(mouthA); const size=26+Math.random()*8;
-      const c={x:m.x,y:m.y,vx:-(2.2+Math.random()*3.3),vy:-(6+Math.random()*5),rot:Math.random()*6.28,vr:(Math.random()-.5)*.5,size,emoji,img:giftImg(imgUrl),u:imgUrl||'',settled:false,life:1};
-      if(preSettled){ c.x=16+Math.random()*Math.max(40,m.x-40); c.rot=(Math.random()-.5)*.8; settle(c); }
-      coins.push(c);
-      if(coins.filter(k=>!k.dying).length>MAX_COINS){ const old=coins.find(k=>k.settled&&!k.dying); if(old) old.dying=true; }
-      save(); }
-    // จำของขวัญในกองไว้ (รีเฟรช OBS แล้วกองเดิมพร้อมรูปของขวัญจริงกลับมา) — ?reset=1 เพื่อล้าง
-    const KEY='vjl-coinjar:'+(Overlay.param('t','')||Overlay.param('username','demo')).slice(-24);
-    let saveT=null;
-    function save(){ clearTimeout(saveT); saveT=setTimeout(()=>{ try{ localStorage.setItem(KEY, JSON.stringify(coins.filter(k=>!k.dying).map(k=>({e:k.emoji,u:k.u})))); }catch{ /* storage ปิดอยู่ */ } },500); }
-    function restore(){ if(Overlay.param('reset','0')==='1'){ try{ localStorage.removeItem(KEY); }catch{} return false; }
-      try{ const list=JSON.parse(localStorage.getItem(KEY)||'[]'); list.slice(-MAX_COINS).forEach(g=>spawnCoin(g.e,g.u,true)); return list.length>0; }catch{ return false; } }
-    // ขนาดจอเปลี่ยน (เช่น ปรับ Browser Source ใน OBS) → จัดกองใหม่
-    addEventListener('resize', ()=>{ heights={}; coins.filter(c=>c.settled&&!c.dying).forEach(settle); });
-    function spawnConf(n){ const m=at(mouthA); for(let i=0;i<n;i++) conf.push({x:m.x,y:m.y,vx:(Math.random()-.5)*12,vy:-(3+Math.random()*8),rot:Math.random()*6.28,vr:(Math.random()-.5)*.8,w:6+Math.random()*5,h:9+Math.random()*6,c:cols[Math.floor(Math.random()*cols.length)],life:1}); }
-    function loop(){ ctx.clearRect(0,0,W,H);
-      for(let i=coins.length-1;i>=0;i--){ const c=coins[i];
-        if(!c.settled){ c.vy+=G; c.x+=c.vx; c.y+=c.vy; c.rot+=c.vr; if(c.x<16){c.x=16;c.vx*=-.5;}
-          const ly=landY(c.x)-c.size*0.4;
-          if(c.y>=ly){ c.y=ly; c.vy*=-.42; c.vx*=.7; c.vr*=.6; if(Math.abs(c.vy)<1.6) settle(c); } }
-        else if(c.dying){ c.life-=0.03; if(c.life<=0){ heights[c.col]=Math.max(0,(heights[c.col]||0)-c.size*0.55); coins.splice(i,1); continue; } }
-        ctx.save(); ctx.globalAlpha=c.life; ctx.translate(c.x,c.y); ctx.rotate(c.rot); const r=c.size/2;
-        if(c.img && c.img.complete && c.img.naturalWidth){ const s=c.size*1.25; ctx.drawImage(c.img,-s/2,-s/2,s,s); ctx.restore(); continue; }
-        const g=ctx.createRadialGradient(-r*.3,-r*.3,r*.2,0,0,r); g.addColorStop(0,'#fff6cf'); g.addColorStop(.55,'#ffcf5c'); g.addColorStop(1,'#f5a623');
-        ctx.beginPath(); ctx.arc(0,0,r,0,6.2832); ctx.fillStyle=g; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle='rgba(255,255,255,.7)'; ctx.stroke();
-        ctx.rotate(-c.rot); ctx.font=Math.round(c.size*.62)+'px serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(c.emoji,0,1); ctx.restore(); }
-      for(let i=conf.length-1;i>=0;i--){ const p=conf[i]; p.vy+=.35; p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr; p.life-=.012; if(p.life<=0||p.y>H+20){conf.splice(i,1);continue;}
-        ctx.save(); ctx.globalAlpha=Math.max(0,p.life); ctx.translate(p.x,p.y); ctx.rotate(p.rot); ctx.fillStyle=p.c; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h); ctx.restore(); }
-      requestAnimationFrame(loop); }
-    requestAnimationFrame(loop);
+    const EMOJI = { Rose: '🌹', 'Finger Heart': '🫰', Perfume: '🧴', Galaxy: '🌌', Lion: '🦁', Universe: '🪐', Heart: '❤️', TikTok: '🎵' };
+    function onGift(e) {
+      const count = e.repeatCount || 1, unit = e.diamondCount || 0, value = e.totalValue || unit * count;
+      diamonds += value; updateDia(); shakeT = 24; showGifter(e.user);
+      screenImg = giftImg(e.giftImage); screenEmoji = EMOJI[e.giftName] || '🎁';
+      const g = { u: e.giftImage || '', e: screenEmoji, d: unit };
+      for (let i = 0; i < Math.min(count, 30); i++) setTimeout(() => { addBody(g); save(); }, i * 160);
+    }
 
-    function updateDia(){ $('dia').textContent=(diamonds||0).toLocaleString('en-US'); const pct=Math.min(100,diamonds/GOAL*100); $('pct').textContent=pct.toFixed(0)+'%'; $('ring').style.background=`conic-gradient(#ff6aa8 ${pct*3.6}deg,#ffffffaa 0deg)`; }
-    function showGifter(nm){ $('gAva').style.background=colOf(nm); $('gAva').textContent=(nm||'?')[0]; $('gNm').textContent=nm;
-      const s=stage.getBoundingClientRect(), m=machine.getBoundingClientRect(); gifter.style.left=(m.left-s.left+m.width*.3)+'px'; gifter.style.top=Math.max(4,m.top-s.top-30)+'px'; gifter.style.opacity='1'; clearTimeout(gifter._t); gifter._t=setTimeout(()=>gifter.style.opacity='0',2600); }
-    function shake(){ machine.classList.remove('shake'); void machine.offsetWidth; machine.classList.add('shake'); }
-
-    const EMOJI = { Rose:'🌹','Finger Heart':'🫰',Perfume:'🧴',Galaxy:'🌌',Lion:'🦁',Universe:'🪐' };
-    function onGift(nm, giftName, value, count, imgUrl){ diamonds+=value; updateDia(); shake(); showGifter(nm);
-      const emoji=EMOJI[giftName]||'🎁'; const n=Math.min((count||1)+(value>=1000?10:2), value>=1000?16:6);
-      for(let i=0;i<n;i++) setTimeout(spawnCoin, i*70, emoji, imgUrl); if(value>=1000) spawnConf(40); }
-
-    // เปิด/รีเฟรช overlay กลางไลฟ์ → เติมกองตามยอดเพชรที่สะสมแล้ว
-    let prefilled=false;
-    // หน้าแรกที่ยังไม่มีของในความจำ → เติมกองตามยอดเพชร (เป็นเหรียญ เพราะไม่รู้ว่าเป็นของขวัญอะไร)
-    setTimeout(()=>{ if(restore()) prefilled=true; },0);
-    function prefill(total){ if(prefilled) return; prefilled=true; if(!total || coins.length) return;
-      const n=Math.min(Math.round(MAX_COINS*0.6), Math.ceil(Math.sqrt(total)*2));
-      for(let i=0;i<n;i++) spawnCoin('🪙', null, true); }
-    function onStats(s){ if(s && typeof s.diamondCount==='number'){ diamonds=s.diamondCount; updateDia(); prefill(diamonds); } }
-
-    // ---- ต่ออีเวนต์จริงจากเซิร์ฟเวอร์ ----
-    Overlay.on('event', (e)=>{ if(e.type==='gift' && !e.streaking){ prefilled=true; const v=e.totalValue||(e.diamondCount||0)*(e.repeatCount||1); onGift(e.user?.nickname||e.user?.uniqueId, e.giftName, v, e.repeatCount, e.giftImage); } });
-    Overlay.on('state', (s)=>onStats(s && s.stats));
+    let prefilled = false;
+    function onStats(s) {
+      if (!s || typeof s.diamondCount !== 'number') return;
+      diamonds = s.diamondCount; updateDia();
+      if (prefilled) return; prefilled = true;
+      // ไม่มีกองในความจำแต่ไลฟ์มีเพชรแล้ว → เติมเหรียญตามยอด
+      if (!bodies.length && diamonds > 0) for (let i = 0; i < Math.min(120, Math.ceil(Math.sqrt(diamonds) * 2)); i++) addBody({ u: '', e: '🪙', d: 1 }, 'restore');
+    }
+    Overlay.on('event', (e) => { if (e.type === 'gift' && !e.streaking) { prefilled = true; onGift(e); } });
+    Overlay.on('state', (s) => onStats(s && s.stats));
     Overlay.on('stats', onStats);
 
-    // ---- demo fallback (เมื่อเปิดไฟล์ตรง ๆ ไม่ได้ต่อเซิร์ฟเวอร์) ----
-    if (!Overlay.connected) {
-      const names=['somchai','mimi','บิ๊ก','lisa','ต้นน้ำ']; const gifts=[['Rose',1],['Finger Heart',5],['Perfume',20],['Galaxy',1000],['Lion',2999]];
-      setInterval(()=>{ const g=gifts[Math.floor(Math.random()*gifts.length)]; const c=g[1]>=1000?1:1+Math.floor(Math.random()*3); onGift(names[Math.floor(Math.random()*names.length)], g[0], g[1]*c, c); }, 1600);
-    }
+    addEventListener('resize', resize); resize();
+    if (restore()) prefilled = true;
     updateDia();
+    requestAnimationFrame(frame);
+
+    // ---- เดโม (เปิดไฟล์ตรง ๆ / ?demo=1) ----
+    if (!Overlay.connected) {
+      const names = ['somchai', 'mimi', 'บิ๊ก', 'lisa', 'ต้นน้ำ'];
+      const gifts = [['Rose', 1], ['Finger Heart', 5], ['Perfume', 20], ['TikTok', 1], ['Galaxy', 1000], ['Lion', 2999]];
+      setInterval(() => {
+        const g = gifts[Math.floor(Math.random() * gifts.length)], nm = names[Math.floor(Math.random() * names.length)];
+        onGift({ type: 'gift', user: { uniqueId: nm, nickname: nm, avatar: '' }, giftName: g[0], diamondCount: g[1], repeatCount: g[1] >= 1000 ? 1 : 1 + Math.floor(Math.random() * 3) });
+      }, 1500);
+    }
   })();
   </script>
 </body>

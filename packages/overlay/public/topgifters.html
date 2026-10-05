@@ -31,7 +31,7 @@
   <script>
   (function(){
     // ?max=5 จำนวนอันดับ  ?label=หัวข้อ
-    // นับเพชรสะสมตั้งแต่เปิด overlay (รีเฟรช = เริ่มใหม่)
+    // นับเพชรสะสมตลอดไลฟ์ (เซิร์ฟเวอร์จำไว้ — รีเฟรชแล้วไม่หาย)
     const MAX=Math.max(1,Math.min(20,parseInt(Overlay.param('max','5'),10)||5));
     document.getElementById('title').textContent=Overlay.param('label','🏆 Top Gifters');
     const cols=['#ff93c0','#b9a6f2','#8fe3cf','#ffcf5c','#ff6aa8','#9d86e8']; const colOf=(nm)=>cols[(nm||'?').charCodeAt(0)%cols.length];
@@ -59,6 +59,9 @@
       const cur=totals.get(id)||{nm:user?(user.nickname||user.uniqueId):'ผู้ชม',avatar:user&&user.avatar,value:0};
       cur.value+=value; totals.set(id,cur); render(id);
     }
+    // เปิด/รีเฟรชกลางไลฟ์ → เซิร์ฟเวอร์ส่งอันดับที่สะสมมาตั้งแต่เริ่มไลฟ์
+    Overlay.on('state',(s)=>{ if(!s||!Array.isArray(s.topGifters)) return; totals.clear();
+      s.topGifters.forEach((g)=>totals.set(g.uniqueId||g.nickname,{nm:g.nickname||g.uniqueId,avatar:g.avatar,value:g.value})); render(); });
     Overlay.on('event',(e)=>{ if(e.type==='gift'&&!e.streaking) add(e.user, e.totalValue||(e.diamondCount||0)*(e.repeatCount||1)); });
     if(!Overlay.connected){ const names=['mimi','บิ๊ก','lisa','ต้นน้ำ','somchai','เฟิร์น','gamer_x']; const vals=[1,5,20,99,1000];
       setInterval(()=>{ const nm=names[Math.floor(Math.random()*names.length)]; add({uniqueId:nm,nickname:nm}, vals[Math.floor(Math.random()*vals.length)]); }, 1400); }

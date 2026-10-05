@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events';
 import { config } from '../config/index.js';
-import { emptyStats, type LiveStats, type NormalizedUser, type TikTokEvent, type TikTokEventType } from './types.js';
+import { emptyStats, type LiveStats, type NormalizedUser, type TikTokEvent, type TikTokEventType, type TopGifter } from './types.js';
 
 // tiktok-live-connector v2 เป็น ESM — โหลดแบบ optional (dynamic import) เพื่อให้ DEMO_MODE ทำงานได้แม้ยังไม่ติดตั้ง
 let TikTokLiveConnection: any = null;
@@ -32,6 +32,8 @@ export class TikTokRoom extends EventEmitter {
   private mockTimer: NodeJS.Timeout | null = null;
   private connected = false;
   stats: LiveStats = emptyStats();
+  // อันดับผู้ให้ของขวัญตลอดไลฟ์ (overlay ที่เปิด/รีเฟรชกลางไลฟ์ได้อันดับครบทันที)
+  private gifters = new Map<string, TopGifter>();
 
   constructor(username: string) {
     super();
@@ -46,12 +48,25 @@ export class TikTokRoom extends EventEmitter {
   }
 
   isConnected(): boolean { return this.connected; }
-  getState() { return { connected: this.connected, username: this.username, stats: this.stats }; }
+  getState() { return { connected: this.connected, username: this.username, stats: this.stats, topGifters: this.topGifters() }; }
+
+  topGifters(limit = 20): TopGifter[] {
+    return [...this.gifters.values()].sort((a, b) => b.value - a.value).slice(0, limit);
+  }
+
+  private addGifter(user: NormalizedUser, value: number): void {
+    if (!value) return;
+    const id = user.uniqueId || user.userId || user.nickname;
+    const cur = this.gifters.get(id) ?? { uniqueId: user.uniqueId, nickname: user.nickname, avatar: user.avatar, value: 0 };
+    cur.value += value; cur.nickname = user.nickname || cur.nickname; cur.avatar = user.avatar || cur.avatar;
+    this.gifters.set(id, cur);
+  }
 
   async connect(demo = config.demoMode): Promise<void> {
     await this.disconnect();
     this.stats = emptyStats();
     this.seenMsgIds.clear();
+    this.gifters.clear();
     if (demo || !TikTokLiveConnection) return this.startDemo();
     return this.connectReal();
   }
@@ -128,6 +143,7 @@ export class TikTokRoom extends EventEmitter {
         if (streak && !streakEnd) { this.send('gift', { user, giftName, giftId, giftImage, repeatCount: count, diamondCount: diamonds, streaking: true }); return; }
         const value = diamonds * count;
         this.stats.giftCount += count; this.stats.diamondCount += value;
+        this.addGifter(user, value);
         this.send('gift', { user, giftName, giftId, giftImage, repeatCount: count, diamondCount: diamonds, totalValue: value, streaking: false });
         break;
       }
@@ -163,7 +179,7 @@ export class TikTokRoom extends EventEmitter {
       const r = Math.random();
       if (r < 0.45) { this.stats.chatCount++; this.send('chat', { user: mockUser(), comment: pick(comments) }); }
       else if (r < 0.7) { const inc = 1 + Math.floor(Math.random() * 15); this.stats.likeCount += inc; this.send('like', { user: mockUser(), likeCount: inc, total: this.stats.likeCount }); }
-      else if (r < 0.85) { const g = pick(gifts); const count = g.d >= 1000 ? 1 : 1 + Math.floor(Math.random() * 3); const value = g.d * count; this.stats.giftCount += count; this.stats.diamondCount += value; this.send('gift', { user: mockUser(), giftName: g.name, repeatCount: count, diamondCount: g.d, totalValue: value, streaking: false }); }
+      else if (r < 0.85) { const g = pick(gifts); const count = g.d >= 1000 ? 1 : 1 + Math.floor(Math.random() * 3); const value = g.d * count; this.stats.giftCount += count; this.stats.diamondCount += value; const u = mockUser(); this.addGifter(u, value); this.send('gift', { user: u, giftName: g.name, repeatCount: count, diamondCount: g.d, totalValue: value, streaking: false }); }
       else if (r < 0.93) { this.stats.followCount++; this.send('follow', { user: mockUser() }); }
       else if (r < 0.97) { this.stats.shareCount++; this.send('share', { user: mockUser() }); }
       else this.send('member', { user: mockUser() });

@@ -30,6 +30,13 @@ export interface TikTokEvent {
   viewerCount?: number;
 }
 
+export interface TopGifter {
+  uniqueId: string;
+  nickname: string;
+  avatar: string;
+  value: number; // เพชรรวม
+}
+
 export interface LiveStats {
   viewerCount: number;
   likeCount: number;

@@ -57,6 +57,26 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
       ] },
     ],
   },
+  garden: {
+    resettable: 'ล้างดอกไม้ทั้งหมด',
+    sections: [
+      { title: 'ต้นไม้', fields: [
+        { key: 'sway', label: 'ความแรงลม (กิ่งแกว่ง)', type: 'range', min: 0, max: 3, step: 0.1, def: 1, hint: '0 = นิ่ง' },
+        { key: 'big', label: 'ของขวัญที่เป็นดอกใหญ่บนยอด ตั้งแต่ (เหรียญ)', type: 'number', min: 1, def: 1000 },
+        { key: 'pot', label: 'สีกระถาง', type: 'color', def: '#f3e6cc' },
+        { key: 'minCoins', label: 'รับเฉพาะของขวัญตั้งแต่ (เหรียญ)', type: 'number', min: 0, def: 0 },
+      ] },
+      { title: 'ขนาดและตำแหน่ง', fields: [
+        size(),
+        { key: 'flowerScale', label: 'ขนาดดอกไม้', type: 'range', min: 0.5, max: 2.5, step: 0.05, def: 1, unit: '×' },
+        ...pos(),
+      ] },
+      { title: 'การแสดงผล', fields: [
+        { key: 'alert', label: 'แสดงชื่อผู้ส่ง', type: 'toggle', def: true },
+        { key: 'board', label: 'แสดงผู้ให้สูงสุดใต้กระถาง', type: 'toggle', def: true },
+      ] },
+    ],
+  },
   coinjar: {
     resettable: 'ล้างกองของขวัญ',
     sections: [

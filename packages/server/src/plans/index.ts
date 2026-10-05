@@ -44,7 +44,7 @@ export const PLAN_DEFS: PlanDef[] = [
       : { widgets: ['coinjar', 'alerts', 'goal', 'chat', 'follower'], maxActionRules: 3, maxTokens: 2, noWatermark: false },
   },
   {
-    code: 'pro', name: 'Pro', priceCents: 24900, currency: 'thb', // 249 บาท/เดือน (เดือนแรกฟรี — ดู TRIAL_DAYS)
+    code: 'pro', name: 'Pro', priceCents: 19900, currency: 'thb', // 199 บาท/เดือน (เดือนแรกฟรี — ดู TRIAL_DAYS)
     features: {
       widgets: [...WIDGET_TYPES],
       maxActionRules: 100, maxTokens: 20, noWatermark: true,

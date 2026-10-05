@@ -73,7 +73,7 @@ export default function OverviewPage() {
               ใช้ได้ {entitlements?.widgets.length ?? 0} วิดเจ็ต · กฎ Actions {entitlements?.maxActionRules} ข้อ
             </p>
             {entitlements?.plan === 'trial' && (
-              <p className="mt-2 text-sm">ช่วงทดลองฟรีใช้ได้ทุกฟีเจอร์ถึง {new Date(entitlements.trialEndsAt!).toLocaleDateString('th-TH', { dateStyle: 'long' })} — หลังจากนั้น 249 บาท/เดือน</p>
+              <p className="mt-2 text-sm">ช่วงทดลองฟรีใช้ได้ทุกฟีเจอร์ถึง {new Date(entitlements.trialEndsAt!).toLocaleDateString('th-TH', { dateStyle: 'long' })} — หลังจากนั้น 199 บาท/เดือน</p>
             )}
             {entitlements?.plan !== 'pro' && (
               <Link href="/dashboard/billing/" className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-pink hover:underline">

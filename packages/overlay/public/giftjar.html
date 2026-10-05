@@ -48,6 +48,7 @@
    *   board=1 top=1 boardFormat=full|name   ผู้ให้สูงสุดใต้โหล (top = จำนวนคน, board=0 ซ่อน; full = รูป+ชื่อ+เหรียญ)
    *   total=0                               แสดงยอดเหรียญรวมเหนือโหล
    *   minCoins=0                            รับเฉพาะของขวัญมูลค่า >= นี้
+   *   shape=jar|bowl|mason cloth=#e0452b    ทรงโหล: jar = คอแคบ, bowl = กลมปากกว้าง, mason = ฝาผ้าผูกเชือก (สีผ้า)
    *   full=spill|fade|reset fullText=...    โหลเต็มแล้ว: spill = ล้นออกกองรอบโหล (ไม่หาย, ค่าเริ่มต้น)
    *                                         fade = ชิ้นเก่าสุดจางออก, reset = ฉลองแล้วเทโหลเริ่มใหม่
    *   font=Kanit fontSize=50                ฟอนต์ (Kanit/Prompt/Mitr/Sriracha/Chakra Petch) และขนาด
@@ -68,51 +69,96 @@
     let W = 0, H = 0; const DPR = Math.min(2, devicePixelRatio || 1);
     function resize() { W = innerWidth; H = innerHeight; canvas.width = W * DPR; canvas.height = H * DPR; canvas.style.width = W + 'px'; canvas.style.height = H + 'px'; layoutUi(); }
 
-    // ---- เรขาคณิตโหล (หน่วย local, จุด 0,0 = กึ่งกลางก้นโหล) ----
-    const BODY_HW = 130, BODY_TOP = -300, CORNER = 40, NECK_HW = 92, NECK_TOP = -338, LID_HW = 102, LID_TOP = -362;
+    // ---- ทรงโหล (หน่วย local, จุด 0,0 = กึ่งกลางก้นโหล, y ติดลบ = ขึ้นด้านบน) ----
+    // hw(y) = ครึ่งความกว้างด้านในที่ความสูง y · openY = ระดับปากโหล · fullY = ถึงระดับนี้ถือว่าเต็ม
+    const SHAPES = {
+      jar: { // โหลแก้วคอแคบ (ค่าเริ่มต้น)
+        hw: (y) => y > -40 ? 90 + Math.sqrt(Math.max(0, 1600 - (y + 40) ** 2)) : y > -260 ? 130 : y > -300 ? 92 + 38 * (0.5 + 0.5 * Math.cos(Math.PI * (-260 - y) / 40)) : 92,
+        openY: -338, openHW: 92, rimHW: 102, topY: -362, fullY: -290, maxHW: 130,
+      },
+      bowl: { // โหลทรงกลมป่อง ปากกว้าง (โหลปลา)
+        hw: (y) => 170 * Math.sqrt(Math.max(0, 1 - ((y + 140) / 150) ** 2)),
+        openY: -262, openHW: 101, rimHW: 116, topY: -278, fullY: -235, maxHW: 170,
+      },
+      mason: { // โหลฝาผ้าผูกเชือก
+        hw: (y) => y > -30 ? 95 + Math.sqrt(Math.max(0, 900 - (y + 30) ** 2)) : y > -250 ? 125 : y > -280 ? 105 + 20 * (0.5 + 0.5 * Math.cos(Math.PI * (-250 - y) / 30)) : 105,
+        openY: -292, openHW: 105, rimHW: 138, topY: -342, fullY: -252, maxHW: 125, closed: true, cloth: P('cloth', '#e0452b'),
+      },
+    };
+    const SH = SHAPES[P('shape', 'jar')] || SHAPES.jar;
     // เว้นที่ใต้โหลไว้ให้ป้ายผู้ให้สูงสุด
     const BOARD_SPACE = SHOW_BOARD ? (TOP === 1 ? 70 : TOP * 46 + 14) : 0;
     const origin = () => ({ x: W / 2 + OX, y: H - 24 * SCALE - BOARD_SPACE + OY });
     const S = () => SCALE * Math.min(1.6, Math.max(0.5, H / 720));
 
-    function jarPath() {
+    function jarPath() { // เส้นขอบโหลจากโปรไฟล์ (ปากซ้าย → ก้น → ปากขวา)
       ctx.beginPath();
-      ctx.moveTo(-NECK_HW, NECK_TOP);
-      ctx.lineTo(-NECK_HW, BODY_TOP + 6);
-      ctx.quadraticCurveTo(-NECK_HW, BODY_TOP + 22, -BODY_HW, BODY_TOP + 40);
-      ctx.lineTo(-BODY_HW, -CORNER);
-      ctx.quadraticCurveTo(-BODY_HW, 0, -BODY_HW + CORNER, 0);
-      ctx.lineTo(BODY_HW - CORNER, 0);
-      ctx.quadraticCurveTo(BODY_HW, 0, BODY_HW, -CORNER);
-      ctx.lineTo(BODY_HW, BODY_TOP + 40);
-      ctx.quadraticCurveTo(NECK_HW, BODY_TOP + 22, NECK_HW, BODY_TOP + 6);
-      ctx.lineTo(NECK_HW, NECK_TOP);
+      const N = 48, yAt = (i) => SH.openY + (-SH.openY) * i / N;
+      for (let i = 0; i <= N; i++) ctx.lineTo(-SH.hw(Math.min(-0.5, yAt(i))), yAt(i));
+      for (let i = N; i >= 0; i--) ctx.lineTo(SH.hw(Math.min(-0.5, yAt(i))), yAt(i));
     }
     function drawJarBack() {
       jarPath(); ctx.closePath();
-      const g = ctx.createLinearGradient(-BODY_HW, 0, BODY_HW, 0);
+      const g = ctx.createLinearGradient(-SH.maxHW, 0, SH.maxHW, 0);
       g.addColorStop(0, 'rgba(210,235,255,.22)'); g.addColorStop(.5, 'rgba(255,255,255,.06)'); g.addColorStop(1, 'rgba(210,235,255,.2)');
       ctx.fillStyle = g; ctx.fill();
-      ctx.beginPath(); ctx.ellipse(0, -6, BODY_HW - 18, 12, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fill();
+      ctx.beginPath(); ctx.ellipse(0, -6, SH.hw(-6) - 14, 10, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fill();
     }
     function drawJarFront() {
       jarPath();
       ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.stroke();
       ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(150,190,230,.6)'; ctx.stroke();
-      // ไฮไลต์กระจก
+      // ไฮไลต์กระจก (ตามความโค้งของโหล)
       ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.moveTo(-BODY_HW + 22, BODY_TOP + 70); ctx.lineTo(-BODY_HW + 22, -60);
-      ctx.lineWidth = 10; ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(-BODY_HW + 42, BODY_TOP + 80); ctx.lineTo(-BODY_HW + 42, BODY_TOP + 150);
-      ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(BODY_HW - 20, BODY_TOP + 90); ctx.lineTo(BODY_HW - 20, -90);
-      ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.stroke();
-      // ขอบปากโหล
-      ctx.beginPath(); ctx.roundRect(-LID_HW, LID_TOP, LID_HW * 2, NECK_TOP - LID_TOP + 4, 8);
-      const lg = ctx.createLinearGradient(0, LID_TOP, 0, NECK_TOP);
+      const hl = (side, off, y0, y1, w, a) => {
+        ctx.beginPath();
+        for (let i = 0; i <= 12; i++) { const y = y0 + (y1 - y0) * i / 12; ctx.lineTo(side * (SH.hw(y) - off), y); }
+        ctx.lineWidth = w; ctx.strokeStyle = `rgba(255,255,255,${a})`; ctx.stroke();
+      };
+      hl(-1, 20, SH.fullY + 40, -60, 10, .35);
+      hl(-1, 40, SH.fullY + 50, SH.fullY + 120, 5, .25);
+      hl(1, 18, SH.fullY + 60, -90, 4, .2);
+      if (SH.cloth) return drawCloth();
+      if (SH === SHAPES.bowl) { // ขอบปากม้วน
+        ctx.beginPath(); ctx.ellipse(0, SH.openY - 4, SH.rimHW, 13, 0, 0, Math.PI * 2);
+        ctx.lineWidth = 9; ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.stroke();
+        ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(150,190,230,.7)'; ctx.stroke();
+        return;
+      }
+      // ขอบปากโหล (เกลียว)
+      ctx.beginPath(); ctx.roundRect(-SH.rimHW, SH.topY, SH.rimHW * 2, SH.openY - SH.topY + 4, 8);
+      const lg = ctx.createLinearGradient(0, SH.topY, 0, SH.openY);
       lg.addColorStop(0, 'rgba(255,255,255,.55)'); lg.addColorStop(1, 'rgba(200,225,250,.3)');
       ctx.fillStyle = lg; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.stroke();
-      for (let i = 1; i <= 2; i++) { ctx.beginPath(); ctx.moveTo(-LID_HW + 4, LID_TOP + i * 8); ctx.lineTo(LID_HW - 4, LID_TOP + i * 8); ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.stroke(); }
+      for (let i = 1; i <= 2; i++) { ctx.beginPath(); ctx.moveTo(-SH.rimHW + 4, SH.topY + i * 8); ctx.lineTo(SH.rimHW - 4, SH.topY + i * 8); ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.stroke(); }
+    }
+    function drawCloth() { // ฝาผ้า + เชือกผูกโบว์
+      const top = SH.topY, hem = -262, R = SH.rimHW;
+      ctx.beginPath();
+      ctx.moveTo(-108, top + 22);
+      ctx.quadraticCurveTo(0, top - 16, 108, top + 22);
+      ctx.quadraticCurveTo(128, top + 50, R, hem - 6);
+      for (let i = 0; i < 10; i++) { // ชายผ้าเป็นคลื่น
+        const x1 = R - (2 * R) * (i + 1) / 10, xm = R - (2 * R) * (i + 0.5) / 10;
+        ctx.quadraticCurveTo(xm, hem + (i % 2 ? -6 : 16), x1, hem + 4);
+      }
+      ctx.quadraticCurveTo(-128, top + 50, -108, top + 22);
+      ctx.closePath();
+      const g = ctx.createLinearGradient(0, top - 10, 0, hem + 10);
+      g.addColorStop(0, '#ff8a6b'); g.addColorStop(.35, SH.cloth); g.addColorStop(1, '#a8301c');
+      ctx.fillStyle = g; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(80,20,10,.35)'; ctx.stroke();
+      ctx.lineCap = 'round'; ctx.strokeStyle = 'rgba(255,255,255,.28)'; ctx.lineWidth = 4;
+      for (const x of [-80, -40, 0, 40, 80]) { ctx.beginPath(); ctx.moveTo(x * 0.9, top + 28); ctx.lineTo(x * 1.15, hem - 2); ctx.stroke(); } // รอยจีบ
+      // เชือกผูกโบว์
+      const ty = SH.openY - 8;
+      ctx.strokeStyle = '#b08a5a';
+      ctx.beginPath(); ctx.moveTo(-SH.openHW - 10, ty); ctx.quadraticCurveTo(0, ty + 8, SH.openHW + 10, ty); ctx.lineWidth = 5; ctx.stroke();
+      ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(10, ty + 2); ctx.bezierCurveTo(-40, ty - 50, -90, ty - 10, 10, ty + 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(10, ty + 2); ctx.bezierCurveTo(60, ty - 50, 110, ty - 10, 10, ty + 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(10, ty + 2); ctx.quadraticCurveTo(-10, ty + 40, -30, ty + 80); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(10, ty + 2); ctx.quadraticCurveTo(30, ty + 45, 22, ty + 86); ctx.stroke();
+      ctx.beginPath(); ctx.arc(10, ty + 2, 6, 0, 6.2832); ctx.fillStyle = '#9a7548'; ctx.fill();
     }
 
     // ---- ฟิสิกส์ (position-based) ----
@@ -126,9 +172,11 @@
       // โหลเต็ม (โหมด spill) → ชิ้นใหม่ทะลักออกปากโหลไปกองข้าง ๆ
       const out = g.o === 1 || (dropFromTop && spilling);
       const side = Math.random() < .5 ? -1 : 1;
-      const b = { x: (Math.random() - .5) * (NECK_HW - r) * 1.4, y: dropFromTop ? LID_TOP - 40 - Math.random() * 60 : BODY_TOP + Math.random() * 200,
+      // โหลปิดฝา (mason) → ของขวัญใหม่โผล่ใต้ฝา · ล้น → ออกเหนือฝาแล้วไหลลงข้าง
+      const dropY = out || !SH.closed ? SH.topY - 40 - Math.random() * 60 : SH.openY + r + 4;
+      const b = { x: (Math.random() - .5) * (SH.openHW - r) * 1.4, y: dropFromTop ? dropY : SH.fullY + 20 + Math.random() * (-SH.fullY - 40),
         r, rot: Math.random() * 6.28, img: giftImg(g.img), emoji: g.e || '🎁', d: g.d || 1, src: out ? { ...g, o: 1 } : g, life: 1, out };
-      if (out && !dropFromTop) { b.x = side * (BODY_HW + 20 + Math.random() * 260); b.y = -r - Math.random() * 120; }
+      if (out && !dropFromTop) { b.x = side * (SH.maxHW + 20 + Math.random() * 260); b.y = -r - Math.random() * 120; }
       b.px = b.x + (Math.random() - .5) * 2; b.py = b.y - 2;
       if (out && dropFromTop) b.px = b.x - side * (1.5 + Math.random() * 2.5); // พุ่งออกด้านข้าง
       bodies.push(b);
@@ -136,31 +184,25 @@
       if (alive.length > MAX) alive[0].dying = true;
     }
 
-    function wallHalfWidth(y) { return y < BODY_TOP + 20 ? NECK_HW : BODY_HW; }
     function constrainOutside(b) {
       if (b.y + b.r > -3) { b.y = -3 - b.r; b.px = b.x - (b.x - b.px) * 0.5; } // พื้น (ระดับก้นโหล) + แรงเสียดทาน → กองเป็นภูเขาข้างโหล
       const s = S(), o = origin(), left = -o.x / s, right = (W - o.x) / s;
       if (b.x - b.r < left) b.x = left + b.r;
       if (b.x + b.r > right) b.x = right - b.r;
-      // ตัวโหลเป็นสิ่งกีดขวาง: ใต้ขอบปากโหลให้ไถลออกด้านข้าง
-      if (b.y + b.r > LID_TOP) {
-        const hw = (b.y < BODY_TOP + 20 ? LID_HW : BODY_HW) + 4;
-        if (Math.abs(b.x) < hw + b.r) b.x = Math.sign(b.x || 1) * (hw + b.r);
+      // ตัวโหลเป็นสิ่งกีดขวาง: ใต้ขอบบนสุดให้ไถลออกด้านข้างตามความโค้งของโหล
+      if (b.y + b.r > SH.topY) {
+        const hw = (b.y < SH.openY ? SH.rimHW : Math.max(SH.hw(Math.min(-0.5, b.y)), SH.hw(Math.min(-0.5, b.y + b.r * 0.75)))) + 6;
+        if (Math.abs(b.x) < hw + b.r * 0.9) { b.x = Math.sign(b.x || 1) * (hw + b.r * 0.9); b.px = b.x - (b.x - b.px) * 0.3; } // ไม่ดีดกระเด็นจากผิวโหล
       }
     }
     function constrain(b) {
       if (b.out) return constrainOutside(b);
-      const hw = wallHalfWidth(b.y) - 3;
+      if (b.y + b.r > -3) b.y = -3 - b.r;
+      if (SH.closed && b.y - b.r < SH.openY) b.y = SH.openY + b.r; // ฝาผ้าปิดด้านบน
+      // เหนือปากโหล = ช่องทางเข้า (กว้างเท่าปาก) · ในโหล = ตามโปรไฟล์ (เช็กส่วนล่างของลูกด้วย สำหรับก้นโค้ง)
+      const hw = (b.y < SH.openY ? SH.openHW : Math.min(SH.hw(Math.min(-0.5, b.y)), SH.hw(Math.min(-0.5, b.y + b.r * 0.75)))) - 3;
       if (b.x - b.r < -hw) b.x = -hw + b.r;
       if (b.x + b.r > hw) b.x = hw - b.r;
-      if (b.y + b.r > -3) b.y = -3 - b.r;
-      // มุมโค้งก้นโหล
-      for (const cx of [-BODY_HW + CORNER, BODY_HW - CORNER]) {
-        const cy = -CORNER, inCorner = (cx < 0 ? b.x < cx : b.x > cx) && b.y > cy;
-        if (!inCorner) continue;
-        const dx = b.x - cx, dy = b.y - cy, dist = Math.hypot(dx, dy), lim = CORNER - 3 - b.r;
-        if (dist > lim && dist > 0) { b.x = cx + dx / dist * lim; b.y = cy + dy / dist * lim; }
-      }
     }
     function step() {
       const VMAX = 14;
@@ -198,12 +240,12 @@
     function checkFull() {
       if (resetting) return;
       // ชิ้นในโหลที่ไม่ได้กำลังตก (อายุ > 2 วิ) กองสูงถึงไหล่โหล = เต็ม
-      const full = bodies.some((b) => !b.out && !b.dying && b.age > 120 && b.y - b.r < BODY_TOP + 10);
+      const full = bodies.some((b) => !b.out && !b.dying && b.age > 120 && b.y - b.r < SH.fullY);
       spilling = full && FULL_MODE === 'spill';
       if (FULL_MODE === 'spill') {
         // ชิ้นที่ค้างเหนือปากโหล (เช่น ของเก่าที่โหลดกลับมาตอนรีเฟรช) → ทะลักออกข้าง
         for (const b of bodies) {
-          if (b.out || b.dying || b.age < 60 || b.y > NECK_TOP) continue;
+          if (b.out || b.dying || b.age < 60 || b.y > SH.openY) continue;
           const side = b.x < 0 ? -1 : 1;
           b.out = true; b.src = { ...b.src, o: 1 }; b.px = b.x - side * (3 + Math.random() * 3);
           save();
@@ -220,7 +262,7 @@
     function resetJar() {
       resetting = true;
       const cols = ['#ff6aa8', '#ffcf5c', '#8fe3cf', '#b9a6f2', '#ffffff'];
-      for (let i = 0; i < 140; i++) conf.push({ x: (Math.random() - .5) * 120, y: LID_TOP, vx: (Math.random() - .5) * 14, vy: -(4 + Math.random() * 12),
+      for (let i = 0; i < 140; i++) conf.push({ x: (Math.random() - .5) * 120, y: SH.topY, vx: (Math.random() - .5) * 14, vy: -(4 + Math.random() * 12),
         rot: Math.random() * 6.28, vr: (Math.random() - .5) * .6, w: 8 + Math.random() * 6, h: 12 + Math.random() * 8, c: cols[i % cols.length], life: 1 });
       $full.textContent = FULL_TEXT; $full.classList.add('show');
       setTimeout(() => bodies.forEach((b, i) => setTimeout(() => { b.dying = true; }, i * 12)), 1500);
@@ -268,10 +310,10 @@
     const $alert = document.getElementById('alert'), $board = document.getElementById('board'), $total = document.getElementById('total'), $full = document.getElementById('full');
     function layoutUi() {
       const o = origin(), s = S();
-      $alert.style.left = o.x + 'px'; $alert.style.top = Math.max(4, o.y + (LID_TOP - 130) * s) + 'px';
+      $alert.style.left = o.x + 'px'; $alert.style.top = Math.max(4, o.y + (SH.topY - 130) * s) + 'px';
       $board.style.left = o.x + 'px'; $board.style.top = (o.y + 10) + 'px';
-      $full.style.left = o.x + 'px'; $full.style.top = (o.y + (BODY_TOP + 140) * s) + 'px';
-      $total.style.left = o.x + 'px'; $total.style.top = Math.max(4, o.y + (LID_TOP - 60) * s) + 'px';
+      $full.style.left = o.x + 'px'; $full.style.top = (o.y + (SH.fullY + 140) * s) + 'px';
+      $total.style.left = o.x + 'px'; $total.style.top = Math.max(4, o.y + (SH.topY - 60) * s) + 'px';
     }
     let alertTimer = null;
     function showAlert(e, count) {

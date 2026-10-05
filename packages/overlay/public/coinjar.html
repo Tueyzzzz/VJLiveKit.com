@@ -178,12 +178,12 @@
       ctx.beginPath(); ctx.ellipse(x0 + w / 2 + d / 2, FLOOR - 2, w * .62, 12, 0, 0, 6.2832); ctx.fillStyle = 'rgba(120,90,160,.18)'; ctx.fill();
       // ขา
       for (const fx of [x0 + 22, x1 - 22]) { rr(fx - 14, y1, 28, FLOOR - y1 - 2, 8); ctx.fillStyle = '#b9a6f2'; ctx.fill(); }
-      // ด้านข้าง
-      ctx.beginPath(); ctx.moveTo(x1, y0); ctx.lineTo(x1 + d, y0 - d); ctx.lineTo(x1 + d, y1 - d); ctx.lineTo(x1, y1); ctx.closePath();
-      ctx.fillStyle = '#c9b6f5'; ctx.fill();
-      // ด้านบน
-      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0 + d, y0 - d); ctx.lineTo(x1 + d, y0 - d); ctx.lineTo(x1, y0); ctx.closePath();
-      ctx.fillStyle = '#ffe1ef'; ctx.fill();
+      // ตัวตู้ 3 มิติ: ซ้อนชั้นมุมโค้งจากด้านหลังมาด้านหน้า (มุมโค้งเท่ากันทุกด้าน)
+      for (let i = d; i > 0; i -= 1.5) {
+        rr(x0 + i, y0 - i, w, h, 26);
+        ctx.fillStyle = i > d - 3 ? '#efe2ff' : '#cdb9f6'; ctx.fill();
+      }
+      rr(x0 + d, y0 - d, w, h, 26); ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.stroke();
       // หูหิ้ว
       ctx.beginPath(); ctx.moveTo(x0 + 70, y0 - d / 2); ctx.lineTo(x0 + 70, y0 - 62); ctx.quadraticCurveTo(x0 + 70, y0 - 82, x0 + 92, y0 - 82);
       ctx.lineTo(x0 + 128, y0 - 82); ctx.quadraticCurveTo(x0 + 150, y0 - 82, x0 + 150, y0 - 62); ctx.lineTo(x0 + 150, y0 - d / 2);

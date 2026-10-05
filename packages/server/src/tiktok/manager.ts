@@ -1,17 +1,19 @@
 import { EventEmitter } from 'node:events';
-import { createRequire } from 'node:module';
 import { config } from '../config/index.js';
 import { emptyStats, type LiveStats, type NormalizedUser, type TikTokEvent, type TikTokEventType } from './types.js';
 
-// tiktok-live-connector เป็น CommonJS — โหลดแบบ optional เพื่อให้ DEMO_MODE ทำงานได้แม้ยังไม่ติดตั้ง
-const require = createRequire(import.meta.url);
-let WebcastPushConnection: any = null;
+// tiktok-live-connector v2 เป็น ESM — โหลดแบบ optional (dynamic import) เพื่อให้ DEMO_MODE ทำงานได้แม้ยังไม่ติดตั้ง
+let TikTokLiveConnection: any = null;
 try {
-  const lib = require('tiktok-live-connector');
-  WebcastPushConnection = lib.TikTokLiveConnection ?? lib.WebcastPushConnection;
+  ({ TikTokLiveConnection } = await import('tiktok-live-connector'));
 } catch {
   console.warn('[tiktok] ยังไม่ได้ติดตั้ง tiktok-live-connector — ใช้ได้เฉพาะ DEMO_MODE');
 }
+
+const num = (v: unknown, fallback = 0): number => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+};
 
 type Events = {
   event: (e: TikTokEvent) => void;
@@ -49,7 +51,8 @@ export class TikTokRoom extends EventEmitter {
   async connect(demo = config.demoMode): Promise<void> {
     await this.disconnect();
     this.stats = emptyStats();
-    if (demo || !WebcastPushConnection) return this.startDemo();
+    this.seenMsgIds.clear();
+    if (demo || !TikTokLiveConnection) return this.startDemo();
     return this.connectReal();
   }
 
@@ -57,7 +60,7 @@ export class TikTokRoom extends EventEmitter {
   private async connectReal(): Promise<void> {
     const opts: Record<string, unknown> = {};
     if (config.signApiKey) opts.signApiKey = config.signApiKey;
-    this.connection = new WebcastPushConnection(this.username, opts);
+    this.connection = new TikTokLiveConnection(this.username, opts);
     this.bindRealEvents();
     const state = await this.connection.connect();
     this.connected = true;
@@ -74,16 +77,20 @@ export class TikTokRoom extends EventEmitter {
       c.on(evName, (d: any) => this.handle(type, d));
     }
     c.on('disconnected', () => { this.connected = false; this.emit('status', { type: 'disconnected', message: 'การเชื่อมต่อถูกตัด' }); });
-    c.on('error', (err: any) => this.emit('status', { type: 'error', message: String(err?.message ?? err) }));
+    // v2 ส่ง error เป็น { info, exception }
+    c.on('error', (err: any) => this.emit('status', { type: 'error', message: String(err?.exception?.message ?? err?.info ?? err?.message ?? err) }));
     c.on('streamEnd', () => this.emit('status', { type: 'streamEnd', message: 'ไลฟ์จบแล้ว' }));
   }
 
+  // v2 ส่ง protobuf object (user.displayId / avatarThumb.urlList); เผื่อรูปแบบเก่า (uniqueId / profilePicture.url)
   private user(d: any = {}): NormalizedUser {
+    const u = d.user ?? {};
+    const uniqueId = u.uniqueId ?? u.displayId ?? 'unknown';
     return {
-      userId: d.userId ?? d.user?.userId ?? '',
-      uniqueId: d.uniqueId ?? d.user?.uniqueId ?? 'unknown',
-      nickname: d.nickname ?? d.user?.nickname ?? d.uniqueId ?? 'ผู้ชม',
-      avatar: d.profilePictureUrl ?? d.user?.profilePicture?.url?.[0] ?? '',
+      userId: String(u.userId ?? u.id ?? ''),
+      uniqueId,
+      nickname: u.nickname || uniqueId || 'ผู้ชม',
+      avatar: u.avatarThumb?.urlList?.[0] ?? u.profilePicture?.url?.[0] ?? '',
     };
   }
 
@@ -92,24 +99,48 @@ export class TikTokRoom extends EventEmitter {
     this.emit('stats', this.stats);
   }
 
+  // TikTok ส่งข้อความเดิมซ้ำได้ (เช่น ประวัติแชทตอนเพิ่งต่อ) — กันซ้ำด้วย msgId
+  private seenMsgIds = new Set<string>();
+  private isDuplicate(d: any): boolean {
+    const id = d?.common?.msgId ?? d?.msgId;
+    if (id === undefined || id === null || id === '' || id === '0') return false;
+    const key = String(id);
+    if (this.seenMsgIds.has(key)) return true;
+    this.seenMsgIds.add(key);
+    if (this.seenMsgIds.size > 2000) this.seenMsgIds.delete(this.seenMsgIds.values().next().value!);
+    return false;
+  }
+
   private handle(type: TikTokEventType, d: any): void {
+    if (this.isDuplicate(d)) return;
     const user = this.user(d);
     switch (type) {
-      case 'chat': this.stats.chatCount++; this.send('chat', { user, comment: d.comment }); break;
+      case 'chat': this.stats.chatCount++; this.send('chat', { user, comment: d.content ?? d.comment ?? '' }); break;
       case 'gift': {
-        const streak = d.giftType === 1;
-        const streakEnd = d.repeatEnd === true || d.repeatEnd === 1;
-        if (streak && !streakEnd) { this.send('gift', { user, giftName: d.giftName, giftId: d.giftId, repeatCount: d.repeatCount ?? 1, diamondCount: d.diamondCount ?? 0, streaking: true }); return; }
-        const count = d.repeatCount ?? 1; const value = (d.diamondCount ?? 0) * count;
+        const g = d.gift ?? d.giftDetails ?? {};
+        const giftName: string = g.name ?? g.giftName ?? d.giftName ?? '';
+        const giftId = num(d.giftId ?? g.id);
+        const diamonds = num(g.diamondCount ?? d.diamondCount);
+        const streak = num(g.type ?? d.giftType) === 1;
+        const streakEnd = d.repeatEnd === true || num(d.repeatEnd) === 1;
+        const count = num(d.repeatCount, 1) || 1;
+        if (streak && !streakEnd) { this.send('gift', { user, giftName, giftId, repeatCount: count, diamondCount: diamonds, streaking: true }); return; }
+        const value = diamonds * count;
         this.stats.giftCount += count; this.stats.diamondCount += value;
-        this.send('gift', { user, giftName: d.giftName, giftId: d.giftId, repeatCount: count, diamondCount: d.diamondCount ?? 0, totalValue: value, streaking: false });
+        this.send('gift', { user, giftName, giftId, repeatCount: count, diamondCount: diamonds, totalValue: value, streaking: false });
         break;
       }
-      case 'like': this.stats.likeCount = d.totalLikeCount ?? this.stats.likeCount + (d.likeCount ?? 1); this.send('like', { user, likeCount: d.likeCount ?? 1, total: this.stats.likeCount }); break;
+      case 'like': {
+        const inc = num(d.count ?? d.likeCount, 1);
+        const total = num(d.total ?? d.totalLikeCount, NaN);
+        this.stats.likeCount = Number.isFinite(total) && total > 0 ? total : this.stats.likeCount + inc;
+        this.send('like', { user, likeCount: inc, total: this.stats.likeCount });
+        break;
+      }
       case 'follow': this.stats.followCount++; this.send('follow', { user }); break;
       case 'share': this.stats.shareCount++; this.send('share', { user }); break;
       case 'member': this.send('member', { user }); break;
-      case 'roomUser': this.stats.viewerCount = d.viewerCount ?? 0; this.send('roomUser', { viewerCount: this.stats.viewerCount }); break;
+      case 'roomUser': this.stats.viewerCount = num(d.total ?? d.viewerCount); this.send('roomUser', { viewerCount: this.stats.viewerCount }); break;
     }
   }
 

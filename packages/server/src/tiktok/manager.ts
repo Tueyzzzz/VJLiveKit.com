@@ -45,6 +45,8 @@ export class TikTokRoom extends EventEmitter {
   private connection: any = null;
   private mockTimer: NodeJS.Timeout | null = null;
   private connected = false;
+  /** รหัสห้องไลฟ์ของ TikTok — เปลี่ยน = ไลฟ์ใหม่ (overlay ใช้ล้างอันดับที่จำไว้) */
+  private roomId: string | null = null;
   stats: LiveStats = emptyStats();
   // อันดับผู้ให้ของขวัญตลอดไลฟ์ (overlay ที่เปิด/รีเฟรชกลางไลฟ์ได้อันดับครบทันที)
   private gifters = new Map<string, TopGifter>();
@@ -63,7 +65,7 @@ export class TikTokRoom extends EventEmitter {
   }
 
   isConnected(): boolean { return this.connected; }
-  getState() { return { connected: this.connected, username: this.username, stats: this.stats, topGifters: this.topGifters(), topLikers: this.topLikers() }; }
+  getState() { return { connected: this.connected, username: this.username, roomId: this.roomId, stats: this.stats, topGifters: this.topGifters(), topLikers: this.topLikers() }; }
 
   topGifters(limit = 20): TopGifter[] { return RoomRanking.top(this.gifters, limit); }
   topLikers(limit = 20): TopGifter[] { return RoomRanking.top(this.likers, limit); }
@@ -88,7 +90,8 @@ export class TikTokRoom extends EventEmitter {
     this.bindRealEvents();
     const state = await this.connection.connect();
     this.connected = true;
-    this.emit('status', { type: 'connected', message: `เชื่อมต่อ @${this.username} สำเร็จ`, roomId: state?.roomId });
+    this.roomId = state?.roomId ? String(state.roomId) : null;
+    this.emit('status', { type: 'connected', message: `เชื่อมต่อ @${this.username} สำเร็จ`, roomId: this.roomId });
   }
 
   private bindRealEvents(): void {

@@ -7,6 +7,7 @@
  *   ?label=...    หัวข้อ
  *   ?bg=35        ความทึบพื้นหลัง % (0 = ใสทั้งหมด)
  *   ?pos=tr       ตำแหน่ง tr | tl | br | bl (บนขวา/บนซ้าย/ล่างขวา/ล่างซ้าย)
+ *   ?reset=1      ล้างอันดับที่จำไว้ (ปกติล้างเองเมื่อเริ่มไลฟ์ใหม่)
  *
  * Ranking.mount({ mode: 'gifts' | 'likes', title, icon })
  */
@@ -68,15 +69,35 @@ window.Ranking = (function () {
       if (!value) return;
       const id = user ? (user.uniqueId || user.userId || user.nickname) : '?';
       const cur = totals.get(id) || { nm: user ? (user.nickname || user.uniqueId) : 'ผู้ชม', avatar: user && user.avatar, value: 0 };
-      cur.value += value; if (user && user.avatar) cur.avatar = user.avatar; totals.set(id, cur); render(id);
+      cur.value += value; if (user && user.avatar) cur.avatar = user.avatar; totals.set(id, cur); render(id); save();
     }
+
+    // จำอันดับไว้ในเครื่อง (เซิร์ฟเวอร์รีสตาร์ท/deploy แล้วไม่หาย) — ล้างเองเมื่อเริ่มไลฟ์ใหม่ (roomId เปลี่ยน) หรือ ?reset=1
+    const KEY = 'vjl-rank:' + opts.mode + ':' + (P('t', '') || P('username', 'demo')).slice(-24);
+    let roomId = null, saveT = null;
+    function save() {
+      clearTimeout(saveT);
+      saveT = setTimeout(saveNow, 400);
+    }
+    function saveNow() { clearTimeout(saveT); try { localStorage.setItem(KEY, JSON.stringify({ roomId, totals: [...totals.entries()] })); } catch { /* storage ปิด */ } }
+    addEventListener('pagehide', saveNow); // รีเฟรช/ปิด → บันทึกทันที
+    try {
+      if (P('reset', '0') === '1') localStorage.removeItem(KEY);
+      const saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+      if (saved) { roomId = saved.roomId || null; (saved.totals || []).forEach(([id, g]) => totals.set(id, g)); render(); }
+    } catch { /* ignore */ }
 
     const stateKey = opts.mode === 'likes' ? 'topLikers' : 'topGifters';
     Overlay.on('state', (s) => {
       if (!s || !Array.isArray(s[stateKey])) return;
-      totals.clear();
-      s[stateKey].forEach((g) => totals.set(g.uniqueId || g.nickname, { nm: g.nickname || g.uniqueId, avatar: g.avatar, value: g.value }));
-      render();
+      if (s.roomId && roomId && s.roomId !== roomId) totals.clear(); // ไลฟ์ใหม่ → เริ่มอันดับใหม่
+      if (s.roomId) roomId = s.roomId;
+      // รวมกับที่จำไว้: เอาค่ามากกว่า (เซิร์ฟเวอร์อาจเพิ่งรีสตาร์ทจนนับใหม่)
+      s[stateKey].forEach((g) => {
+        const id = g.uniqueId || g.nickname, cur = totals.get(id);
+        if (!cur || g.value > cur.value) totals.set(id, { nm: g.nickname || g.uniqueId, avatar: g.avatar || (cur && cur.avatar), value: g.value });
+      });
+      render(); save();
     });
     Overlay.on('event', (e) => {
       if (opts.mode === 'gifts' && e.type === 'gift' && !e.streaking) add(e.user, e.totalValue || (e.diamondCount || 0) * (e.repeatCount || 1));

@@ -39,21 +39,13 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
     sections: [
       { title: 'รูปแบบโหล', fields: [
         { key: 'shape', label: 'ทรงโหล', type: 'select', def: 'heart', options: [
-          ['heart', 'โหลหัวใจ', '🫙 โหลและตู้ (ภาพ 3D)', 'gj-heart'], ['orb', 'โหลกลมห่วงชมพู', '🫙 โหลและตู้ (ภาพ 3D)', 'gj-orb'], ['tank', 'ตู้ปลา', '🫙 โหลและตู้ (ภาพ 3D)', 'gj-tank'],
-          ['sundae', 'ถ้วยไอศกรีม', '🫙 โหลและตู้ (ภาพ 3D)', 'gj-sundae'],
-          ['jstar', 'โหลดาว', '🫙 โหลและตู้ (ภาพ 3D)', 'gj-jstar'],
-          ['jbasket', 'โหลตะกร้า', '🫙 โหลและตู้ (ภาพ 3D)', 'gj-jbasket'],
-          ['cauldron', 'โหลหม้อแม่มด', '🫙 โหลและตู้ (ภาพ 3D)', 'gj-cauldron'],
-          ['catbank', 'กระปุกแมวใส', '🫙 โหลและตู้ (ภาพ 3D)', 'gj-catbank'],
-          ['jsnowman', 'โหลตุ๊กตาหิมะ', '🫙 โหลและตู้ (ภาพ 3D)', 'gj-jsnowman'],
-          ['castle', 'ตู้ปลาปราสาท', '🫙 โหลและตู้ (ภาพ 3D)', 'gj-castle'],
-          ['fishbowl', 'โหลปลาทองขอบคลื่น', '🫙 โหลและตู้ (ภาพ 3D)', 'gj-fishbowl'],
-          ['hearttank', 'ตู้ปลาหัวใจ', '🫙 โหลและตู้ (ภาพ 3D)', 'gj-hearttank'],
-          ['moon', 'ตู้ปลาพระจันทร์', '🫙 โหลและตู้ (ภาพ 3D)', 'gj-moon'],
-          ['gacha', 'ตู้ปลากาชาปอง', '🫙 โหลและตู้ (ภาพ 3D)', 'gj-gacha'],
-          ['shell', 'ตู้ปลาเปลือกหอย', '🫙 โหลและตู้ (ภาพ 3D)', 'gj-shell'],
-         
-         
+          ['heart', 'โหลหัวใจ', '🫙 โหลแก้ว (ภาพ 3D)', 'gj-heart'], ['orb', 'โหลกลมห่วงชมพู', '🫙 โหลแก้ว (ภาพ 3D)', 'gj-orb'],
+          ['sundae', 'ถ้วยไอศกรีม', '🫙 โหลแก้ว (ภาพ 3D)', 'gj-sundae'],
+          ['jstar', 'โหลดาว', '🫙 โหลแก้ว (ภาพ 3D)', 'gj-jstar'],
+          ['jbasket', 'โหลตะกร้า', '🫙 โหลแก้ว (ภาพ 3D)', 'gj-jbasket'],
+          ['cauldron', 'โหลหม้อแม่มด', '🫙 โหลแก้ว (ภาพ 3D)', 'gj-cauldron'],
+          ['catbank', 'กระปุกแมวใส', '🫙 โหลแก้ว (ภาพ 3D)', 'gj-catbank'],
+          ['jsnowman', 'โหลตุ๊กตาหิมะ', '🫙 โหลแก้ว (ภาพ 3D)', 'gj-jsnowman'],
         ] },
         ...tint((v) => ['heart', 'orb', 'tank', 'pig', 'sundae', 'jstar', 'jbasket', 'cauldron', 'catbank', 'jsnowman', 'catbelly', 'jdino', 'jbear', 'jfrog', 'castle', 'fishbowl', 'hearttank', 'moon', 'gacha', 'shell', 'sub', 'snow', 'van'].includes(String(v.shape))),
         { key: 'full', label: 'เมื่อโหลเต็ม', type: 'select', when: (v) => !['car', 'globe', 'heart', 'snow', 'van', 'pig', 'sub', 'jstar', 'catbank', 'jsnowman', 'catbelly', 'jdino', 'jbear', 'jfrog'].includes(String(v.shape)), def: 'spill', options: [['spill', 'ล้นออกมากองข้างโหล'], ['fade', 'ชิ้นเก่าสุดค่อย ๆ หายไป'], ['reset', 'ฉลอง แล้วเทโหลเริ่มใหม่']] },
@@ -83,14 +75,22 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
       ] },
     ],
   },
-  vehicle: {
-    resettable: 'ล้างของขวัญและอันดับ',
+  aquarium: {
+    resettable: 'ล้างของขวัญในตู้และอันดับ',
     sections: [
-      { title: 'ยานพาหนะ', fields: [
-        { key: 'shape', label: 'ยานพาหนะ', type: 'select', def: 'van', options: [
-          ['van', 'รถหัวใจ (ภาพ 3D)', '🚐 ยานพาหนะ', 'gj-van'], ['sub', 'เรือดำน้ำ (ภาพ 3D)', '🚐 ยานพาหนะ', 'gj-sub'],
+      { title: 'ตู้ปลา', fields: [
+        { key: 'shape', label: 'ตู้ปลา', type: 'select', def: 'tank', options: [
+          ['tank', 'ตู้ปลา', '🐠 ตู้ปลา (ภาพ 3D)', 'gj-tank'],
+          ['castle', 'ตู้ปลาปราสาท', '🐠 ตู้ปลา (ภาพ 3D)', 'gj-castle'],
+          ['fishbowl', 'โหลปลาทองขอบคลื่น', '🐠 ตู้ปลา (ภาพ 3D)', 'gj-fishbowl'],
+          ['hearttank', 'ตู้ปลาหัวใจ', '🐠 ตู้ปลา (ภาพ 3D)', 'gj-hearttank'],
+          ['moon', 'ตู้ปลาพระจันทร์', '🐠 ตู้ปลา (ภาพ 3D)', 'gj-moon'],
+          ['gacha', 'ตู้ปลากาชาปอง', '🐠 ตู้ปลา (ภาพ 3D)', 'gj-gacha'],
+          ['shell', 'ตู้ปลาเปลือกหอย', '🐠 ตู้ปลา (ภาพ 3D)', 'gj-shell'],
+          ['sub', 'เรือดำน้ำ (ภาพ 3D)', '🐠 ตู้ปลา (ภาพ 3D)', 'gj-sub'],
         ] },
         ...tint(() => true),
+        { key: 'full', label: 'เมื่อโหลเต็ม', type: 'select', when: (v) => !['car', 'globe', 'heart', 'snow', 'van', 'pig', 'sub', 'jstar', 'catbank', 'jsnowman', 'catbelly', 'jdino', 'jbear', 'jfrog'].includes(String(v.shape)), def: 'spill', options: [['spill', 'ล้นออกมากองข้างโหล'], ['fade', 'ชิ้นเก่าสุดค่อย ๆ หายไป'], ['reset', 'ฉลอง แล้วเทโหลเริ่มใหม่']] },
         { key: 'fullText', label: 'ข้อความตอนโหลเต็ม', type: 'text', def: 'โหลเต็มแล้ว! 🎉', when: (v) => v.full === 'reset' },
       ] },
       { title: 'ขนาดและตำแหน่ง', fields: [
@@ -117,6 +117,27 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
       ] },
     ],
   },
+  vehicle: {
+    resettable: 'ล้างของขวัญที่ลากอยู่',
+    sections: [
+      { title: 'รถ', fields: [
+        { key: 'car', label: 'แบบรถ', type: 'select', def: 'van', options: [
+          ['van', 'รถหัวใจ', '🚗 รถลากของขวัญ (ภาพ 3D)', 'gj-van'],
+        ] },
+        ...tint(() => true),
+        { key: 'alert', label: 'แสดงชื่อคนส่ง', type: 'toggle', def: true },
+        { key: 'minCoins', label: 'รับเฉพาะของขวัญตั้งแต่ (เหรียญ)', type: 'number', min: 0, def: 0 },
+      ] },
+      { title: 'ขนาดและตำแหน่ง', fields: [
+        size(),
+        { key: 'giftScale', label: 'ขนาดของขวัญ', type: 'range', min: 0.5, max: 2.5, step: 0.05, def: 1, unit: '×' },
+        { key: 'max', label: 'ลากได้สูงสุด (ชิ้น)', type: 'number', min: 30, max: 400, def: 140, hint: 'เกินแล้วชิ้นเก่าสุดค่อย ๆ จางไป — ของขวัญเล็กลงจะลากได้มากขึ้น' },
+        ...pos(),
+      ] },
+    ],
+  },
+
+
   snowglobe: {
     resettable: 'ล้างของขวัญในลูกแก้วและอันดับ',
     sections: [

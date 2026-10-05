@@ -48,7 +48,8 @@ export async function buildApp(): Promise<FastifyInstance> {
       'tree.html': { file: 'garden.html', defaults: { skin: 'tree' } },
       'belly.html': { file: 'giftjar.html', defaults: { shape: 'pig' } },
       'snowglobe.html': { file: 'giftjar.html', defaults: { shape: 'snow' } },
-      'vehicle.html': { file: 'giftjar.html', defaults: { shape: 'van' } },
+      'aquarium.html': { file: 'giftjar.html', defaults: { shape: 'tank' } },
+      'vehicle.html': { file: 'dragcar.html', defaults: {} },
     };
     const alias = ALIAS[page];
     let html: string;

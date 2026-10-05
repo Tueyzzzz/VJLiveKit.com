@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gift Car Overlay</title>
+  <link rel="icon" href="favicon.svg" />
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    html,body{margin:0;height:100%;background:transparent;overflow:hidden;font-family:'Kanit',sans-serif;color:#fff}
+    #fx{position:fixed;inset:0}
+    #alert{position:fixed;display:flex;align-items:center;gap:10px;padding:8px 14px 8px 8px;border-radius:999px;
+      background:rgba(20,10,30,.55);backdrop-filter:blur(4px);opacity:0;transform:translate(-50%,10px);transition:opacity .35s,transform .35s;white-space:nowrap;pointer-events:none;
+      text-shadow:0 2px 4px rgba(0,0,0,.65)}
+    #alert.show{opacity:1;transform:translate(-50%,0)}
+    #alert img.ava{width:44px;height:44px;border-radius:50%;object-fit:cover;background:#b9a6f2}
+    #alert img.gift{width:36px;height:36px;object-fit:contain}
+    #alert .nm{font-weight:600;font-size:18px} #alert .sub{font-size:15px;opacity:.9}
+  </style>
+</head>
+<body>
+  <canvas id="fx"></canvas>
+  <div id="alert"><img class="ava" alt="" /><div><div class="nm"></div><div class="sub"></div></div><img class="gift" alt="" /></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/overlay-client.js"></script>
+  <script src="js/juice.js"></script>
+  <script>
+  /*
+   * รถลากของขวัญ (แบบรถงานแต่งลากกระป๋อง) — ของขวัญจริงผูกเชือกท้ายรถ ลากไปกับพื้น กระเด้งตามถนน กางเป็นพัด
+   *   car=van                    แบบรถ (ภาพ 3D มุมหลัง)
+   *   hue=0 sat=1 bright=1       เปลี่ยนสีรถ
+   *   scale=1 giftScale=1 x=0 y=0 alert=1 minCoins=0 max=140 reset=1
+   */
+  (function () {
+    const P = (k, d) => Overlay.param(k, d);
+    const num = (k, d) => { const v = parseFloat(P(k, d)); return Number.isFinite(v) ? v : d; };
+    const SCALE = num('scale', 1), GIFT_SCALE = num('giftScale', 1), OX = num('x', 0), OY = num('y', 0);
+    const SHOW_ALERT = P('alert', '1') !== '0', MIN_COINS = num('minCoins', 0);
+    const MAX = Math.round(Math.max(30, Math.min(400, num('max', 140) / (GIFT_SCALE * GIFT_SCALE))));
+
+    // รถ (ภาพมุมหลัง) — พิกัดหน่วยออกแบบ: 0,0 = กลางล่างของรถ · hook = ตะขอกลางกันชนท้าย
+    const CARS = {
+      van: { src: 'themes/car-heart.webp', x: -209.3, y: -360, w: 418, h: 360, hook: { x: -2, y: -54 } },
+    };
+    const CAR = CARS[P('car', 'van')] || CARS.van;
+    const carImg = Juice.skin(CAR.src, num('hue', 0), num('sat', 1), num('bright', 1));
+    const CAR_Y = -150; // รถยกขึ้นจากขอบล่าง → ของขวัญลากอยู่ด้านหน้า (ใกล้กล้อง)
+
+    const canvas = document.getElementById('fx'), ctx = canvas.getContext('2d');
+    const DPR = Math.min(2, devicePixelRatio || 1);
+    let W = 0, H = 0;
+    const S = () => SCALE * Math.min(1.6, Math.max(0.5, H / 720));
+    const origin = () => ({ x: W / 2 + OX, y: H - 20 * SCALE + OY });
+    function resize() { W = innerWidth; H = innerHeight; canvas.width = W * DPR; canvas.height = H * DPR; canvas.style.width = W + 'px'; canvas.style.height = H + 'px'; layoutUi(); }
+
+    // ---- ตำแหน่งที่ของขวัญถูกลาก: พัดหลายแถวจากตะขอ (แถวไกล = ใกล้รถ, แถวใกล้กล้อง = ล่างจอ ตัวใหญ่ขึ้น) ----
+    const hook = () => ({ x: CAR.hook.x, y: CAR_Y + CAR.hook.y });
+    const slots = [];
+    // แถวบนพื้นจากท้ายรถลงมาหาขอบล่าง แต่ละแถวกางออกด้านข้างกว้างขึ้นเรื่อย ๆ (จำนวนรอบจำกัด → จบแน่นอน)
+    for (let j = 0; j < 8; j++) {
+      const y = CAR_Y - 6 + j * 21; if (y > -10) break;
+      for (let m = 0; m < 34; m++) for (const sgn of m ? [-1, 1] : [1]) {
+        const x = sgn * (m * 30 + (j % 2 ? 15 : 0));
+        slots.push({ x, y, k: j, ph: (x * 0.13 + y * 0.07 + 6.28) % 6.28 });
+      }
+    }
+    // ช่องที่ใกล้ท้ายรถก่อน (กองจากตรงกลางออกไป)
+    slots.sort((p, q) => Math.hypot(p.x * 0.6, p.y - CAR_Y) - Math.hypot(q.x * 0.6, q.y - CAR_Y));
+
+    // ---- ของขวัญ ----
+    const gifts = [], fx = new Juice.Particles(), punch = new Juice.Spring(260, 11);
+    const imgCache = {};
+    function giftImg(url) { if (!url || !/^https:\/\//.test(url)) return null; let im = imgCache[url]; if (!im) { im = new Image(); im.src = url; imgCache[url] = im; } return im; }
+    const EMOJI = { Rose: '🌹', 'Finger Heart': '🫰', Perfume: '🧴', Galaxy: '🌌', Lion: '🦁', Universe: '🪐', Heart: '❤️', TikTok: '🎵' };
+    const sizeFor = Juice.sizeFor || (() => 1);
+    function freeSlot() {
+      const used = new Set(gifts.filter((g) => !g.dying).map((g) => g.slot));
+      for (let i = 0; i < slots.length && i < MAX + 20; i++) if (!used.has(i)) return i;
+      return -1;
+    }
+    function addGift(g, born) {
+      let slot = freeSlot();
+      const alive = gifts.filter((b) => !b.dying);
+      if (alive.length >= MAX || slot < 0) { const old = alive[0]; if (old) { old.dying = true; slot = old.slot; } }
+      if (slot < 0) slot = 0;
+      const r = Math.min(42, 15 * GIFT_SCALE * sizeFor(g.d, 3));
+      gifts.push({ g, img: giftImg(g.u), slot, r, born, life: 1, sx: (Math.random() - .5) * 160, sy: CAR_Y - 420 - Math.random() * 120 });
+      if (born > 0) punch.kick(g.d >= 1000 ? -6 : -2.5);
+    }
+
+    // ---- จำไว้ (รีโหลด/deploy ใหม่ไม่หาย) ----
+    const KEY = 'vjl-vehicle:' + (P('t', '') || P('username', 'demo')).slice(-24);
+    let saveT = null;
+    const saveNow = () => { try { localStorage.setItem(KEY, JSON.stringify({ g: gifts.filter((b) => !b.dying).map((b) => b.g) })); } catch { /* storage ปิด */ } };
+    const save = () => { clearTimeout(saveT); saveT = setTimeout(saveNow, 500); };
+    addEventListener('pagehide', () => { clearTimeout(saveT); saveNow(); });
+    try {
+      if (P('reset', '0') === '1') localStorage.removeItem(KEY);
+      const s = JSON.parse(localStorage.getItem(KEY) || 'null');
+      if (s) (s.g || []).slice(-MAX).forEach((g) => addGift(g, -1e6));
+    } catch { /* ignore */ }
+
+    // ---- วาด ----
+    function drawGift(img, e, size) {
+      const st = Juice.sticker ? Juice.sticker(img, size * S() * DPR) : null;
+      if (st) { const s = size * Juice.STICKER_PAD; ctx.drawImage(st, -s / 2, -s / 2, s, s); }
+      else if (img && img.complete && img.naturalWidth) ctx.drawImage(img, -size / 2, -size / 2, size, size);
+      else { ctx.font = Math.round(size * .85) + 'px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(e || '🎁', 0, 2); }
+    }
+    function giftPos(b, t, now) {
+      const sl = slots[b.slot] || slots[0];
+      const sp = 3.2 + (b.slot % 5) * 0.35, ph = sl.ph;
+      const hop = Math.pow(Math.max(0, Math.sin(t * sp + ph)), 6) * (6 + sl.k * 1.2); // กระเด้งตามหลุมถนน
+      let x = sl.x + Math.sin(t * 1.4 + ph) * 3, y = sl.y - hop;
+      if (b.born > 0) { // ลอยเข้ามาผูก
+        const k = Math.min(1, (now - b.born) / 700), e = Juice.easeOutBack ? Juice.easeOutBack(k) : k;
+        x = b.sx + (x - b.sx) * e; y = b.sy + (y - b.sy) * Math.min(1, k * 1.1);
+        if (k >= 1 && !b.landed) { b.landed = true; fx.dust(x, y + b.r * 0.6, 5); fx.sparkle(x, y, 5, b.g.d >= 1000 ? '#ffe08a' : '#fff6e8'); }
+      }
+      return { x, y, rot: Math.sin(t * 2.1 + ph) * 0.18 + hop * 0.01, depth: 0.88 + Math.max(0, (sl.y - CAR_Y)) / 600 };
+    }
+    function frame(now) {
+      const t = now / 1000;
+      punch.step(1 / 60); fx.step();
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.imageSmoothingQuality = 'high';
+      const o = origin(), s = S(); ctx.translate(o.x, o.y); ctx.scale(s, s);
+      // รถสั่นเหมือนกำลังวิ่ง
+      const bob = Math.sin(t * 9) * 1.2 + Math.max(0, Math.sin(t * 2.3)) ** 12 * 4, sq = 1 + Math.max(-0.08, Math.min(0.08, punch.x * 0.012));
+      const h = hook(), hy = h.y - bob;
+      const list = gifts.map((b) => ({ b, p: giftPos(b, t, now) })).sort((a, c) => a.p.y - c.p.y);
+      // เงารถ
+      ctx.beginPath(); ctx.ellipse(0, CAR_Y - 4, CAR.w * 0.42, 14, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(60,40,90,.28)'; ctx.fill();
+      // รถ
+      ctx.save(); ctx.translate(0, CAR_Y - bob); ctx.scale(2 - sq, sq);
+      if (carImg.ready()) ctx.drawImage(carImg.source, CAR.x, CAR.y, CAR.w, CAR.h);
+      ctx.restore();
+      // เชือก (วาดก่อนของขวัญ ทับกันชนเล็กน้อย)
+      ctx.lineCap = 'round';
+      for (const { b, p } of list) {
+        if (b.born > 0 && !b.landed) continue;
+        const tx = p.x, ty = p.y - b.r * 0.55 * p.depth, mx = (h.x + tx) / 2, my = Math.max(hy, ty) + 18;
+        ctx.globalAlpha = b.life;
+        ctx.beginPath(); ctx.moveTo(h.x, hy); ctx.quadraticCurveTo(mx, my, tx, ty);
+        ctx.lineWidth = 2.6; ctx.strokeStyle = 'rgba(90,60,120,.35)'; ctx.stroke();
+        ctx.lineWidth = 1.4; ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      // ตะขอ
+      ctx.beginPath(); ctx.arc(h.x, hy, 5, 0, Math.PI * 2); ctx.fillStyle = '#f4f0fb'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(120,90,160,.6)'; ctx.stroke();
+      // ของขวัญ (ไกล → ใกล้)
+      for (const { b, p } of list) {
+        if (b.dying) b.life -= 0.03;
+        const size = b.r * 2 * p.depth;
+        if (b.g.d >= 20 && b.life > 0.5) Juice.aura(ctx, p.x, p.y, size * 0.5, b.g.d, t);
+        ctx.save(); ctx.globalAlpha = Math.max(0, b.life);
+        ctx.beginPath(); ctx.ellipse(p.x, p.y + size * 0.45, size * 0.38, size * 0.1, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(60,40,90,.22)'; ctx.fill(); // เงาบนพื้น
+        ctx.translate(p.x, p.y); ctx.rotate(p.rot); drawGift(b.img, b.g.e, size); ctx.restore();
+      }
+      for (let i = gifts.length - 1; i >= 0; i--) if (gifts[i].life <= 0) gifts.splice(i, 1);
+      fx.draw(ctx);
+      requestAnimationFrame(frame);
+    }
+
+    // ---- แจ้งเตือนชื่อคนส่ง ----
+    const $alert = document.getElementById('alert');
+    function layoutUi() { const o = origin(), s = S(); $alert.style.left = o.x + 'px'; $alert.style.top = Math.max(4, o.y - 560 * s) + 'px'; }
+    let alertT = null;
+    function showAlert(e, count) {
+      if (!SHOW_ALERT) return;
+      const u = e.user || {};
+      $alert.querySelector('.ava').src = u.avatar || ''; $alert.querySelector('.gift').src = e.giftImage || '';
+      $alert.querySelector('.nm').textContent = u.nickname || u.uniqueId || '';
+      $alert.querySelector('.sub').textContent = `ส่ง ${e.giftName || 'ของขวัญ'} ×${count}`;
+      $alert.classList.add('show'); clearTimeout(alertT); alertT = setTimeout(() => $alert.classList.remove('show'), 3200);
+    }
+
+    function onGift(e) {
+      const count = e.repeatCount || 1, unit = e.diamondCount || 0;
+      if (unit < MIN_COINS) return;
+      const g = { u: e.giftImage || '', e: EMOJI[e.giftName] || '🎁', d: unit };
+      const n = unit >= 1000 ? 1 : Math.min(count, 25);
+      for (let i = 0; i < n; i++) setTimeout(() => { addGift(g, performance.now()); save(); }, i * 140);
+      showAlert(e, count);
+    }
+    Overlay.on('event', (e) => { if (e.type === 'gift' && !e.streaking) onGift(e); });
+
+    if (P('debug', '0') === '1') window.__car = { gifts, slots };
+    addEventListener('resize', resize); resize(); requestAnimationFrame(frame);
+
+    if (!Overlay.connected) {
+      const names = ['somchai', 'mimi', 'บิ๊ก', 'lisa', 'ต้นน้ำ'];
+      const list = [['Rose', 1], ['Rose', 1], ['Finger Heart', 5], ['Perfume', 20], ['Galaxy', 1000], ['Lion', 29999]];
+      setInterval(() => {
+        const g = list[Math.floor(Math.random() * list.length)], nm = names[Math.floor(Math.random() * names.length)];
+        onGift({ type: 'gift', user: { uniqueId: nm, nickname: nm }, giftName: g[0], diamondCount: g[1], repeatCount: g[1] >= 1000 ? 1 : 1 + Math.floor(Math.random() * 3) });
+      }, 1300);
+    }
+  })();
+  </script>
+</body>
+</html>

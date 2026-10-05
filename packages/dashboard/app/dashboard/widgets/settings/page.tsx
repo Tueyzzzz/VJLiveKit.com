@@ -3,10 +3,10 @@
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, RotateCcw, Save } from 'lucide-react';
+import { ArrowLeft, Check, Copy, RotateCcw, Save } from 'lucide-react';
 import { WIDGET_LABELS } from '@/components/Pricing';
 import { Alert, Button, Card, Field, Input, PageHeader, Select, Spinner } from '@/components/ui';
-import { api, ApiError } from '@/lib/api';
+import { api, ApiError, type OverlayTokenRow } from '@/lib/api';
 import { WIDGET_SETTINGS, defaultsOf, toOverlayParams, type FieldDef, type Values } from '@/lib/widgetSettings';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
@@ -21,6 +21,34 @@ function groupOptions(options: Opt[]): [string, Opt[]][] {
     if (hit) hit[1].push(o); else out.push([g, [o]]);
   }
   return out;
+}
+
+/** ลิงก์ OBS ของวิดเจ็ตนี้ (จากชุดลิงก์แรก) + ปุ่มคัดลอก */
+function WidgetLinkBox({ type }: { type: string }) {
+  const [url, setUrl] = useState<string | null | undefined>(undefined);
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    api<{ tokens: OverlayTokenRow[] }>('/api/overlay-tokens')
+      .then((r) => { const w = r.tokens[0]?.urls.find((u) => u.type === type); setUrl(w && !w.locked ? w.url : null); })
+      .catch(() => setUrl(null));
+  }, [type]);
+  if (url === undefined) return null;
+  return (
+    <Card className="mb-6">
+      <div className="mb-2 text-sm font-semibold text-violet">ลิงก์สำหรับ OBS / TikTok Live Studio</div>
+      {url ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <code className="min-w-0 flex-1 truncate rounded-lg bg-canvas px-3 py-2 text-xs text-muted">{url}</code>
+          <Button variant="secondary" onClick={() => { void navigator.clipboard?.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 1500); }}>
+            {copied ? <><Check className="size-4" /> คัดลอกแล้ว</> : <><Copy className="size-4" /> คัดลอกลิงก์</>}
+          </Button>
+        </div>
+      ) : (
+        <p className="text-sm text-muted">ยังไม่มีลิงก์ — <Link href="/dashboard/widgets/" className="text-pink underline">สร้างชุดลิงก์ที่หน้าวิดเจ็ต</Link> ก่อน</p>
+      )}
+      <p className="mt-2 text-xs text-muted">ลิงก์เดิมใช้ได้ตลอด — แก้แบบแล้วกดบันทึก จอใน OBS เปลี่ยนเองภายในไม่กี่วินาที ไม่ต้องรีเฟรช</p>
+    </Card>
+  );
 }
 
 function FieldInput({ f, value, onChange }: { f: FieldDef; value: Values[string]; onChange: (v: Values[string]) => void }) {
@@ -160,6 +188,8 @@ function WidgetSettings() {
       <PageHeader title={`ตั้งค่า: ${WIDGET_LABELS[type] ?? type}`}
         description="ตั้งค่าแล้วกดบันทึก — วิดเจ็ตที่เปิดอยู่ใน OBS / TikTok Live Studio จะเปลี่ยนตามทันที"
         actions={<Link href="/dashboard/widgets/"><Button variant="secondary"><ArrowLeft className="size-4" /> กลับ</Button></Link>} />
+
+      <WidgetLinkBox type={type} />
 
       {!values ? <Spinner /> : (
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">

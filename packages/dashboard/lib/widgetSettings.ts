@@ -34,11 +34,11 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
     resettable: 'ล้างของขวัญในโหลและอันดับ',
     sections: [
       { title: 'รูปแบบโหล', fields: [
-        { key: 'shape', label: 'ทรงโหล', type: 'select', def: 'heart', options: [['heart', 'โหลหัวใจ (ภาพ 3D)'], ['jar', 'โหลแก้วคอแคบ'], ['bowl', 'โหลกลมปากกว้าง'], ['mason', 'โหลฝาผ้าผูกโบว์'], ['car', 'รถพาสเทล (ของกองบนหลังคา)'], ['globe', 'ลูกแก้วหิมะ']] },
+        { key: 'shape', label: 'ทรงโหล', type: 'select', def: 'heart', options: [['heart', 'โหลหัวใจ (ภาพ 3D)'], ['orb', 'โหลกลมห่วงชมพู (ภาพ 3D)'], ['jar', 'โหลแก้วคอแคบ'], ['bowl', 'โหลกลมปากกว้าง'], ['mason', 'โหลฝาผ้าผูกโบว์'], ['car', 'รถพาสเทล (ของกองบนหลังคา)'], ['globe', 'ลูกแก้วหิมะ'], ['snow', 'ลูกแก้วหิมะ (ภาพ 3D)'], ['van', 'รถหัวใจ (ภาพ 3D)']] },
         { key: 'body', label: 'สีรถ', type: 'color', def: '#bfe9e6', when: (v) => v.shape === 'car' },
-        ...tint((v) => v.shape === 'heart'),
+        ...tint((v) => ['heart', 'orb', 'snow', 'van'].includes(String(v.shape))),
         { key: 'cloth', label: 'สีผ้าฝาโหล', type: 'color', def: '#e0452b', when: (v) => v.shape === 'mason' },
-        { key: 'full', label: 'เมื่อโหลเต็ม', type: 'select', when: (v) => !['car', 'globe', 'heart'].includes(String(v.shape)), def: 'spill', options: [['spill', 'ล้นออกมากองข้างโหล'], ['fade', 'ชิ้นเก่าสุดค่อย ๆ หายไป'], ['reset', 'ฉลอง แล้วเทโหลเริ่มใหม่']] },
+        { key: 'full', label: 'เมื่อโหลเต็ม', type: 'select', when: (v) => !['car', 'globe', 'heart', 'snow', 'van'].includes(String(v.shape)), def: 'spill', options: [['spill', 'ล้นออกมากองข้างโหล'], ['fade', 'ชิ้นเก่าสุดค่อย ๆ หายไป'], ['reset', 'ฉลอง แล้วเทโหลเริ่มใหม่']] },
         { key: 'fullText', label: 'ข้อความตอนโหลเต็ม', type: 'text', def: 'โหลเต็มแล้ว! 🎉', when: (v) => v.full === 'reset' },
       ] },
       { title: 'ขนาดและตำแหน่ง', fields: [
@@ -71,7 +71,9 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
       { title: 'ต้นไม้', fields: [
         { key: 'sway', label: 'ความแรงลม (กิ่งแกว่ง)', type: 'range', min: 0, max: 3, step: 0.1, def: 1, hint: '0 = นิ่ง' },
         { key: 'big', label: 'ของขวัญที่เป็นดอกใหญ่บนยอด ตั้งแต่ (เหรียญ)', type: 'number', min: 1, def: 1000 },
-        { key: 'pot', label: 'สีกระถาง', type: 'color', def: '#f3e6cc' },
+        { key: 'skin', label: 'แบบกระถาง', type: 'select', def: 'image', options: [['image', 'กระถางหัวใจมีปีก (ภาพ 3D)'], ['classic', 'กระถางเซรามิก (วาดด้วยโค้ด)']] },
+        ...tint((v) => v.skin !== 'classic'),
+        { key: 'pot', label: 'สีกระถาง', type: 'color', def: '#f3e6cc', when: (v) => v.skin === 'classic' },
         { key: 'minCoins', label: 'รับเฉพาะของขวัญตั้งแต่ (เหรียญ)', type: 'number', min: 0, def: 0 },
       ] },
       { title: 'ขนาดและตำแหน่ง', fields: [

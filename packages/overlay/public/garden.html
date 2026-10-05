@@ -37,7 +37,9 @@
    *   scale=1 flowerScale=1 x=0 y=0   ขนาด/ตำแหน่ง
    *   big=1000                        ของขวัญมูลค่าตั้งแต่นี้ = ดอกใหญ่บนยอด
    *   sway=1                          ความแรงลม (0 = นิ่ง)
-   *   pot=#f3e6cc                     สีกระถาง
+   *   skin=image|classic              กระถางรูป 3D (ค่าเริ่มต้น) หรือแบบวาดด้วยโค้ด
+   *   hue=0 sat=1 bright=1            เปลี่ยนสีกระถางรูป 3D
+   *   pot=#f3e6cc                     สีกระถาง (แบบ classic)
    *   alert=1 board=1 minCoins=0 reset=1
    */
   (function () {
@@ -56,7 +58,10 @@
 
     // ---- ต้นไม้: กิ่งหลักแผ่เป็นพัดจากปากกระถาง + กิ่งย่อย (สุ่มแบบคงที่ เหมือนกันทุกครั้งที่โหลด) ----
     let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-    const POT_TOP = -96;
+    // กระถางรูป 3D: พิกัดวัดจากรูป (k = หน่วย/พิกเซล, จุด 0,0 = กลางดินแนวนอน, ก้นกระถาง)
+    const POT_SKIN = P('skin', 'image') === 'classic' ? null : { src: 'themes/pot-heart.webp', k: 0.24, x: -151.9, y: -219.8, w: 303.8, h: 219.8 };
+    const potImg = POT_SKIN ? Juice.skin(POT_SKIN.src, num('hue', 0), num('sat', 1), num('bright', 1)) : null;
+    const POT_TOP = POT_SKIN ? -179.2 : -96; // กิ่งงอกจากกลางดิน
     const stems = [];
     for (let i = 0; i < 11; i++) {
       const a = -Math.PI / 2 + (i / 10 - .5) * 2.3 + (rnd() - .5) * .12; // พัดกว้าง ~130°
@@ -79,7 +84,7 @@
     function stemPoint(st, t, time) {
       const sway = Math.sin(time * 0.9 + st.phase) * 0.06 * SWAY * t;
       const a = st.a + st.bend * t * 0.6 + sway;
-      const base = { x: Math.cos(st.a) * 14, y: POT_TOP + 4 };
+      const base = POT_SKIN ? { x: Math.cos(st.a) * 46, y: POT_TOP + 8 - Math.abs(Math.cos(st.a)) * 6 } : { x: Math.cos(st.a) * 14, y: POT_TOP + 4 };
       return { x: base.x + Math.cos(a) * st.len * t, y: base.y + Math.sin(a) * st.len * t, a };
     }
     function slotPoint(sl, time) {
@@ -108,6 +113,11 @@
     function drawPot() {
       const w = 92, h = 96, top = POT_TOP;
       ctx.save(); const br = Juice.breathe(performance.now() / 1000, 0.012); ctx.scale(1 + (1 - br) * 0.5, br);
+      if (POT_SKIN) {
+        ctx.beginPath(); ctx.ellipse(0, -4, 125, 12, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(90,70,140,.25)'; ctx.fill();
+        if (potImg.ready()) ctx.drawImage(potImg.source, POT_SKIN.x, POT_SKIN.y, POT_SKIN.w, POT_SKIN.h);
+        ctx.restore(); return;
+      }
       // เงา
       ctx.beginPath(); ctx.ellipse(0, -2, w * 1.05, 12, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(90,70,140,.25)'; ctx.fill();
       // ตัวกระถาง (ทรงถ้วย)
@@ -127,6 +137,11 @@
       ctx.fillStyle = rg; ctx.fill(); ctx.strokeStyle = 'rgba(120,95,60,.35)'; ctx.stroke();
       ctx.beginPath(); ctx.ellipse(0, top + 12, w - 6, 10, 0, 0, Math.PI * 2); ctx.fillStyle = '#5b4535'; ctx.fill();
       ctx.restore();
+    }
+    // ก้อนดินรอบโคนกิ่ง → กิ่งดูงอกออกมาจากดินจริง (สุ่มคงที่)
+    const TUFTS = stems.flatMap((st) => [0, 1, 2].map((j) => ({ st, dx: (j - 1) * 5 + (rnd() - .5) * 3, dy: 1 + rnd() * 3, r: 3.2 + rnd() * 2.2, c: ['#4a3122', '#5e3f2b', '#6d4a33'][j] })));
+    function drawSoilTufts(time) {
+      for (const t of TUFTS) { const p = stemPoint(t.st, 0, time); ctx.beginPath(); ctx.arc(p.x + t.dx, p.y + t.dy, t.r, 0, Math.PI * 2); ctx.fillStyle = t.c; ctx.fill(); }
     }
     function drawStems(time) {
       ctx.lineCap = 'round';
@@ -176,9 +191,10 @@
     }
     function frame(now) {
       const time = now / 1000;
-      ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.imageSmoothingQuality = 'high';
       const o = origin(), s = S(); ctx.translate(o.x, o.y); ctx.scale(s, s);
-      drawStems(time); drawPot(); drawFlowers(time, now);
+      if (POT_SKIN) { drawPot(); drawStems(time); drawSoilTufts(time); } else { drawStems(time); drawPot(); }
+      drawFlowers(time, now);
       fx.step(); fx.draw(ctx);
       requestAnimationFrame(frame);
     }
@@ -187,7 +203,7 @@
     const $alert = document.getElementById('alert'), $board = document.getElementById('board');
     function layoutUi() {
       const o = origin(), s = S();
-      $alert.style.left = o.x + 'px'; $alert.style.top = Math.max(4, o.y - 470 * s) + 'px';
+      $alert.style.left = o.x + 'px'; $alert.style.top = Math.max(4, o.y - (470 - 96 - POT_TOP) * s) + 'px';
       $board.style.left = o.x + 'px'; $board.style.top = (o.y + 10) + 'px';
     }
     let alertT = null, ranking = {};

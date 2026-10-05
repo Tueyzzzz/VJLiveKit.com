@@ -51,7 +51,7 @@
    *   board=1 top=1 boardFormat=full|name   ผู้ให้สูงสุดใต้โหล (top = จำนวนคน, board=0 ซ่อน; full = รูป+ชื่อ+เหรียญ)
    *   total=0                               แสดงยอดเหรียญรวมเหนือโหล
    *   minCoins=0                            รับเฉพาะของขวัญมูลค่า >= นี้
-   *   shape=heart|jar|bowl|mason|car|globe cloth=#e0452b body=#bfe9e6   ทรง: jar = คอแคบ, bowl = กลมปากกว้าง, mason = ฝาผ้า (สีผ้า), car = รถพาสเทล (สีรถ)
+   *   shape=heart|snow|van|jar|bowl|mason|car|globe cloth=#e0452b body=#bfe9e6   ทรง: jar = คอแคบ, bowl = กลมปากกว้าง, mason = ฝาผ้า (สีผ้า), car = รถพาสเทล (สีรถ)
    *   full=spill|fade|reset fullText=...    โหลเต็มแล้ว: spill = ล้นออกกองรอบโหล (ไม่หาย, ค่าเริ่มต้น)
    *                                         fade = ชิ้นเก่าสุดจางออก, reset = ฉลองแล้วเทโหลเริ่มใหม่
    *   font=Kanit fontSize=50                ฟอนต์ (Kanit/Prompt/Mitr/Sriracha/Chakra Petch) และขนาด
@@ -103,6 +103,23 @@
         openY: -249.1, openHW: 120, rimHW: 150, topY: -380.0, fullY: -209.1, maxHW: 165.2, closed: true, floor: -17.5, fullMode: 'fade',
         image: { src: 'themes/jar-heart.webp', x: -206.2, y: -380.0, w: 412.4, h: 380.0 },
       },
+      orb: { // โหลกลมหัวใจ (ภาพ 3D) — ปากเปิด ห่วงชมพู: ของขวัญหล่นผ่านห่วง · ผนังวัดจากภาพ
+        prof: [[-297.1,130.9],[-293.7,134.1],[-290.2,137.6],[-286.7,141.2],[-283.2,144.6],[-279.7,147.5],[-276.2,150.7],[-272.7,153.3],[-269.2,156.1],[-265.7,158.5],[-262.2,160.8],[-258.7,163.3],[-255.2,165.4],[-251.7,167.3],[-248.2,169.0],[-244.7,170.8],[-241.2,172.3],[-237.7,173.9],[-234.2,175.3],[-230.7,176.7],[-227.2,177.8],[-223.7,179.0],[-220.2,179.9],[-216.7,180.9],[-213.2,182.0],[-209.8,182.7],[-206.3,183.4],[-202.8,184.1],[-199.3,184.6],[-195.8,185.1],[-192.3,185.5],[-188.8,185.8],[-185.3,186.2],[-181.8,186.2],[-178.3,186.5],[-174.8,186.5],[-171.3,186.5],[-167.8,186.3],[-164.3,186.2],[-160.8,185.8],[-157.3,185.8],[-153.8,185.5],[-150.3,184.8],[-146.8,184.4],[-143.3,183.9],[-139.8,183.2],[-136.3,182.5],[-132.8,181.8],[-129.3,180.7],[-125.9,179.9],[-122.4,178.8],[-118.9,177.6],[-115.4,176.4],[-111.9,175.1],[-108.4,173.7],[-104.9,172.2],[-101.4,170.6],[-97.9,168.9],[-94.4,167.1],[-90.9,165.0],[-87.4,162.9],[-83.9,160.8],[-80.4,158.5],[-76.9,156.1],[-73.4,153.5],[-69.9,150.8],[-66.4,147.7],[-62.9,144.7],[-59.4,141.4],[-55.9,137.9],[-52.4,134.4],[-48.9,130.2],[-45.4,126.0],[-42.0,121.3],[-38.5,116.2],[-35.0,111.0],[-31.5,105.1],[-28.0,98.9],[-24.5,95.4]],
+        hw: (y) => profileHW(SHAPES.orb.prof, y),
+        openY: -297.1, openHW: 130.9, rimHW: 152.6, topY: -380.0, fullY: -257.1, maxHW: 186.5, floor: -22.7,
+        image: { src: 'themes/orb-front.webp', back: 'themes/orb-back.webp', x: -229.2, y: -380.0, w: 458.7, h: 380.0 },
+      },
+      snow: { // ลูกแก้วหิมะ (ภาพ 3D) — โดมปิด: ของขวัญตกลงบนหิมะหน้าบ้าน อยู่หลังกระจก · เต็มแล้วชิ้นเก่าจางออก
+        hw: (y) => Math.sqrt(Math.max(0, 147.7 ** 2 - (y - (-243.2)) ** 2)),
+        openY: -378.9, openHW: 90, rimHW: 120, topY: -400.0, fullY: -320.9, maxHW: 147.7, closed: true, floor: -135.4, fullMode: 'fade',
+        dome: { cy: -243.2, r: 147.7 },
+        image: { src: 'themes/globe-front.webp', back: 'themes/globe-back.webp', x: -229.4, y: -400.0, w: 459.1, h: 400.0 },
+      },
+      van: { // รถหัวใจ (ภาพ 3D) — ตัวรถทึบ: ของขวัญตกลงบนแร็คหลังคา ค้างระหว่างราว แล้วล้นลงข้างรถ · ขอบชนวัดจากภาพ
+        hw: () => 171.7, openY: -360.0, openHW: 90, rimHW: 120, topY: -360.0, fullY: -360.0, maxHW: 171.7, solid: true,
+        field: { top: [[-171.1,-69.5],[-167.3,-77.7],[-163.4,-220.8],[-159.6,-225.9],[-155.8,-228.1],[-152.0,-229.1],[-148.1,-229.7],[-144.3,-230.0],[-140.5,-230.0],[-136.7,-228.7],[-132.8,-244.4],[-129.0,-252.6],[-125.2,-262.5],[-121.4,-271.8],[-117.6,-280.4],[-113.7,-287.7],[-109.9,-293.7],[-106.1,-297.9],[-102.3,-300.7],[-98.4,-302.3],[-94.6,-303.6],[-90.8,-311.3],[-87.0,-319.5],[-83.2,-326.9],[-79.3,-330.1],[-75.5,-330.7],[-71.7,-329.7],[-67.9,-324.6],[-64.0,-318.9],[-60.2,-318.9],[-56.4,-318.9],[-52.6,-318.9],[-48.7,-318.9],[-44.9,-318.9],[-41.1,-318.9],[-37.3,-318.9],[-33.5,-318.9],[-29.6,-318.9],[-25.8,-318.9],[-22.0,-318.9],[-18.2,-318.9],[-14.3,-318.9],[-10.5,-318.9],[-6.7,-318.9],[-2.9,-318.9],[1.0,-318.9],[4.8,-318.9],[8.6,-318.9],[12.4,-318.9],[16.2,-318.9],[20.1,-318.9],[23.9,-318.9],[27.7,-318.9],[31.5,-318.9],[35.4,-318.9],[39.2,-318.9],[43.0,-318.9],[46.8,-318.9],[50.7,-318.9],[54.5,-318.9],[58.3,-318.9],[62.1,-318.9],[65.9,-319.5],[69.8,-328.1],[73.6,-330.4],[77.4,-330.7],[81.2,-328.8],[85.1,-322.7],[88.9,-297.6],[92.7,-297.6],[96.5,-297.6],[100.4,-297.6],[104.2,-297.6],[108.0,-296.0],[111.8,-290.9],[115.6,-284.5],[119.5,-276.5],[123.3,-267.3],[127.1,-257.4],[130.9,-249.5],[134.8,-237.3],[138.6,-229.4],[142.4,-230.0],[146.2,-230.0],[150.1,-229.4],[153.9,-228.7],[157.7,-226.8],[161.5,-224.0],[165.3,-79.6],[169.2,-74.9]], hw: [[-329.4,80.9],[-325.6,83.8],[-321.8,85.7],[-317.9,87.6],[-314.1,89.5],[-310.3,91.1],[-306.5,92.7],[-302.7,98.1],[-298.8,105.1],[-295.0,109.0],[-291.2,111.5],[-287.4,114.1],[-283.5,116.0],[-279.7,117.9],[-275.9,119.8],[-272.1,121.4],[-268.2,122.7],[-264.4,124.2],[-260.6,125.8],[-256.8,127.4],[-253.0,129.0],[-249.1,130.9],[-245.3,132.5],[-241.5,133.8],[-237.7,134.4],[-233.8,134.8],[-230.0,147.8],[-226.2,159.3],[-222.4,162.5],[-218.5,164.1],[-214.7,164.7],[-210.9,165.0],[-207.1,165.3],[-203.3,165.0],[-199.4,164.7],[-195.6,163.4],[-191.8,160.2],[-188.0,142.4],[-184.1,143.4],[-180.3,144.3],[-176.5,147.5],[-172.7,149.4],[-168.8,150.7],[-165.0,150.7],[-161.2,152.3],[-157.4,153.9],[-153.6,155.2],[-149.7,156.1],[-145.9,156.7],[-142.1,157.7],[-138.3,158.0],[-134.4,158.7],[-130.6,159.0],[-126.8,160.6],[-123.0,162.2],[-119.2,163.1],[-115.3,163.4],[-111.5,163.4],[-107.7,162.5],[-103.9,160.6],[-100.0,160.6],[-96.2,160.6],[-92.4,160.6],[-88.6,160.2],[-84.7,159.9],[-80.9,163.4],[-77.1,167.6],[-73.3,169.8],[-69.5,171.1],[-65.6,171.7],[-61.8,171.7],[-58.0,171.7],[-54.2,171.4],[-50.3,171.1],[-46.5,170.1],[-42.7,168.8],[-38.9,166.9],[-35.0,164.1],[-31.2,160.2],[-27.4,152.9],[-23.6,149.1],[-19.8,148.8],[-15.9,148.5],[-12.1,147.8],[-8.3,146.2],[-4.5,143.0],[-0.6,133.2]] }, spawnX: [-81.9,96.5],
+        image: { src: 'themes/car-heart.webp', x: -209.3, y: -360.0, w: 418.0, h: 360.0 },
+      },
       car: { // รถพาสเทล (มุมหลัง) — ของขวัญกองบนหลังคาแล้วไหลลงข้างรถ (ตัวรถทึบ ไม่มีของข้างใน)
         hw: () => 152, openY: -282, openHW: 100, rimHW: 112, topY: -300, fullY: -300, maxHW: 152, solid: true,
         // ตัวรถเป็นกล่องสี่เหลี่ยมมุมมน 2 ชั้น + ราวหลังคา (กันของตก)
@@ -114,6 +131,8 @@
     if (SH.fullMode) FULL_MODE = SH.fullMode;
     // เปลี่ยนสีโหล (ภาพ): ?hue=-180..180 ?sat=1 ?bright=1
     const shapeImg = SH.image ? Juice.skin(SH.image.src, num('hue', 0), num('sat', 1), num('bright', 1)) : null;
+    const shapeBack = SH.image && SH.image.back ? Juice.skin(SH.image.back, num('hue', 0), num('sat', 1), num('bright', 1)) : null;
+    const domeFlakes = SH.dome ? Array.from({ length: 60 }, () => ({ x: (Math.random() - .5) * SH.dome.r * 1.6, y: SH.dome.cy - SH.dome.r + Math.random() * SH.dome.r * 1.4, r: 1.5 + Math.random() * 2.5, sp: .2 + Math.random() * .45, ph: Math.random() * 6.28 })) : null;
     // เว้นที่ใต้โหลไว้ให้ป้ายผู้ให้สูงสุด
     const BOARD_SPACE = SHOW_BOARD ? (TOP === 1 ? 70 : TOP * 46 + 14) : 0;
     const origin = () => ({ x: W / 2 + OX, y: H - 24 * SCALE - BOARD_SPACE + OY });
@@ -128,6 +147,8 @@
     function drawJarBack() {
       if (SH.image) {
         ctx.beginPath(); ctx.ellipse(0, -2, SH.maxHW * 0.9, 12, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(90,70,140,.25)'; ctx.fill();
+        if (SH.solid) { if (shapeImg.ready()) ctx.drawImage(shapeImg.source, SH.image.x, SH.image.y, SH.image.w, SH.image.h); return; } // รถทึบ: วาดเต็มเป็นชั้นหลัง
+        if (shapeBack) { if (shapeBack.ready()) ctx.drawImage(shapeBack.source, SH.image.x, SH.image.y, SH.image.w, SH.image.h); return; } // ชั้นหลัง (บ้าน/ฐาน)
         if (shapeImg.ready()) { ctx.save(); ctx.globalAlpha = 0.35; ctx.drawImage(shapeImg.source, SH.image.x, SH.image.y, SH.image.w, SH.image.h); ctx.restore(); } // ผนังหลัง
         return;
       }
@@ -140,7 +161,19 @@
       ctx.beginPath(); ctx.ellipse(0, -6, SH.hw(-6) - 14, 10, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fill();
     }
     function drawJarFront() {
-      if (SH.image) { if (shapeImg.ready()) ctx.drawImage(shapeImg.source, SH.image.x, SH.image.y, SH.image.w, SH.image.h); return; }
+      if (SH.image) {
+        if (domeFlakes) { // หิมะโปรยในโดม
+          const { cy, r } = SH.dome, t = performance.now() / 1000;
+          ctx.save(); ctx.beginPath(); ctx.arc(0, cy, r - 4, 0, Math.PI * 2); ctx.clip();
+          for (const f of domeFlakes) {
+            f.y += f.sp; if (f.y > SH.floor - 6) { f.y = cy - r; f.x = (Math.random() - .5) * r * 1.6; }
+            ctx.beginPath(); ctx.arc(f.x + Math.sin(t + f.ph) * 6, f.y, f.r, 0, 6.29); ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fill();
+          }
+          ctx.restore();
+        }
+        if (shapeImg.ready()) ctx.drawImage(shapeImg.source, SH.image.x, SH.image.y, SH.image.w, SH.image.h);
+        return;
+      }
       if (SH.solid) return;
       if (SH.globe) return drawGlobeFront();
       jarPath();
@@ -297,7 +330,7 @@
       if (out && !dropFromTop) { b.x = side * (SH.maxHW + 20 + Math.random() * 260); b.y = -r - Math.random() * 120; }
       b.px = b.x + (Math.random() - .5) * 2; b.py = b.y - 2;
       if (out && dropFromTop && !SH.solid) b.px = b.x - side * (1.5 + Math.random() * 2.5); // พุ่งออกด้านข้าง
-      if (SH.solid && dropFromTop) { b.x = (Math.random() - .5) * 170; b.px = b.x; }
+      if (SH.solid && dropFromTop) { b.x = SH.spawnX ? SH.spawnX[0] + 15 + Math.random() * (SH.spawnX[1] - SH.spawnX[0] - 30) : (Math.random() - .5) * 170; b.px = b.x; }
       if (SH.solid && !dropFromTop && !g.o) { b.x = (Math.random() - .5) * 180; b.y = SH.topY - 20 - Math.random() * 200; b.px = b.x; b.py = b.y; }
       bodies.push(b);
       if (dropFromTop) fx.sparkle(b.x, b.y, 5, b.d >= 1000 ? '#ffe08a' : '#fff6e8');
@@ -310,6 +343,20 @@
       const s = S(), o = origin(), left = -o.x / s, right = (W - o.x) / s;
       if (b.x - b.r < left) b.x = left + b.r;
       if (b.x + b.r > right) b.x = right - b.r;
+      if (SH.field) { // ชนกับรูปทรงจากภาพ: อยู่เหนือผิว → ดันขึ้น (วางบนหลังคา), อยู่ข้าง ๆ → ดันออกด้านข้าง
+        const F = SH.field, top = (x) => (x < F.top[0][0] || x > F.top[F.top.length - 1][0]) ? Infinity : profileHW(F.top, x);
+        const side = (y) => y < F.hw[0][0] ? 0 : profileHW(F.hw, y);
+        const t0 = top(b.x);
+        if (t0 < Infinity && b.y < t0 + b.r * 0.3) {
+          let h = Infinity;
+          for (let q = -1; q <= 1.001; q += 0.25) { const ys = top(b.x + q * b.r); if (ys < Infinity) h = Math.min(h, ys - Math.sqrt(Math.max(0, 1 - q * q)) * b.r); }
+          if (b.y > h) { b.y = h; b.px = b.x - (b.x - b.px) * 0.5; }
+        } else {
+          const hw = side(b.y);
+          if (hw && Math.abs(b.x) < hw + b.r * 0.9) { b.x = Math.sign(b.x || 1) * (hw + b.r * 0.9); b.px = b.x - (b.x - b.px) * 0.3; }
+        }
+        return;
+      }
       if (SH.rects) { // ชนกับกล่องตัวรถ (จุดใกล้สุดบนสี่เหลี่ยม)
         for (const [x0, x1, y0, y1] of SH.rects) {
           const cx = Math.max(x0, Math.min(x1, b.x)), cy = Math.max(y0, Math.min(y1, b.y)), dx = b.x - cx, dy = b.y - cy, d = Math.hypot(dx, dy);
@@ -442,7 +489,7 @@
     setInterval(() => { if (document.hidden) tick(); }, 250);
     function frame() {
       tick();
-      ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.imageSmoothingQuality = 'high';
       const o = origin(), s = S();
       nowT = performance.now() / 1000;
       ctx.translate(o.x, o.y); ctx.scale(s, s);

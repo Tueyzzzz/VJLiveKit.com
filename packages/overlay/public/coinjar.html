@@ -323,7 +323,7 @@
     setInterval(() => { if (document.hidden) tick(); }, 250);
     function frame() {
       tick();
-      ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.imageSmoothingQuality = 'high';
       ctx.translate(TX, TY); ctx.scale(S, S);
       nowT = performance.now() / 1000;
       if (SKIN && skinImg.ready()) {

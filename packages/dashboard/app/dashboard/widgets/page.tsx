@@ -60,7 +60,16 @@ const WIDGET_BLURB: Record<string, string> = {
 /** ความกว้างจอจำลองของตัวอย่าง (ยิ่งแคบ = วิดเจ็ตดูใหญ่ขึ้น) — วิดเจ็ตเล็ก ๆ ไม่ต้องย่อจากจอ 1920 */
 const PREVIEW_W: Record<string, number> = { goal: 760, chat: 820, follower: 640, alerts: 900, timer: 760, topgifters: 900, toplikers: 900, tts: 900, fx: 1100, league: 1400 };
 
-function WidgetPreview({ type }: { type: string }) {
+/** ตั้งค่าที่บันทึกไว้ → พารามิเตอร์ URL ของตัวอย่าง (พารามิเตอร์ใน URL มาก่อนค่าเริ่มต้นเสมอ) */
+function configQuery(config?: Record<string, unknown>): string {
+  if (!config) return '';
+  const q = new URLSearchParams();
+  for (const [k, v] of Object.entries(config)) if (k !== 'resetAt' && v !== null && v !== undefined && v !== '') q.set(k, String(v));
+  const str = q.toString();
+  return str ? '&' + str : '';
+}
+
+function WidgetPreview({ type, config }: { type: string; config?: Record<string, unknown> }) {
   const FW = PREVIEW_W[type] ?? 1920, FH = Math.round(FW * 9 / 16);
   const ref = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0);
@@ -77,7 +86,7 @@ function WidgetPreview({ type }: { type: string }) {
     <div ref={ref} className="relative aspect-video overflow-hidden rounded-xl"
       style={{ background: 'radial-gradient(circle at 30% 20%, #3a2d52, #17121f 70%)' }}>
       {visible && scale > 0 && (
-        <iframe src={`${API_BASE}/overlay/${type}.html?demo=1&reset=1`} title={`ตัวอย่าง ${type}`} loading="lazy"
+        <iframe src={`${API_BASE}/overlay/${type}.html?demo=1&reset=1${configQuery(config)}`} title={`ตัวอย่าง ${type}`} loading="lazy"
           className="pointer-events-none absolute left-0 top-0 origin-top-left border-0"
           style={{ width: FW, height: FH, transform: `scale(${scale})` }} />
       )}
@@ -106,6 +115,8 @@ export default function WidgetsPage() {
   const [maxTokens, setMaxTokens] = useState(0);
   const [error, setError] = useState<{ text: string; upgrade?: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [configs, setConfigs] = useState<Record<string, Record<string, unknown>>>({});
+  useEffect(() => { api<{ configs: Record<string, Record<string, unknown>> }>('/api/widgets/configs').then((r) => setConfigs(r.configs)).catch(() => {}); }, []);
 
   const load = useCallback(async () => {
     try {
@@ -172,7 +183,7 @@ export default function WidgetsPage() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {list.map((w) => (
           <Card key={w.type} className="p-3">
-            <WidgetPreview type={w.type} />
+            <WidgetPreview type={w.type} config={configs[w.type]} />
             <div className="mt-3 flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 text-sm font-medium">

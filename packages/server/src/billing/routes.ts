@@ -5,7 +5,7 @@ import { requireUser, getUser } from '../auth/middleware.js';
 import { billing } from './index.js';
 import { BillingError, type WebhookResult } from './provider.js';
 import { config } from '../config/index.js';
-import { PLAN_DEFS } from '../plans/index.js';
+import { PLAN_DEFS, trialEndOf } from '../plans/index.js';
 
 function sendBillingError(reply: import('fastify').FastifyReply, err: unknown) {
   if (err instanceof BillingError) return reply.code(err.status).send({ error: err.message });
@@ -91,6 +91,7 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
         planName: plan.name,
         priceCents: plan.priceCents,
         currency: plan.currency,
+        trialEnd: trialEndOf(user.createdAt),
         successUrl: `${config.publicBaseUrl}/billing/success/`,
         cancelUrl: `${config.publicBaseUrl}/billing/cancel/`,
       });

@@ -69,7 +69,9 @@ export class StripeBillingProvider implements BillingProvider {
       success_url: `${p.successUrl}?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: p.cancelUrl,
       allow_promotion_codes: true,
-      subscription_data: { metadata: { userId: p.userId, planCode: p.planCode } },
+      // ยังเหลือช่วงทดลองฟรี (Stripe ต้องการล่วงหน้า ≥ 48 ชม.) → ตัดบัตรครั้งแรกตอนหมดช่วงฟรี
+      subscription_data: { metadata: { userId: p.userId, planCode: p.planCode },
+        ...(p.trialEnd && p.trialEnd.getTime() - Date.now() > 49 * 3600_000 ? { trial_end: Math.floor(p.trialEnd.getTime() / 1000) } : {}) },
       metadata: { userId: p.userId, planCode: p.planCode },
     });
     if (!session.url) throw new BillingError('Stripe ไม่คืน URL สำหรับชำระเงิน', 502);

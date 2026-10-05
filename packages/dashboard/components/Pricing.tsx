@@ -52,6 +52,7 @@ export function PlanCards({ plans, currentPlan, renderAction }: {
               <span className="font-display text-4xl">{pro ? formatMoney(p.priceCents, p.currency) : 'ฟรี'}</span>
               {pro && <span className="text-sm text-muted"> / เดือน</span>}
             </p>
+            {pro && <p className="mt-1 text-sm font-medium text-pink">🎁 สมัครใหม่ใช้ฟรีทุกฟีเจอร์ 30 วันแรก</p>}
             <ul className="mt-5 flex-1 space-y-2 text-sm">
               {ALL_WIDGETS.map((w) => {
                 const ok = p.features.widgets.includes(w);

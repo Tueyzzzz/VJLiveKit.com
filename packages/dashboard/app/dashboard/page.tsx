@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
 import { ArrowRight, CheckCircle2, Circle } from 'lucide-react';
 import { Alert, Badge, Button, Card, Field, Input, PageHeader } from '@/components/ui';
-import { api, type Me } from '@/lib/api';
+import { api, planLabel, type Me } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 
 export default function OverviewPage() {
@@ -66,14 +66,17 @@ export default function OverviewPage() {
           <Card>
             <div className="flex items-center justify-between">
               <h2 className="font-medium">แพลนของคุณ</h2>
-              <Badge tone={entitlements?.plan === 'pro' ? 'pink' : 'gray'}>{entitlements?.plan === 'pro' ? 'Pro' : 'Free'}</Badge>
+              <Badge tone={entitlements?.plan === 'free' ? 'gray' : 'pink'}>{planLabel(entitlements)}</Badge>
             </div>
             <p className="mt-2 text-sm text-muted">
               ใช้ได้ {entitlements?.widgets.length ?? 0} วิดเจ็ต · กฎ Actions {entitlements?.maxActionRules} ข้อ
             </p>
+            {entitlements?.plan === 'trial' && (
+              <p className="mt-2 text-sm">ช่วงทดลองฟรีใช้ได้ทุกฟีเจอร์ถึง {new Date(entitlements.trialEndsAt!).toLocaleDateString('th-TH', { dateStyle: 'long' })} — หลังจากนั้น 249 บาท/เดือน</p>
+            )}
             {entitlements?.plan !== 'pro' && (
               <Link href="/dashboard/billing/" className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-pink hover:underline">
-                อัปเกรดเป็น Pro <ArrowRight className="size-4" />
+                {entitlements?.plan === 'trial' ? 'สมัคร Pro ไว้เลย (ยังไม่เก็บเงินจนหมดช่วงฟรี)' : 'อัปเกรดเป็น Pro'} <ArrowRight className="size-4" />
               </Link>
             )}
           </Card>

@@ -18,8 +18,14 @@ export interface PlanFeatures {
 }
 
 export interface Entitlements extends PlanFeatures {
-  plan: string; // "free" | "pro"
+  plan: string; // "free" | "trial" | "pro"
+  /** ช่วงทดลองฟรีสิ้นสุด (ISO) — มีเฉพาะตอนอยู่ในช่วงทดลอง */
+  trialEndsAt?: string;
 }
+
+/** สมัครใหม่ = ใช้ฟรีทุกฟีเจอร์ (เท่า Pro) 30 วันนับจากวันสมัคร แล้วต้องสมัคร Pro */
+export const TRIAL_DAYS = 30;
+export const trialEndOf = (createdAt: Date): Date => new Date(createdAt.getTime() + TRIAL_DAYS * 86_400_000);
 
 interface PlanDef { code: string; name: string; priceCents: number; currency: string; features: PlanFeatures }
 
@@ -28,7 +34,7 @@ interface PlanDef { code: string; name: string; priceCents: number; currency: st
  * แก้ราคา/ฟีเจอร์ที่นี่แล้ว deploy ได้เลย ไม่ต้องรัน seed เอง
  */
 // ช่วงเปิดทดสอบ: Free ได้ทุกฟีเจอร์เท่า Pro — ตั้งเป็น false เพื่อกลับไปใช้ลิมิต Free ปกติ
-const FREE_UNLOCKED_FOR_TESTING = true;
+const FREE_UNLOCKED_FOR_TESTING = false;
 
 export const PLAN_DEFS: PlanDef[] = [
   {
@@ -38,7 +44,7 @@ export const PLAN_DEFS: PlanDef[] = [
       : { widgets: ['coinjar', 'alerts', 'goal', 'chat', 'follower'], maxActionRules: 3, maxTokens: 2, noWatermark: false },
   },
   {
-    code: 'pro', name: 'Pro', priceCents: 14900, currency: 'thb', // 149 บาท/เดือน
+    code: 'pro', name: 'Pro', priceCents: 24900, currency: 'thb', // 249 บาท/เดือน (เดือนแรกฟรี — ดู TRIAL_DAYS)
     features: {
       widgets: [...WIDGET_TYPES],
       maxActionRules: 100, maxTokens: 20, noWatermark: true,
@@ -60,10 +66,18 @@ const PAID_STATUSES = new Set(['ACTIVE', 'TRIALING', 'PAST_DUE']);
 
 /** คำนวณสิทธิ์ปัจจุบันของผู้ใช้ (หมดอายุ/ยกเลิก -> กลับเป็น free) */
 export async function getEntitlements(userId: string): Promise<Entitlements> {
-  const sub = await prisma.subscription.findUnique({ where: { userId }, include: { plan: true } });
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { createdAt: true, subscription: { include: { plan: true } } } });
+  const sub = user?.subscription;
   const active = sub && PAID_STATUSES.has(sub.status)
     && (!sub.currentPeriodEnd || sub.currentPeriodEnd.getTime() > Date.now());
-  if (!active) return { plan: FREE.code, ...FREE.features };
+  if (!active) {
+    // ยังไม่จ่าย: อยู่ในช่วงทดลอง 30 วันแรก → ใช้ได้ทุกอย่างเท่า Pro
+    const trialEnd = user ? trialEndOf(user.createdAt) : null;
+    if (trialEnd && trialEnd.getTime() > Date.now()) {
+      return { plan: 'trial', ...PLAN_DEFS.find((p) => p.code === 'pro')!.features, trialEndsAt: trialEnd.toISOString() };
+    }
+    return { plan: FREE.code, ...FREE.features };
+  }
   const def = PLAN_DEFS.find((p) => p.code === sub.plan.code);
   const features = (def?.features ?? (sub.plan.features as unknown as PlanFeatures)) ?? FREE.features;
   return { plan: sub.plan.code, ...features };

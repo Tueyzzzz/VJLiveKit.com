@@ -9,6 +9,8 @@ export interface CheckoutParams {
   /** ลูกค้าเดิมฝั่ง gateway (ถ้ามี) */
   customerId?: string | null;
   planCode: string;      // "pro"
+  /** ยังอยู่ในช่วงทดลองฟรี → เริ่มตัดบัตรวันนี้ (ไม่เก็บเงินซ้อนช่วงฟรี) */
+  trialEnd?: Date;
   planName: string;
   priceCents: number;
   currency: string;

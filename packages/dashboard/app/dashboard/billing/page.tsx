@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { ExternalLink } from 'lucide-react';
 import { PlanCards, usePlans } from '@/components/Pricing';
 import { Alert, Badge, Button, Card, PageHeader, Spinner } from '@/components/ui';
-import { api, formatMoney, type PaymentRow } from '@/lib/api';
+import { api, formatMoney, trialDaysLeft, type PaymentRow } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 
 const STATUS_LABEL: Record<string, string> = { ACTIVE: 'ใช้งานอยู่', TRIALING: 'ทดลองใช้', PAST_DUE: 'ค้างชำระ', CANCELED: 'ยกเลิกแล้ว', INCOMPLETE: 'ชำระเงินไม่สำเร็จ' };
@@ -41,6 +41,12 @@ export default function BillingPage() {
       <PageHeader title="แพลน & การชำระเงิน" description="ชำระผ่านบัตรอย่างปลอดภัยด้วย Stripe ยกเลิกได้ทุกเมื่อ" />
 
       {error && <div className="mb-5"><Alert>{error}</Alert></div>}
+      {entitlements?.plan === 'trial' && (
+        <div className="mb-5"><Alert tone="info">🎁 คุณอยู่ในช่วงทดลองฟรี เหลือ {trialDaysLeft(entitlements)} วัน (ถึง {new Date(entitlements.trialEndsAt!).toLocaleDateString('th-TH', { dateStyle: 'long' })}) — สมัคร Pro ตอนนี้ได้เลย ระบบจะเริ่มเก็บ 249 บาท/เดือน หลังหมดช่วงฟรี</Alert></div>
+      )}
+      {entitlements?.plan === 'free' && (
+        <div className="mb-5"><Alert>ช่วงทดลองฟรีหมดแล้ว — ตอนนี้ใช้ได้เฉพาะวิดเจ็ตพื้นฐาน สมัคร Pro 249 บาท/เดือน เพื่อใช้ทุกวิดเจ็ตต่อ</Alert></div>
+      )}
       {!billingEnabled && plans && (
         <div className="mb-5"><Alert tone="info">ระบบชำระเงินยังไม่เปิดใช้งาน — กรุณาติดต่อผู้ดูแล</Alert></div>
       )}
@@ -79,7 +85,7 @@ export default function BillingPage() {
             <Button variant="secondary" className="w-full" disabled>คุณเป็นสมาชิก Pro แล้ว 🎉</Button>
           ) : (
             <Button className="w-full" disabled={!billingEnabled} loading={busy === p.code} onClick={() => go('/api/billing/checkout', p.code, { planCode: p.code })}>
-              อัปเกรดเป็น {p.name}
+              {entitlements?.plan === 'trial' ? `สมัคร ${p.name} (เก็บเงินหลังหมดช่วงฟรี)` : `อัปเกรดเป็น ${p.name}`}
             </Button>
           )}
         />

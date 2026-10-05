@@ -48,6 +48,20 @@ export interface Entitlements {
   maxActionRules: number;
   maxTokens: number;
   noWatermark: boolean;
+  /** อยู่ในช่วงทดลองฟรีเดือนแรก (plan = "trial") */
+  trialEndsAt?: string;
+}
+
+/** จำนวนวันที่เหลือของช่วงทดลองฟรี (ไม่อยู่ในช่วงทดลอง = null) */
+export function trialDaysLeft(e: Entitlements | null | undefined): number | null {
+  if (!e?.trialEndsAt) return null;
+  return Math.max(0, Math.ceil((new Date(e.trialEndsAt).getTime() - Date.now()) / 86_400_000));
+}
+/** ป้ายแพลนสั้น ๆ */
+export function planLabel(e: Entitlements | null | undefined): string {
+  if (e?.plan === 'pro') return 'Pro';
+  const d = trialDaysLeft(e);
+  return d !== null ? `ทดลองฟรี · เหลือ ${d} วัน` : 'Free';
 }
 export interface Me {
   id: string;

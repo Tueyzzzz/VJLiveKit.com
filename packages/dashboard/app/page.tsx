@@ -47,7 +47,7 @@ export default function Home() {
           วิดเจ็ตสวย ๆ วางใน OBS / TikTok LIVE Studio ได้ทันที เชื่อมกับไลฟ์จริงแบบเรียลไทม์ ตั้งค่าครั้งเดียวใช้ได้ตลอด
         </p>
         <div className="mt-8 flex justify-center gap-3">
-          <Link href={user ? '/dashboard/' : '/register/'}><Button className="px-6 py-3 text-base">เริ่มใช้ฟรี</Button></Link>
+          <Link href={user ? '/dashboard/' : '/register/'}><Button className="px-6 py-3 text-base">ใช้ฟรีเดือนแรก</Button></Link>
           <a href="/overlay/coinjar.html?demo=1" target="_blank" rel="noreferrer"><Button variant="secondary" className="px-6 py-3 text-base">ดูเดโม</Button></a>
         </div>
       </section>

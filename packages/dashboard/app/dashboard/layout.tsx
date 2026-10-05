@@ -7,6 +7,7 @@ import { LayoutDashboard, LayoutTemplate, Zap, CreditCard, LogOut } from 'lucide
 import { Logo } from '@/components/Logo';
 import { Badge, Spinner, cx } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
+import { planLabel } from '@/lib/api';
 
 const NAV = [
   { href: '/dashboard/', label: 'ภาพรวม', icon: LayoutDashboard },
@@ -44,7 +45,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </nav>
         <div className="hidden px-5 py-6 md:absolute md:bottom-0 md:block md:w-64">
           <div className="mb-3 truncate text-sm">{user.displayName ?? user.email}</div>
-          <div className="mb-4"><Badge tone={entitlements?.plan === 'pro' ? 'pink' : 'gray'}>แพลน {entitlements?.plan === 'pro' ? 'Pro' : 'Free'}</Badge></div>
+          <div className="mb-4"><Badge tone={entitlements?.plan === 'free' ? 'gray' : 'pink'}>{planLabel(entitlements)}</Badge></div>
           <button onClick={() => { logout(); router.replace('/'); }} className="flex items-center gap-2 text-sm text-muted hover:text-ink">
             <LogOut className="size-4" /> ออกจากระบบ
           </button>

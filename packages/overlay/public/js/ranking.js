@@ -8,7 +8,7 @@
  *   ?bg=35        ความทึบพื้นหลัง % (0 = ใสทั้งหมด)
  *   ?pos=tr       ตำแหน่ง tr | tl | br | bl (บนขวา/บนซ้าย/ล่างขวา/ล่างซ้าย)
  *   ?reset=1      ล้างอันดับที่จำไว้ (ปกติล้างเองเมื่อเริ่มไลฟ์ใหม่)
- *   ?frames=a     แท่น Top 3 กรอบพระราชวัง/องครักษ์: a | b (แบบสำรอง) | off
+ *   ?frames=a     แท่น Top 3: a | b (พระราชวัง) | gaming | singer | toy | off
  *
  * Ranking.mount({ mode: 'gifts' | 'likes', title, icon })
  */
@@ -67,8 +67,17 @@ window.Ranking = (function () {
     r3: { cx: .4995, cy: .4934, r: .28, rib: .868, ribH: .09, ink: '#6b2f1e', sh: 'rgba(255,255,255,.6)' },
     r1b: { cx: .5006, cy: .5292, r: .265, rib: .865, ribH: .095, ink: '#fff', sh: 'rgba(120,0,20,.7)' },
     r3b: { cx: .5001, cy: .4624, r: .26, rib: .857, ribH: .09, ink: '#6b2f1e', sh: 'rgba(255,255,255,.6)' },
+    // เกมมิ่ง (นีออน) · นักร้อง (เวที/ไวน์แดง) · Toy Cute (ของเล่นพาสเทล)
+    g1: { cx: .4998, cy: .5482, r: .244, rib: .862, ribH: .085, ink: '#d6faff', sh: 'rgba(0,190,255,.95)' },
+    g2: { cx: .4999, cy: .5303, r: .232, rib: .835, ribH: .085, ink: '#d6faff', sh: 'rgba(0,190,255,.95)' },
+    g3: { cx: .4998, cy: .5055, r: .24, rib: .833, ribH: .085, ink: '#ffe0fb', sh: 'rgba(255,60,220,.95)' },
+    s1: { cx: .5042, cy: .5112, r: .258, rib: .862, ribH: .085, ink: '#fff', sh: 'rgba(120,0,20,.8)' },
+    s2: { cx: .4999, cy: .4672, r: .252, rib: .83, ribH: .085, ink: '#5a2a22', sh: 'rgba(255,255,255,.7)' },
+    s3: { cx: .5022, cy: .4632, r: .289, rib: .83, ribH: .085, ink: '#6b4a2a', sh: 'rgba(255,255,255,.7)' },
+    t1: { cx: .5051, cy: .5144, r: .216, rib: .85, ribH: .085, ink: '#fff', sh: 'rgba(210,60,130,.95)' },
+    t3: { cx: .4983, cy: .4799, r: .234, rib: .83, ribH: .085, ink: '#fff', sh: 'rgba(210,60,120,.95)' },
   };
-  const FRAME_SETS = { a: ['r1', 'r2', 'r3'], b: ['r1b', 'r2', 'r3b'] };
+  const FRAME_SETS = { a: ['r1', 'r2', 'r3'], b: ['r1b', 'r2', 'r3b'], gaming: ['g1', 'g2', 'g3'], singer: ['s1', 's2', 's3'], toy: ['t1', 't3', 't3'] };
 
   function mount(opts) {
     const P = (k, d) => Overlay.param(k, d);

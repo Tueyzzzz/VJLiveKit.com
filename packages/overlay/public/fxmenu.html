@@ -86,6 +86,12 @@
       [...list.children].forEach((r) => { if (r.querySelector('.what')?.textContent === f.name) { r.classList.remove('hot'); void r.offsetWidth; r.classList.add('hot'); } });
     });
 
+    // ตัวอย่างในแดชบอร์ด (ไม่มีลิงก์จริง): ล็อกอินอยู่ → ใช้กฎจริงของวีเจเป็นค่าเริ่มต้น · ไม่มี/ยังไม่มีกฎ → ตัวอย่างสมมติ
+    let session = null; try { session = localStorage.getItem('vjl_token') || sessionStorage.getItem('vjl_token'); } catch (e) { /* ignore */ }
+    if (!Overlay.connected && session) {
+      fetch('/api/actions/menu', { headers: { Authorization: 'Bearer ' + session } }).then((r) => (r.ok ? r.json() : null))
+        .then((j) => { if (j && j.items && j.items.length) { items = j.items; render(); } }).catch(() => {});
+    }
     if (!Overlay.connected) {
       const IMG = 'https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/';
       items = [

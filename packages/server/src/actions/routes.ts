@@ -95,6 +95,12 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
     return { ok: true, screens };
   });
 
+  // รายการเมนูของขวัญจากกฎจริง (ใช้ในตัวอย่างวิดเจ็ต "เมนูของขวัญ" บนแดชบอร์ด)
+  app.get('/api/actions/menu', { preHandler: requireUser }, async (req) => {
+    const claims = getUser(req)!;
+    return { items: (await getHub()?.menuFor(claims.userId)) ?? [] };
+  });
+
   app.delete('/api/actions/:id', { preHandler: requireUser }, async (req, reply) => {
     const claims = getUser(req)!;
     const id = (req.params as { id: string }).id;

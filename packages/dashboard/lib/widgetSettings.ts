@@ -410,11 +410,12 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
   goal: {
     sections: [
       { title: 'เป้าหมาย', fields: [
-        { key: 'style', label: 'รูปแบบ', type: 'select', def: 'bar', options: [['bar', '▬ แถบเปอร์เซ็นต์'], ['heart', '💖 หัวใจแก้วเติมน้ำ']] },
+        { key: 'style', label: 'รูปแบบ', type: 'select', def: 'bar', options: [['bar', '▬ แถบเปอร์เซ็นต์'], ['heart', '💖 หัวใจแก้วเรียบ ๆ', 'หัวใจแก้ว'], ['h-angel', '👼 หัวใจปีกนางฟ้า', 'หัวใจแก้ว', '/overlay/hearts/angel.webp'], ['h-potion', '🧪 ขวดยาเวทมนตร์', 'หัวใจแก้ว', '/overlay/hearts/potion.webp'], ['h-bowjar', '🎀 โหลโบว์ชมพู', 'หัวใจแก้ว', '/overlay/hearts/bowjar.webp'], ['h-piggy', '🐷 กระปุกของเล่น', 'หัวใจแก้ว', '/overlay/hearts/piggy.webp'], ['h-cyber', '🎮 หัวใจไซเบอร์', 'หัวใจแก้ว', '/overlay/hearts/cyber.webp'], ['h-melody', '🎤 หัวใจโน้ตดนตรี', 'หัวใจแก้ว', '/overlay/hearts/melody.webp']] },
         { key: 'type', label: 'นับจาก', type: 'select', def: 'like', options: [['like', '❤️ ไลค์'], ['follow', '➕ ผู้ติดตาม'], ['share', '🔁 แชร์'], ['diamond', '💎 เพชร'], ['gift', '🎁 จำนวนของขวัญ']] },
         { key: 'target', label: 'เป้าหมาย', type: 'number', min: 1, def: 10000 },
         { key: 'next', label: 'ถึงเป้าแล้วเพิ่มเป้าถัดไปอีก', type: 'number', min: 0, def: 0, hint: '0 = ไม่เพิ่ม' },
         { key: 'label', label: 'หัวข้อ', type: 'text', def: '', placeholder: 'เว้นว่าง = ตามชนิด' },
+        { key: 'liq', label: 'สีน้ำในหัวใจ', type: 'select', def: 'auto', options: [['auto', '✨ ตามสิ่งที่นับ'], ['pink', '💗 ชมพู'], ['red', '❤️ แดง'], ['purple', '💜 ม่วง'], ['blue', '💙 ฟ้า'], ['mint', '💚 มิ้นต์'], ['gold', '💛 ทอง'], ['peach', '🧡 พีช'], ['rainbow', '🌈 สีรุ้งเปลี่ยนไปเรื่อย ๆ']] },
         { key: 'size', label: 'ขนาดหัวใจ', type: 'range', min: 0.5, max: 2.5, step: 0.1, def: 1, unit: '×', hint: 'ใช้กับแบบหัวใจแก้ว' },
         bg(),
       ] },

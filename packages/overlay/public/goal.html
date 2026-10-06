@@ -38,6 +38,17 @@
   #heart.done svg { animation:hBeat 1s ease-in-out infinite; filter:drop-shadow(0 0 22px rgba(255,200,120,.9)); }
   .hspk { position:absolute; pointer-events:none; color:#fff6c2; text-shadow:0 0 8px #ffd76a; animation:hspk 1.6s ease-out forwards; }
   @keyframes hspk { from { opacity:1; transform:translate(0,0) scale(.6) } to { opacity:0; transform:translate(var(--dx),var(--dy)) scale(1.2) } }
+  /* ---- หัวใจแก้วจากรูป AI: น้ำ (โค้ด) อยู่หลังรูปแก้ว ตัดตามรูปด้านในแก้ว (mask) ---- */
+  #iheart { position:fixed; left:50%; top:10px; transform:translateX(-50%); display:none; flex-direction:column; align-items:center; width:calc(280px * var(--hs,1)); }
+  #iheart.on { display:flex; }
+  #iheart .ht { font-family:'Itim',sans-serif; font-size:calc(22px * var(--hs,1)); color:#fff; text-shadow:0 2px 5px rgba(0,0,0,.7); white-space:nowrap; margin-bottom:-6%; position:relative; z-index:2; }
+  #iheart .box { position:relative; width:100%; aspect-ratio:1; animation:hBeat 2.6s ease-in-out infinite; filter:drop-shadow(0 10px 16px rgba(60,10,50,.3)); }
+  #iheart .liq { position:absolute; inset:0; }
+  #iheart .liq svg { width:100%; height:100%; display:block; }
+  #iheart .glass { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+  #iheart .ip { position:absolute; left:0; right:0; text-align:center; font-family:'Itim',sans-serif; font-size:calc(30px * var(--hs,1)); color:#fff; text-shadow:0 2px 4px rgba(80,20,60,.8), 0 0 10px rgba(255,255,255,.4); }
+  #iheart .hn { margin-top:-8%; font-family:'Itim',sans-serif; font-size:calc(20px * var(--hs,1)); color:#ffe9a8; text-shadow:0 2px 4px rgba(0,0,0,.75); font-variant-numeric:tabular-nums; position:relative; }
+  #iheart.done .box { animation:hBeat 1s ease-in-out infinite; filter:drop-shadow(0 0 22px rgba(255,200,120,.9)); }
 </style>
 </head>
 <body>
@@ -71,6 +82,22 @@
     </svg>
     <div class="hn"><span id="hcur">0</span> / <span id="htarget">0</span></div>
   </div>
+  <div id="iheart">
+    <div class="ht" id="ititle"></div>
+    <div class="box">
+      <div class="liq"><svg viewBox="0 0 200 200" preserveAspectRatio="none">
+        <defs><linearGradient id="iliq" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="90"><stop offset="0" id="iq1"/><stop offset="1" id="iq2"/></linearGradient></defs>
+        <g class="lvl" id="ilvl">
+          <path class="wv2" fill="url(#iliq)" d="M0 6 Q25 0 50 6 T100 6 T150 6 T200 6 T250 6 T300 6 T350 6 T400 6 T450 6 V420 H0 Z"/>
+          <path class="wv1" fill="url(#iliq)" d="M0 6 Q25 12 50 6 T100 6 T150 6 T200 6 T250 6 T300 6 T350 6 T400 6 T450 6 V420 H0 Z"/>
+          <g id="ibubs"></g>
+        </g>
+      </svg></div>
+      <img class="glass" id="iglass" alt="" />
+      <div class="ip" id="ipct">0%</div>
+    </div>
+    <div class="hn"><span id="icur">0</span> / <span id="itarget">0</span></div>
+  </div>
   <script src="/socket.io/socket.io.js"></script>
   <script src="js/overlay-client.js"></script>
   <script>
@@ -91,7 +118,11 @@
 
     // แบบแสดงผล: bar = แถบ (เดิม) · heart = หัวใจแก้วเติมน้ำ
     const STYLE=Overlay.param('style','bar'), H=document.getElementById('heart');
-    const liquid={like:['#ff9cc6','#ff4f93'],follow:['#9ff0dc','#3fbf9d'],share:['#ffe08a','#f5a623'],diamond:['#ffe9a0','#f2a81c'],gift:['#d3c4ff','#8f72e8']}[type]||['#ff9cc6','#ff4f93'];
+    let liquid={like:['#ff9cc6','#ff4f93'],follow:['#9ff0dc','#3fbf9d'],share:['#ffe08a','#f5a623'],diamond:['#ffe9a0','#f2a81c'],gift:['#d3c4ff','#8f72e8']}[type]||['#ff9cc6','#ff4f93'];
+    // สีน้ำ: auto = ตามสิ่งที่นับ · เลือกเองได้ · rainbow = ไล่สีรุ้งวนไปเรื่อย ๆ
+    const LIQ={pink:['#ffb3d4','#ff4f93'],red:['#ff9a9a','#e8243c'],purple:['#d9c8ff','#8a5cf0'],blue:['#a8dcff','#2f8cf0'],mint:['#b6f5e4','#2fbf98'],gold:['#ffeaa0','#f0a01c'],peach:['#ffd3b6','#ff8a5c'],rainbow:['#ffb3d4','#ff4f93']};
+    const LQ=Overlay.param('liq','auto'); if(LIQ[LQ]) liquid.splice(0,2,...LIQ[LQ]);
+    if(LQ==='rainbow'){ const st=document.createElement('style'); st.textContent='#lvl,#ilvl{animation:rbw 6s linear infinite}@keyframes rbw{to{filter:hue-rotate(360deg)}}'; document.head.appendChild(st); }
     let lastPct=0;
     if(STYLE==='heart'){
       document.getElementById('goal').style.display='none'; H.classList.add('on');
@@ -120,11 +151,42 @@
         sp.style.fontSize=(12+Math.random()*12)+'px'; H.appendChild(sp); setTimeout(()=>sp.remove(),1700); } }
       lastPct=pct;
     }
+    // แบบหัวใจแก้วจากรูป: lv = ระดับน้ำ (สัดส่วนความสูงรูป) ที่ 0%,5%,…,100% ของปริมาตรด้านในแก้ว (วัดจากรูปจริง)
+    const IH={"angel":{"lv":[0.8063,0.7292,0.6917,0.6625,0.6354,0.6125,0.5917,0.5708,0.5521,0.5333,0.5146,0.4958,0.4792,0.4604,0.4437,0.4271,0.4083,0.3896,0.3708,0.3479,0.3125],"mid":0.559},"potion":{"lv":[0.8083,0.7583,0.7312,0.7063,0.6854,0.6667,0.6479,0.6333,0.6167,0.6021,0.5875,0.5729,0.5583,0.5437,0.5292,0.5146,0.4979,0.4833,0.4667,0.4437,0.4104],"mid":0.609},"bowjar":{"lv":[0.8042,0.7562,0.725,0.7,0.6792,0.6604,0.6417,0.625,0.6083,0.5917,0.5771,0.5625,0.5479,0.5333,0.5167,0.5021,0.4854,0.4708,0.4542,0.4333,0.4042],"mid":0.604},"cyber":{"lv":[0.8,0.7292,0.6937,0.6646,0.6417,0.6188,0.5979,0.5792,0.5604,0.5417,0.5229,0.5062,0.4896,0.4708,0.4542,0.4375,0.4188,0.4021,0.3812,0.3604,0.3187],"mid":0.559},"piggy":{"lv":[0.7271,0.675,0.6438,0.6167,0.5896,0.5667,0.5417,0.5208,0.4979,0.4792,0.4604,0.4396,0.4208,0.4021,0.3833,0.3625,0.3438,0.3208,0.2979,0.2708,0.2271],"mid":0.477},"melody":{"lv":[0.6667,0.6167,0.5917,0.5708,0.5521,0.5354,0.5208,0.5062,0.4917,0.4792,0.4667,0.4542,0.4417,0.4313,0.4167,0.4042,0.3896,0.375,0.3583,0.3396,0.3104],"mid":0.489}};
+    const ISTY=STYLE.startsWith('h-')?IH[STYLE.slice(2)]:null, IHE=document.getElementById('iheart');
+    let ilast=0;
+    if(ISTY){
+      const nm=STYLE.slice(2);
+      document.getElementById('goal').style.display='none'; IHE.classList.add('on');
+      IHE.style.setProperty('--hs', String(Math.max(.4,Math.min(3,parseFloat(Overlay.param('size','1'))||1))));
+      { const L=IHE.querySelector('.liq').style, u=`url("hearts/${nm}-mask.png")`; L.webkitMaskImage=u; L.maskImage=u; L.webkitMaskSize=L.maskSize='100% 100%'; L.webkitMaskRepeat=L.maskRepeat='no-repeat'; }
+      document.getElementById('iglass').src=`hearts/${nm}.webp`;
+      document.getElementById('ititle').textContent=Overlay.param('label',labels[type]||'เป้าหมาย');
+      document.getElementById('iq1').setAttribute('stop-color',liquid[0]); document.getElementById('iq2').setAttribute('stop-color',liquid[1]);
+      document.getElementById('ipct').style.top=`calc(${(ISTY.mid*100).toFixed(1)}% - .6em)`;
+      const bubs=document.getElementById('ibubs');
+      for(let i=0;i<10;i++){ const b=document.createElementNS('http://www.w3.org/2000/svg','circle');
+        b.setAttribute('cx',String(30+Math.random()*140)); b.setAttribute('cy',String(20+Math.random()*120)); b.setAttribute('r',String(1.2+Math.random()*2.8));
+        b.setAttribute('fill','rgba(255,255,255,.8)'); b.setAttribute('class','bub'); b.style.animationDelay=(-Math.random()*3)+'s'; b.style.animationDuration=(2.4+Math.random()*2)+'s'; bubs.appendChild(b); }
+    }
+    function renderImg(v,pct){
+      const f=Math.min(1,Math.max(0,pct/100)), k=f*20, i=Math.floor(k), lv=ISTY.lv;
+      let y=i>=20?lv[20]-0.02:lv[i]+(lv[Math.min(20,i+1)]-lv[i])*(k-i); if(f<=0) y=lv[0]+0.03;
+      document.getElementById('ilvl').style.transform=`translateY(${(y*200-6).toFixed(1)}px)`;
+      document.getElementById('ipct').textContent=Math.floor(pct)+'%';
+      document.getElementById('icur').textContent=Overlay.fmt(v); document.getElementById('itarget').textContent=Overlay.fmt(target);
+      const done=pct>=100; IHE.classList.toggle('done',done);
+      if(done && ilast<100){ for(let j=0;j<14;j++){ const sp=document.createElement('span'); sp.className='hspk'; sp.textContent=j%3?'✦':'💖';
+        const a=Math.random()*Math.PI*2, d=60+Math.random()*90; sp.style.left='50%'; sp.style.top='45%'; sp.style.setProperty('--dx',Math.cos(a)*d+'px'); sp.style.setProperty('--dy',Math.sin(a)*d+'px');
+        sp.style.fontSize=(12+Math.random()*12)+'px'; IHE.appendChild(sp); setTimeout(()=>sp.remove(),1700); } }
+      ilast=pct;
+    }
     function render(v){ if(NEXT>0) while(v>=target) target+=NEXT; document.getElementById('target').textContent=Overlay.fmt(target);
       const pct=Math.min(100,v/target*100); document.getElementById('cur').textContent=Overlay.fmt(v);
       document.getElementById('fill').style.width=pct+'%'; document.getElementById('pct').textContent=pct.toFixed(1)+'%';
       document.getElementById('goal').classList.toggle('done',pct>=100);
-      if(STYLE==='heart') renderHeart(v,pct); }
+      if(STYLE==='heart') renderHeart(v,pct);
+      if(ISTY) renderImg(v,pct); }
 
     Overlay.on('stats',(s)=>render(s[key]||0));
     Overlay.on('state',(s)=>render((s.stats&&s.stats[key])||0));

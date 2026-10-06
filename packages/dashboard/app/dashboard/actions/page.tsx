@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
-import { Check, Copy, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react';
+import { Check, Copy, Pencil, Play, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { Alert, Badge, Button, Card, Field, Input, PageHeader, Select, Spinner } from '@/components/ui';
 import { GiftPicker } from '@/components/GiftPicker';
 import { toDigits } from '@/components/NumberInput';
@@ -164,6 +164,15 @@ export default function ActionsPage() {
   async function toggle(r: Rule) {
     try { await api(`/api/actions/${r.id}`, { method: 'PUT', body: { enabled: !r.enabled } }); await load(); }
     catch (err) { setError({ text: (err as Error).message }); }
+  }
+
+  // ▶ ทดลองเล่นบนจอ fx — ถ้าไม่มีจอ fx เปิดอยู่ บอกให้ใส่ลิงก์ก่อน
+  async function test(r: Rule) {
+    try {
+      const res = await api<{ screens: number }>(`/api/actions/${r.id}/test`, { method: 'POST' });
+      if (res.screens > 0) alert(`ส่ง “${r.name}” ไปที่จอแล้ว ✓ (เปิดอยู่ ${res.screens} จอ)`);
+      else alert('ยังไม่มีจอเอฟเฟกต์ (fx) เปิดอยู่ — คัดลอกลิงก์ “จอเอฟเฟกต์” ด้านบนไปใส่ในโปรแกรมไลฟ์ก่อน แล้วกดทดลองอีกครั้ง');
+    } catch (err) { setError({ text: (err as Error).message }); }
   }
 
   async function remove(r: Rule) {
@@ -335,6 +344,7 @@ export default function ActionsPage() {
                   <div className="flex items-center gap-2 font-medium">{r.name} {!r.enabled && <Badge tone="gray">ปิดอยู่</Badge>}</div>
                   <div className="truncate text-sm text-muted">{describe(r)}</div>
                 </div>
+                <Button variant="ghost" className="px-3" aria-label="ทดลองเล่น" title="ทดลองเล่นบนจอ" onClick={() => test(r)}><Play className="size-4" /></Button>
                 <Button variant="ghost" className="px-3" aria-label="แก้ไข" onClick={() => { setError(null); setDraft(toDraft(r)); }}><Pencil className="size-4" /></Button>
                 <Button variant="ghost" className="px-3 hover:text-red-600" aria-label="ลบ" onClick={() => remove(r)}><Trash2 className="size-4" /></Button>
               </li>

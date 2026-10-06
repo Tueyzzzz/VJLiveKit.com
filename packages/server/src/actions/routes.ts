@@ -79,6 +79,20 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
     return { rule };
   });
 
+  // ทดลองเล่นกฎนี้บนจอ fx ทันที (ไม่ต้องรอของขวัญจริง) — คืนจำนวนจอ fx ที่เปิดอยู่ ไว้บอกวีเจว่าใส่ลิงก์หรือยัง
+  app.post('/api/actions/:id/test', { preHandler: requireUser, config: { rateLimit: { max: 30, timeWindow: '1 minute' } } }, async (req, reply) => {
+    const claims = getUser(req)!;
+    const id = (req.params as { id: string }).id;
+    const rule = await prisma.actionRule.findFirst({ where: { id, userId: claims.userId } });
+    if (!rule) return reply.code(404).send({ error: 'ไม่พบกฎนี้' });
+    const user = await prisma.user.findUnique({ where: { id: claims.userId }, select: { tiktokUsername: true, displayName: true } });
+    if (!user?.tiktokUsername) return reply.code(400).send({ error: 'ยังไม่ได้ผูกชื่อ TikTok' });
+    const nick = user.displayName || user.tiktokUsername;
+    const event = { type: 'gift', user: { uniqueId: user.tiktokUsername, nickname: nick }, giftName: 'ทดสอบ', comment: 'ทดสอบ' };
+    const screens = (await getHub()?.emitOwnerCount(claims.userId, user.tiktokUsername, 'action', { ruleId: rule.id, name: rule.name, action: rule.action, event, ts: Date.now() })) ?? 0;
+    return { ok: true, screens };
+  });
+
   app.delete('/api/actions/:id', { preHandler: requireUser }, async (req, reply) => {
     const claims = getUser(req)!;
     const id = (req.params as { id: string }).id;

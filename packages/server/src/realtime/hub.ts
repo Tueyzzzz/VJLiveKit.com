@@ -62,6 +62,13 @@ export class RoomHub {
     this.io.to(RoomHub.ownerChannel(userId, username)).emit(event, payload);
   }
 
+  /** ยิงให้ overlay ของเจ้าของ แล้วคืนจำนวนจอที่เปิดรับอยู่ (ใช้ปุ่ม "ทดลองเล่น") */
+  async emitOwnerCount(userId: string, username: string, event: string, payload: unknown): Promise<number> {
+    const ch = RoomHub.ownerChannel(userId, username);
+    this.io.to(ch).emit(event, payload);
+    return (await this.io.in(ch).fetchSockets()).length;
+  }
+
   /** ส่งตั้งค่าวิดเจ็ตใหม่ให้ overlay ที่เปิดอยู่ของผู้ใช้ (หลังบันทึกใน Dashboard) */
   pushConfig(userId: string, widget: string, settings: unknown): void {
     this.io.to(RoomHub.configChannel(userId, widget)).emit('config', settings ?? {});

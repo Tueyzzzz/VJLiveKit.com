@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { AuthProvider } from '@/lib/auth';
 import './globals.css';
+import { Pixels } from '@/components/Pixels';
 
 const SITE = 'https://vjlivekit.com';
 const TITLE = 'VJLiveKit — วิดเจ็ตไลฟ์ TikTok สำหรับ OBS & TikTok LIVE Studio';
@@ -36,6 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="min-h-dvh">
         <AuthProvider>{children}</AuthProvider>
+        <Pixels />
       </body>
     </html>
   );

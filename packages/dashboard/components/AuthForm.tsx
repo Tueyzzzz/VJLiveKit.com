@@ -8,6 +8,7 @@ import { Alert, Button, Card, Field, Input } from './ui';
 import { PasswordInput } from './PasswordInput';
 import { api, ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { trackSignup } from '@/lib/track';
 
 export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   const router = useRouter();
@@ -36,6 +37,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
         ...(mode === 'register' ? (() => { try { const r = localStorage.getItem('vjl_ref'); return r ? { ref: r } : {}; } catch { return {}; } })() : {}),
       };
       const res = await api<{ token: string }>(`/api/auth/${mode}`, { method: 'POST', body });
+      if (mode === 'register') trackSignup();
       await login(res.token, mode === 'login' ? remember : true);
       router.replace(nextPath());
     } catch (err) {

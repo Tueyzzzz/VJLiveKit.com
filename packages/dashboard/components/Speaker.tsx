@@ -1,0 +1,89 @@
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+import { Volume2, VolumeX } from 'lucide-react';
+import { api, getToken, type Rule } from '@/lib/api';
+import { cx } from './ui';
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
+const KEY = 'vjl-speaker';
+
+interface Fire { name: string; action: Rule['action']; event?: { user?: { nickname?: string; uniqueId?: string } } }
+interface SocketLike { on: (ev: string, fn: (d: never) => void) => void; disconnect: () => void }
+type IoFn = (url: string, opts: object) => SocketLike;
+type Sfx = { play: (id: string, vol?: number) => boolean };
+
+/** โหลดสคริปต์ครั้งเดียว (socket.io client + เสียงสำเร็จรูป มาจากเซิร์ฟเวอร์เดียวกัน ไม่ต้องลงแพ็กเกจเพิ่ม) */
+const loaded: Record<string, Promise<void>> = {};
+function loadScript(src: string): Promise<void> {
+  return (loaded[src] ??= new Promise((ok, bad) => {
+    const s = document.createElement('script'); s.src = src; s.onload = () => ok(); s.onerror = () => { delete loaded[src]; bad(new Error(src)); };
+    document.head.appendChild(s);
+  }));
+}
+
+/**
+ * ลำโพงแดชบอร์ด (แบบ TikFinity): เปิดเว็บไว้หน้าไหนก็ได้ → กฎ "เล่นเสียง" ดังที่เครื่องนี้
+ * ไม่ต้องใส่ลิงก์ในโปรแกรมไลฟ์ · เชื่อมต่อเฉพาะตอนมีกฎเสียงที่เปิดอยู่ · กันจอดับระหว่างเปิด
+ */
+export function Speaker({ username }: { username?: string | null }) {
+  const [on, setOn] = useState(true);
+  const [hasSound, setHasSound] = useState(false);
+  const [live, setLive] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const toastT = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => { try { setOn(localStorage.getItem(KEY) !== 'off'); } catch { /* ignore */ } }, []);
+  // มีกฎเสียงที่เปิดอยู่ไหม (เช็กซ้ำทุกนาที เผื่อเพิ่งสร้างกฎ)
+  useEffect(() => {
+    const check = () => api<{ rules: Rule[] }>('/api/actions').then((r) => setHasSound(r.rules.some((x) => x.enabled && x.action.type === 'sound'))).catch(() => {});
+    check(); const t = setInterval(check, 60_000); return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    if (!on || !hasSound || !username) { setLive(false); return; }
+    let sock: SocketLike | null = null, lock: { release: () => Promise<void> } | null = null, dead = false;
+    void (async () => {
+      try { await Promise.all([loadScript(`${API_BASE}/socket.io/socket.io.js`), loadScript(`${API_BASE}/overlay/js/sfx.js`)]); } catch { return; }
+      const io = (window as unknown as { io?: IoFn }).io;
+      if (dead || !io) return;
+      sock = io(API_BASE || location.origin, { query: { session: getToken() ?? '' }, transports: ['websocket', 'polling'] });
+      sock.on('ready', () => setLive(true));
+      sock.on('disconnect', () => setLive(false));
+      sock.on('action', (f: Fire) => {
+        const who = f.event?.user?.nickname || f.event?.user?.uniqueId || '';
+        if (f.action.type === 'sound') {
+          const sfx = (window as unknown as { VJLSfx?: Sfx }).VJLSfx;
+          if (f.action.sound && sfx) sfx.play(f.action.sound);
+          else if (f.action.url) void new Audio(f.action.url).play().catch(() => {});
+        }
+        setToast(`${who ? who + ' → ' : ''}${f.name}`);
+        if (toastT.current) clearTimeout(toastT.current);
+        toastT.current = setTimeout(() => setToast(null), 4000);
+      });
+      try { lock = await (navigator as unknown as { wakeLock?: { request: (t: string) => Promise<{ release: () => Promise<void> }> } }).wakeLock?.request('screen') ?? null; } catch { /* ไม่รองรับ */ }
+    })();
+    return () => { dead = true; sock?.disconnect(); void lock?.release().catch(() => {}); setLive(false); };
+  }, [on, hasSound, username]);
+
+  function toggle() {
+    const next = !on; setOn(next);
+    try { localStorage.setItem(KEY, next ? 'on' : 'off'); } catch { /* ignore */ }
+    if (next) { const sfx = (window as unknown as { VJLSfx?: Sfx }).VJLSfx; sfx?.play('pop', 0.6); } // คลิกนี้ปลดล็อกเสียงของเบราว์เซอร์ด้วย
+  }
+
+  if (!hasSound) return null;
+  return (
+    <>
+      <button onClick={toggle} title={on ? 'เสียงจากกฎ Actions ดังที่เครื่องนี้ (เปิดเว็บไว้หน้าไหนก็ได้)' : 'ปิดเสียงที่เครื่องนี้อยู่ — เสียงจะเล่นที่ลิงก์ FX แทน'}
+        className={cx('flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm transition', on ? 'bg-mint/15 text-ink' : 'text-muted hover:bg-violet-soft')}>
+        {on ? <Volume2 className="size-4 text-mint" /> : <VolumeX className="size-4" />}
+        <span className="min-w-0 flex-1 truncate">{on ? 'เสียงจากกฎ: ดังที่นี่' : 'เสียงจากกฎ: ปิด'}</span>
+        {on && <span className={cx('size-2 shrink-0 rounded-full', live ? 'bg-mint' : 'bg-gray-300')} />}
+      </button>
+      {toast && (
+        <div className="fixed bottom-4 right-4 z-50 max-w-xs rounded-2xl bg-white px-4 py-3 text-sm shadow-lg ring-1 ring-line">🔊 {toast}</div>
+      )}
+    </>
+  );
+}

@@ -286,7 +286,11 @@
     }
 
     // รับ action จากเซิร์ฟเวอร์ (Actions & Events engine)
-    Overlay.on('action',(fire)=>play(fire.action,fire.event));
+    Overlay.on('action',(fire)=>{
+      // เสียงเล่นที่แดชบอร์ด (ลำโพง) แล้ว → จอนี้โชว์แค่ข้อความ ไม่เล่นเสียงซ้ำ
+      if(fire.elsewhere && fire.action.type==='sound'){ const t=fill(fire.action.text,fire.event); if(t) showText(t,fire.action.durationMs||5000); return; }
+      play(fire.action,fire.event);
+    });
     if(Overlay.param('debug','0')==='1') window.__play=play;
 
     // demo fallback — จำลองกฎ "ได้ Galaxy -> โชว์ข้อความ"

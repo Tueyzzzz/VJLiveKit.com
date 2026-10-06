@@ -56,17 +56,31 @@ export class RoomHub {
   static roomChannel(username: string) { return `room:${normalize(username)}`; }
   static ownerChannel(userId: string, username: string) { return `owner:${userId}:${normalize(username)}`; }
   static configChannel(userId: string, widget: string) { return `cfg:${userId}:${widget}`; }
+  /** แดชบอร์ดที่เปิด "ลำโพง" ไว้ (เล่นเสียงจากกฎบนเว็บ แบบ TikFinity) */
+  static speakerChannel(userId: string) { return `spk:${userId}`; }
 
   /** ส่งอีเวนต์ให้ overlay ของเจ้าของ (เช่น โดเนทที่ยืนยันแล้ว) */
   emitOwner(userId: string, username: string, event: string, payload: unknown): void {
     this.io.to(RoomHub.ownerChannel(userId, username)).emit(event, payload);
   }
 
+  /**
+   * ส่ง action ไปที่จอ fx + แดชบอร์ด
+   * กฎ "เล่นเสียง" + มีแดชบอร์ดเปิดลำโพงอยู่ → เสียงออกที่แดชบอร์ด จอ fx ไม่ต้องเล่นซ้ำ (elsewhere)
+   */
+  fireAction(ownerId: string, username: string, fire: object & { action: { type: string } }): void {
+    const spk = RoomHub.speakerChannel(ownerId);
+    const speakers = this.io.sockets.adapter.rooms.get(spk)?.size ?? 0;
+    this.io.to(spk).emit('action', fire);
+    this.io.to(RoomHub.ownerChannel(ownerId, username)).emit('action', speakers && fire.action.type === 'sound' ? { ...fire, elsewhere: true } : fire);
+  }
+
   /** ยิงให้ overlay ของเจ้าของ แล้วคืนจำนวนจอที่เปิดรับอยู่ (ใช้ปุ่ม "ทดลองเล่น") */
   async emitOwnerCount(userId: string, username: string, event: string, payload: unknown): Promise<number> {
     const ch = RoomHub.ownerChannel(userId, username);
-    this.io.to(ch).emit(event, payload);
-    return (await this.io.in(ch).fetchSockets()).length;
+    if (event === 'action') this.fireAction(userId, username, payload as { action: { type: string } });
+    else this.io.to(ch).emit(event, payload);
+    return (await this.io.in(ch).fetchSockets()).length + (event === 'action' ? (await this.io.in(RoomHub.speakerChannel(userId)).fetchSockets()).length : 0);
   }
 
   /** ส่งตั้งค่าวิดเจ็ตใหม่ให้ overlay ที่เปิดอยู่ของผู้ใช้ (หลังบันทึกใน Dashboard) */
@@ -134,7 +148,7 @@ export class RoomHub {
       for (const ownerId of entry.owners.keys()) {
         void this.getRules(ownerId).then((rules) => {
           if (!rules.length) return;
-          for (const fire of evaluate(rules, e)) this.io.to(RoomHub.ownerChannel(ownerId, key)).emit('action', fire);
+          for (const fire of evaluate(rules, e)) this.fireAction(ownerId, key, fire);
         });
       }
     });

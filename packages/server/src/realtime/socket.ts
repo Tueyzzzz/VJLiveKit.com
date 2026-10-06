@@ -6,6 +6,7 @@ import { config } from '../config/index.js';
 import { OVERLAY_VERSION } from '../overlay-version.js';
 import { prisma } from '../db/prisma.js';
 import { getEntitlements, isWidgetType } from '../plans/index.js';
+import { verifySession } from '../auth/service.js';
 import type { ActionRule, RuleTrigger, RuleAction } from '../actions/engine.js';
 
 /** โหลดกฎ Actions ที่เปิดใช้ของผู้ใช้ */
@@ -66,7 +67,24 @@ export function setupRealtime(httpServer: HttpServer): RoomHub {
   });
 
   io.on('connection', (socket) => {
-    const { token, username, widget } = socket.handshake.query as { token?: string; username?: string; widget?: string };
+    const { token, username, widget, session } = socket.handshake.query as { token?: string; username?: string; widget?: string; session?: string };
+
+    // แดชบอร์ด "ลำโพง": ล็อกอินแล้วเปิดเว็บไว้ = ได้ยินเสียงจากกฎ (ไม่ต้องใส่ลิงก์) และต่อไลฟ์ให้เองระหว่างเปิด
+    if (session) {
+      void (async () => {
+        const claims = verifySession(session);
+        const user = claims ? await prisma.user.findUnique({ where: { id: claims.userId }, select: { tiktokUsername: true } }).catch(() => null) : null;
+        if (!claims || !user?.tiktokUsername || socket.disconnected) { socket.disconnect(true); return; }
+        socket.join(RoomHub.speakerChannel(claims.userId));
+        const room = user.tiktokUsername;
+        await hub.attach(room, claims.userId).catch(() => null);
+        if (socket.disconnected) { hub.detach(room, claims.userId); return; }
+        socket.once('disconnect', () => hub.detach(room, claims.userId));
+        socket.emit('ready', { username: room });
+      })();
+      return;
+    }
+
     socket.emit('version', OVERLAY_VERSION); // overlay เวอร์ชันเก่า → โหลดตัวเองใหม่
 
     void (async () => {

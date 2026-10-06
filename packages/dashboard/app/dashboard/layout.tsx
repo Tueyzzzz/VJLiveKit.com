@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { LayoutDashboard, LayoutTemplate, Zap, CreditCard, LogOut, Gift, Shield, BookOpen, Wallet } from 'lucide-react';
 import { Logo } from '@/components/Logo';
+import { Speaker } from '@/components/Speaker';
 import { Badge, Spinner, cx } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { planLabel } from '@/lib/api';
@@ -46,6 +47,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             );
           })}
         </nav>
+        <div className="px-3 pb-3 md:pt-2"><Speaker username={user.tiktokUsername} /></div>
         <div className="hidden px-5 py-6 md:absolute md:bottom-0 md:block md:w-64">
           <div className="mb-3 truncate text-sm">{user.displayName ?? user.email}</div>
           <div className="mb-4"><Badge tone={entitlements?.plan === 'free' ? 'gray' : 'pink'}>{planLabel(entitlements)}</Badge></div>

@@ -99,7 +99,7 @@
       const alive = gifts.filter((b) => !b.dying);
       if (alive.length >= MAX || slot < 0) { const old = alive[0]; if (old) { old.dying = true; slot = old.slot; } }
       if (slot < 0) slot = 0;
-      const r = Math.min(42, 15 * GIFT_SCALE * sizeFor(g.d, 3));
+      const r = Math.min(66, 15 * GIFT_SCALE * sizeFor(g.d, 4.2)); // ของแพงใหญ่ชัด ๆ (Lion/Universe ≈ 4 เท่า)
       gifts.push({ g, img: giftImg(g.u), slot, r, born, life: 1, sx: (Math.random() - .5) * 160, sy: CAR_Y - 420 - Math.random() * 120 });
       if (born > 0) punch.kick(g.d >= 1000 ? -6 : -2.5);
     }
@@ -206,10 +206,10 @@
 
     if (!Overlay.connected) {
       const names = ['somchai', 'mimi', 'บิ๊ก', 'lisa', 'ต้นน้ำ'];
-      const list = [['Rose', 1], ['Rose', 1], ['Finger Heart', 5], ['Perfume', 20], ['Galaxy', 1000], ['Lion', 29999]];
+      const I = 'https://p16-webcast.tiktokcdn.com/img/', list = [['Rose', 1, I + 'maliva/webcast-va/eba3a9bb85c33e017f3648eaf88d7189~tplv-obj.webp'], ['Rose', 1, I + 'maliva/webcast-va/eba3a9bb85c33e017f3648eaf88d7189~tplv-obj.webp'], ['Finger Heart', 5, I + 'maliva/webcast-va/a4c4dc437fd3a6632aba149769491f49.png~tplv-obj.webp'], ['Perfume', 20, I + 'maliva/webcast-va/20b8f61246c7b6032777bb81bf4ee055~tplv-obj.webp'], ['Galaxy', 1000, I + 'alisg/webcast-sg/resource/79a02148079526539f7599150da9fd28.png~tplv-obj.webp'], ['Lion', 29999, I + 'maliva/webcast-va/4fb89af2082a290b37d704e20f4fe729~tplv-obj.webp']]; // ตัวอย่างใช้รูปของขวัญจริง
       setInterval(() => {
         const g = list[Math.floor(Math.random() * list.length)], nm = names[Math.floor(Math.random() * names.length)];
-        onGift({ type: 'gift', user: { uniqueId: nm, nickname: nm }, giftName: g[0], diamondCount: g[1], repeatCount: g[1] >= 1000 ? 1 : 1 + Math.floor(Math.random() * 3) });
+        onGift({ type: 'gift', user: { uniqueId: nm, nickname: nm }, giftName: g[0], giftImage: g[2], diamondCount: g[1], repeatCount: g[1] >= 1000 ? 1 : 1 + Math.floor(Math.random() * 3) });
       }, 1300);
     }
   })();

@@ -74,7 +74,8 @@ export async function getEntitlements(userId: string): Promise<Entitlements> {
     // ยังไม่จ่าย: อยู่ในช่วงทดลอง 30 วันแรก → ใช้ได้ทุกอย่างเท่า Pro
     const trialEnd = user ? trialEndOf(user.createdAt) : null;
     if (trialEnd && trialEnd.getTime() > Date.now()) {
-      return { plan: 'trial', ...PLAN_DEFS.find((p) => p.code === 'pro')!.features, trialEndsAt: trialEnd.toISOString() };
+      // ทดลองฟรีได้ทุกวิดเจ็ตเท่า Pro แต่ยังมีป้าย VJLiveKit บนจอ — สมัคร Pro แล้วป้ายหายเอง
+      return { plan: 'trial', ...PLAN_DEFS.find((p) => p.code === 'pro')!.features, noWatermark: false, trialEndsAt: trialEnd.toISOString() };
     }
     return { plan: FREE.code, ...FREE.features };
   }

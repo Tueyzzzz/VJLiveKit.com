@@ -42,7 +42,7 @@ export default function BillingPage() {
 
       {error && <div className="mb-5"><Alert>{error}</Alert></div>}
       {entitlements?.plan === 'trial' && (
-        <div className="mb-5"><Alert tone="info">🎁 คุณอยู่ในช่วงทดลองฟรี เหลือ {trialDaysLeft(entitlements)} วัน (ถึง {new Date(entitlements.trialEndsAt!).toLocaleDateString('th-TH', { dateStyle: 'long' })}) — สมัคร Pro ตอนนี้ได้เลย ระบบจะเริ่มเก็บ 199 บาท/เดือน หลังหมดช่วงฟรี</Alert></div>
+        <div className="mb-5"><Alert tone="info">🎁 คุณอยู่ในช่วงทดลองฟรี เหลือ {trialDaysLeft(entitlements)} วัน (ถึง {new Date(entitlements.trialEndsAt!).toLocaleDateString('th-TH', { dateStyle: 'long' })}) — สมัคร Pro ตอนนี้ได้เลย ระบบจะเริ่มเก็บ 199 บาท/เดือน หลังหมดช่วงฟรี (สมาชิก Pro ไม่มีป้าย vjlivekit.com มุมจอ)</Alert></div>
       )}
       {entitlements?.plan === 'free' && (
         <div className="mb-5"><Alert>ช่วงทดลองฟรีหมดแล้ว — ตอนนี้ใช้ได้เฉพาะวิดเจ็ตพื้นฐาน สมัคร Pro 199 บาท/เดือน เพื่อใช้ทุกวิดเจ็ตต่อ</Alert></div>

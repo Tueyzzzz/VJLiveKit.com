@@ -96,6 +96,22 @@ window.Overlay = (function () {
       try { localStorage.setItem(CFG_KEY, next); } catch { /* storage ปิด */ }
       location.reload(); // ใช้ตั้งค่าใหม่
     });
+    // ป้ายเล็ก ๆ มุมขวาล่าง สำหรับแพลนฟรี/ทดลอง — สมัคร Pro แล้วเซิร์ฟเวอร์ส่ง show:false ป้ายหายเอง
+    let brand = null;
+    socket.on('brand', (b) => {
+      const show = !!(b && b.show);
+      if (!show) { if (brand) brand.style.display = 'none'; return; }
+      if (!brand) {
+        brand = document.createElement('div');
+        brand.style.cssText = 'position:fixed;right:10px;bottom:10px;z-index:99998;display:flex;align-items:center;gap:6px;' +
+          'padding:4px 11px 4px 7px;border-radius:999px;background:rgba(255,255,255,.88);box-shadow:0 2px 8px rgba(80,30,90,.18);' +
+          "font:700 13px/1 'Segoe UI',Tahoma,sans-serif;color:#e0468e;letter-spacing:.2px;pointer-events:none;opacity:.92";
+        brand.innerHTML = '<svg width="16" height="16" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="33" r="27" fill="#ffcf5c"/>' +
+          '<path d="M32 50c-8-5.6-15-11-15-18.6A8 8 0 0 1 32 27a8 8 0 0 1 15 4.4C47 39 40 44.4 32 50z" fill="#ff6aa8"/></svg>vjlivekit.com';
+        document.body.appendChild(brand);
+      }
+      brand.style.display = 'flex';
+    });
     socket.on('tiktok-event', (e) => fire('event', e));
     socket.on('stats', (s) => fire('stats', s));
     socket.on('status', (s) => fire('status', s));

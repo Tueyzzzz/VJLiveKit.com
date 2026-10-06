@@ -18,7 +18,7 @@ const rulesProvider: RulesProvider = async (userId) => {
   }));
 };
 
-interface Viewer { username: string; ownerId?: string }
+interface Viewer { username: string; ownerId?: string; watermark?: boolean }
 
 /** ตรวจสิทธิ์การเชื่อมต่อ: token ต้องยังไม่ถูกเพิกถอน และแพลนต้องเปิดวิดเจ็ตนี้ */
 async function resolveViewer(token: string | undefined, username: string | undefined, widget: string | undefined): Promise<Viewer | { error: string }> {
@@ -29,12 +29,10 @@ async function resolveViewer(token: string | undefined, username: string | undef
     if (!record || record.revoked || record.userId !== payload.userId) return { error: 'token ถูกเพิกถอนแล้ว — สร้างลิงก์ใหม่ใน Dashboard' };
     const user = await prisma.user.findUnique({ where: { id: payload.userId }, select: { tiktokUsername: true } });
     if (!user?.tiktokUsername) return { error: 'ยังไม่ได้ตั้งชื่อ TikTok ใน Dashboard' };
-    if (widget && isWidgetType(widget)) {
-      const ent = await getEntitlements(payload.userId);
-      if (!ent.widgets.includes(widget)) return { error: 'หมดช่วงทดลองฟรี/สิทธิ์ Pro — ต่ออายุที่ vjlivekit.com แล้วลิงก์นี้จะกลับมาใช้ได้เอง' };
-    }
+    const ent = await getEntitlements(payload.userId);
+    if (widget && isWidgetType(widget) && !ent.widgets.includes(widget)) return { error: 'หมดช่วงทดลองฟรี/สิทธิ์ Pro — ต่ออายุที่ vjlivekit.com แล้วลิงก์นี้จะกลับมาใช้ได้เอง' };
     // ใช้ชื่อ TikTok ปัจจุบันของผู้ใช้ (เปลี่ยนชื่อแล้วลิงก์เดิมยังใช้ได้)
-    return { username: user.tiktokUsername, ownerId: payload.userId };
+    return { username: user.tiktokUsername, ownerId: payload.userId, watermark: !ent.noWatermark };
   }
   if (username && config.demoMode) return { username: username.replace(/^@/, '').trim() };
   return { error: 'ไม่มี token หรือ username ที่ถูกต้อง' };
@@ -82,6 +80,7 @@ export function setupRealtime(httpServer: HttpServer): RoomHub {
       if (socket.disconnected) return;
 
       const { username: room, ownerId } = viewer;
+      socket.emit('brand', { show: !!viewer.watermark }); // ป้าย VJLiveKit มุมจอ (ฟรี/ทดลอง) — Pro ไม่มี
       socket.join(RoomHub.roomChannel(room));
       if (ownerId) socket.join(RoomHub.ownerChannel(ownerId, room));
       // ตั้งค่าวิดเจ็ตที่บันทึกจาก Dashboard → ส่งให้ overlay (แก้ใน Dashboard แล้วจอเปลี่ยนทันที ไม่ต้องเปลี่ยนลิงก์)

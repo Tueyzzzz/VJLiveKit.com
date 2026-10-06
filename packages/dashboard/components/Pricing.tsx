@@ -70,6 +70,9 @@ export function PlanCards({ plans, currentPlan, renderAction }: {
               })}
               <li className="flex items-center gap-2"><Check className="size-4 text-mint" /> กฎ Actions สูงสุด {p.features.maxActionRules} ข้อ</li>
               <li className="flex items-center gap-2"><Check className="size-4 text-mint" /> ลิงก์ overlay {p.features.maxTokens} ชุด</li>
+              <li className={cx('flex items-center gap-2', !p.features.noWatermark && 'text-muted/70')}>
+                {p.features.noWatermark ? <Check className="size-4 text-mint" /> : <Lock className="size-4" />} ไม่มีป้าย VJLiveKit บนจอ
+              </li>
             </ul>
             <div className="mt-6">{renderAction(p)}</div>
           </Card>

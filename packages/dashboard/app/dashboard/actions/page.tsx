@@ -104,6 +104,7 @@ export default function ActionsPage() {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [error, setError] = useState<{ text: string; upgrade?: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [saved, setSaved] = useState<string | null>(null);
   // กดแก้ไข/เพิ่มกฎ → เลื่อนขึ้นไปที่ฟอร์ม (ฟอร์มอยู่บนสุด ถ้าไม่เลื่อนจะดูเหมือนกดไม่ติด)
   const formRef = useRef<HTMLDivElement>(null);
   const draftKey = draft ? draft.id ?? 'new' : null;
@@ -130,6 +131,7 @@ export default function ActionsPage() {
       else await api('/api/actions', { method: 'POST', body });
       setDraft(null);
       await load();
+      setSaved(`บันทึก “${body.name}” แล้ว ✓ มีผลกับไลฟ์ทันที`); setTimeout(() => setSaved(null), 4000);
     } catch (err) {
       setError({ text: err instanceof ApiError && err.status === 400 ? 'ข้อมูลไม่ถูกต้อง — ลิงก์ต้องขึ้นต้นด้วย https://' : (err as Error).message,
         upgrade: err instanceof ApiError && err.upgrade });
@@ -170,6 +172,7 @@ export default function ActionsPage() {
           <Alert tone="info">overlay FX (ที่เล่น Actions) ใช้ได้ในแพลน Pro — ตั้งกฎไว้ก่อนได้ แล้ว <Link href="/dashboard/billing/" className="font-medium text-pink underline">อัปเกรด</Link> เพื่อให้แสดงบนไลฟ์</Alert>
         </div>
       )}
+      {saved && <div className="mb-5"><Alert tone="success">{saved}</Alert></div>}
       {error && <div className="mb-5"><Alert>{error.text} {error.upgrade && <Link href="/dashboard/billing/" className="font-medium underline">อัปเกรด</Link>}</Alert></div>}
 
       {draft && (

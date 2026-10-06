@@ -7,6 +7,7 @@ import { ArrowLeft, Check, Copy, RotateCcw, Save } from 'lucide-react';
 import { WIDGET_LABELS } from '@/components/Pricing';
 import { Alert, Button, Card, Field, Input, PageHeader, Select, Spinner } from '@/components/ui';
 import { api, ApiError, type OverlayTokenRow } from '@/lib/api';
+import { NumberInput } from '@/components/NumberInput';
 import { WIDGET_SETTINGS, defaultsOf, toOverlayParams, type FieldDef, type Values } from '@/lib/widgetSettings';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
@@ -81,7 +82,7 @@ function FieldInput({ f, value, onChange }: { f: FieldDef; value: Values[string]
         </div>
       );
     case 'number':
-      return <Input type="number" min={f.min} max={f.max} value={String(value)} onChange={(e) => onChange(e.target.value === '' ? 0 : Number(e.target.value))} />;
+      return <NumberInput min={f.min} max={f.max} value={value as number} onChange={(n) => onChange(n)} />;
     case 'select':
       // มีรูปย่อ → กางเป็นการ์ดรูปตามหมวด ให้เห็นทุกแบบแล้วกดเลือกได้เลย
       if (f.options.some((o) => o[3])) return (

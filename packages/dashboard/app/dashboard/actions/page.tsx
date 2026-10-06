@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { Check, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { Alert, Badge, Button, Card, Field, Input, PageHeader, Select, Spinner } from '@/components/ui';
 import { GiftPicker } from '@/components/GiftPicker';
+import { toDigits } from '@/components/NumberInput';
 import { api, ApiError, type ActionType, type Rule, type TarotDeck, type TarotTopic, type TriggerEvent } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 
@@ -197,7 +198,7 @@ export default function ActionsPage() {
               {draft.event === 'gift' && (
                 <>
                   <Field label="กิฟต์"><GiftPicker value={draft.giftName} onChange={(v) => set('giftName', v)} /></Field>
-                  <Field label="มูลค่าขั้นต่ำ (เพชร)"><Input type="number" min={0} value={draft.minDiamonds} onChange={(e) => set('minDiamonds', e.target.value)} placeholder="เช่น 100" /></Field>
+                  <Field label="มูลค่าขั้นต่ำ (เพชร)"><Input type="text" inputMode="numeric" value={draft.minDiamonds} onChange={(e) => set('minDiamonds', toDigits(e.target.value))} placeholder="เช่น 100" /></Field>
                 </>
               )}
               {draft.event === 'chat' && (
@@ -229,7 +230,7 @@ export default function ActionsPage() {
               )}
               {draft.type === 'effect' && (
                 <Field label="จำนวนผีเสื้อ" hint="1–30 ตัว · ข้อความประกอบจะขึ้นเป็นหัวเรื่องกลางจอ">
-                  <Input type="number" min={1} max={30} value={draft.count} onChange={(e) => set('count', e.target.value)} />
+                  <Input type="text" inputMode="numeric" value={draft.count} onChange={(e) => set('count', toDigits(e.target.value))} />
                 </Field>
               )}
               {draft.type === 'tarot' && (
@@ -254,7 +255,7 @@ export default function ActionsPage() {
                   </Select>
                 </Field>
               )}
-              <Field label="แสดงนาน (วินาที)"><Input type="number" min={1} max={60} step="0.5" value={draft.durationSec} onChange={(e) => set('durationSec', e.target.value)} /></Field>
+              <Field label="แสดงนาน (วินาที)"><Input type="text" inputMode="decimal" value={draft.durationSec} onChange={(e) => set('durationSec', toDigits(e.target.value, true))} /></Field>
             </div>
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={draft.enabled} onChange={(e) => set('enabled', e.target.checked)} className="accent-pink" /> เปิดใช้งาน</label>
             <div className="flex gap-2">

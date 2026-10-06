@@ -57,7 +57,8 @@ export function ruleMatches(rule: ActionRule, e: TikTokEvent): boolean {
       if (!id || !e.giftId || id !== e.giftId) return false;
     }
     const value = e.totalValue ?? (e.diamondCount ?? 0) * (e.repeatCount ?? 1);
-    if (t.minDiamonds != null && value < t.minDiamonds) return false;
+    // เลือกกิฟต์เฉพาะแล้ว ไม่ใช้มูลค่าขั้นต่ำ (กฎเก่าที่ตั้งคู่กัน เช่น Heart + 99 จะไม่มีวันขึ้น)
+    if (!t.giftName && t.minDiamonds != null && value < t.minDiamonds) return false;
   }
   if (e.type === 'chat' && t.keyword) {
     if (!(e.comment ?? '').toLowerCase().includes(t.keyword.toLowerCase())) return false;

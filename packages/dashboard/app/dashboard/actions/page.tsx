@@ -2,11 +2,11 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
-import { Check, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react';
+import { Check, Copy, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { Alert, Badge, Button, Card, Field, Input, PageHeader, Select, Spinner } from '@/components/ui';
 import { GiftPicker } from '@/components/GiftPicker';
 import { toDigits } from '@/components/NumberInput';
-import { api, ApiError, type ActionType, type Rule, type TarotDeck, type TarotTopic, type TriggerEvent } from '@/lib/api';
+import { api, ApiError, type OverlayTokenRow, type ActionType, type Rule, type TarotDeck, type TarotTopic, type TriggerEvent } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 
 const EVENT_LABELS: Record<TriggerEvent, string> = { gift: '🎁 ได้รับกิฟต์', follow: '➕ มีคนติดตาม', share: '🔁 มีคนแชร์', like: '❤️ มีคนกดไลค์', chat: '💬 แชทมีคำว่า' };
@@ -112,6 +112,19 @@ export default function ActionsPage() {
   const [error, setError] = useState<{ text: string; upgrade?: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState<string | null>(null);
+  // ลิงก์วิดเจ็ต FX (ตัวที่แสดง Actions บนจอ) — คัดลอกได้จากหน้านี้เลย
+  const [fxUrl, setFxUrl] = useState<string | null | undefined>(undefined);
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    api<{ tokens: OverlayTokenRow[] }>('/api/overlay-tokens')
+      .then((r) => setFxUrl(r.tokens[0]?.urls.find((u) => u.type === 'fx')?.url ?? null))
+      .catch(() => setFxUrl(null));
+  }, []);
+  async function copyFx() {
+    if (!fxUrl) return;
+    try { await navigator.clipboard.writeText(fxUrl); } catch { window.prompt('คัดลอกลิงก์นี้', fxUrl); return; }
+    setCopied(true); setTimeout(() => setCopied(false), 1500);
+  }
   // กดแก้ไข/เพิ่มกฎ → เลื่อนขึ้นไปที่ฟอร์ม (ฟอร์มอยู่บนสุด ถ้าไม่เลื่อนจะดูเหมือนกดไม่ติด)
   const formRef = useRef<HTMLDivElement>(null);
   const draftKey = draft ? draft.id ?? 'new' : null;
@@ -174,6 +187,20 @@ export default function ActionsPage() {
       <PageHeader title="Actions & Events"
         description="ตั้งกฎอัตโนมัติ: เมื่อเกิดเหตุการณ์ในไลฟ์ → overlay FX เล่นเสียง/รูป/วิดีโอ/ข้อความ"
         actions={!draft && <Button onClick={() => { setError(null); setDraft({ ...EMPTY }); }}><Plus className="size-4" /> เพิ่มกฎ</Button>} />
+
+      <Card className="mb-6">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="font-medium">✨ ลิงก์วิดเจ็ตเอฟเฟกต์ (FX)</div>
+            <p className="text-sm text-muted">Actions ทุกกฎจะแสดงผ่านวิดเจ็ตนี้ — วางในโปรแกรมไลฟ์ <b>ให้เต็มจอ</b> และไว้ <b>ชั้นบนสุด</b> ครั้งเดียวพอ</p>
+          </div>
+          {fxUrl ? (
+            <Button variant="secondary" onClick={copyFx}>{copied ? <><Check className="size-4 text-mint" /> คัดลอกแล้ว</> : <><Copy className="size-4" /> คัดลอกลิงก์ FX</>}</Button>
+          ) : fxUrl === null ? (
+            <Link href="/dashboard/widgets/" className="text-sm font-medium text-pink underline">สร้างลิงก์ที่หน้าวิดเจ็ตก่อน</Link>
+          ) : <Spinner />}
+        </div>
+      </Card>
 
       {fxLocked && (
         <div className="mb-5">

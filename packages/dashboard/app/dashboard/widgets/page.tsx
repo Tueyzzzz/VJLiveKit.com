@@ -27,7 +27,7 @@ const PARAM_HINTS: Record<string, string> = {
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
 
 /** วิดเจ็ตที่กำลังพัฒนา — ลูกค้าเห็นเป็นสีเทา ใช้ไม่ได้ (แอดมินยังใช้ทดสอบได้) */
-const SOON = new Set(['league']);
+const SOON = new Set(['league', 'tts']);
 
 const COLLECT_GROUP = '🎁 สะสมของขวัญ — โหล ตู้ ต้นไม้ เครื่องจักร';
 

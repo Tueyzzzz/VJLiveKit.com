@@ -7,6 +7,7 @@ import { OVERLAY_VERSION } from '../overlay-version.js';
 import { prisma } from '../db/prisma.js';
 import { getEntitlements, isWidgetType } from '../plans/index.js';
 import { verifySession } from '../auth/service.js';
+import { settings } from '../settings/index.js';
 import type { ActionRule, RuleTrigger, RuleAction } from '../actions/engine.js';
 
 /** โหลดกฎ Actions ที่เปิดใช้ของผู้ใช้ */
@@ -105,7 +106,7 @@ export function setupRealtime(httpServer: HttpServer): RoomHub {
       if (socket.disconnected) return;
 
       const { username: room, ownerId } = viewer;
-      socket.emit('brand', { show: !!viewer.watermark }); // ป้าย VJLiveKit มุมจอ (ฟรี/ทดลอง) — Pro ไม่มี
+      socket.emit('brand', { show: !!viewer.watermark, every: settings().brandEveryMin }); // ป้าย VJLiveKit มุมจอ (ฟรี/ทดลอง) — Pro ไม่มี
       // ตั้งค่าวิดเจ็ตที่บันทึกจาก Dashboard → ส่งให้ overlay (แก้ใน Dashboard แล้วจอเปลี่ยนทันที ไม่ต้องเปลี่ยนลิงก์)
       if (ownerId && widget && isWidgetType(widget)) {
         socket.join(RoomHub.configChannel(ownerId, widget));

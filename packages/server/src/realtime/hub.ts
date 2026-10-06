@@ -4,6 +4,7 @@ import type { Server } from 'socket.io';
 import { loadSession, saveSession } from './sessions.js';
 import { connStats } from './connstats.js';
 import { trackLive } from './lives.js';
+import { settings } from '../settings/index.js';
 import { config } from '../config/index.js';
 
 /** โหลดกฎ Actions ที่เปิดใช้ของผู้ใช้หนึ่งคน */
@@ -67,9 +68,9 @@ export class RoomHub {
   private presence = new Map<string, number>();
   private waiting = new Map<string, Set<{ on: () => void; off: () => void }>>();
   private graceTimers = new Map<string, ReturnType<typeof setTimeout>>();
-  private readonly PRESENCE_GRACE_MS = 90_000; // รีเฟรช/เปลี่ยนหน้าเว็บ ไม่ทำให้จอดับ
+  private get PRESENCE_GRACE_MS() { return settings().presenceGraceSec * 1000; } // รีเฟรช/เปลี่ยนหน้าเว็บ ไม่ทำให้จอดับ (ปรับได้)
 
-  isPresent(ownerId: string): boolean { return (this.presence.get(ownerId) ?? 0) > 0 || this.graceTimers.has(ownerId); }
+  isPresent(ownerId: string): boolean { if (!settings().presenceLock) return true; return (this.presence.get(ownerId) ?? 0) > 0 || this.graceTimers.has(ownerId); }
 
   /** แดชบอร์ดเปิด/ปิด → ปลุก/พักวิดเจ็ตของวีเจคนนั้น */
   presenceUp(ownerId: string): void {
@@ -84,7 +85,7 @@ export class RoomHub {
     this.presence.delete(ownerId);
     this.graceTimers.set(ownerId, setTimeout(() => {
       this.graceTimers.delete(ownerId);
-      if ((this.presence.get(ownerId) ?? 0) === 0) for (const w of this.waiting.get(ownerId) ?? []) w.off();
+      if ((this.presence.get(ownerId) ?? 0) === 0 && settings().presenceLock) for (const w of this.waiting.get(ownerId) ?? []) w.off();
     }, this.PRESENCE_GRACE_MS));
   }
   /** วิดเจ็ตลงทะเบียนรอ — on() เมื่อแดชบอร์ดเปิด, off() เมื่อปิด · คืนฟังก์ชันยกเลิก */

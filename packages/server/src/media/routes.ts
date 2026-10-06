@@ -5,6 +5,7 @@ import crypto from 'node:crypto';
 import { z } from 'zod';
 import { requireUser, getUser } from '../auth/middleware.js';
 import { config } from '../config/index.js';
+import { settings } from '../settings/index.js';
 
 /**
  * อัปโหลดเสียง/เพลงของวีเจ ใช้กับกฎ "เล่นเสียง" (แทนการหาลิงก์ไฟล์เอง)
@@ -12,7 +13,7 @@ import { config } from '../config/index.js';
  * ชื่อไฟล์สุ่ม เดาไม่ได้ — overlay ใน OBS โหลดได้โดยไม่ต้องล็อกอิน
  */
 const ROOT = path.join(process.env.SNAPSHOT_DIR ? path.dirname(process.env.SNAPSHOT_DIR) : path.resolve(process.cwd(), '../../data'), 'sounds');
-const MAX_BYTES = 5 * 1024 * 1024, MAX_FILES = 30;
+const lim = () => ({ bytes: settings().soundMaxMB * 1024 * 1024, files: settings().soundMaxFiles }); // ปรับได้ที่หน้าตั้งค่าระบบ
 const TYPES: Record<string, string> = { 'audio/mpeg': 'mp3', 'audio/mp3': 'mp3', 'audio/wav': 'wav', 'audio/x-wav': 'wav', 'audio/wave': 'wav', 'audio/ogg': 'ogg', 'audio/mp4': 'm4a', 'audio/x-m4a': 'm4a', 'audio/aac': 'aac', 'audio/webm': 'webm' };
 const MIME: Record<string, string> = { mp3: 'audio/mpeg', wav: 'audio/wav', ogg: 'audio/ogg', m4a: 'audio/mp4', aac: 'audio/aac', webm: 'audio/webm' };
 
@@ -30,16 +31,16 @@ const urlOf = (userId: string, f: SoundFile) => `${config.publicBaseUrl}/media/s
 
 const uploadSchema = z.object({
   name: z.string().trim().min(1).max(60),
-  data: z.string().regex(/^data:audio\/[\w.+-]+;base64,/).max(7_200_000),
+  data: z.string().regex(/^data:audio\/[\w.+-]+;base64,/).max(28_000_000),
 });
 
 export async function mediaRoutes(app: FastifyInstance): Promise<void> {
   app.get('/api/sounds', { preHandler: requireUser }, async (req) => {
     const { userId } = getUser(req)!;
-    return { sounds: list(userId).map((f) => ({ id: f.id, name: f.name, size: f.size, url: urlOf(userId, f) })), max: MAX_FILES, maxBytes: MAX_BYTES };
+    return { sounds: list(userId).map((f) => ({ id: f.id, name: f.name, size: f.size, url: urlOf(userId, f) })), max: lim().files, maxBytes: lim().bytes };
   });
 
-  app.post('/api/sounds', { preHandler: requireUser, bodyLimit: 7_500_000, config: { rateLimit: { max: 20, timeWindow: '10 minutes' } } }, async (req, reply) => {
+  app.post('/api/sounds', { preHandler: requireUser, bodyLimit: 28_500_000, config: { rateLimit: { max: 20, timeWindow: '10 minutes' } } }, async (req, reply) => {
     const { userId } = getUser(req)!;
     const parsed = uploadSchema.safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: 'ไฟล์ไม่ถูกต้อง — รองรับ mp3 / wav / ogg / m4a' });
@@ -47,9 +48,9 @@ export async function mediaRoutes(app: FastifyInstance): Promise<void> {
     const mime = data.slice(5, data.indexOf(';')).toLowerCase(), ext = TYPES[mime];
     if (!ext) return reply.code(400).send({ error: 'รองรับเฉพาะไฟล์เสียง mp3 / wav / ogg / m4a' });
     const buf = Buffer.from(data.slice(data.indexOf(',') + 1), 'base64');
-    if (buf.length > MAX_BYTES) return reply.code(400).send({ error: 'ไฟล์ใหญ่เกิน 5MB — ตัดให้สั้นลง หรือแปลงเป็น mp3' });
+    if (buf.length > lim().bytes) return reply.code(400).send({ error: `ไฟล์ใหญ่เกิน ${settings().soundMaxMB}MB — ตัดให้สั้นลง หรือแปลงเป็น mp3` });
     const items = list(userId);
-    if (items.length >= MAX_FILES) return reply.code(400).send({ error: `อัปโหลดได้สูงสุด ${MAX_FILES} ไฟล์ — ลบไฟล์เก่าก่อน` });
+    if (items.length >= lim().files) return reply.code(400).send({ error: `อัปโหลดได้สูงสุด ${lim().files} ไฟล์ — ลบไฟล์เก่าก่อน` });
     const id = crypto.randomBytes(9).toString('base64url');
     const f: SoundFile = { id, name, file: `${id}.${ext}`, size: buf.length, createdAt: new Date().toISOString() };
     fs.mkdirSync(dirOf(userId), { recursive: true });

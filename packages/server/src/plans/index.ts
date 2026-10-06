@@ -1,5 +1,6 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '../db/prisma.js';
+import { settings } from '../settings/index.js';
 
 /** วิดเจ็ตทั้งหมดที่ระบบมี (ชื่อตรงกับไฟล์ /overlay/<type>.html) */
 export const WIDGET_TYPES = ['coinjar', 'giftjar', 'aquarium', 'spacedome', 'belly', 'snowglobe', 'vehicle', 'garden', 'tree', 'alerts', 'goal', 'chat', 'follower', 'topgifters', 'toplikers', 'timer', 'league', 'tts', 'fx', 'fxmenu', 'donate', 'collect'] as const;
@@ -25,7 +26,7 @@ export interface Entitlements extends PlanFeatures {
 
 /** สมัครใหม่ = ใช้ฟรีทุกฟีเจอร์ (เท่า Pro) 30 วันนับจากวันสมัคร แล้วต้องสมัคร Pro */
 export const TRIAL_DAYS = 30;
-export const trialEndOf = (createdAt: Date): Date => new Date(createdAt.getTime() + TRIAL_DAYS * 86_400_000);
+export const trialEndOf = (createdAt: Date): Date => new Date(createdAt.getTime() + settings().trialDays * 86_400_000); // แอดมินปรับได้ที่หน้าตั้งค่าระบบ
 
 interface PlanDef { code: string; name: string; priceCents: number; currency: string; features: PlanFeatures }
 
@@ -77,7 +78,7 @@ export async function getEntitlements(userId: string): Promise<Entitlements> {
       // ทดลองฟรีได้ทุกวิดเจ็ตเท่า Pro แต่ยังมีป้าย VJLiveKit บนจอ — สมัคร Pro แล้วป้ายหายเอง
       return { plan: 'trial', ...PLAN_DEFS.find((p) => p.code === 'pro')!.features, noWatermark: false, trialEndsAt: trialEnd.toISOString() };
     }
-    return { plan: FREE.code, ...FREE.features };
+    return { plan: FREE.code, ...FREE.features, ...(FREE_UNLOCKED_FOR_TESTING ? {} : { maxActionRules: settings().freeMaxRules, maxTokens: settings().freeMaxTokens }) };
   }
   const def = PLAN_DEFS.find((p) => p.code === sub.plan.code);
   const features = (def?.features ?? (sub.plan.features as unknown as PlanFeatures)) ?? FREE.features;

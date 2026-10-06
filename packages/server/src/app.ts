@@ -13,6 +13,7 @@ import { referralRoutes } from './referrals/routes.js';
 import { adminRoutes } from './admin/routes.js';
 import { donateRoutes } from './donate/routes.js';
 import { mediaRoutes } from './media/routes.js';
+import { settings } from './settings/index.js';
 import { config } from './config/index.js';
 import { OVERLAY_DIR, OVERLAY_VERSION } from './overlay-version.js';
 import { runtime } from './runtime.js';
@@ -77,6 +78,9 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   // คลังของขวัญ (ชื่อ/รูป/ราคา) สำหรับดรอปดาวน์เลือกกิฟต์
   app.get('/api/gifts', async () => ({ gifts: listGifts() }));
+
+  // ค่าสาธารณะจากหน้าตั้งค่าระบบ (ประกาศบนแดชบอร์ด · วันทดลองฟรี)
+  app.get('/api/settings/public', async () => ({ announcement: settings().announcement, trialDays: settings().trialDays }));
 
   app.get('/healthz', async () => ({ ok: true, live: runtime.liveRooms() }));
 

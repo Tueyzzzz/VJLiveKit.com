@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { Activity, BarChart3, Download, Gift, KeyRound, Radio, RefreshCw, Search, Users } from 'lucide-react';
+import { Activity, BarChart3, Download, Gift, KeyRound, Radio, RefreshCw, Search, Settings2, Users } from 'lucide-react';
 import { Alert, Badge, Button, Card, Input, PageHeader, Spinner } from '@/components/ui';
 import { api, getToken } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -31,6 +31,20 @@ interface Lives {
   top: { username: string; lives: number; diamonds: number; last: string }[];
   recent: { roomId: string; username: string; startedAt: string; lastSeenAt: string; diamonds: number; peakViewers: number; ended: boolean }[];
 }
+type SysSettings = Record<string, number | boolean | string>;
+/** ช่องในหน้าตั้งค่าระบบ: [คีย์, ชื่อ, คำอธิบาย, หน่วย] */
+const SYS_FIELDS: [string, string, string, string?][] = [
+  ['presenceLock', 'ล็อกวิดเจ็ต (แบบ TikFinity)', 'วิดเจ็ตในโปรแกรมไลฟ์ทำงานเฉพาะตอนวีเจล็อกอินเปิดเว็บไว้ — ประหยัดเซิร์ฟเวอร์'],
+  ['presenceGraceSec', 'ปิดเว็บแล้วรอก่อนพักวิดเจ็ต', 'กันรีเฟรช/เปลี่ยนหน้าแล้วจอดับ', 'วินาที'],
+  ['trialDays', 'ทดลองฟรีหลังสมัคร', 'ใช้ได้ทุกอย่างเท่า Pro (มีผลกับทุกคน รวมคนที่สมัครแล้ว)', 'วัน'],
+  ['freeMaxRules', 'แพลนฟรี: กฎ Actions สูงสุด', '', 'ข้อ'],
+  ['freeMaxTokens', 'แพลนฟรี: ชุดลิงก์สูงสุด', '', 'ชุด'],
+  ['soundMaxMB', 'อัปโหลดเสียง: ขนาดต่อไฟล์', '', 'MB'],
+  ['soundMaxFiles', 'อัปโหลดเสียง: จำนวนไฟล์ต่อคน', '', 'ไฟล์'],
+  ['donateDefaultMin', 'โดเนท: ขั้นต่ำเริ่มต้น', 'ใช้เมื่อวีเจยังไม่ได้ตั้งเอง', 'บาท'],
+  ['brandEveryMin', 'ป้าย vjlivekit.com โผล่ทุก', 'เฉพาะแพลนฟรี/ทดลอง (โผล่ครั้งละ 6 วินาที)', 'นาที'],
+  ['announcement', 'ประกาศบนแดชบอร์ด', 'ขึ้นแถบบนสุดของแดชบอร์ดทุกคน · เว้นว่าง = ไม่แสดง'],
+];
 const ago = (t: number | null) => { if (!t) return '-'; const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'เมื่อกี้' : m < 60 ? `${m} นาทีที่แล้ว` : `${Math.floor(m / 60)} ชม. ${m % 60} นาที`; };
 const EULER_DAILY = 2500; // โควตาแพ็กเกจฟรีของ EulerStream (คำขอ/วัน)
 
@@ -40,7 +54,9 @@ const PLAN: Record<string, [string, 'pink' | 'mint' | 'gray']> = { pro: ['Pro', 
 /** หลังบ้านแอดมิน: ภาพรวม · ผู้ใช้ (แจก Pro / รีเซ็ตรหัส) · ไลฟ์ที่ออนไลน์ */
 export default function AdminPage() {
   const { isAdmin } = useAuth();
-  const [tab, setTab] = useState<'overview' | 'reports' | 'users' | 'live' | 'lives'>('overview');
+  const [tab, setTab] = useState<'overview' | 'reports' | 'users' | 'live' | 'lives' | 'settings'>('overview');
+  const [sys, setSys] = useState<{ settings: SysSettings; defaults: SysSettings; limits: Record<string, [number, number]> } | null>(null);
+  const [sysDraft, setSysDraft] = useState<SysSettings | null>(null);
   const [lives, setLives] = useState<Lives | null>(null);
   const [rep, setRep] = useState<Reports | null>(null);
   const [ov, setOv] = useState<Overview | null>(null);
@@ -59,6 +75,7 @@ export default function AdminPage() {
     if (tab === 'overview') { void loadOv(); const t = setInterval(loadOv, 15_000); return () => clearInterval(t); }
     if (tab === 'users' && !users) void loadUsers();
     if (tab === 'reports') api<Reports>('/api/admin/reports').then(setRep).catch((e) => setMsg({ tone: 'error', text: (e as Error).message }));
+    if (tab === 'settings') api<{ settings: SysSettings; defaults: SysSettings; limits: Record<string, [number, number]> }>('/api/admin/settings').then((r) => { setSys(r); setSysDraft(r.settings); }).catch((e) => setMsg({ tone: 'error', text: (e as Error).message }));
     if (tab === 'lives') { const f = () => api<Lives>('/api/admin/lives').then(setLives).catch((e) => setMsg({ tone: 'error', text: (e as Error).message })); void f(); const t = setInterval(f, 30_000); return () => clearInterval(t); }
     if (tab === 'live') { void loadLive(); const t = setInterval(loadLive, 10_000); return () => clearInterval(t); }
   }, [isAdmin, tab, users, loadOv, loadUsers, loadLive]);
@@ -95,7 +112,7 @@ export default function AdminPage() {
     <div>
       <PageHeader title="หลังบ้าน (แอดมิน)" description="ภาพรวมระบบ · จัดการผู้ใช้ · ไลฟ์ที่ออนไลน์อยู่" />
       <div className="mb-5 flex flex-wrap gap-2">
-        {([['overview', 'ภาพรวม', Activity], ['reports', 'รายงาน', BarChart3], ['users', 'ลูกค้า', Users], ['live', 'ไลฟ์ตอนนี้', RefreshCw], ['lives', 'จำนวนไลฟ์', Radio]] as const).map(([k, l, Icon]) => (
+        {([['overview', 'ภาพรวม', Activity], ['reports', 'รายงาน', BarChart3], ['users', 'ลูกค้า', Users], ['live', 'ไลฟ์ตอนนี้', RefreshCw], ['lives', 'จำนวนไลฟ์', Radio], ['settings', 'ตั้งค่าระบบ', Settings2]] as const).map(([k, l, Icon]) => (
           <Button key={k} variant={tab === k ? 'primary' : 'secondary'} onClick={() => setTab(k)}><Icon className="size-4" /> {l}</Button>
         ))}
       </div>
@@ -231,6 +248,40 @@ export default function AdminPage() {
           <p className="mt-2 text-xs text-muted">แสดงล่าสุด 100 คน — ใช้ช่องค้นหาเพื่อหาคนอื่น</p>
         </div>
       )}
+
+      {tab === 'settings' && (!sys || !sysDraft ? <Spinner /> : (
+        <Card className="space-y-4">
+          {SYS_FIELDS.map(([k, label, hint, unit]) => {
+            const v = sysDraft[k], def = sys.defaults[k], lim = sys.limits[k];
+            return (
+              <div key={k} className="flex flex-wrap items-center gap-3 border-b border-line pb-4 last:border-0 last:pb-0">
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium">{label}</div>
+                  <div className="text-xs text-muted">{hint}{hint && ' · '}ค่าเริ่มต้น {typeof def === 'boolean' ? (def ? 'เปิด' : 'ปิด') : String(def || '-')}{lim ? ` · ${lim[0]}–${lim[1]}` : ''}</div>
+                </div>
+                {typeof def === 'boolean' ? (
+                  <button type="button" role="switch" aria-checked={!!v} onClick={() => setSysDraft({ ...sysDraft, [k]: !v })}
+                    className={`relative h-6 w-11 rounded-full transition ${v ? 'bg-pink' : 'bg-gray-300'}`}>
+                    <span className={`absolute top-0.5 size-5 rounded-full bg-white shadow transition ${v ? 'left-5.5' : 'left-0.5'}`} />
+                  </button>
+                ) : typeof def === 'number' ? (
+                  <div className="flex items-center gap-2"><Input className="w-28 text-right" inputMode="numeric" value={String(v)} onChange={(e) => setSysDraft({ ...sysDraft, [k]: e.target.value.replace(/[^\d]/g, '') })} /><span className="w-12 text-sm text-muted">{unit}</span></div>
+                ) : (
+                  <Input className="w-full sm:w-96" maxLength={300} value={String(v ?? '')} onChange={(e) => setSysDraft({ ...sysDraft, [k]: e.target.value })} placeholder="เช่น 🎉 เพิ่มเสียงสำเร็จรูป 12 แบบแล้ว!" />
+                )}
+              </div>
+            );
+          })}
+          <div className="flex gap-2 pt-2">
+            <Button onClick={async () => {
+              const body = Object.fromEntries(Object.entries(sysDraft).map(([k, v]) => [k, typeof sys.defaults[k] === 'number' ? Number(v) : v]));
+              try { const r = await api<{ settings: SysSettings }>('/api/admin/settings', { method: 'PUT', body }); setSys({ ...sys, settings: r.settings }); setSysDraft(r.settings); setMsg({ tone: 'success', text: 'บันทึกแล้ว ✓ มีผลทันที' }); }
+              catch (e) { setMsg({ tone: 'error', text: (e as Error).message }); }
+            }}>บันทึก</Button>
+            <Button variant="secondary" onClick={() => setSysDraft(sys.defaults)}>คืนค่าเริ่มต้นทั้งหมด</Button>
+          </div>
+        </Card>
+      ))}
 
       {tab === 'lives' && (!lives ? <Spinner /> : (
         <div className="space-y-4">

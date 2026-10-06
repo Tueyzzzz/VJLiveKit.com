@@ -6,6 +6,7 @@ import { requireUser, getUser } from '../auth/middleware.js';
 import { getEntitlements } from '../plans/index.js';
 import { getHub } from '../realtime/hub.js';
 import { config } from '../config/index.js';
+import { settings as sys } from '../settings/index.js';
 import { addDonation, listDonations, updateDonation, slipPath, isUsedRef, markRef, type Donation } from './store.js';
 
 /**
@@ -27,7 +28,7 @@ async function ownerByHandle(handle: string) {
   const cfg = await prisma.widgetConfig.findUnique({ where: { userId_type: { userId: user.id, type: 'donate' } }, select: { settings: true } });
   const s = (cfg?.settings ?? {}) as DonateSettings;
   if (!s.promptpay || digits(s.promptpay).length < 10) return null;
-  return { user, settings: { promptpay: digits(s.promptpay), min: Math.max(1, Number(s.min) || 10), title: s.title || '' } };
+  return { user, settings: { promptpay: digits(s.promptpay), min: Math.max(1, Number(s.min) || sys().donateDefaultMin), title: s.title || '' } };
 }
 
 function announce(userId: string, tiktok: string, d: Donation) {

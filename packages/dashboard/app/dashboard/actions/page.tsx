@@ -212,9 +212,10 @@ export default function ActionsPage() {
   // ไฟล์เสียงที่อัปโหลดไว้ (ใช้กับกฎ "เล่นเสียง")
   const [uploads, setUploads] = useState<Upload[]>([]);
   const [uploading, setUploading] = useState(false);
-  useEffect(() => { api<{ sounds: Upload[] }>('/api/sounds').then((r) => setUploads(r.sounds)).catch(() => {}); }, []);
+  const [maxBytes, setMaxBytes] = useState(5 * 1024 * 1024);
+  useEffect(() => { api<{ sounds: Upload[]; maxBytes: number }>('/api/sounds').then((r) => { setUploads(r.sounds); if (r.maxBytes) setMaxBytes(r.maxBytes); }).catch(() => {}); }, []);
   async function uploadSound(f: File) {
-    if (f.size > 5 * 1024 * 1024) { setError({ text: 'ไฟล์ใหญ่เกิน 5MB — ตัดให้สั้นลง หรือแปลงเป็น mp3' }); return; }
+    if (f.size > maxBytes) { setError({ text: `ไฟล์ใหญ่เกิน ${Math.round(maxBytes / 1048576)}MB — ตัดให้สั้นลง หรือแปลงเป็น mp3` }); return; }
     setUploading(true); setError(null);
     try {
       const data = await readAsDataUrl(f);
@@ -305,7 +306,7 @@ export default function ActionsPage() {
                 </Select>
               </Field>
               {draft.type === 'sound' && (
-                <Field label="เสียง" hint="เลือกเสียงสำเร็จรูป หรืออัปโหลดเพลง/เสียงของคุณ (mp3 · wav · ogg · m4a ไม่เกิน 5MB) · กด ▶ เพื่อฟัง">
+                <Field label="เสียง" hint={`เลือกเสียงสำเร็จรูป หรืออัปโหลดเพลง/เสียงของคุณ (mp3 · wav · ogg · m4a ไม่เกิน ${Math.round(maxBytes / 1048576)}MB) · กด ▶ เพื่อฟัง`}>
                   <div className="flex flex-wrap gap-2">
                     <Select className="min-w-0 flex-1" value={draft.sound || (uploads.some((u) => u.url === draft.url) ? 'url:' + draft.url : '')}
                       onChange={(e) => { const v = e.target.value; setDraft((d) => (d ? (v.startsWith('url:') ? { ...d, sound: '', url: v.slice(4) } : { ...d, sound: v, url: v ? d.url : (uploads.some((u) => u.url === d.url) ? '' : d.url) }) : d)); }}>

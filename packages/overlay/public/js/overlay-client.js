@@ -116,7 +116,7 @@ window.Overlay = (function () {
         document.body.appendChild(brand);
         setTimeout(flash, 50);
       }
-      if (!brandTimer) brandTimer = setInterval(flash, 10 * 60 * 1000);
+      if (!brandTimer) brandTimer = setInterval(flash, Math.max(1, Number(b.every) || 10) * 60 * 1000);
     });
     socket.on('tiktok-event', (e) => fire('event', e));
     socket.on('stats', (s) => fire('stats', s));

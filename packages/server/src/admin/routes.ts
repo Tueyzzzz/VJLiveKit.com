@@ -10,6 +10,7 @@ import { grantDays } from '../referrals/routes.js';
 import { getHub } from '../realtime/hub.js';
 import { connStats } from '../realtime/connstats.js';
 import { listLives } from '../realtime/lives.js';
+import { settings, updateSettings, DEFAULTS, LIMITS, type SystemSettings } from '../settings/index.js';
 
 /** แอดมิน = role ADMIN ในฐานข้อมูล หรืออีเมลอยู่ใน ADMIN_EMAILS */
 export function isAdmin(req: FastifyRequest): boolean {
@@ -130,6 +131,10 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
   });
 
   // ---- ไลฟ์ที่เชื่อมต่ออยู่ ----
+  // ตั้งค่าระบบ (แก้แล้วมีผลทันที ไม่ต้อง deploy)
+  app.get('/api/admin/settings', { preHandler: requireAdmin }, async () => ({ settings: settings(), defaults: DEFAULTS, limits: LIMITS }));
+  app.put('/api/admin/settings', { preHandler: requireAdmin }, async (req) => ({ settings: updateSettings((req.body ?? {}) as Partial<SystemSettings>) }));
+
   app.get('/api/admin/live', { preHandler: requireAdmin }, async () => ({ rooms: getHub()?.listRooms() ?? [] }));
 
   // จำนวนไลฟ์ (1 รหัสห้องไลฟ์ TikTok = 1 ไลฟ์) — วันนี้ / 7 วัน / 30 วัน / ทั้งหมด + อันดับวีเจที่ไลฟ์บ่อย + ไลฟ์ล่าสุด

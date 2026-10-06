@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { Check, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { Alert, Badge, Button, Card, Field, Input, PageHeader, Select, Spinner } from '@/components/ui';
 import { GiftPicker } from '@/components/GiftPicker';
-import { api, ApiError, type ActionType, type Rule, type TarotDeck, type TriggerEvent } from '@/lib/api';
+import { api, ApiError, type ActionType, type Rule, type TarotDeck, type TarotTopic, type TriggerEvent } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 
 const EVENT_LABELS: Record<TriggerEvent, string> = { gift: '🎁 ได้รับกิฟต์', follow: '➕ มีคนติดตาม', share: '🔁 มีคนแชร์', like: '❤️ มีคนกดไลค์', chat: '💬 แชทมีคำว่า' };
@@ -25,9 +25,10 @@ interface Draft {
   durationSec: string;
   cards: string;
   deck: TarotDeck;
+  topic: TarotTopic;
 }
 
-const EMPTY: Draft = { name: '', enabled: true, event: 'gift', giftName: '', minDiamonds: '', keyword: '', type: 'sound', url: '', text: '', durationSec: '5', cards: '1', deck: 'full' };
+const EMPTY: Draft = { name: '', enabled: true, event: 'gift', giftName: '', minDiamonds: '', keyword: '', type: 'sound', url: '', text: '', durationSec: '5', cards: '1', deck: 'full', topic: 'general' };
 
 /** เทมเพลตยอดนิยม — กดครั้งเดียวสร้างกฎได้เลย (ไม่ต้องหาไฟล์เสียง/รูปเอง) */
 interface Template { icon: string; title: string; desc: string; rule: { name: string; trigger: Rule['trigger']; action: Rule['action'] } }
@@ -40,6 +41,12 @@ const TEMPLATES: Template[] = [
     rule: { name: 'ไพ่ 7 ใบ (1,000 เพชร+)', trigger: { event: 'gift', minDiamonds: 1000 }, action: { type: 'tarot', cards: 7, text: '👑 ดูดวงเต็มชุดให้ {user}', durationMs: 20000 } } },
   { icon: '💬', title: 'พิมพ์ “ดูดวง” ในแชท → ไพ่ 1 ใบ', desc: 'ให้คนดูเล่นได้ทุกคน',
     rule: { name: 'แชทดูดวง', trigger: { event: 'chat', keyword: 'ดูดวง' }, action: { type: 'tarot', cards: 1, text: '🔮 ไพ่ของ {user}', durationMs: 8000 } } },
+  { icon: '💘', title: 'ทำนายความรัก 3 ใบ', desc: 'กิฟต์ 30 เพชรขึ้นไป → ใจคุณ · ใจเขา · อนาคตความรัก',
+    rule: { name: 'ทำนายความรัก', trigger: { event: 'gift', minDiamonds: 30 }, action: { type: 'tarot', cards: 3, topic: 'love', text: '💘 ดวงความรักของ {user}', durationMs: 13000 } } },
+  { icon: '💌', title: 'พิมพ์ “ดูดวงความรัก” → ไพ่ 1 ใบ', desc: 'คนดูขอดูดวงความรักในแชท',
+    rule: { name: 'แชทดูดวงความรัก', trigger: { event: 'chat', keyword: 'ดูดวงความรัก' }, action: { type: 'tarot', cards: 1, topic: 'love', text: '💌 ความรักของ {user}', durationMs: 8000 } } },
+  { icon: '🪞', title: 'ทำนายตัวตน 3 ใบ', desc: 'กิฟต์ 30 เพชรขึ้นไป → ตัวตนจริง · ที่คนอื่นมอง · จุดเด่น',
+    rule: { name: 'ทำนายตัวตน', trigger: { event: 'gift', minDiamonds: 30 }, action: { type: 'tarot', cards: 3, topic: 'self', text: '🪞 ตัวตนของ {user}', durationMs: 13000 } } },
   { icon: '⚔️', title: 'ร่างกายต้องการดาบ', desc: 'ได้กิฟต์ → สุ่มไพ่ชุดดาบ 1 ใบ ตามเทรนด์',
     rule: { name: 'ร่างกายต้องการดาบ', trigger: { event: 'gift', minDiamonds: 1 }, action: { type: 'tarot', cards: 1, deck: 'swords', text: '⚔️ ร่างกายของ {user} ต้องการดาบ!', durationMs: 8000 } } },
   { icon: '💖', title: 'มีคนติดตาม → ข้อความขอบคุณ', desc: '“ขอบคุณ {user} ที่กดติดตามนะ”',
@@ -60,6 +67,7 @@ function toDraft(r: Rule): Draft {
     durationSec: r.action.durationMs ? String(r.action.durationMs / 1000) : '5',
     cards: String(r.action.cards ?? 1),
     deck: r.action.deck ?? 'full',
+    topic: r.action.topic ?? 'general',
   };
 }
 
@@ -73,7 +81,7 @@ function toBody(d: Draft) {
   const action: Rule['action'] = { type: d.type };
   if (d.type !== 'text' && d.url.trim()) action.url = d.url.trim();
   if (d.text.trim()) action.text = d.text.trim();
-  if (d.type === 'tarot') { action.cards = Number(d.cards) || 1; if (d.deck !== 'full') action.deck = d.deck; }
+  if (d.type === 'tarot') { action.cards = Number(d.cards) || 1; if (d.deck !== 'full') action.deck = d.deck; if (d.topic !== 'general') action.topic = d.topic; }
   const sec = Number(d.durationSec);
   if (sec > 0) action.durationMs = Math.min(60_000, Math.round(sec * 1000));
   return { name: d.name.trim(), enabled: d.enabled, trigger, action };
@@ -204,6 +212,15 @@ export default function ActionsPage() {
                     <option value="1">🃏 เปิด 1 ใบ — คำทำนายเดียว</option>
                     <option value="3">🃏🃏🃏 เปิด 3 ใบ — อดีต · ปัจจุบัน · อนาคต</option>
                     <option value="7">เปิด 7 ใบ — ดูดวงเต็มชุด</option>
+                  </Select>
+                </Field>
+              )}
+              {draft.type === 'tarot' && (
+                <Field label="หัวข้อคำทำนาย">
+                  <Select value={draft.topic} onChange={(e) => set('topic', e.target.value as TarotTopic)}>
+                    <option value="general">🔮 ดวงทั่วไป</option>
+                    <option value="love">💘 ความรัก — ใจคุณ · ใจเขา · อนาคตความรัก</option>
+                    <option value="self">🪞 ตัวตน — นิสัยจริง · คนอื่นมองคุณ · จุดเด่นที่ซ่อนอยู่</option>
                   </Select>
                 </Field>
               )}

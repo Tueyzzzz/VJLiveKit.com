@@ -17,6 +17,8 @@ export interface RuleAction {
   cards?: number;
   /** สำรับที่สุ่ม: ทั้งสำรับ / ชุดใหญ่ / เฉพาะชุดไม้เท้า·ถ้วย·ดาบ·เหรียญ */
   deck?: 'full' | 'major' | 'wands' | 'cups' | 'swords' | 'pentacles';
+  /** หัวข้อคำทำนาย: ทั่วไป | ความรัก | ตัวตน */
+  topic?: 'general' | 'love' | 'self';
 }
 
 export interface ActionRule {

@@ -9,6 +9,7 @@ export const WIDGET_LABELS: Record<string, string> = {
   donate: 'โดเนทขึ้นจอ (พร้อมเพย์)',
   fxmenu: 'เมนูของขวัญ (บอกผู้ชมว่าส่งอะไร)',
   collect: 'สะสมของขวัญ (ลิงก์เดียว ทุกแบบ)',
+  sign: 'ป้ายไฟ LED ข้อความวิ่ง',
   coinjar: 'Coin Jar',
   giftjar: 'โหลแก้วของขวัญ',
   aquarium: 'ตู้ปลาของขวัญ',

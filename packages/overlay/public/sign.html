@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LED Sign Overlay</title>
+<link rel="icon" href="favicon.svg" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Itim&family=Mali:wght@700&family=Kanit:wght@600&family=Mitr:wght@500&display=swap');
+  html,body { margin:0; width:100%; height:100%; background:transparent; overflow:hidden; }
+  #wrap { position:fixed; left:50%; transform:translateX(-50%); width:var(--w,80vw); }
+  #wrap.top { top:4vh } #wrap.center { top:50%; transform:translate(-50%,-50%) } #wrap.bottom { bottom:5vh }
+  .board { position:relative; overflow:hidden; border-radius:18px; padding:var(--pad,14px) 0; background:rgba(8,6,16,var(--bg,.85)); box-shadow:0 10px 30px rgba(0,0,0,.35); }
+  .track { white-space:nowrap; display:flex; justify-content:center; }
+  .txt { display:inline-block; font-size:var(--fs,64px); line-height:1.15; color:var(--c,#ff4fa3); font-family:var(--font,'Kanit'),sans-serif; padding:0 .3em; }
+  /* เลื่อน */
+  .scroll .track { justify-content:flex-start; }
+  .scroll .txt { padding-left:100%; animation:marq var(--dur,10s) linear infinite; }
+  @keyframes marq { from { transform:translateX(0) } to { transform:translateX(-100%) } }
+  .blink .txt { animation:blink 1s steps(1) infinite; } @keyframes blink { 50% { opacity:.15 } }
+  .pulse .txt { animation:pulse 1.6s ease-in-out infinite; } @keyframes pulse { 50% { transform:scale(1.06) } }
+
+  /* LED จุด: เรืองแสง + ตาข่ายจุดทับ */
+  .led .txt { text-shadow:0 0 6px var(--c), 0 0 18px var(--c); letter-spacing:.06em; }
+  .led .board::after { content:''; position:absolute; inset:0; pointer-events:none;
+    background:radial-gradient(circle, transparent 0 1.4px, rgba(8,6,16,.92) 2.2px) 0 0/5px 5px; }
+  /* นีออน */
+  .neon .board { background:rgba(10,4,20,var(--bg,.6)); border:2px solid color-mix(in srgb, var(--c) 60%, white); box-shadow:0 0 18px var(--c), inset 0 0 18px var(--c); }
+  .neon .txt { color:#fff; text-shadow:0 0 4px #fff, 0 0 10px var(--c), 0 0 22px var(--c), 0 0 42px var(--c); }
+  .neon.flicker .txt { animation:flick 4s infinite; } @keyframes flick { 0%,18%,22%,62%,64%,100% { opacity:1 } 20%,63% { opacity:.4 } }
+  .neon.scroll .txt { animation:marq var(--dur,10s) linear infinite; }
+  /* ไฟหลอดรอบป้าย (แบบป้ายโรงละคร) */
+  .bulb .board { background:linear-gradient(180deg, rgba(120,20,60,var(--bg,.9)), rgba(60,10,40,var(--bg,.9))); border:6px solid #ffcf5c; }
+  .bulb .txt { color:#fff6d6; text-shadow:0 2px 0 #b8541f, 0 0 14px #ffcf5c; }
+  .bulbs { position:absolute; inset:4px; pointer-events:none; }
+  .bulbs i { position:absolute; width:10px; height:10px; margin:-5px; border-radius:50%; background:#fff3b0; box-shadow:0 0 8px #ffd34d, 0 0 16px #ffb400; animation:bulb 1s steps(1) infinite; }
+  .bulbs i:nth-child(odd) { animation-delay:.5s; } @keyframes bulb { 50% { background:#8a6a2a; box-shadow:none } }
+  /* พาสเทลน่ารัก */
+  .cute .board { background:linear-gradient(135deg, rgba(255,111,170,var(--bg,.92)), rgba(150,110,240,var(--bg,.92))); border:3px solid #fff; border-radius:999px; }
+  .cute .txt { color:#fff; text-shadow:0 3px 0 rgba(120,40,120,.45); font-family:'Mali','Itim',sans-serif; }
+  /* สีรุ้ง */
+  .rainbow .txt { background:linear-gradient(90deg,#ff4f6d,#ffb03a,#ffe14a,#4fe08a,#3ab8ff,#9a6bff,#ff4f6d) 0 0/200% 100%; -webkit-background-clip:text; background-clip:text; color:transparent; animation:rb 3s linear infinite; }
+  .rainbow.scroll .txt { animation:marq var(--dur,10s) linear infinite, rb 3s linear infinite; }
+  .led.rainbow .txt, .neon.rainbow .txt { text-shadow:none; filter:drop-shadow(0 0 8px rgba(255,255,255,.5)); }
+  @keyframes rb { to { background-position:200% 0 } }
+</style>
+</head>
+<body>
+  <div id="wrap"><div class="board"><div class="bulbs" id="bulbs"></div><div class="track"><span class="txt" id="txt"></span></div></div></div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/overlay-client.js"></script>
+  <script>
+  (function () {
+    // ป้ายไฟ LED / นีออน / ไฟหลอด — ข้อความวิ่งหรืออยู่กับที่
+    // ?text=ข้อความ (หลายข้อความคั่นด้วย |) · ?style=led|neon|bulb|cute · ?mode=scroll|static|blink|pulse · ?color=#ff4fa3 · ?rainbow=0
+    // ?speed=5 (1–10) · ?size=64 · ?width=80 (% จอ) · ?pos=top|center|bottom · ?bg=85 · ?font=Kanit · ?every=6 (วินาที สลับข้อความ, ไม่เลื่อน)
+    // ข้อความใส่ตัวแปรได้: {likes} {diamonds} {viewers} {follows} {gifts} — อัปเดตตามไลฟ์จริง
+    const P = (k, d) => Overlay.param(k, d);
+    const num = (k, d, lo, hi) => Math.max(lo, Math.min(hi, parseFloat(P(k, d)) || parseFloat(d)));
+    const wrap = document.getElementById('wrap'), txt = document.getElementById('txt'), bulbs = document.getElementById('bulbs');
+    const STYLE = ['led', 'neon', 'bulb', 'cute'].includes(P('style', 'led')) ? P('style', 'led') : 'led';
+    const MODE = ['scroll', 'static', 'blink', 'pulse'].includes(P('mode', 'scroll')) ? P('mode', 'scroll') : 'scroll';
+    const RAINBOW = ['1', 'true'].includes(String(P('rainbow', '0')));
+    document.body.className = [STYLE, MODE, RAINBOW ? 'rainbow' : '', STYLE === 'neon' ? 'flicker' : ''].join(' ');
+    wrap.classList.add(['top', 'center', 'bottom'].includes(P('pos', 'top')) ? P('pos', 'top') : 'top');
+    const S = document.documentElement.style;
+    const color = /^#[0-9a-f]{3,8}$/i.test(P('color', '#ff4fa3')) ? P('color', '#ff4fa3') : '#ff4fa3';
+    S.setProperty('--c', color);
+    S.setProperty('--fs', num('size', '64', 16, 220) + 'px');
+    S.setProperty('--pad', Math.round(num('size', '64', 16, 220) * 0.22) + 'px');
+    S.setProperty('--w', num('width', '80', 20, 100) + 'vw');
+    S.setProperty('--bg', num('bg', '85', 0, 100) / 100);
+    S.setProperty('--font', `'${String(P('font', 'Kanit')).replace(/[^\w ]/g, '')}'`);
+
+    const lines = String(P('text', '✨ ยินดีต้อนรับสู่ไลฟ์ ✨ | กดหัวใจให้หน่อยน้า 💖 | ฝากกดติดตามด้วยนะ')).split(/\s*\|\s*|\n/).map((s) => s.trim()).filter(Boolean).slice(0, 10);
+    const stats = { likes: 0, diamonds: 0, viewers: 0, follows: 0, gifts: 0 };
+    const fill = (s) => s.replace(/\{(likes|diamonds|viewers|follows|gifts)\}/g, (_, k) => Number(stats[k] || 0).toLocaleString('en-US'));
+    let idx = 0;
+
+    function show() {
+      const line = lines[idx % lines.length] || '';
+      txt.textContent = MODE === 'scroll' ? lines.map(fill).join('     ✦     ') : fill(line);
+      if (MODE === 'scroll') {
+        // ความเร็วคงที่ตามความยาวข้อความ (speed 1 ช้า → 10 เร็ว)
+        const pxPerSec = 40 + num('speed', '5', 1, 10) * 28;
+        requestAnimationFrame(() => S.setProperty('--dur', ((txt.scrollWidth) / pxPerSec).toFixed(1) + 's'));
+      }
+    }
+    function layoutBulbs() {
+      if (STYLE !== 'bulb') return;
+      bulbs.innerHTML = '';
+      const r = bulbs.getBoundingClientRect(), gap = 26;
+      const nx = Math.max(2, Math.floor(r.width / gap)), ny = Math.max(1, Math.floor(r.height / gap));
+      const add = (x, y) => { const i = document.createElement('i'); i.style.left = x + 'px'; i.style.top = y + 'px'; bulbs.appendChild(i); };
+      for (let k = 0; k <= nx; k++) { add(k * r.width / nx, 0); add(k * r.width / nx, r.height); }
+      for (let k = 1; k < ny; k++) { add(0, k * r.height / ny); add(r.width, k * r.height / ny); }
+    }
+    show(); setTimeout(layoutBulbs, 300); addEventListener('resize', layoutBulbs);
+    // ไม่เลื่อน + หลายข้อความ → สลับทุก ?every วินาที
+    if (MODE !== 'scroll' && lines.length > 1) setInterval(() => { idx++; show(); }, num('every', '6', 2, 60) * 1000);
+
+    // ตัวแปรสถิติไลฟ์ (เปลี่ยนข้อความเฉพาะตอนค่าเปลี่ยน กันแอนิเมชันกระตุก)
+    const hasVars = lines.some((l) => /\{(likes|diamonds|viewers|follows|gifts)\}/.test(l));
+    let last = '';
+    Overlay.on('stats', (s) => {
+      if (!hasVars || !s) return;
+      Object.assign(stats, { likes: s.likeCount, diamonds: s.diamondCount, viewers: s.viewerCount, follows: s.followCount, gifts: s.giftCount });
+      const k = JSON.stringify(stats); if (k === last) return; last = k;
+      if (MODE === 'scroll') { const t = lines.map(fill).join('     ✦     '); if (txt.textContent !== t) txt.textContent = t; } else show();
+    });
+    // ตัวอย่าง: ตัวเลขขยับเองให้เห็นว่าตัวแปรทำงาน
+    if (!Overlay.connected && hasVars) setInterval(() => { stats.likes += 37; stats.diamonds += 5; stats.viewers = 120 + Math.round(Math.random() * 30); txt.textContent = MODE === 'scroll' ? lines.map(fill).join('     ✦     ') : fill(lines[idx % lines.length]); }, 2000);
+  })();
+  </script>
+</body>
+</html>

@@ -5,6 +5,7 @@ import { useState, type FormEvent } from 'react';
 import { ArrowRight, CheckCircle2, Circle } from 'lucide-react';
 import { Alert, Badge, Button, Card, Field, Input, PageHeader } from '@/components/ui';
 import { ChangePassword } from '@/components/ChangePassword';
+import { ActiveRules } from '@/components/ActiveRules';
 import { api, planLabel, type Me } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 
@@ -44,6 +45,8 @@ export default function OverviewPage() {
   return (
     <div>
       <PageHeader title={`สวัสดี ${user.displayName ?? ''} 👋`} description="ตั้งค่าครั้งเดียว วิดเจ็ตทุกตัวจะเชื่อมกับไลฟ์ของคุณอัตโนมัติ" />
+
+      <ActiveRules />
 
       <div className="grid gap-5 lg:grid-cols-5">
         <Card className="lg:col-span-3">

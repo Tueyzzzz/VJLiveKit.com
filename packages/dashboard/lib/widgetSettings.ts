@@ -431,6 +431,26 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
       ] },
     ],
   },
+  sign: {
+    sections: [
+      { title: 'ข้อความ', fields: [
+        { key: 'text', label: 'ข้อความบนป้าย', type: 'text', def: '✨ ยินดีต้อนรับสู่ไลฟ์ ✨ | กดหัวใจให้หน่อยน้า 💖 | ฝากกดติดตามด้วยนะ', placeholder: 'ข้อความ 1 | ข้อความ 2', hint: 'หลายข้อความคั่นด้วย | · ใส่ยอดสดได้: {likes} ไลก์ · {diamonds} เพชร · {viewers} คนดู · {follows} ผู้ติดตามใหม่ · {gifts} กิฟต์' },
+        { key: 'mode', label: 'การเคลื่อนไหว', type: 'select', def: 'scroll', options: [['scroll', '⬅️ วิ่ง (ข้อความเลื่อน)'], ['static', '⏸ อยู่กับที่ (สลับข้อความ)'], ['blink', '💡 กะพริบ'], ['pulse', '💓 เต้นตุบ ๆ']] },
+        { key: 'speed', label: 'ความเร็ววิ่ง', type: 'range', min: 1, max: 10, step: 1, def: 5, when: (v) => v.mode === 'scroll' },
+        { key: 'every', label: 'สลับข้อความทุก (วินาที)', type: 'number', min: 2, max: 60, def: 6, when: (v) => v.mode !== 'scroll' },
+      ] },
+      { title: 'หน้าตาป้าย', fields: [
+        { key: 'style', label: 'แบบป้าย', type: 'select', def: 'led', options: [['led', '🟥 LED จุด'], ['neon', '🌈 นีออน'], ['bulb', '💡 ไฟหลอดรอบป้าย'], ['cute', '🍬 พาสเทลน่ารัก']] },
+        { key: 'color', label: 'สีตัวอักษร', type: 'color', def: '#ff4fa3', when: (v) => v.style !== 'bulb' && v.style !== 'cute' },
+        { key: 'rainbow', label: 'สีรุ้งไล่สี', type: 'toggle', def: false },
+        { key: 'font', label: 'ฟอนต์', type: 'select', def: 'Kanit', options: [['Kanit', 'Kanit (หนา ชัด)'], ['Mitr', 'Mitr (มน)'], ['Mali', 'Mali (น่ารัก)'], ['Itim', 'Itim (ลายมือ)']] },
+        { key: 'size', label: 'ขนาดตัวอักษร', type: 'range', min: 24, max: 160, step: 2, def: 64, unit: 'px' },
+        { key: 'width', label: 'ความกว้างป้าย', type: 'range', min: 20, max: 100, step: 5, def: 80, unit: '%' },
+        { key: 'pos', label: 'ตำแหน่ง', type: 'select', def: 'top', options: [['top', 'บน'], ['center', 'กลางจอ'], ['bottom', 'ล่าง']] },
+        bg(85),
+      ] },
+    ],
+  },
   fxmenu: {
     sections: [
       { title: 'เมนูของขวัญ', fields: [

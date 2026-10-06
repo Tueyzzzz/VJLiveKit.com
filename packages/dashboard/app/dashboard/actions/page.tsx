@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { Check, Copy, Pencil, Play, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { Alert, Badge, Button, Card, Field, Input, PageHeader, Select, Spinner } from '@/components/ui';
-import { GiftCell, GiftPicker } from '@/components/GiftPicker';
+import { GiftCell, GiftPicker, useGifts } from '@/components/GiftPicker';
 import { toDigits } from '@/components/NumberInput';
 import { api, ApiError, type OverlayTokenRow, type ActionType, type Rule, type TarotDeck, type TarotTopic, type TriggerEvent } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -181,6 +181,16 @@ export default function ActionsPage() {
     catch (err) { setError({ text: (err as Error).message }); }
   }
 
+  // เตือนเมื่อเลือกกิฟต์ถูก ๆ คู่กับขั้นต่ำสูง (เช่น Heart 1💎 + 99) → ต้องส่งคอมโบเดียวหลายสิบชิ้นถึงจะขึ้น
+  const gifts = useGifts();
+  const minHint = (() => {
+    if (!draft || draft.event !== 'gift' || !draft.minDiamonds.trim()) return 'นับรวมทั้งคอมโบ (ส่งรัว ๆ ครั้งเดียว) · เว้นว่าง = ทุกราคา';
+    const min = Number(draft.minDiamonds) || 0;
+    const g = draft.giftName ? gifts.find((x) => x.name.toLowerCase() === draft.giftName.toLowerCase()) : undefined;
+    if (g && g.diamonds > 0 && min > g.diamonds) return `⚠️ ${g.name} ราคา ${g.diamonds}💎 → ต้องส่ง ${Math.ceil(min / g.diamonds)} ชิ้นในคอมโบเดียวถึงจะขึ้น · ถ้าอยากให้ขึ้นทุกครั้งที่ส่ง ให้ลบช่องนี้ หรือเลือก "ทุกกิฟต์"`;
+    return 'นับรวมทั้งคอมโบ (ส่งรัว ๆ ครั้งเดียว)';
+  })();
+
   const fxLocked = entitlements ? !entitlements.widgets.includes('fx') : false;
   const [adding, setAdding] = useState<string | null>(null);
   async function applyTemplate(t: Template) {
@@ -234,7 +244,7 @@ export default function ActionsPage() {
               {draft.event === 'gift' && (
                 <>
                   <Field label="กิฟต์"><GiftPicker value={draft.giftName} onChange={(v) => set('giftName', v)} /></Field>
-                  <Field label="มูลค่าขั้นต่ำ (เพชร)"><Input type="text" inputMode="numeric" value={draft.minDiamonds} onChange={(e) => set('minDiamonds', toDigits(e.target.value))} placeholder="เช่น 100" /></Field>
+                  <Field label="มูลค่าขั้นต่ำ (เพชร)" hint={minHint}><Input type="text" inputMode="numeric" value={draft.minDiamonds} onChange={(e) => set('minDiamonds', toDigits(e.target.value))} placeholder="เช่น 100" /></Field>
                 </>
               )}
               {draft.event === 'chat' && (

@@ -20,6 +20,7 @@ export const metadata: Metadata = {
   },
   twitter: { card: 'summary_large_image', title: TITLE, description: DESC, images: ['/og.png'] },
   robots: { index: true, follow: true },
+  verification: { google: 'N6KgsEtxCGvYorh9FuZ32OObpolT4t9ylVY3W4_T6qQ' },
 };
 
 export const viewport: Viewport = { themeColor: '#ff93c0' };

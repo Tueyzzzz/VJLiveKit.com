@@ -73,7 +73,7 @@ export function setupRealtime(httpServer: HttpServer): RoomHub {
       catch (err) { viewer = { error: 'เซิร์ฟเวอร์ขัดข้อง' }; console.error('[socket] resolve failed', err); }
 
       if ('error' in viewer) {
-        socket.emit('status', { type: 'error', message: viewer.error });
+        socket.emit('status', { type: 'error', message: viewer.error, fatal: true }); // ปัญหาลิงก์/สิทธิ์ — วีเจต้องแก้เอง → โชว์บนจอได้
         socket.disconnect(true);
         return;
       }

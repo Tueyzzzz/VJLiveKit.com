@@ -75,7 +75,9 @@ window.Overlay = (function () {
     };
     socket.on('disconnect', (reason) => { if (reason === 'io server disconnect') setTimeout(() => socket.connect(), 60_000); }); // ต่ออายุแล้วกลับมาเอง
     socket.on('status', (s) => {
-      if (s && (s.type === 'error' || s.type === 'offline')) showBadge(s.message);
+      // บนจอไลฟ์โชว์เฉพาะปัญหาลิงก์/สิทธิ์ (fatal) — error ชั่วคราวของ TikTok/การเชื่อมต่อ ไม่ให้คนดูเห็น (ต่อใหม่เอง)
+      if (s && s.type === 'error' && s.fatal) showBadge(s.message);
+      else if (s && (s.type === 'error' || s.type === 'offline')) console.warn('[VJLiveKit]', s.message);
       else if (s && s.type === 'connected' && badge) badge.style.display = 'none';
     });
     socket.on('state', (s) => { if (s && s.connected && badge) badge.style.display = 'none'; });

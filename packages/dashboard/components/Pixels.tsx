@@ -4,7 +4,7 @@ import Script from 'next/script';
  * Meta Pixel + TikTok Pixel สำหรับยิงโฆษณาหาคนที่เคยเข้าเว็บ
  * ใส่ ID แล้ว deploy ได้เลย — เว้นว่าง = ไม่โหลดสคริปต์ใด ๆ (ID เป็นค่าสาธารณะ ฝังในหน้าเว็บได้)
  */
-export const META_PIXEL_ID = '';
+export const META_PIXEL_ID = '1048055068206493';
 export const TIKTOK_PIXEL_ID = '';
 
 export function Pixels() {

@@ -321,7 +321,7 @@ export default function AdminPage() {
               <table className="mt-2 w-full text-sm"><tbody className="divide-y divide-line">
                 {lives.recent.length === 0 ? <tr><td className="px-4 py-6 text-center text-muted">ยังไม่มีข้อมูล</td></tr> : lives.recent.map((r) => {
                   const mins = Math.max(1, Math.round((new Date(r.lastSeenAt).getTime() - new Date(r.startedAt).getTime()) / 60000));
-                  return <tr key={r.roomId}><td className="px-4 py-2 font-medium">@{r.username}</td><td className="px-4 py-2 text-xs">{new Date(r.startedAt).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })}</td><td className="px-4 py-2 text-xs">{mins >= 60 ? `${Math.floor(mins / 60)} ชม. ${mins % 60} น.` : `${mins} นาที`}</td><td className="px-4 py-2">💎 {r.diamonds.toLocaleString('th-TH')}</td><td className="px-4 py-2">{r.ended ? <Badge tone="gray">จบแล้ว</Badge> : <Badge tone="mint">ไลฟ์อยู่</Badge>}</td></tr>;
+                  return <tr key={r.roomId}><td className="px-4 py-2 font-medium">@{r.username}</td><td className="px-4 py-2 text-xs">{new Date(r.startedAt).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })}</td><td className="px-4 py-2 text-xs">{mins >= 60 ? `${Math.floor(mins / 60)} ชม. ${mins % 60} น.` : `${mins} นาที`}</td><td className="px-4 py-2">💎 {r.diamonds.toLocaleString('th-TH')}</td><td className="px-4 py-2">{!r.ended && Date.now() - new Date(r.lastSeenAt).getTime() < 3 * 60_000 ? <Badge tone="mint">ไลฟ์อยู่</Badge> : <Badge tone="gray">จบแล้ว</Badge>}</td></tr>;
                 })}
               </tbody></table>
             </Card>

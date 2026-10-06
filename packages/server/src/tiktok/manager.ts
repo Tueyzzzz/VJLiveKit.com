@@ -137,7 +137,8 @@ export class TikTokRoom extends EventEmitter {
     c.on('disconnected', () => { this.connected = false; this.emit('status', { type: 'disconnected', message: 'การเชื่อมต่อถูกตัด' }); });
     // v2 ส่ง error เป็น { info, exception }
     c.on('error', (err: any) => this.emit('status', { type: 'error', message: String(err?.exception?.message ?? err?.info ?? err?.message ?? err) }));
-    c.on('streamEnd', () => this.emit('status', { type: 'streamEnd', message: 'ไลฟ์จบแล้ว' }));
+    // ไลฟ์จบ → ไม่ถือว่ายังต่ออยู่ (เดิมค้างสถานะ "ไลฟ์อยู่") แล้วปิดการเชื่อมต่อ ระบบจะรอต่อใหม่เองเมื่อเริ่มไลฟ์รอบหน้า
+    c.on('streamEnd', () => { this.connected = false; this.emit('status', { type: 'streamEnd', message: 'ไลฟ์จบแล้ว' }); void this.connection?.disconnect?.().catch?.(() => {}); });
   }
 
   // v2 ส่ง protobuf object (user.displayId / avatarThumb.urlList); เผื่อรูปแบบเก่า (uniqueId / profilePicture.url)
@@ -167,7 +168,11 @@ export class TikTokRoom extends EventEmitter {
     for (const r of rows) this.send('like', { user: r.user, likeCount: r.inc, total: this.stats.likeCount });
   }
 
+  /** เวลาที่ได้รับอีเวนต์ล่าสุดจากไลฟ์ (คนดู/แชท/กิฟต์) — ไว้เช็กว่ายังไลฟ์อยู่จริง */
+  lastActivityAt = 0;
+
   private send(type: TikTokEventType, payload: Partial<TikTokEvent>): void {
+    this.lastActivityAt = Date.now();
     this.emit('event', { type, ts: Date.now(), ...payload });
     this.emit('stats', this.stats);
   }

@@ -265,7 +265,9 @@ export class RoomHub {
   listRooms() {
     return [...this.rooms.entries()].map(([key, e]) => {
       const st = e.room.getState();
-      return { username: key, connected: st.connected, roomId: st.roomId, widgets: e.viewers, owners: e.owners.size,
+      // ไลฟ์อยู่จริง = ต่ออยู่ และมีอีเวนต์ (คนดู/แชท/กิฟต์) ภายใน 3 นาที — กันสถานะค้างตอนไลฟ์จบแต่ TikTok ไม่ส่งสัญญาณจบ
+      const fresh = Date.now() - Math.max(e.room.lastActivityAt, e.connectedAt ?? 0) < 3 * 60_000;
+      return { username: key, connected: st.connected && fresh, roomId: st.roomId, widgets: e.viewers, owners: e.owners.size,
         diamonds: st.stats.diamondCount, gifts: st.stats.giftCount, likes: st.stats.likeCount, viewers: st.stats.viewerCount ?? 0, topGifter: st.topGifters[0]?.nickname ?? null,
         attempts: e.attempts, connectedAt: e.connectedAt, lastError: e.lastError, lastErrorAt: e.lastErrorAt, retrying: !!e.retryTimer };
     }).sort((a, b) => Number(b.connected) - Number(a.connected) || b.diamonds - a.diamonds);

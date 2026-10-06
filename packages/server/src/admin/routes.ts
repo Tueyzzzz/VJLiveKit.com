@@ -164,7 +164,7 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
     }
     return {
       totals: { today: since(startToday.getTime()).length, d7: since(now - 7 * DAY).length, d30: since(now - 30 * DAY).length, all: all.length,
-        streamers30: per.size, liveNow: all.filter((l) => !l.ended && now - new Date(l.lastSeenAt).getTime() < 5 * 60_000).length },
+        streamers30: per.size, liveNow: (getHub()?.listRooms() ?? []).filter((r) => r.connected).length },
       daily,
       top: [...per.values()].sort((a, b) => b.lives - a.lives).slice(0, 20),
       recent: all.slice(-30).reverse(),

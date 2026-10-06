@@ -53,6 +53,13 @@
   .bfly .wl { transform-origin:100% 50%; } .bfly .wr { transform-origin:0% 50%; animation-name:flapR; }
   @keyframes flapL { from { transform:scaleX(1) } to { transform:scaleX(.18) skewY(6deg) } }
   @keyframes flapR { from { transform:scaleX(1) } to { transform:scaleX(.18) skewY(-6deg) } }
+  /* ผีเสื้อคริสตัลจากรูป AI: ปีกซ้าย/ขวา/ลำตัวแยกชั้น — ปีกพับเข้าหาลำตัว (กึ่งกลางรูป) */
+  .bfly.img { filter:drop-shadow(0 0 6px var(--g)); }
+  .bfi { position:relative; width:150px; height:101px; }
+  .bfi img { position:absolute; inset:0; width:100%; height:100%; }
+  .bfi .il { transform-origin:50% 50%; animation:iflap var(--fs,.3s) ease-in-out infinite alternate; }
+  .bfi .ir { transform-origin:50% 50%; animation:iflap var(--fs,.3s) ease-in-out infinite alternate; }
+  @keyframes iflap { from { transform:scaleX(1) } to { transform:scaleX(.22) scaleY(.96) } }
   .dust { position:fixed; left:0; top:0; width:6px; height:6px; border-radius:50%; pointer-events:none; background:radial-gradient(circle,#fff 0,var(--c) 45%,transparent 70%);
     animation:dust 1.4s ease-out forwards; }
   @keyframes dust { from { opacity:1; transform:translate(var(--x),var(--y)) scale(1) } to { opacity:0; transform:translate(var(--x),calc(var(--y) + 40px)) scale(.2) } }
@@ -233,7 +240,10 @@
       const n=Math.max(1,Math.min(30,a.count||12)), dur=Math.max(3000,a.durationMs||8000), W=innerWidth, H=innerHeight, t0=performance.now();
       const title=fill(a.text,ev); if(title){ const t=document.createElement('div'); t.className='ftitle'; t.textContent=title; t.style.setProperty('--out',(dur/1000-.8)+'s'); fx.appendChild(t); setTimeout(()=>t.remove(),dur+200); }
       for(let i=0;i<n;i++){
-        const c=WINGS[i%WINGS.length], el=document.createElement('div'); el.className='bfly'; el.innerHTML=butterflySVG(c);
+        const c=WINGS[i%WINGS.length], el=document.createElement('div'); el.className='bfly';
+        if(a.style==='code') el.innerHTML=butterflySVG(c);
+        else { el.classList.add('img'); el.innerHTML='<div class="bfi"><img class="il" src="fx/bfly-l.webp" alt=""><img class="ir" src="fx/bfly-r.webp" alt=""><img src="fx/bfly-b.webp" alt=""></div>';
+          const hue=[0,190,280,120,330][i%5]; if(hue) el.querySelector('.bfi').style.filter=`hue-rotate(${hue}deg) saturate(1.15)`; }
         el.style.setProperty('--g',c[3]); el.style.setProperty('--fs',(0.22+Math.random()*0.16)+'s');
         const size=0.45+Math.random()*0.75; fx.appendChild(el);
         // บินจากขอบล่าง/ด้านข้าง วนเป็นเส้นโค้งสุ่ม แล้วลอยออกนอกจอ
@@ -249,7 +259,7 @@
           const e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
           const x=sx+(ex-sx)*e+Math.sin(k*6.28*freq+ph)*wob, y=sy+(ey-sy)*e+Math.cos(k*6.28*freq*1.3+ph)*wob*.6;
           const dx=Math.cos(k*6.28*freq+ph)*wob*freq, ang=Math.max(-35,Math.min(35,dx*.15))+(fromLeft?12:-12);
-          el.style.transform=`translate(${x-50}px,${y-50}px) rotate(${ang}deg) scale(${size})`;
+          el.style.transform=a.style==='code'?`translate(${x-50}px,${y-50}px) rotate(${ang}deg) scale(${size})`:`translate(${x-75}px,${y-50}px) rotate(${ang}deg) scale(${size*1.15})`;
           if(now-lastDust>70){ lastDust=now; const d=document.createElement('span'); d.className='dust'; d.style.setProperty('--c',c[1]);
             d.style.setProperty('--x',(x+(Math.random()-.5)*16)+'px'); d.style.setProperty('--y',(y+12)+'px'); fx.appendChild(d); setTimeout(()=>d.remove(),1450); }
           requestAnimationFrame(step);

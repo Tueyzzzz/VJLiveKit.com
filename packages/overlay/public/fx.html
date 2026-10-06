@@ -78,7 +78,7 @@
     const fx=document.getElementById('fx'), armBtn=document.getElementById('armBtn');
     let audioArmed=false;
     armBtn.style.display='none';
-    armBtn.addEventListener('click',()=>{ audioArmed=true; armBtn.textContent='✅ พร้อมเล่น FX'; armBtn.disabled=true; setTimeout(()=>armBtn.style.display='none',1200); });
+    armBtn.addEventListener('click',()=>{ audioArmed=true; try{ window.VJLSfx&&VJLSfx.play('pop',0); }catch(e){} /* มือถือ/เบราว์เซอร์: ต้องแตะ 1 ครั้งถึงจะมีเสียง */ armBtn.textContent='✅ พร้อมเล่น FX'; armBtn.disabled=true; setTimeout(()=>armBtn.style.display='none',1200); });
 
     function clearLater(el,ms){ setTimeout(()=>{ el.style.animation='fade .4s forwards'; setTimeout(()=>el.remove(),400); }, ms||4000); }
 

@@ -1,25 +1,21 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { GIFT_SEED } from './gift-seed.js';
 
 /**
  * คลังของขวัญ (ชื่อ · รูป · ราคา) — เก็บจากของขวัญจริงที่ส่งในไลฟ์ของทุกคน ใช้ทำดรอปดาวน์เลือกกิฟต์ใน Dashboard
- * เริ่มต้นมีของขวัญยอดนิยม (ยังไม่มีรูป จนกว่าจะมีคนส่งจริงครั้งแรก)
+ * เริ่มต้นจากรายการของขวัญ TikTok ครบ ~640 ตัวพร้อมรูปจริง (gift-seed.ts) แล้วอัปเดตจากไลฟ์จริงเรื่อย ๆ
  */
-export interface GiftInfo { name: string; id?: number; image?: string; diamonds: number; seen: number }
+export interface GiftInfo { name: string; id?: number; image?: string; diamonds: number; seen: number; th?: string }
 
 const FILE = path.join(process.env.SNAPSHOT_DIR ? path.dirname(process.env.SNAPSHOT_DIR) : path.resolve(process.cwd(), '../../data'), 'gifts.json');
-const SEED: [string, number][] = [
-  ['Rose', 1], ['TikTok', 1], ['GG', 1], ['Ice Cream Cone', 1], ['Heart Me', 1], ['Finger Heart', 5], ['Rosa', 10],
-  ['Perfume', 20], ['Doughnut', 30], ['Paper Crane', 99], ['Hand Hearts', 100], ['Confetti', 100], ['Corgi', 299],
-  ['Money Gun', 500], ['Swan', 699], ['Train', 899], ['Galaxy', 1000], ['Fireworks', 1088], ['Sports Car', 7000],
-  ['Interstellar', 10000], ['Falcon', 10999], ['Lion', 29999], ['Universe', 34999], ['TikTok Universe', 44999],
-];
 
 const gifts = new Map<string, GiftInfo>();
-for (const [name, diamonds] of SEED) gifts.set(name.toLowerCase(), { name, diamonds, seen: 0 });
+for (const g of GIFT_SEED) gifts.set(g.name.toLowerCase(), { ...g, seen: 0 });
 try {
   const saved = JSON.parse(fs.readFileSync(FILE, 'utf8')) as GiftInfo[];
-  for (const g of saved) gifts.set(g.name.toLowerCase(), g);
+  // ข้อมูลที่เคยเห็นจากไลฟ์จริงทับค่าตั้งต้น (แต่เก็บชื่อไทย/รูปจาก seed ไว้ถ้าไฟล์เก่ายังไม่มี)
+  for (const g of saved) { const k = g.name.toLowerCase(), s = gifts.get(k); gifts.set(k, { ...s, ...g, image: g.image ?? s?.image, th: g.th ?? s?.th }); }
 } catch { /* ยังไม่มีไฟล์ */ }
 
 let dirty = false;
@@ -73,5 +69,5 @@ export function refreshFromRoom(fetchGifts: () => Promise<unknown>): void {
 
 /** รายการทั้งหมด เรียงตามราคา */
 export function listGifts(): GiftInfo[] {
-  return [...gifts.values()].sort((a, b) => a.diamonds - b.diamonds || a.name.localeCompare(b.name));
+  return [...gifts.values()].filter((g) => g.image || g.seen > 0).sort((a, b) => a.diamonds - b.diamonds || a.name.localeCompare(b.name));
 }

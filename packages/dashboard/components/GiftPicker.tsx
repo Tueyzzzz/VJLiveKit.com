@@ -5,7 +5,7 @@ import { ChevronDown, Search, X } from 'lucide-react';
 import { Input } from './ui';
 import { api } from '@/lib/api';
 
-interface Gift { name: string; image?: string; diamonds: number; seen: number }
+interface Gift { name: string; image?: string; diamonds: number; seen: number; th?: string }
 const EMOJI: Record<string, string> = { rose: '🌹', 'finger heart': '🫰', perfume: '🧴', galaxy: '🌌', lion: '🦁', universe: '🪐', 'tiktok universe': '🪐', tiktok: '🎵', gg: '🎮', 'ice cream cone': '🍦', doughnut: '🍩', corgi: '🐶', 'money gun': '💸', swan: '🦢', train: '🚂', fireworks: '🎆', 'sports car': '🏎️', falcon: '🦅', 'heart me': '💗', 'hand hearts': '🫶', confetti: '🎉', 'paper crane': '🕊️', rosa: '🌹', interstellar: '🚀' };
 
 let cache: Gift[] | null = null;
@@ -21,7 +21,7 @@ export function GiftPicker({ value, onChange }: { value: string; onChange: (name
     const close = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
     document.addEventListener('mousedown', close); return () => document.removeEventListener('mousedown', close);
   }, []);
-  const list = useMemo(() => { const t = q.trim().toLowerCase(); return t ? gifts.filter((g) => g.name.toLowerCase().includes(t)) : gifts; }, [gifts, q]);
+  const list = useMemo(() => { const t = q.trim().toLowerCase(); return t ? gifts.filter((g) => g.name.toLowerCase().includes(t) || (g.th ?? '').includes(t) || String(g.diamonds) === t) : gifts; }, [gifts, q]);
   const sel = gifts.find((g) => g.name.toLowerCase() === value.trim().toLowerCase());
   const icon = (g?: Gift, name = '') => g?.image
     ? <img src={g.image} alt="" className="size-7 object-contain" />
@@ -40,7 +40,7 @@ export function GiftPicker({ value, onChange }: { value: string; onChange: (name
         <div className="absolute z-20 mt-1 w-full rounded-xl border border-line bg-white p-2 shadow-lg">
           <div className="relative mb-2">
             <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted" />
-            <Input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="ค้นหา หรือพิมพ์ชื่อกิฟต์" className="pl-8"
+            <Input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="ค้นหาชื่อไทย/อังกฤษ หรือราคาเพชร" className="pl-8"
               onKeyDown={(e) => { if (e.key === 'Enter' && q.trim()) { e.preventDefault(); onChange(list[0]?.name ?? q.trim()); setOpen(false); setQ(''); } }} />
           </div>
           <div className="grid max-h-72 grid-cols-3 gap-1.5 overflow-y-auto sm:grid-cols-4">
@@ -48,10 +48,11 @@ export function GiftPicker({ value, onChange }: { value: string; onChange: (name
               <span className="grid size-10 place-items-center text-2xl">✨</span>ทุกกิฟต์
             </button>
             {list.map((g) => (
-              <button key={g.name} type="button" onClick={() => { onChange(g.name); setOpen(false); setQ(''); }} title={g.name}
+              <button key={g.name} type="button" onClick={() => { onChange(g.name); setOpen(false); setQ(''); }} title={g.th ? `${g.name} · ${g.th}` : g.name}
                 className={`flex flex-col items-center rounded-lg p-1.5 text-xs hover:bg-pink-soft ${sel?.name === g.name ? 'bg-pink-soft' : ''}`}>
-                <span className="grid size-10 place-items-center">{g.image ? <img src={g.image} alt="" className="size-10 object-contain" /> : <span className="text-2xl">{EMOJI[g.name.toLowerCase()] ?? '🎁'}</span>}</span>
+                <span className="grid size-10 place-items-center">{g.image ? <img src={g.image} alt="" loading="lazy" className="size-10 object-contain" /> : <span className="text-2xl">{EMOJI[g.name.toLowerCase()] ?? '🎁'}</span>}</span>
                 <span className="w-full truncate text-center">{g.name}</span>
+                {g.th && <span className="w-full truncate text-center text-[10px] text-muted">{g.th}</span>}
                 <span className="text-[10px] text-muted">💎 {g.diamonds.toLocaleString('th-TH')}</span>
               </button>
             ))}

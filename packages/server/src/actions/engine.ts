@@ -86,6 +86,7 @@ export function evaluate(rules: ActionRule[], e: TikTokEvent): ActionFire[] {
 
 /** รายการในจอ "เมนูของขวัญ" — บอกผู้ชมว่าส่งอะไรแล้วจะเกิดอะไร */
 export interface MenuItem {
+  id: string;
   event: RuleTrigger['event'];
   gift?: string;
   th?: string;
@@ -102,7 +103,7 @@ export function menuItems(rules: ActionRule[]): MenuItem[] {
   const items = rules.filter((r) => r.enabled).map((r): MenuItem => {
     const t = r.trigger, g = t.giftName ? giftInfo(t.giftName) : undefined;
     return {
-      event: t.event, gift: t.giftName, th: g?.th, image: g?.image, diamonds: g?.diamonds,
+      id: r.id, event: t.event, gift: t.giftName, th: g?.th, image: g?.image, diamonds: g?.diamonds,
       minDiamonds: t.giftName ? undefined : t.minDiamonds, keyword: t.keyword,
       label: r.name, kind: r.action.type, cards: r.action.cards,
     };

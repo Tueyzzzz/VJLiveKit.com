@@ -51,6 +51,9 @@
     const OTHER = P('other', 'true') !== 'false';
     const EV = { follow: ['➕', 'กดติดตาม'], share: ['🔗', 'แชร์ไลฟ์'], like: ['❤️', 'กดไลก์'], chat: ['💬', 'พิมพ์'] };
     const fmt = (n) => Number(n).toLocaleString('en-US');
+    // เลือกจากแดชบอร์ด: ซ่อนบางกฎ / เปลี่ยนรูปของขวัญที่แสดง
+    let SEL = {}; try { SEL = JSON.parse(P('items', '') || '{}') || {}; } catch (e) { SEL = {}; }
+    const HIDE = new Set(SEL.hide || []), ICONS = SEL.icons || {};
 
     function rowEl(m) {
       const r = document.createElement('div'); r.className = 'row';
@@ -71,7 +74,7 @@
     let items = [], timer = null, idx = 0;
     function render() {
       clearInterval(timer); list.innerHTML = '';
-      const show = items.filter((m) => OTHER || m.event === 'gift');
+      const show = items.filter((m) => (OTHER || m.event === 'gift') && !HIDE.has(m.id)).map((m) => (/^https:\/\//.test(ICONS[m.id] || '') ? { ...m, image: ICONS[m.id] } : m));
       if (!show.length) { list.innerHTML = '<div class="empty">ยังไม่มีกฎ — ตั้งที่เมนู Actions &amp; Events</div>'; return; }
       if (LAYOUT === 'rotate') {
         const step = () => { list.innerHTML = ''; list.appendChild(rowEl(show[idx++ % show.length])); };

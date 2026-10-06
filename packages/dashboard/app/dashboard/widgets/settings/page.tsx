@@ -8,6 +8,7 @@ import { WIDGET_LABELS } from '@/components/Pricing';
 import { Alert, Button, Card, Field, Input, PageHeader, Select, Spinner } from '@/components/ui';
 import { api, ApiError, type OverlayTokenRow } from '@/lib/api';
 import { NumberInput } from '@/components/NumberInput';
+import { GiftPicker, useGifts } from '@/components/GiftPicker';
 import { WIDGET_SETTINGS, defaultsOf, toOverlayParams, type FieldDef, type Values } from '@/lib/widgetSettings';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
@@ -89,8 +90,60 @@ function WidgetLinkBox({ type }: { type: string }) {
   );
 }
 
+interface MenuRow { id: string; event: string; gift?: string; th?: string; image?: string; minDiamonds?: number; keyword?: string; label: string }
+interface MenuSel { hide?: string[]; icons?: Record<string, string> }
+
+/** เลือกว่าจะโชว์กฎไหนในเมนูของขวัญ + เปลี่ยนรูปของขวัญที่แสดง (เช่น กฎ "ทุกกิฟต์ 99💎" ให้โชว์รูป Galaxy) */
+function MenuItemsEditor({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [rows, setRows] = useState<MenuRow[] | null>(null);
+  const [picking, setPicking] = useState<string | null>(null);
+  const gifts = useGifts();
+  useEffect(() => { api<{ items: MenuRow[] }>('/api/actions/menu').then((r) => setRows(r.items)).catch(() => setRows([])); }, []);
+  let sel: MenuSel = {}; try { sel = value ? JSON.parse(value) as MenuSel : {}; } catch { /* ค่าเสีย */ }
+  const hide = new Set(sel.hide ?? []), icons = sel.icons ?? {};
+  const put = (next: MenuSel) => onChange(JSON.stringify(next));
+  if (!rows) return <Spinner />;
+  if (!rows.length) return <p className="text-sm text-muted">ยังไม่มีกฎ — <Link href="/dashboard/actions/" className="text-pink underline">ตั้งกฎที่ Actions &amp; Events</Link></p>;
+  return (
+    <div className="space-y-2">
+      {rows.map((r) => {
+        const img = icons[r.id] || r.image;
+        const how = r.event === 'gift' ? (r.gift ? `ส่ง ${r.th || r.gift}` : r.minDiamonds ? `กิฟต์ 💎${r.minDiamonds}+` : 'ทุกกิฟต์') : r.event === 'chat' ? `พิมพ์ “${r.keyword ?? ''}”` : r.event;
+        return (
+          <div key={r.id} className={`rounded-xl border border-line p-2 ${hide.has(r.id) ? 'opacity-50' : ''}`}>
+            <div className="flex items-center gap-2">
+              <input type="checkbox" className="size-4 accent-pink" checked={!hide.has(r.id)} aria-label="แสดงในเมนู"
+                onChange={(e) => { const h = new Set(hide); if (e.target.checked) h.delete(r.id); else h.add(r.id); put({ ...sel, hide: [...h] }); }} />
+              <button type="button" title="เลือกรูปของขวัญที่จะแสดง" onClick={() => setPicking(picking === r.id ? null : r.id)}
+                className="grid size-10 shrink-0 place-items-center rounded-lg bg-pink-soft/60 ring-pink hover:ring-2">
+                {img ? <img src={img} alt="" className="size-8 object-contain" /> : <span className="text-xl">🎁</span>}
+              </button>
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-medium">{r.label}</div>
+                <div className="truncate text-xs text-muted">{how}{icons[r.id] ? ' · รูปที่เลือกเอง' : ''}</div>
+              </div>
+            </div>
+            {picking === r.id && (
+              <div className="mt-2 flex items-center gap-2">
+                <div className="flex-1"><GiftPicker value={gifts.find((g) => g.image === icons[r.id])?.name ?? ''} onChange={(name) => {
+                  const g = gifts.find((x) => x.name === name); const next = { ...icons };
+                  if (g?.image) next[r.id] = g.image; else delete next[r.id];
+                  put({ ...sel, icons: next }); setPicking(null);
+                }} /></div>
+                {icons[r.id] && <Button type="button" variant="ghost" className="px-2 text-xs" onClick={() => { const next = { ...icons }; delete next[r.id]; put({ ...sel, icons: next }); setPicking(null); }}>ใช้รูปเดิม</Button>}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function FieldInput({ f, value, onChange }: { f: FieldDef; value: Values[string]; onChange: (v: Values[string]) => void }) {
   switch (f.type) {
+    case 'menuItems':
+      return <MenuItemsEditor value={String(value ?? '')} onChange={onChange} />;
     case 'toggle':
       return (
         <button type="button" role="switch" aria-checked={!!value} onClick={() => onChange(!value)}

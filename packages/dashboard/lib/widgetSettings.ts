@@ -10,7 +10,9 @@ export type FieldDef =
   | { key: string; label: string; type: 'toggle'; def: boolean; hint?: string; when?: (v: Values) => boolean }
   | { key: string; label: string; type: 'swatch'; /** [ค่า, สีที่แสดง, ชื่อ] */ options: [number, string, string][]; def: number; hint?: string; when?: (v: Values) => boolean }
   | { key: string; label: string; type: 'color'; def: string; hint?: string; when?: (v: Values) => boolean }
-  | { key: string; label: string; type: 'text'; def: string; placeholder?: string; hint?: string; when?: (v: Values) => boolean };
+  | { key: string; label: string; type: 'text'; def: string; placeholder?: string; hint?: string; when?: (v: Values) => boolean }
+  /** เลือกรายการในเมนูของขวัญ: ค่า = JSON { hide: [ruleId], icons: { ruleId: รูป } } */
+  | { key: string; label: string; type: 'menuItems'; def: string; hint?: string; when?: (v: Values) => boolean };
 
 export type Values = Record<string, string | number | boolean>;
 export interface Section { title: string; fields: FieldDef[] }
@@ -433,6 +435,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
     sections: [
       { title: 'เมนูของขวัญ', fields: [
         { key: 'title', label: 'หัวข้อ', type: 'text', def: '🎁 ส่งของขวัญเพื่อ…' },
+        { key: 'items', label: 'รายการที่แสดง', type: 'menuItems', def: '', hint: 'ดึงจากกฎ Actions อัตโนมัติ · ติ๊กออก = ไม่แสดง · กดรูปเพื่อเลือกรูปของขวัญที่จะโชว์' },
         { key: 'layout', label: 'รูปแบบ', type: 'select', def: 'list', options: [['list', 'รายการ (โชว์หลายข้อ)'], ['rotate', 'หมุนทีละข้อ (ประหยัดที่)']] },
         { key: 'max', label: 'จำนวนที่แสดง', type: 'number', min: 1, max: 12, def: 6, when: (v) => v.layout !== 'rotate' },
         { key: 'every', label: 'เปลี่ยนทุก (วินาที)', type: 'number', min: 2, max: 30, def: 5, when: (v) => v.layout === 'rotate' },

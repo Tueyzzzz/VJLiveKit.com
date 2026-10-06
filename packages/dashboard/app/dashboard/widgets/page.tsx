@@ -33,10 +33,12 @@ const WIDGET_GROUPS: [string, string[]][] = [
   ['🔔 แจ้งเตือนและแชท', ['alerts', 'chat', 'follower', 'tts']],
   ['🥇 อันดับผู้ชม', ['topgifters', 'toplikers']],
   ['✨ เอฟเฟกต์', ['fx']],
+  ['💸 โดเนทขึ้นจอ', ['donate']],
 ];
 
 /** คำอธิบายสั้นในแกลเลอรี */
 const WIDGET_BLURB: Record<string, string> = {
+  donate: 'แจ้งเตือนโดเนทผ่านพร้อมเพย์ — ตั้งค่าที่เมนู “โดเนทขึ้นจอ”',
   coinjar: 'เครื่องจักรพาสเทล ของขวัญวิ่งบนสายพานแล้วกองเป็นภูเขา',
   giftjar: 'ของขวัญจริงตกลงโหล — มีทรงโหล รถ ลูกแก้วหิมะ',
   belly: 'หมู แมว ไดโน หมี กบ อ้าปากงับของขวัญ แล้วไปกองในท้องใส',
@@ -60,7 +62,7 @@ const WIDGET_BLURB: Record<string, string> = {
 
 /** พรีวิวสดของวิดเจ็ต (โหมดเดโม) — ย่อจาก 1920×1080 ให้พอดีการ์ด, โหลดเฉพาะตอนเลื่อนมาเห็น */
 /** ความกว้างจอจำลองของตัวอย่าง (ยิ่งแคบ = วิดเจ็ตดูใหญ่ขึ้น) — วิดเจ็ตเล็ก ๆ ไม่ต้องย่อจากจอ 1920 */
-const PREVIEW_W: Record<string, number> = { goal: 760, chat: 820, follower: 640, alerts: 900, timer: 760, topgifters: 900, toplikers: 900, tts: 900, fx: 1100, league: 1400 };
+const PREVIEW_W: Record<string, number> = { goal: 760, chat: 820, follower: 640, alerts: 900, timer: 760, topgifters: 900, toplikers: 900, tts: 900, fx: 1100, league: 1400, donate: 900 };
 
 /** ตั้งค่าที่บันทึกไว้ → พารามิเตอร์ URL ของตัวอย่าง (พารามิเตอร์ใน URL มาก่อนค่าเริ่มต้นเสมอ) */
 function configQuery(config?: Record<string, unknown>): string {
@@ -95,7 +97,7 @@ function posterOf(type: string, config?: Record<string, unknown>): string | null
   if (type === 'fx') return `${API_BASE}/overlay/tarot/m10.webp`;
   return null;
 }
-const ICON: Record<string, string> = { league: '🏆', goal: '🎯', timer: '⏱️', alerts: '🔔', chat: '💬', follower: '➕', topgifters: '🥇', toplikers: '💗', tts: '🔊', fx: '✨' };
+const ICON: Record<string, string> = { league: '🏆', goal: '🎯', timer: '⏱️', alerts: '🔔', chat: '💬', follower: '➕', topgifters: '🥇', toplikers: '💗', tts: '🔊', fx: '✨', donate: '💸' };
 
 /**
  * ตัวอย่างวิดเจ็ต: ปกติแสดงรูปนิ่ง (เบา ไม่หน่วงหน้าเว็บ) — ชี้เมาส์/กดเล่น ถึงจะเปิดตัวอย่างจริง ทีละใบ

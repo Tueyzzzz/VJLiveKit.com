@@ -57,6 +57,11 @@ export class RoomHub {
   static ownerChannel(userId: string, username: string) { return `owner:${userId}:${normalize(username)}`; }
   static configChannel(userId: string, widget: string) { return `cfg:${userId}:${widget}`; }
 
+  /** ส่งอีเวนต์ให้ overlay ของเจ้าของ (เช่น โดเนทที่ยืนยันแล้ว) */
+  emitOwner(userId: string, username: string, event: string, payload: unknown): void {
+    this.io.to(RoomHub.ownerChannel(userId, username)).emit(event, payload);
+  }
+
   /** ส่งตั้งค่าวิดเจ็ตใหม่ให้ overlay ที่เปิดอยู่ของผู้ใช้ (หลังบันทึกใน Dashboard) */
   pushConfig(userId: string, widget: string, settings: unknown): void {
     this.io.to(RoomHub.configChannel(userId, widget)).emit('config', settings ?? {});

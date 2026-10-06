@@ -31,6 +31,9 @@ export const config = {
     publicKey: process.env.OMISE_PUBLIC_KEY,
   },
 
+  /** EasySlip (ตรวจสลิปโดเนทอัตโนมัติ) — ไม่ตั้ง = วีเจกดยืนยันโดเนทเองในแดชบอร์ด */
+  easyslipKey: process.env.EASYSLIP_API_KEY || undefined,
+
   /** อีเมลแอดมิน (คั่นด้วย ,) — เข้าหน้าหลังบ้าน /dashboard/admin/ */
   adminEmails: (process.env.ADMIN_EMAILS || '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean),
 

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Donate Overlay</title>
+<link rel="icon" href="favicon.svg" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Itim&family=Mali:wght@500;700&display=swap');
+  html,body { margin:0; width:100%; height:100%; background:transparent; overflow:hidden; font-family:'Mali','Itim',sans-serif; }
+  #wrap { position:fixed; left:50%; transform:translateX(-50%); display:flex; justify-content:center; width:min(620px,92vw); }
+  #wrap.top { top:6vh } #wrap.center { top:50%; transform:translate(-50%,-50%) } #wrap.bottom { bottom:7vh }
+  .card { position:relative; width:100%; padding:18px 22px 20px; border-radius:26px; text-align:center; color:#fff; box-sizing:border-box;
+    background:linear-gradient(135deg,rgba(255,111,170,.92),rgba(150,110,240,.92)); border:2px solid rgba(255,255,255,.7);
+    box-shadow:0 18px 40px rgba(80,20,90,.45), 0 0 0 6px rgba(255,255,255,.12); transform:scale(var(--s,1)); transform-origin:50% 0;
+    animation:pop .7s cubic-bezier(.2,1.5,.4,1) both; }
+  .card.out { animation:out .5s ease-in forwards; }
+  .who { font-family:'Itim',sans-serif; font-size:26px; text-shadow:0 2px 4px rgba(60,10,60,.5); }
+  .amt { font-family:'Itim',sans-serif; font-size:64px; line-height:1.05; margin:4px 0 2px; color:#fff6c2;
+    text-shadow:0 0 14px rgba(255,220,120,.9), 0 3px 0 rgba(170,80,20,.5); animation:amt 1.2s ease-in-out .6s 2; }
+  .msg { font-size:22px; line-height:1.4; margin-top:6px; padding:8px 14px; border-radius:16px; background:rgba(255,255,255,.18); word-break:break-word; }
+  .badge { position:absolute; left:50%; top:-22px; transform:translateX(-50%); font-size:34px; animation:spin 1.6s ease-in-out infinite; }
+  @keyframes pop { from { opacity:0; transform:translateY(-30px) scale(calc(var(--s,1)*.6)) } to { opacity:1; transform:scale(var(--s,1)) } }
+  @keyframes out { to { opacity:0; transform:translateY(-20px) scale(calc(var(--s,1)*.9)) } }
+  @keyframes amt { 50% { transform:scale(1.12) } }
+  @keyframes spin { 50% { transform:translateX(-50%) rotate(-12deg) scale(1.15) } }
+  .coin { position:fixed; font-size:28px; pointer-events:none; animation:fall var(--d,2.4s) cubic-bezier(.3,.1,.6,1) forwards; }
+  @keyframes fall { from { transform:translate(0,-60px) rotate(0) } to { transform:translate(var(--x,0),110vh) rotate(var(--r,360deg)) } }
+</style>
+</head>
+<body>
+  <div id="wrap"></div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/overlay-client.js"></script>
+  <script>
+  (function () {
+    // ?pos=top|center|bottom · ?scale=1 · ?dur=8 (วินาที) · ?sound=1 · ?coins=1 · ?label=ขอบคุณที่โดเนท
+    const P = (k, d) => Overlay.param(k, d);
+    const wrap = document.getElementById('wrap');
+    wrap.className = ['top', 'center', 'bottom'].includes(P('pos', 'top')) ? P('pos', 'top') : 'top';
+    const SCALE = Math.max(.4, Math.min(2.5, parseFloat(P('scale', '1')) || 1));
+    const DUR = Math.max(3, Math.min(30, parseFloat(P('dur', '8')) || 8)) * 1000;
+    const SOUND = P('sound', 'true') !== 'false', COINS = P('coins', 'true') !== 'false';
+    const fmt = (n) => Number(n).toLocaleString('th-TH', { maximumFractionDigits: 2 });
+
+    let ac = null;
+    function chime() {
+      if (!SOUND) return;
+      try {
+        ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+        [880, 1175, 1568, 2093].forEach((f, i) => {
+          const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime + i * 0.11;
+          o.type = 'triangle'; o.frequency.value = f; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.18, t + .02); g.gain.exponentialRampToValueAtTime(.001, t + .6);
+          o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + .65);
+        });
+      } catch { /* เสียงถูกบล็อก */ }
+    }
+    function rain(amount) {
+      if (!COINS) return;
+      const n = Math.min(40, 8 + Math.round(Math.log10(Math.max(1, amount)) * 10));
+      for (let i = 0; i < n; i++) setTimeout(() => {
+        const c = document.createElement('div'); c.className = 'coin'; c.textContent = i % 4 ? '🪙' : (i % 8 ? '💖' : '💸');
+        c.style.left = Math.random() * 100 + 'vw'; c.style.setProperty('--x', (Math.random() - .5) * 120 + 'px'); c.style.setProperty('--r', (Math.random() * 720 - 360) + 'deg');
+        c.style.setProperty('--d', (2 + Math.random() * 1.6) + 's'); c.style.fontSize = (20 + Math.random() * 18) + 'px';
+        document.body.appendChild(c); setTimeout(() => c.remove(), 4000);
+      }, i * 60);
+    }
+
+    // ต่อคิวทีละรายการ (โดเนทพร้อมกันหลายคนไม่ทับกัน)
+    const q = []; let busy = false;
+    function next() {
+      const d = q.shift(); if (!d) { busy = false; return; } busy = true;
+      const card = document.createElement('div'); card.className = 'card'; card.style.setProperty('--s', SCALE);
+      const big = d.amount >= 500;
+      card.innerHTML = `<div class="badge">${big ? '👑' : '💖'}</div><div class="who"></div><div class="amt"></div>${d.message ? '<div class="msg"></div>' : ''}`;
+      card.querySelector('.who').textContent = `${d.name} ${P('label', 'โดเนท')}`;
+      card.querySelector('.amt').textContent = `฿${fmt(d.amount)}`;
+      if (d.message) card.querySelector('.msg').textContent = d.message;
+      wrap.appendChild(card); chime(); rain(d.amount);
+      setTimeout(() => { card.classList.add('out'); setTimeout(() => { card.remove(); next(); }, 500); }, DUR);
+    }
+    Overlay.on('donation', (d) => { q.push(d); if (!busy) next(); });
+
+    if (!Overlay.connected) {
+      const demo = [{ name: 'mimi', amount: 100, message: 'สู้ ๆ นะคะ ร้องเพลงเพราะมาก 💕' }, { name: 'บิ๊ก', amount: 500, message: 'ขอเพลงรักหน่อยครับ' }, { name: 'lisa', amount: 20, message: '' }];
+      let i = 0; const tick = () => { q.push(demo[i++ % demo.length]); if (!busy) next(); };
+      tick(); setInterval(tick, DUR + 1500);
+    }
+  })();
+  </script>
+</body>
+</html>

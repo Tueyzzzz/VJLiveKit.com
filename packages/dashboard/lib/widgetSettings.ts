@@ -429,6 +429,23 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
       ] },
     ],
   },
+  donate: {
+    sections: [
+      { title: 'บัญชีรับโดเนท', fields: [
+        { key: 'promptpay', label: 'พร้อมเพย์', type: 'text', def: '', placeholder: '08xxxxxxxx', hint: 'ตั้งได้ที่เมนู “โดเนทขึ้นจอ” ด้วย' },
+        { key: 'min', label: 'โดเนทขั้นต่ำ (บาท)', type: 'number', min: 1, def: 10 },
+        { key: 'title', label: 'ข้อความบนหน้าโดเนท', type: 'text', def: '' },
+      ] },
+      { title: 'แจ้งเตือนบนจอ', fields: [
+        { key: 'label', label: 'คำหลังชื่อ', type: 'text', def: 'โดเนท' },
+        { key: 'pos', label: 'ตำแหน่ง', type: 'select', def: 'top', options: [['top', 'บน'], ['center', 'กลางจอ'], ['bottom', 'ล่าง']] },
+        { key: 'dur', label: 'แสดงนาน (วินาที)', type: 'number', min: 3, max: 30, def: 8 },
+        { key: 'sound', label: 'เสียงกริ๊ง', type: 'toggle', def: true },
+        { key: 'coins', label: 'เหรียญ/หัวใจโปรย', type: 'toggle', def: true },
+        size(),
+      ] },
+    ],
+  },
   topgifters: {
     resettable: 'ล้างอันดับ',
     sections: [

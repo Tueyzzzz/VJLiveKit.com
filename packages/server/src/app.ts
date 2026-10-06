@@ -11,6 +11,7 @@ import { actionRoutes } from './actions/routes.js';
 import { ttsRoutes } from './tts/routes.js';
 import { referralRoutes } from './referrals/routes.js';
 import { adminRoutes } from './admin/routes.js';
+import { donateRoutes } from './donate/routes.js';
 import { config } from './config/index.js';
 import { OVERLAY_DIR, OVERLAY_VERSION } from './overlay-version.js';
 import { runtime } from './runtime.js';
@@ -85,6 +86,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(ttsRoutes);
   await app.register(referralRoutes);
   await app.register(adminRoutes);
+  await app.register(donateRoutes);
 
   // 404: API ตอบ JSON, หน้าเว็บตอบหน้า 404 ของ Dashboard
   const notFoundPage = path.join(DASHBOARD_DIR, '404.html');

@@ -84,6 +84,7 @@ set_env STRIPE_SECRET_KEY "${STRIPE_SECRET_KEY:-}"
 set_env STRIPE_WEBHOOK_SECRET "${STRIPE_WEBHOOK_SECRET:-}"
 set_env STRIPE_PRICE_PRO_MONTHLY "${STRIPE_PRICE_PRO_MONTHLY:-}"
 set_env ADMIN_EMAILS "${ADMIN_EMAILS:-}"
+set_env EASYSLIP_API_KEY "${EASYSLIP_API_KEY:-}"
 
 # ---------- 5) ดึง image ใหม่แล้วรัน ----------
 if [ -n "${GHCR_TOKEN:-}" ]; then

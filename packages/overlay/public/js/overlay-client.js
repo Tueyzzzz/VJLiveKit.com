@@ -9,7 +9,7 @@
  */
 window.Overlay = (function () {
   const params = new URLSearchParams(location.search);
-  const handlers = { event: [], stats: [], status: [], state: [], action: [] };
+  const handlers = { event: [], stats: [], status: [], state: [], action: [], donation: [] };
   const fire = (k, d) => handlers[k].forEach((fn) => fn(d));
 
   // ---- ตั้งค่าจาก Dashboard (บันทึกในบัญชี) ----
@@ -120,6 +120,7 @@ window.Overlay = (function () {
     socket.on('status', (s) => fire('status', s));
     socket.on('state', (s) => fire('state', s));
     socket.on('action', (a) => fire('action', a));
+    socket.on('donation', (d) => fire('donation', d));
     api.connected = true;
     api.socket = socket;
   } else {

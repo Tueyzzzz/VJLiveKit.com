@@ -6,6 +6,7 @@ import { api, formatMoney, type Plan } from '@/lib/api';
 import { Badge, Card, cx } from './ui';
 
 export const WIDGET_LABELS: Record<string, string> = {
+  donate: 'โดเนทขึ้นจอ (พร้อมเพย์)',
   coinjar: 'Coin Jar',
   giftjar: 'โหลแก้วของขวัญ',
   aquarium: 'ตู้ปลาของขวัญ',

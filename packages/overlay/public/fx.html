@@ -72,6 +72,7 @@
   <button id="armBtn">🔊 เปิดเสียง FX (คลิกครั้งเดียว)</button>
   <script src="/socket.io/socket.io.js"></script>
   <script src="js/overlay-client.js"></script>
+  <script src="js/sfx.js"></script>
   <script>
   (function(){
     const fx=document.getElementById('fx'), armBtn=document.getElementById('armBtn');
@@ -273,7 +274,8 @@
       if(a.type==='effect') return butterflies(a,ev);
       const dur=a.durationMs||5000;
       const text=fill(a.text,ev);
-      if(a.type==='sound' && a.url){
+      if(a.type==='sound' && a.sound && window.VJLSfx){ if(!VJLSfx.play(a.sound) && !audioArmed) armBtn.style.display='block'; }
+      else if(a.type==='sound' && a.url){
         // OBS อนุญาต autoplay อยู่แล้ว — ถ้าเบราว์เซอร์บล็อกค่อยให้กดปุ่มเปิดเสียง
         const au=new Audio(a.url); au.play().catch(()=>{ if(!audioArmed) armBtn.style.display='block'; });
       }

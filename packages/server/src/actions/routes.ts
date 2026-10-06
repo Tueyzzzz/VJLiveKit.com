@@ -17,6 +17,7 @@ const actionSchema = z.object({
   effect: z.enum(['butterflies']).optional(),
   count: z.number().int().min(1).max(30).optional(),
   url: z.string().url().optional(),
+  sound: z.string().regex(/^[a-z]{2,20}$/).optional(), // เสียงสำเร็จรูป (overlay/js/sfx.js) — ไม่ต้องมีลิงก์
   text: z.string().max(200).optional(),
   durationMs: z.number().int().positive().max(60_000).optional(),
   cards: z.union([z.literal(1), z.literal(3), z.literal(7)]).optional(),

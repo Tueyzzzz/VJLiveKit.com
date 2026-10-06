@@ -22,6 +22,8 @@ interface Draft {
   keyword: string;
   type: ActionType;
   url: string;
+  /** เสียงสำเร็จรูป ('' = ใช้ลิงก์ไฟล์เอง) */
+  sound: string;
   text: string;
   durationSec: string;
   cards: string;
@@ -30,7 +32,7 @@ interface Draft {
   count: string;
 }
 
-const EMPTY: Draft = { name: '', enabled: true, event: 'gift', giftName: '', minDiamonds: '', keyword: '', type: 'sound', url: '', text: '', durationSec: '5', cards: '1', deck: 'full', topic: 'general', count: '12' };
+const EMPTY: Draft = { name: '', enabled: true, event: 'gift', giftName: '', minDiamonds: '', keyword: '', type: 'sound', url: '', sound: 'chime', text: '', durationSec: '5', cards: '1', deck: 'full', topic: 'general', count: '12' };
 
 /** เทมเพลตยอดนิยม — กดครั้งเดียวสร้างกฎได้เลย (ไม่ต้องหาไฟล์เสียง/รูปเอง) */
 interface Template { icon: string; title: string; desc: string; rule: { name: string; trigger: Rule['trigger']; action: Rule['action'] } }
@@ -65,11 +67,21 @@ const TEMPLATES: Template[] = [
     rule: { name: 'ขอบคุณ Galaxy', trigger: { event: 'gift', giftName: 'Galaxy' }, action: { type: 'text', text: '🌌 {user} ส่ง Galaxy! รักเลย 💜', durationMs: 5000 } } },
 ];
 
+/** เสียงสำเร็จรูป — ชุดเดียวกับ overlay/js/sfx.js (ฟังตัวอย่างโดยโหลดไฟล์นั้นมาเล่น) */
+const SFX: [string, string][] = [['chime', '🔔 กริ๊ง'], ['coin', '🪙 เหรียญ'], ['levelup', '⬆️ เลเวลอัป'], ['fanfare', '🎺 ฟันแฟร์'], ['magic', '✨ เวทมนตร์'], ['pop', '🫧 ป๊อป'], ['whoosh', '💨 วู้ช'], ['drum', '🥁 ตึ่งโป๊ะ'], ['boing', '🌀 ดึ๋ง'], ['heart', '💗 หัวใจ'], ['applause', '👏 ปรบมือ'], ['alarm', '🚨 ไซเรน']];
+let sfxLoad: Promise<void> | null = null;
+async function playSfx(id: string) {
+  const w = window as unknown as { VJLSfx?: { play: (id: string) => boolean } };
+  sfxLoad ??= new Promise((ok, bad) => { const s = document.createElement('script'); s.src = `${process.env.NEXT_PUBLIC_API_BASE ?? ''}/overlay/js/sfx.js`; s.onload = () => ok(); s.onerror = bad; document.head.appendChild(s); });
+  try { await sfxLoad; w.VJLSfx?.play(id); } catch { sfxLoad = null; }
+}
+
 function toDraft(r: Rule): Draft {
   return {
     id: r.id, name: r.name, enabled: r.enabled, event: r.trigger.event,
     giftName: r.trigger.giftName ?? '', minDiamonds: r.trigger.minDiamonds != null ? String(r.trigger.minDiamonds) : '',
-    keyword: r.trigger.keyword ?? '', type: r.action.type, url: r.action.url ?? '', text: r.action.text ?? '',
+    keyword: r.trigger.keyword ?? '', type: r.action.type, url: r.action.url ?? '',
+    sound: r.action.sound ?? (r.action.url ? '' : 'chime'), text: r.action.text ?? '',
     durationSec: r.action.durationMs ? String(r.action.durationMs / 1000) : '5',
     cards: String(r.action.cards ?? 1),
     deck: r.action.deck ?? 'full',
@@ -86,8 +98,9 @@ function toBody(d: Draft) {
   }
   if (d.event === 'chat' && d.keyword.trim()) trigger.keyword = d.keyword.trim();
   const action: Rule['action'] = { type: d.type };
-  const needsFile = d.type === 'sound' || d.type === 'image' || d.type === 'video';
+  const needsFile = (d.type === 'sound' && !d.sound) || d.type === 'image' || d.type === 'video';
   if (needsFile && d.url.trim()) action.url = d.url.trim();
+  if (d.type === 'sound' && d.sound) action.sound = d.sound;
   if (d.type === 'effect') { action.effect = 'butterflies'; action.count = Math.max(1, Math.min(30, Number(d.count) || 12)); }
   if (d.text.trim()) action.text = d.text.trim();
   if (d.type === 'tarot') { action.cards = Number(d.cards) || 1; if (d.deck !== 'full') action.deck = d.deck; if (d.topic !== 'general') action.topic = d.topic; }
@@ -150,7 +163,7 @@ export default function ActionsPage() {
     e.preventDefault();
     if (!draft) return;
     // ต้องมีลิงก์ไฟล์เฉพาะ เสียง/รูป/วิดีโอ (ไพ่ทาโร่ · ผีเสื้อ · ข้อความ ไม่ต้องใช้)
-    if ((draft.type === 'sound' || draft.type === 'image' || draft.type === 'video') && !draft.url.trim()) { setError({ text: 'ใส่ลิงก์ไฟล์ (https://...) ด้วย' }); return; }
+    if (((draft.type === 'sound' && !draft.sound) || draft.type === 'image' || draft.type === 'video') && !draft.url.trim()) { setError({ text: 'ใส่ลิงก์ไฟล์ (https://...) ด้วย' }); return; }
     if (draft.type === 'text' && !draft.text.trim()) { setError({ text: 'ใส่ข้อความที่จะแสดงด้วย' }); return; }
     setBusy(true);
     setError(null);
@@ -269,7 +282,18 @@ export default function ActionsPage() {
                   {Object.entries(ACTION_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                 </Select>
               </Field>
-              {(draft.type === 'sound' || draft.type === 'image' || draft.type === 'video') && (
+              {draft.type === 'sound' && (
+                <Field label="เสียง" hint="เสียงสำเร็จรูป ไม่ต้องหาไฟล์ · กด ▶ เพื่อฟัง">
+                  <div className="flex gap-2">
+                    <Select value={draft.sound} onChange={(e) => set('sound', e.target.value)}>
+                      {SFX.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+                      <option value="">🔗 ใช้ไฟล์เสียงของฉันเอง (ลิงก์)</option>
+                    </Select>
+                    {draft.sound && <Button type="button" variant="secondary" className="px-3" aria-label="ฟังเสียง" onClick={() => void playSfx(draft.sound)}><Play className="size-4" /></Button>}
+                  </div>
+                </Field>
+              )}
+              {((draft.type === 'sound' && !draft.sound) || draft.type === 'image' || draft.type === 'video') && (
                 <Field label="ลิงก์ไฟล์" hint="ลิงก์ตรงไปยังไฟล์ .mp3 / .png / .gif / .mp4 (https://)">
                   <Input type="url" required value={draft.url} onChange={(e) => set('url', e.target.value)} placeholder="https://..." />
                 </Field>

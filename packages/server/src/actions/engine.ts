@@ -16,6 +16,8 @@ export interface RuleAction {
   /** จำนวนตัว/ชิ้นของเอฟเฟกต์ */
   count?: number;
   url?: string;
+  /** เสียงสำเร็จรูป (ไม่ต้องมีไฟล์) เช่น chime · coin · fanfare */
+  sound?: string;
   text?: string;
   durationMs?: number;
   /** สุ่มไพ่ทาโร่: จำนวนใบ 1 | 3 | 7 */

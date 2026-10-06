@@ -84,7 +84,7 @@ export interface Plan { code: string; name: string; priceCents: number; currency
 
 export type TriggerEvent = 'gift' | 'follow' | 'share' | 'like' | 'chat';
 export type ActionType = 'sound' | 'image' | 'video' | 'text' | 'tarot';
-export type TarotTopic = 'general' | 'love' | 'self';
+export type TarotTopic = 'general' | 'love' | 'self' | 'money';
 export type TarotDeck = 'full' | 'major' | 'wands' | 'cups' | 'swords' | 'pentacles';
 export interface Rule {
   id: string;

@@ -45,6 +45,8 @@ const TEMPLATES: Template[] = [
     rule: { name: 'ทำนายความรัก', trigger: { event: 'gift', minDiamonds: 30 }, action: { type: 'tarot', cards: 3, topic: 'love', text: '💘 ดวงความรักของ {user}', durationMs: 13000 } } },
   { icon: '💌', title: 'พิมพ์ “ดูดวงความรัก” → ไพ่ 1 ใบ', desc: 'คนดูขอดูดวงความรักในแชท',
     rule: { name: 'แชทดูดวงความรัก', trigger: { event: 'chat', keyword: 'ดูดวงความรัก' }, action: { type: 'tarot', cards: 1, topic: 'love', text: '💌 ความรักของ {user}', durationMs: 8000 } } },
+  { icon: '💰', title: 'ทำนายการเงิน 3 ใบ', desc: 'กิฟต์ 99 เพชรขึ้นไป → การเงินตอนนี้ · สิ่งที่ต้องระวัง · โชคลาภ',
+    rule: { name: 'ทำนายการเงิน', trigger: { event: 'gift', minDiamonds: 99 }, action: { type: 'tarot', cards: 3, topic: 'money', text: '💰 ดวงการเงินของ {user}', durationMs: 13000 } } },
   { icon: '🪞', title: 'ทำนายตัวตน 3 ใบ', desc: 'กิฟต์ 30 เพชรขึ้นไป → ตัวตนจริง · ที่คนอื่นมอง · จุดเด่น',
     rule: { name: 'ทำนายตัวตน', trigger: { event: 'gift', minDiamonds: 30 }, action: { type: 'tarot', cards: 3, topic: 'self', text: '🪞 ตัวตนของ {user}', durationMs: 13000 } } },
   { icon: '⚔️', title: 'ร่างกายต้องการดาบ', desc: 'ได้กิฟต์ → สุ่มไพ่ชุดดาบ 1 ใบ ตามเทรนด์',
@@ -220,6 +222,7 @@ export default function ActionsPage() {
                   <Select value={draft.topic} onChange={(e) => set('topic', e.target.value as TarotTopic)}>
                     <option value="general">🔮 ดวงทั่วไป</option>
                     <option value="love">💘 ความรัก — ใจคุณ · ใจเขา · อนาคตความรัก</option>
+                    <option value="money">💰 การเงิน — การเงินตอนนี้ · สิ่งที่ต้องระวัง · โชคลาภที่กำลังมา</option>
                     <option value="self">🪞 ตัวตน — นิสัยจริง · คนอื่นมองคุณ · จุดเด่นที่ซ่อนอยู่</option>
                   </Select>
                 </Field>

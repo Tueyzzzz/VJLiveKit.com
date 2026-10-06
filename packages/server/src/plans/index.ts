@@ -2,7 +2,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../db/prisma.js';
 
 /** วิดเจ็ตทั้งหมดที่ระบบมี (ชื่อตรงกับไฟล์ /overlay/<type>.html) */
-export const WIDGET_TYPES = ['coinjar', 'giftjar', 'aquarium', 'spacedome', 'belly', 'snowglobe', 'vehicle', 'garden', 'tree', 'alerts', 'goal', 'chat', 'follower', 'topgifters', 'toplikers', 'timer', 'league', 'tts', 'fx', 'fxmenu', 'donate'] as const;
+export const WIDGET_TYPES = ['coinjar', 'giftjar', 'aquarium', 'spacedome', 'belly', 'snowglobe', 'vehicle', 'garden', 'tree', 'alerts', 'goal', 'chat', 'follower', 'topgifters', 'toplikers', 'timer', 'league', 'tts', 'fx', 'fxmenu', 'donate', 'collect'] as const;
 export type WidgetType = (typeof WIDGET_TYPES)[number];
 
 export function isWidgetType(t: string): t is WidgetType {
@@ -41,7 +41,7 @@ export const PLAN_DEFS: PlanDef[] = [
     code: 'free', name: 'Free', priceCents: 0, currency: 'thb',
     features: FREE_UNLOCKED_FOR_TESTING
       ? { widgets: [...WIDGET_TYPES], maxActionRules: 100, maxTokens: 20, noWatermark: true }
-      : { widgets: ['coinjar', 'alerts', 'goal', 'chat', 'follower'], maxActionRules: 3, maxTokens: 2, noWatermark: false },
+      : { widgets: ['coinjar', 'collect', 'alerts', 'goal', 'chat', 'follower'], maxActionRules: 3, maxTokens: 2, noWatermark: false },
   },
   {
     code: 'pro', name: 'Pro', priceCents: 19900, currency: 'thb', // 199 บาท/เดือน (เดือนแรกฟรี — ดู TRIAL_DAYS)

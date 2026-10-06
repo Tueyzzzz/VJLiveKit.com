@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Gift Collection Overlay</title>
+<link rel="icon" href="favicon.svg" />
+<style>
+  html,body { margin:0; width:100%; height:100%; background:transparent; overflow:hidden; }
+  iframe { position:fixed; inset:0; width:100%; height:100%; border:0; background:transparent; }
+</style>
+</head>
+<body>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/overlay-client.js"></script>
+  <script>
+  (function () {
+    // ลิงก์เดียวสำหรับวิดเจ็ตสะสมของขวัญทุกแบบ — เลือกแบบที่แดชบอร์ด (ตั้งค่า style) แล้วจอเปลี่ยนเองไม่ต้องเปลี่ยนลิงก์ใน OBS
+    // แต่ละแบบยังใช้ตั้งค่าของตัวเอง (ขนาด สี ฯลฯ) และจำของที่สะสมไว้แยกกัน
+    const STYLES = ['giftjar', 'aquarium', 'belly', 'snowglobe', 'spacedome', 'vehicle', 'tree', 'garden', 'coinjar'];
+    const style = STYLES.includes(Overlay.param('style', 'giftjar')) ? Overlay.param('style', 'giftjar') : 'giftjar';
+    const q = new URLSearchParams(location.search); q.delete('style'); q.delete('_v');
+    const f = document.createElement('iframe');
+    f.src = style + '.html' + (q.toString() ? '?' + q : '');
+    f.allow = 'autoplay';
+    f.setAttribute('allowtransparency', 'true');
+    document.body.appendChild(f);
+  })();
+  </script>
+</body>
+</html>

@@ -26,9 +26,11 @@ const PARAM_HINTS: Record<string, string> = {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
 
+const COLLECT_GROUP = '🎁 สะสมของขวัญ — โหล ตู้ ต้นไม้ เครื่องจักร';
+
 /** จัดหมวดวิดเจ็ตในแกลเลอรี (ประเภทเดียวกันอยู่ด้วยกัน) */
 const WIDGET_GROUPS: [string, string[]][] = [
-  ['🎁 สะสมของขวัญ — โหล ตู้ ต้นไม้ เครื่องจักร', ['giftjar', 'aquarium', 'belly', 'snowglobe', 'spacedome', 'vehicle', 'tree', 'garden', 'coinjar']],
+  [COLLECT_GROUP, ['giftjar', 'aquarium', 'belly', 'snowglobe', 'spacedome', 'vehicle', 'tree', 'garden', 'coinjar']],
   ['🏆 เป้าหมายและลีก', ['league', 'goal', 'timer']],
   ['🔔 แจ้งเตือนและแชท', ['alerts', 'chat', 'follower', 'tts']],
   ['🥇 อันดับผู้ชม', ['topgifters', 'toplikers']],
@@ -161,6 +163,14 @@ export default function WidgetsPage() {
   const [configs, setConfigs] = useState<Record<string, Record<string, unknown>>>({});
   const [livePreview, setLivePreview] = useState<string | null>(null); // เล่นตัวอย่างจริงทีละใบ
   useEffect(() => { api<{ configs: Record<string, Record<string, unknown>> }>('/api/widgets/configs').then((r) => setConfigs(r.configs)).catch(() => {}); }, []);
+  // ลิงก์เดียวของกลุ่มสะสมของขวัญ: เลือกแบบที่นี่ → จอใน OBS เปลี่ยนเองทันที
+  const collectStyle = String(configs.collect?.style ?? 'giftjar');
+  async function pickCollect(style: string) {
+    const next = { ...(configs.collect ?? {}), style };
+    setConfigs((c) => ({ ...c, collect: next }));
+    try { await api('/api/widgets/collect/config', { method: 'PUT', body: next }); }
+    catch (err) { setError({ text: (err as Error).message }); }
+  }
 
   const load = useCallback(async () => {
     try {
@@ -217,16 +227,26 @@ export default function WidgetsPage() {
       <h2 className="mb-3 text-sm font-semibold text-violet">ตัวอย่างวิดเจ็ตทั้งหมด</h2>
       {(() => {
         const all = tokens?.[0]?.urls ?? Object.keys(WIDGET_BLURB).map((type) => ({ type, url: '', locked: false }));
-        const grouped = new Set(WIDGET_GROUPS.flatMap(([, t]) => t));
+        const grouped = new Set([...WIDGET_GROUPS.flatMap(([, t]) => t), 'collect']);
+        const collectUrl = all.find((w) => w.type === 'collect' && !w.locked)?.url;
         const groups: [string, typeof all][] = WIDGET_GROUPS.map(([title, types]) => [title, types.flatMap((t) => all.filter((w) => w.type === t))]);
         const rest = all.filter((w) => !grouped.has(w.type));
         if (rest.length) groups.push(['อื่น ๆ', rest]);
         return groups.filter(([, list]) => list.length).map(([title, list]) => (
       <section key={title} className="mb-8">
       <h3 className="mb-3 text-sm font-semibold">{title}</h3>
+      {title === COLLECT_GROUP && (
+        <Card className="mb-4 flex flex-wrap items-center gap-3 ring-2 ring-pink/30">
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-medium">🔗 ลิงก์เดียวใช้ได้ทุกแบบ — ตอนนี้ใช้: <b className="text-pink">{WIDGET_LABELS[collectStyle] ?? collectStyle}</b></div>
+            <p className="text-xs text-muted">วางลิงก์นี้ใน OBS / LIVE Studio ครั้งเดียว แล้วกด “ใช้แบบนี้” ที่การ์ดด้านล่าง จอเปลี่ยนแบบเองทันที ไม่ต้องเปลี่ยนลิงก์</p>
+          </div>
+          {collectUrl ? <CopyButton text={collectUrl} /> : <span className="text-xs text-muted">สร้างลิงก์ชุดแรกด้านล่างก่อน</span>}
+        </Card>
+      )}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {list.map((w) => (
-          <Card key={w.type} className="p-3">
+          <Card key={w.type} className={`p-3 ${title === COLLECT_GROUP && collectStyle === w.type ? 'ring-2 ring-pink' : ''}`}>
             <WidgetPreview type={w.type} config={configs[w.type]} live={livePreview === w.type}
               onLive={(on) => setLivePreview((cur) => (on ? w.type : cur === w.type ? null : cur))} />
             <div className="mt-3 flex items-start justify-between gap-2">
@@ -238,7 +258,10 @@ export default function WidgetsPage() {
                 <p className="mt-0.5 text-xs text-muted">{WIDGET_BLURB[w.type] ?? ''}</p>
               </div>
               <div className="flex shrink-0 gap-1.5">
-                {w.url && !w.locked && <CopyButton text={w.url} />}
+                {title === COLLECT_GROUP ? (
+                  collectStyle === w.type ? <Badge tone="pink"><Check className="size-3" /> ใช้อยู่</Badge>
+                    : !w.locked && <Button variant="secondary" className="px-3 text-xs" onClick={() => pickCollect(w.type)}>ใช้แบบนี้</Button>
+                ) : w.url && !w.locked && <CopyButton text={w.url} />}
                 <Link href={`/dashboard/widgets/settings/?type=${w.type}`} aria-label="ตั้งค่าวิดเจ็ต">
                   <Button variant="secondary" className="px-3"><Settings className="size-4" /></Button>
                 </Link>

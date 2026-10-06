@@ -104,7 +104,7 @@ window.Overlay = (function () {
     let brand = null, brandTimer = null;
     const flash = () => { if (!brand) return; brand.style.opacity = '.85'; setTimeout(() => { if (brand) brand.style.opacity = '0'; }, 6000); };
     socket.on('brand', (b) => {
-      const show = !!(b && b.show);
+      const show = !!(b && b.show) && widgetName !== 'collect'; // collect = กรอบหุ้ม ป้ายอยู่ในวิดเจ็ตข้างในแล้ว
       if (!show) { clearInterval(brandTimer); brandTimer = null; if (brand) { brand.remove(); brand = null; } return; }
       if (!brand) {
         brand = document.createElement('div');

@@ -9,7 +9,11 @@ export interface RuleTrigger {
 }
 
 export interface RuleAction {
-  type: 'sound' | 'image' | 'video' | 'text' | 'tarot';
+  type: 'sound' | 'image' | 'video' | 'text' | 'tarot' | 'effect';
+  /** เอฟเฟกต์เต็มจอ (type=effect) */
+  effect?: 'butterflies';
+  /** จำนวนตัว/ชิ้นของเอฟเฟกต์ */
+  count?: number;
   url?: string;
   text?: string;
   durationMs?: number;

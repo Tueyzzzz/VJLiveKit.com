@@ -9,7 +9,7 @@ import { api, ApiError, type ActionType, type Rule, type TarotDeck, type TarotTo
 import { useAuth } from '@/lib/auth';
 
 const EVENT_LABELS: Record<TriggerEvent, string> = { gift: '🎁 ได้รับกิฟต์', follow: '➕ มีคนติดตาม', share: '🔁 มีคนแชร์', like: '❤️ มีคนกดไลค์', chat: '💬 แชทมีคำว่า' };
-const ACTION_LABELS: Record<ActionType, string> = { sound: '🔊 เล่นเสียง', image: '🖼️ แสดงรูป/GIF', video: '🎬 เล่นวิดีโอ', text: '✏️ แสดงข้อความ', tarot: '🔮 สุ่มไพ่ทาโร่' };
+const ACTION_LABELS: Record<ActionType, string> = { sound: '🔊 เล่นเสียง', image: '🖼️ แสดงรูป/GIF', video: '🎬 เล่นวิดีโอ', text: '✏️ แสดงข้อความ', tarot: '🔮 สุ่มไพ่ทาโร่', effect: '🦋 ผีเสื้อเทพนิยาย' };
 
 interface Draft {
   id?: string;
@@ -26,9 +26,10 @@ interface Draft {
   cards: string;
   deck: TarotDeck;
   topic: TarotTopic;
+  count: string;
 }
 
-const EMPTY: Draft = { name: '', enabled: true, event: 'gift', giftName: '', minDiamonds: '', keyword: '', type: 'sound', url: '', text: '', durationSec: '5', cards: '1', deck: 'full', topic: 'general' };
+const EMPTY: Draft = { name: '', enabled: true, event: 'gift', giftName: '', minDiamonds: '', keyword: '', type: 'sound', url: '', text: '', durationSec: '5', cards: '1', deck: 'full', topic: 'general', count: '12' };
 
 /** เทมเพลตยอดนิยม — กดครั้งเดียวสร้างกฎได้เลย (ไม่ต้องหาไฟล์เสียง/รูปเอง) */
 interface Template { icon: string; title: string; desc: string; rule: { name: string; trigger: Rule['trigger']; action: Rule['action'] } }
@@ -49,6 +50,8 @@ const TEMPLATES: Template[] = [
     rule: { name: 'ทำนายการเงิน', trigger: { event: 'gift', minDiamonds: 99 }, action: { type: 'tarot', cards: 3, topic: 'money', text: '💰 ดวงการเงินของ {user}', durationMs: 13000 } } },
   { icon: '🪞', title: 'ทำนายตัวตน 3 ใบ', desc: 'กิฟต์ 30 เพชรขึ้นไป → ตัวตนจริง · ที่คนอื่นมอง · จุดเด่น',
     rule: { name: 'ทำนายตัวตน', trigger: { event: 'gift', minDiamonds: 30 }, action: { type: 'tarot', cards: 3, topic: 'self', text: '🪞 ตัวตนของ {user}', durationMs: 13000 } } },
+  { icon: '🦋', title: 'ได้ Rose → ผีเสื้อเทพนิยาย', desc: 'ผีเสื้อปีกวาวบินข้ามจอ โปรยผงประกาย',
+    rule: { name: 'ผีเสื้อเทพนิยาย', trigger: { event: 'gift', giftName: 'Rose' }, action: { type: 'effect', effect: 'butterflies', count: 12, text: '🦋 {user} เสกผีเสื้อให้ ✨', durationMs: 8000 } } },
   { icon: '⚔️', title: 'ร่างกายต้องการดาบ', desc: 'ได้กิฟต์ → สุ่มไพ่ชุดดาบ 1 ใบ ตามเทรนด์',
     rule: { name: 'ร่างกายต้องการดาบ', trigger: { event: 'gift', minDiamonds: 1 }, action: { type: 'tarot', cards: 1, deck: 'swords', text: '⚔️ ร่างกายของ {user} ต้องการดาบ!', durationMs: 8000 } } },
   { icon: '💖', title: 'มีคนติดตาม → ข้อความขอบคุณ', desc: '“ขอบคุณ {user} ที่กดติดตามนะ”',
@@ -70,6 +73,7 @@ function toDraft(r: Rule): Draft {
     cards: String(r.action.cards ?? 1),
     deck: r.action.deck ?? 'full',
     topic: r.action.topic ?? 'general',
+    count: String(r.action.count ?? 12),
   };
 }
 
@@ -81,7 +85,9 @@ function toBody(d: Draft) {
   }
   if (d.event === 'chat' && d.keyword.trim()) trigger.keyword = d.keyword.trim();
   const action: Rule['action'] = { type: d.type };
-  if (d.type !== 'text' && d.url.trim()) action.url = d.url.trim();
+  const needsFile = d.type === 'sound' || d.type === 'image' || d.type === 'video';
+  if (needsFile && d.url.trim()) action.url = d.url.trim();
+  if (d.type === 'effect') { action.effect = 'butterflies'; action.count = Math.max(1, Math.min(30, Number(d.count) || 12)); }
   if (d.text.trim()) action.text = d.text.trim();
   if (d.type === 'tarot') { action.cards = Number(d.cards) || 1; if (d.deck !== 'full') action.deck = d.deck; if (d.topic !== 'general') action.topic = d.topic; }
   const sec = Number(d.durationSec);
@@ -121,7 +127,8 @@ export default function ActionsPage() {
   async function save(e: FormEvent) {
     e.preventDefault();
     if (!draft) return;
-    if (draft.type !== 'text' && !draft.url.trim()) { setError({ text: 'ใส่ลิงก์ไฟล์ (https://...) ด้วย' }); return; }
+    // ต้องมีลิงก์ไฟล์เฉพาะ เสียง/รูป/วิดีโอ (ไพ่ทาโร่ · ผีเสื้อ · ข้อความ ไม่ต้องใช้)
+    if ((draft.type === 'sound' || draft.type === 'image' || draft.type === 'video') && !draft.url.trim()) { setError({ text: 'ใส่ลิงก์ไฟล์ (https://...) ด้วย' }); return; }
     if (draft.type === 'text' && !draft.text.trim()) { setError({ text: 'ใส่ข้อความที่จะแสดงด้วย' }); return; }
     setBusy(true);
     setError(null);
@@ -203,7 +210,7 @@ export default function ActionsPage() {
                   {Object.entries(ACTION_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                 </Select>
               </Field>
-              {draft.type !== 'text' && draft.type !== 'tarot' && (
+              {(draft.type === 'sound' || draft.type === 'image' || draft.type === 'video') && (
                 <Field label="ลิงก์ไฟล์" hint="ลิงก์ตรงไปยังไฟล์ .mp3 / .png / .gif / .mp4 (https://)">
                   <Input type="url" required value={draft.url} onChange={(e) => set('url', e.target.value)} placeholder="https://..." />
                 </Field>
@@ -218,6 +225,11 @@ export default function ActionsPage() {
                     <option value="3">🃏🃏🃏 เปิด 3 ใบ — อดีต · ปัจจุบัน · อนาคต</option>
                     <option value="7">เปิด 7 ใบ — ดูดวงเต็มชุด</option>
                   </Select>
+                </Field>
+              )}
+              {draft.type === 'effect' && (
+                <Field label="จำนวนผีเสื้อ" hint="1–30 ตัว · ข้อความประกอบจะขึ้นเป็นหัวเรื่องกลางจอ">
+                  <Input type="number" min={1} max={30} value={draft.count} onChange={(e) => set('count', e.target.value)} />
                 </Field>
               )}
               {draft.type === 'tarot' && (

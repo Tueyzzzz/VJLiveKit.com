@@ -13,7 +13,9 @@ const triggerSchema = z.object({
   keyword: z.string().optional(),
 });
 const actionSchema = z.object({
-  type: z.enum(['sound', 'image', 'video', 'text', 'tarot']),
+  type: z.enum(['sound', 'image', 'video', 'text', 'tarot', 'effect']),
+  effect: z.enum(['butterflies']).optional(),
+  count: z.number().int().min(1).max(30).optional(),
   url: z.string().url().optional(),
   text: z.string().max(200).optional(),
   durationMs: z.number().int().positive().max(60_000).optional(),

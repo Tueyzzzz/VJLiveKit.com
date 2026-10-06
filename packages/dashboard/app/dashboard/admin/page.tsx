@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { Activity, BarChart3, Download, Gift, KeyRound, RefreshCw, Search, Users } from 'lucide-react';
+import { Activity, BarChart3, Download, Gift, KeyRound, Radio, RefreshCw, Search, Users } from 'lucide-react';
 import { Alert, Badge, Button, Card, Input, PageHeader, Spinner } from '@/components/ui';
 import { api, getToken } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -25,6 +25,12 @@ interface Room {
   username: string; connected: boolean; widgets: number; owners: number; diamonds: number; gifts: number; likes: number; viewers: number; topGifter: string | null;
   attempts: number; connectedAt: number | null; lastError: string | null; lastErrorAt: number | null; retrying: boolean;
 }
+interface Lives {
+  totals: { today: number; d7: number; d30: number; all: number; streamers30: number; liveNow: number };
+  daily: { date: string; lives: number; streamers: number }[];
+  top: { username: string; lives: number; diamonds: number; last: string }[];
+  recent: { roomId: string; username: string; startedAt: string; lastSeenAt: string; diamonds: number; peakViewers: number; ended: boolean }[];
+}
 const ago = (t: number | null) => { if (!t) return '-'; const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'เมื่อกี้' : m < 60 ? `${m} นาทีที่แล้ว` : `${Math.floor(m / 60)} ชม. ${m % 60} นาที`; };
 const EULER_DAILY = 2500; // โควตาแพ็กเกจฟรีของ EulerStream (คำขอ/วัน)
 
@@ -34,7 +40,8 @@ const PLAN: Record<string, [string, 'pink' | 'mint' | 'gray']> = { pro: ['Pro', 
 /** หลังบ้านแอดมิน: ภาพรวม · ผู้ใช้ (แจก Pro / รีเซ็ตรหัส) · ไลฟ์ที่ออนไลน์ */
 export default function AdminPage() {
   const { isAdmin } = useAuth();
-  const [tab, setTab] = useState<'overview' | 'reports' | 'users' | 'live'>('overview');
+  const [tab, setTab] = useState<'overview' | 'reports' | 'users' | 'live' | 'lives'>('overview');
+  const [lives, setLives] = useState<Lives | null>(null);
   const [rep, setRep] = useState<Reports | null>(null);
   const [ov, setOv] = useState<Overview | null>(null);
   const [users, setUsers] = useState<UserRow[] | null>(null);
@@ -52,6 +59,7 @@ export default function AdminPage() {
     if (tab === 'overview') { void loadOv(); const t = setInterval(loadOv, 15_000); return () => clearInterval(t); }
     if (tab === 'users' && !users) void loadUsers();
     if (tab === 'reports') api<Reports>('/api/admin/reports').then(setRep).catch((e) => setMsg({ tone: 'error', text: (e as Error).message }));
+    if (tab === 'lives') { const f = () => api<Lives>('/api/admin/lives').then(setLives).catch((e) => setMsg({ tone: 'error', text: (e as Error).message })); void f(); const t = setInterval(f, 30_000); return () => clearInterval(t); }
     if (tab === 'live') { void loadLive(); const t = setInterval(loadLive, 10_000); return () => clearInterval(t); }
   }, [isAdmin, tab, users, loadOv, loadUsers, loadLive]);
 
@@ -87,7 +95,7 @@ export default function AdminPage() {
     <div>
       <PageHeader title="หลังบ้าน (แอดมิน)" description="ภาพรวมระบบ · จัดการผู้ใช้ · ไลฟ์ที่ออนไลน์อยู่" />
       <div className="mb-5 flex flex-wrap gap-2">
-        {([['overview', 'ภาพรวม', Activity], ['reports', 'รายงาน', BarChart3], ['users', 'ลูกค้า', Users], ['live', 'ไลฟ์ตอนนี้', RefreshCw]] as const).map(([k, l, Icon]) => (
+        {([['overview', 'ภาพรวม', Activity], ['reports', 'รายงาน', BarChart3], ['users', 'ลูกค้า', Users], ['live', 'ไลฟ์ตอนนี้', RefreshCw], ['lives', 'จำนวนไลฟ์', Radio]] as const).map(([k, l, Icon]) => (
           <Button key={k} variant={tab === k ? 'primary' : 'secondary'} onClick={() => setTab(k)}><Icon className="size-4" /> {l}</Button>
         ))}
       </div>
@@ -223,6 +231,47 @@ export default function AdminPage() {
           <p className="mt-2 text-xs text-muted">แสดงล่าสุด 100 คน — ใช้ช่องค้นหาเพื่อหาคนอื่น</p>
         </div>
       )}
+
+      {tab === 'lives' && (!lives ? <Spinner /> : (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+            {[['ไลฟ์อยู่ตอนนี้', lives.totals.liveNow], ['ไลฟ์วันนี้', lives.totals.today], ['ไลฟ์ 7 วัน', lives.totals.d7], ['ไลฟ์ 30 วัน', lives.totals.d30], ['ไลฟ์ทั้งหมด', lives.totals.all], ['วีเจที่ไลฟ์ (30 วัน)', lives.totals.streamers30]].map(([l, v]) => (
+              <Card key={String(l)} className="p-4"><div className="text-xs text-muted">{l}</div><div className="mt-1 font-display text-3xl">{Number(v).toLocaleString('th-TH')}</div></Card>
+            ))}
+          </div>
+          <Card>
+            <h3 className="mb-3 text-sm font-semibold">ไลฟ์ต่อวัน (14 วันล่าสุด)</h3>
+            <div className="flex h-36 items-end gap-1.5">
+              {lives.daily.map((x) => { const max = Math.max(1, ...lives.daily.map((y) => y.lives)); return (
+                <div key={x.date} className="flex flex-1 flex-col items-center gap-1" title={`${x.date}: ${x.lives} ไลฟ์ · ${x.streamers} วีเจ`}>
+                  <span className="text-[10px] text-muted">{x.lives || ''}</span>
+                  <div className="w-full rounded-t-md bg-pink/70" style={{ height: `${(x.lives / max) * 100}px` }} />
+                  <span className="text-[10px] text-muted">{x.date.slice(8)}</span>
+                </div>); })}
+            </div>
+          </Card>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Card className="overflow-x-auto p-0">
+              <h3 className="px-4 pt-4 text-sm font-semibold">วีเจที่ไลฟ์บ่อย (30 วัน)</h3>
+              <table className="mt-2 w-full text-sm"><tbody className="divide-y divide-line">
+                {lives.top.length === 0 ? <tr><td className="px-4 py-6 text-center text-muted">ยังไม่มีข้อมูล</td></tr> : lives.top.map((t) => (
+                  <tr key={t.username}><td className="px-4 py-2 font-medium">@{t.username}</td><td className="px-4 py-2">{t.lives} ไลฟ์</td><td className="px-4 py-2">💎 {t.diamonds.toLocaleString('th-TH')}</td><td className="px-4 py-2 text-xs text-muted">{d(t.last)}</td></tr>
+                ))}
+              </tbody></table>
+            </Card>
+            <Card className="overflow-x-auto p-0">
+              <h3 className="px-4 pt-4 text-sm font-semibold">ไลฟ์ล่าสุด</h3>
+              <table className="mt-2 w-full text-sm"><tbody className="divide-y divide-line">
+                {lives.recent.length === 0 ? <tr><td className="px-4 py-6 text-center text-muted">ยังไม่มีข้อมูล</td></tr> : lives.recent.map((r) => {
+                  const mins = Math.max(1, Math.round((new Date(r.lastSeenAt).getTime() - new Date(r.startedAt).getTime()) / 60000));
+                  return <tr key={r.roomId}><td className="px-4 py-2 font-medium">@{r.username}</td><td className="px-4 py-2 text-xs">{new Date(r.startedAt).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })}</td><td className="px-4 py-2 text-xs">{mins >= 60 ? `${Math.floor(mins / 60)} ชม. ${mins % 60} น.` : `${mins} นาที`}</td><td className="px-4 py-2">💎 {r.diamonds.toLocaleString('th-TH')}</td><td className="px-4 py-2">{r.ended ? <Badge tone="gray">จบแล้ว</Badge> : <Badge tone="mint">ไลฟ์อยู่</Badge>}</td></tr>;
+                })}
+              </tbody></table>
+            </Card>
+          </div>
+          <p className="text-xs text-muted">นับเฉพาะไลฟ์ที่วีเจเปิดวิดเจ็ต/เว็บไว้ (ระบบต่อเข้าไลฟ์ได้) · 1 รหัสห้องไลฟ์ของ TikTok = 1 ไลฟ์ · เริ่มนับตั้งแต่วันนี้</p>
+        </div>
+      ))}
 
       {tab === 'live' && (!rooms ? <Spinner /> : rooms.length === 0 ? <Card className="py-8 text-center text-sm text-muted">ยังไม่มีใครเปิดวิดเจ็ตตอนนี้</Card> : (
         <Card className="overflow-x-auto p-0">

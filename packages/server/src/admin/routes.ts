@@ -9,6 +9,7 @@ import { getEntitlements, trialEndOf } from '../plans/index.js';
 import { grantDays } from '../referrals/routes.js';
 import { getHub } from '../realtime/hub.js';
 import { connStats } from '../realtime/connstats.js';
+import { listLives } from '../realtime/lives.js';
 
 /** แอดมิน = role ADMIN ในฐานข้อมูล หรืออีเมลอยู่ใน ADMIN_EMAILS */
 export function isAdmin(req: FastifyRequest): boolean {
@@ -130,4 +131,30 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
 
   // ---- ไลฟ์ที่เชื่อมต่ออยู่ ----
   app.get('/api/admin/live', { preHandler: requireAdmin }, async () => ({ rooms: getHub()?.listRooms() ?? [] }));
+
+  // จำนวนไลฟ์ (1 รหัสห้องไลฟ์ TikTok = 1 ไลฟ์) — วันนี้ / 7 วัน / 30 วัน / ทั้งหมด + อันดับวีเจที่ไลฟ์บ่อย + ไลฟ์ล่าสุด
+  app.get('/api/admin/lives', { preHandler: requireAdmin }, async () => {
+    const all = listLives(), now = Date.now();
+    const TZ = 7 * 3_600_000; // นับวันตามเวลาไทย
+    const startToday = new Date(Math.floor((now + TZ) / DAY) * DAY - TZ);
+    const since = (ms: number) => all.filter((l) => new Date(l.startedAt).getTime() >= ms);
+    const per = new Map<string, { username: string; lives: number; diamonds: number; last: string }>();
+    for (const l of since(now - 30 * DAY)) {
+      const p = per.get(l.username) ?? { username: l.username, lives: 0, diamonds: 0, last: l.startedAt };
+      p.lives++; p.diamonds += l.diamonds; if (l.startedAt > p.last) p.last = l.startedAt; per.set(l.username, p);
+    }
+    const daily: { date: string; lives: number; streamers: number }[] = [];
+    for (let i = 13; i >= 0; i--) {
+      const d0 = new Date(startToday.getTime() - i * DAY), d1 = d0.getTime() + DAY;
+      const ls = all.filter((l) => { const t = new Date(l.startedAt).getTime(); return t >= d0.getTime() && t < d1; });
+      daily.push({ date: new Date(d0.getTime() + TZ).toISOString().slice(0, 10), lives: ls.length, streamers: new Set(ls.map((l) => l.username)).size });
+    }
+    return {
+      totals: { today: since(startToday.getTime()).length, d7: since(now - 7 * DAY).length, d30: since(now - 30 * DAY).length, all: all.length,
+        streamers30: per.size, liveNow: all.filter((l) => !l.ended && now - new Date(l.lastSeenAt).getTime() < 5 * 60_000).length },
+      daily,
+      top: [...per.values()].sort((a, b) => b.lives - a.lives).slice(0, 20),
+      recent: all.slice(-30).reverse(),
+    };
+  });
 }

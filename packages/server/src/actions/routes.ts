@@ -5,6 +5,7 @@ import { prisma } from '../db/prisma.js';
 import { requireUser, getUser } from '../auth/middleware.js';
 import { getEntitlements } from '../plans/index.js';
 import { getHub } from '../realtime/hub.js';
+import { isAdmin } from '../admin/routes.js';
 
 const triggerSchema = z.object({
   event: z.enum(['gift', 'follow', 'share', 'like', 'chat']),
@@ -48,6 +49,7 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
     const parsed = ruleSchema.safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: 'กฎไม่ถูกต้อง', issues: parsed.error.issues });
     const { name, enabled, trigger, action } = parsed.data;
+    if (action.type === 'tarot' && !isAdmin(req)) return reply.code(403).send({ error: 'Action เปิดไพ่ทาโร่ ใช้ได้เฉพาะแอดมิน' });
     const ent = await getEntitlements(claims.userId);
     const count = await prisma.actionRule.count({ where: { userId: claims.userId } });
     if (count >= ent.maxActionRules) {
@@ -68,6 +70,7 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
     const existing = await prisma.actionRule.findFirst({ where: { id, userId: claims.userId } });
     if (!existing) return reply.code(404).send({ error: 'ไม่พบกฎนี้' });
     const d = parsed.data;
+    if (d.action?.type === 'tarot' && !isAdmin(req)) return reply.code(403).send({ error: 'Action เปิดไพ่ทาโร่ ใช้ได้เฉพาะแอดมิน' });
     const rule = await prisma.actionRule.update({
       where: { id },
       data: {

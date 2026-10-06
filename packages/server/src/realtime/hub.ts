@@ -3,6 +3,7 @@ import { evaluate, menuItems, type ActionRule, type MenuItem } from '../actions/
 import type { Server } from 'socket.io';
 import { loadSession, saveSession } from './sessions.js';
 import { connStats } from './connstats.js';
+import { trackLive } from './lives.js';
 import { config } from '../config/index.js';
 
 /** โหลดกฎ Actions ที่เปิดใช้ของผู้ใช้หนึ่งคน */
@@ -200,6 +201,8 @@ export class RoomHub {
   private persist(entry: RoomEntry, ended = false): Promise<void> {
     if (this.demo || !entry.room.liveRoomId || (!entry.dirty && !ended)) return Promise.resolve();
     entry.dirty = false;
+    const st = entry.room.getState().stats;
+    trackLive(entry.room.liveRoomId, entry.room.username, { diamonds: st.diamondCount, gifts: st.giftCount, likes: st.likeCount, peakViewers: entry.room.peakViewers }, ended);
     return saveSession(entry.room, ended).catch((err) => console.error('[sessions] save failed', err));
   }
 
@@ -214,6 +217,7 @@ export class RoomHub {
         // ไลฟ์เดิม (เซิร์ฟเวอร์เพิ่งรีสตาร์ท/deploy) → โหลดสถิติ/อันดับที่บันทึกไว้กลับมา
         // room.connect() ล้างสถิติในหน่วยความจำทุกครั้ง → โหลดของไลฟ์เดิมคืนทุกครั้งที่ต่อสำเร็จ (ไม่บวกซ้ำ)
         if (entry.room.liveRoomId) {
+          trackLive(entry.room.liveRoomId, entry.room.username, {}); // นับไลฟ์ (หน้าแอดมิน)
           entry.restoredFor = entry.room.liveRoomId;
           try { await loadSession(entry.room); } catch (err) { console.error('[sessions] load failed', err); }
         }

@@ -126,7 +126,7 @@ function describe(r: Rule): string {
 }
 
 export default function ActionsPage() {
-  const { entitlements } = useAuth();
+  const { entitlements, isAdmin } = useAuth();
   const [rules, setRules] = useState<Rule[] | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [error, setError] = useState<{ text: string; upgrade?: boolean } | null>(null);
@@ -301,7 +301,7 @@ export default function ActionsPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="ให้ทำ">
                 <Select value={draft.type} onChange={(e) => set('type', e.target.value as ActionType)}>
-                  {Object.entries(ACTION_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                  {Object.entries(ACTION_LABELS).filter(([k]) => k !== 'tarot' || isAdmin || draft.type === 'tarot').map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                 </Select>
               </Field>
               {draft.type === 'sound' && (
@@ -387,7 +387,7 @@ export default function ActionsPage() {
           <h2 className="mb-1 flex items-center gap-2 font-medium"><Sparkles className="size-4 text-pink" /> เทมเพลตยอดนิยม</h2>
           <p className="mb-4 text-sm text-muted">กด “ใช้เลย” แล้วใช้ได้ทันที — แก้ข้อความหรือเงื่อนไขทีหลังได้ด้วยปุ่มดินสอ</p>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {TEMPLATES.map((t) => {
+            {TEMPLATES.filter((t) => isAdmin || t.rule.action.type !== 'tarot').map((t) => {
               const added = have.has(t.rule.name);
               return (
                 <div key={t.rule.name} className="flex flex-col rounded-xl border border-line bg-canvas/50 p-3">

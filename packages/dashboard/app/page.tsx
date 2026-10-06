@@ -36,6 +36,7 @@ const JSONLD = [
     applicationCategory: 'MultimediaApplication', operatingSystem: 'Web, Windows, macOS',
     description: 'วิดเจ็ตไลฟ์ TikTok สำหรับ OBS และ TikTok LIVE Studio — โหลของขวัญ ตู้ปลา ต้นไม้ รถลาก Coin Jar อันดับ Top Gifters ลีก TikTok และไพ่ทาโร่',
     inLanguage: 'th', image: 'https://vjlivekit.com/og.png',
+    sameAs: ['https://www.instagram.com/vjlivekit/', 'https://www.facebook.com/profile.php?id=61595273575386'],
     offers: { '@type': 'Offer', price: '199', priceCurrency: 'THB', description: 'ใช้ฟรีเดือนแรก จากนั้น 199 บาท/เดือน' },
   },
   {
@@ -119,7 +120,7 @@ export default function Home() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSONLD) }} />
 
       <footer className="border-t border-line py-8 text-center text-xs text-muted">
-        <a href="/tikfinity-alternative/" className="mr-2 underline">ทางเลือก TikFinity ภาษาไทย</a> · <a href="/vj-studio-alternative/" className="mr-2 underline">ทางเลือก วีเจ.com</a> · © {new Date().getFullYear()} VJLiveKit · งานพัฒนาอิสระ ไม่เกี่ยวข้องกับ TikTok อย่างเป็นทางการ
+        <a href="https://www.instagram.com/vjlivekit/" target="_blank" rel="noopener" className="mr-2 underline">Instagram</a> · <a href="https://www.facebook.com/profile.php?id=61595273575386" target="_blank" rel="noopener" className="mr-2 underline">Facebook</a> · <a href="/tikfinity-alternative/" className="mr-2 underline">ทางเลือก TikFinity ภาษาไทย</a> · <a href="/vj-studio-alternative/" className="mr-2 underline">ทางเลือก วีเจ.com</a> · © {new Date().getFullYear()} VJLiveKit · งานพัฒนาอิสระ ไม่เกี่ยวข้องกับ TikTok อย่างเป็นทางการ
       </footer>
     </div>
   );

@@ -97,7 +97,7 @@ function FieldInput({ f, value, onChange }: { f: FieldDef; value: Values[string]
                       className={`flex flex-col items-center gap-1 rounded-xl border-2 p-1.5 text-center transition ${on ? 'border-pink bg-pink-soft' : 'border-line bg-white hover:border-pink/40'}`}>
                       <span className="grid aspect-square w-full place-items-center overflow-hidden rounded-lg bg-canvas">
                         {thumb
-                          ? <img src={`${API_BASE}/overlay/themes/thumbs/${thumb}.webp`} alt="" loading="lazy" className="max-h-full max-w-full object-contain p-1" />
+                          ? <img src={thumb.startsWith('/') ? `${API_BASE}${thumb}` : `${API_BASE}/overlay/themes/thumbs/${thumb}.webp`} alt="" loading="lazy" className="max-h-full max-w-full object-contain p-1" />
                           : <span className="text-2xl">✏️</span>}
                       </span>
                       <span className={`line-clamp-2 text-[11px] leading-tight ${on ? 'font-medium text-pink' : 'text-muted'}`}>{l}</span>

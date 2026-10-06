@@ -79,8 +79,20 @@ function posterOf(type: string, config?: Record<string, unknown>): string | null
     if (f.type !== 'select' || !f.options.some((o) => o[3])) continue;
     const v = String(config?.[f.key] ?? f.def);
     const opt = f.options.find((o) => o[0] === v) ?? f.options.find((o) => o[3]);
-    if (opt?.[3]) return `${API_BASE}/overlay/themes/thumbs/${opt[3]}.webp`;
+    if (opt?.[3]) return opt[3].startsWith('/') ? `${API_BASE}${opt[3]}` : `${API_BASE}/overlay/themes/thumbs/${opt[3]}.webp`;
   }
+  // วิดเจ็ตที่ไม่มีธีมรูป → ใช้รูปจริงของแบบที่เลือก (กรอบ Top 3 · หัวใจแก้ว · ไพ่ทาโร่)
+  const v = (k: string, d: string) => String(config?.[k] ?? d);
+  if (type === 'topgifters' || type === 'toplikers') {
+    const first: Record<string, string> = { a: 'r1', b: 'r1b', gaming: 'g1', singer: 's1', toy: 't1', minimal: type === 'toplikers' ? 't1' : 'r1' };
+    const k = first[v('frames', 'a')] ?? (type === 'toplikers' ? 't1' : 'r1');
+    return `${API_BASE}/overlay/frames/${type === 'toplikers' && v('frames', 'a') === 'a' ? 't1' : k}.webp`;
+  }
+  if (type === 'goal') {
+    const st = v('style', 'bar');
+    return `${API_BASE}/overlay/hearts/${st.startsWith('h-') ? st.slice(2) : 'potion'}.webp`;
+  }
+  if (type === 'fx') return `${API_BASE}/overlay/tarot/m10.webp`;
   return null;
 }
 const ICON: Record<string, string> = { league: '🏆', goal: '🎯', timer: '⏱️', alerts: '🔔', chat: '💬', follower: '➕', topgifters: '🥇', toplikers: '💗', tts: '🔊', fx: '✨' };

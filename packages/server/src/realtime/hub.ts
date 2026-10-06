@@ -70,6 +70,9 @@ export class RoomHub {
   private graceTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private get PRESENCE_GRACE_MS() { return settings().presenceGraceSec * 1000; } // รีเฟรช/เปลี่ยนหน้าเว็บ ไม่ทำให้จอดับ (ปรับได้)
 
+  /** วีเจคนนี้เปิดเว็บอยู่ไหม (หน้าแอดมิน) */
+  webOpen(ownerId: string): boolean { return (this.presence.get(ownerId) ?? 0) > 0; }
+
   isPresent(ownerId: string): boolean { if (!settings().presenceLock) return true; return (this.presence.get(ownerId) ?? 0) > 0 || this.graceTimers.has(ownerId); }
 
   /** แดชบอร์ดเปิด/ปิด → ปลุก/พักวิดเจ็ตของวีเจคนนั้น */

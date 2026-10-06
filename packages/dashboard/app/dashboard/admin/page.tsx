@@ -14,6 +14,7 @@ interface Overview {
 interface UserRow {
   id: string; email: string; displayName: string | null; tiktokUsername: string | null; createdAt: string; admin: boolean;
   plan: string; trialEndsAt: string | null; subscription: { status: string; provider: string | null; currentPeriodEnd: string | null } | null;
+  live?: { status: 'live' | 'online' | 'offline'; viewers?: number; diamonds?: number; since?: number | null }; lastLiveAt?: string | null; lives30?: number;
 }
 interface Reports {
   signupsByDay: { day: string; n: number }[];
@@ -73,7 +74,7 @@ export default function AdminPage() {
   useEffect(() => {
     if (!isAdmin) return;
     if (tab === 'overview') { void loadOv(); const t = setInterval(loadOv, 15_000); return () => clearInterval(t); }
-    if (tab === 'users' && !users) void loadUsers();
+    if (tab === 'users') { if (!users) void loadUsers(q); const t = setInterval(() => void loadUsers(q), 20_000); return () => clearInterval(t); } // สถานะไลฟ์อัปเดตเอง
     if (tab === 'reports') api<Reports>('/api/admin/reports').then(setRep).catch((e) => setMsg({ tone: 'error', text: (e as Error).message }));
     if (tab === 'settings') api<{ settings: SysSettings; defaults: SysSettings; limits: Record<string, [number, number]> }>('/api/admin/settings').then((r) => { setSys(r); setSysDraft(r.settings); }).catch((e) => setMsg({ tone: 'error', text: (e as Error).message }));
     if (tab === 'lives') { const f = () => api<Lives>('/api/admin/lives').then(setLives).catch((e) => setMsg({ tone: 'error', text: (e as Error).message })); void f(); const t = setInterval(f, 30_000); return () => clearInterval(t); }
@@ -223,13 +224,18 @@ export default function AdminPage() {
             <Card className="overflow-x-auto p-0">
               <table className="w-full text-sm">
                 <thead className="border-b border-line text-left text-xs text-muted">
-                  <tr><th className="px-4 py-3 font-normal">ผู้ใช้</th><th className="px-4 py-3 font-normal">TikTok</th><th className="px-4 py-3 font-normal">แพลน</th><th className="px-4 py-3 font-normal">หมดสิทธิ์</th><th className="px-4 py-3 font-normal">สมัคร</th><th className="px-4 py-3" /></tr>
+                  <tr><th className="px-4 py-3 font-normal">ผู้ใช้</th><th className="px-4 py-3 font-normal">TikTok</th><th className="px-4 py-3 font-normal">สถานะไลฟ์</th><th className="px-4 py-3 font-normal">แพลน</th><th className="px-4 py-3 font-normal">หมดสิทธิ์</th><th className="px-4 py-3 font-normal">สมัคร</th><th className="px-4 py-3" /></tr>
                 </thead>
                 <tbody className="divide-y divide-line">
                   {users.map((u) => (
                     <tr key={u.id}>
                       <td className="px-4 py-3"><div className="font-medium">{u.displayName ?? '-'} {u.admin && <Badge tone="pink">แอดมิน</Badge>}</div><div className="text-xs text-muted">{u.email}</div></td>
                       <td className="px-4 py-3">{u.tiktokUsername ? `@${u.tiktokUsername}` : '-'}</td>
+                      <td className="px-4 py-3 text-xs">
+                        {u.live?.status === 'live' ? <Badge tone="mint">🔴 ไลฟ์อยู่</Badge> : u.live?.status === 'online' ? <Badge tone="violet">เปิดเว็บ รอไลฟ์</Badge> : <Badge tone="gray">ออฟไลน์</Badge>}
+                        {u.live?.status === 'live' && <div className="mt-1 text-muted">👀 {(u.live.viewers ?? 0).toLocaleString('th-TH')} · 💎 {(u.live.diamonds ?? 0).toLocaleString('th-TH')} · {ago(u.live.since ?? null)}</div>}
+                        <div className="mt-1 text-muted">ไลฟ์ล่าสุด {u.lastLiveAt ? d(u.lastLiveAt) : '-'} · 30 วัน {u.lives30 ?? 0} ครั้ง</div>
+                      </td>
                       <td className="px-4 py-3"><Badge tone={PLAN[u.plan]?.[1] ?? 'gray'}>{PLAN[u.plan]?.[0] ?? u.plan}</Badge></td>
                       <td className="px-4 py-3 text-xs">{u.plan === 'trial' ? d(u.trialEndsAt) : u.plan === 'pro' ? d(u.subscription?.currentPeriodEnd) : '-'}{u.subscription?.provider ? <div className="text-muted">{u.subscription.provider}</div> : null}</td>
                       <td className="px-4 py-3 text-xs">{d(u.createdAt)}</td>

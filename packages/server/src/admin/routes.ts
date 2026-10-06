@@ -58,9 +58,17 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
       select: { id: true, email: true, displayName: true, tiktokUsername: true, role: true, createdAt: true,
         subscription: { select: { status: true, provider: true, currentPeriodEnd: true } } },
     });
+    // สถานะไลฟ์ของลูกค้า: ไลฟ์อยู่ / เปิดเว็บรอไลฟ์ / ออฟไลน์ + ไลฟ์ล่าสุด + จำนวนไลฟ์ 30 วัน
+    const hub = getHub(), rooms = new Map((hub?.listRooms() ?? []).map((r) => [r.username.toLowerCase(), r]));
+    const all = listLives(), cut = Date.now() - 30 * DAY;
     const users = await Promise.all(rows.map(async (u) => {
       const ent = await getEntitlements(u.id);
-      return { ...u, plan: ent.plan, trialEndsAt: ent.trialEndsAt ?? null, trialEnd: trialEndOf(u.createdAt), admin: u.role === 'ADMIN' || config.adminEmails.includes(u.email.toLowerCase()) };
+      const tk = (u.tiktokUsername ?? '').toLowerCase(), room = tk ? rooms.get(tk) : undefined;
+      const mine = tk ? all.filter((l) => l.username.toLowerCase() === tk) : [];
+      const live = room?.connected
+        ? { status: 'live' as const, viewers: room.viewers, diamonds: room.diamonds, since: room.connectedAt }
+        : { status: hub?.webOpen(u.id) || room ? 'online' as const : 'offline' as const };
+      return { ...u, live, lastLiveAt: mine.at(-1)?.startedAt ?? null, lives30: mine.filter((l) => new Date(l.startedAt).getTime() >= cut).length, plan: ent.plan, trialEndsAt: ent.trialEndsAt ?? null, trialEnd: trialEndOf(u.createdAt), admin: u.role === 'ADMIN' || config.adminEmails.includes(u.email.toLowerCase()) };
     }));
     return { users };
   });

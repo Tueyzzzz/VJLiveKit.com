@@ -58,6 +58,40 @@ export class RoomHub {
   static configChannel(userId: string, widget: string) { return `cfg:${userId}:${widget}`; }
   /** แดชบอร์ดที่เปิด "ลำโพง" ไว้ (เล่นเสียงจากกฎบนเว็บ แบบ TikFinity) */
   static speakerChannel(userId: string) { return `spk:${userId}`; }
+  /** แดชบอร์ดที่เปิดเสียงอยู่ (เสียงกฎดังที่เว็บ → จอ fx ไม่ต้องเล่นซ้ำ) */
+  static soundChannel(userId: string) { return `snd:${userId}`; }
+
+  // ---- ล็อกแบบ TikFinity: วิดเจ็ตทำงานเฉพาะตอนวีเจเปิดหน้าเว็บ (แดชบอร์ด) ค้างไว้ ----
+  // ประหยัดเซิร์ฟเวอร์: ไม่ต่อ TikTok ให้ลิงก์ที่ถูกทิ้งไว้ใน OBS ตอนวีเจไม่ได้ใช้งาน
+  private presence = new Map<string, number>();
+  private waiting = new Map<string, Set<{ on: () => void; off: () => void }>>();
+  private graceTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  private readonly PRESENCE_GRACE_MS = 90_000; // รีเฟรช/เปลี่ยนหน้าเว็บ ไม่ทำให้จอดับ
+
+  isPresent(ownerId: string): boolean { return (this.presence.get(ownerId) ?? 0) > 0 || this.graceTimers.has(ownerId); }
+
+  /** แดชบอร์ดเปิด/ปิด → ปลุก/พักวิดเจ็ตของวีเจคนนั้น */
+  presenceUp(ownerId: string): void {
+    const n = (this.presence.get(ownerId) ?? 0) + 1; this.presence.set(ownerId, n);
+    const g = this.graceTimers.get(ownerId);
+    if (g) { clearTimeout(g); this.graceTimers.delete(ownerId); }
+    else if (n === 1) for (const w of this.waiting.get(ownerId) ?? []) w.on();
+  }
+  presenceDown(ownerId: string): void {
+    const n = Math.max(0, (this.presence.get(ownerId) ?? 1) - 1);
+    if (n > 0) { this.presence.set(ownerId, n); return; }
+    this.presence.delete(ownerId);
+    this.graceTimers.set(ownerId, setTimeout(() => {
+      this.graceTimers.delete(ownerId);
+      if ((this.presence.get(ownerId) ?? 0) === 0) for (const w of this.waiting.get(ownerId) ?? []) w.off();
+    }, this.PRESENCE_GRACE_MS));
+  }
+  /** วิดเจ็ตลงทะเบียนรอ — on() เมื่อแดชบอร์ดเปิด, off() เมื่อปิด · คืนฟังก์ชันยกเลิก */
+  watchPresence(ownerId: string, w: { on: () => void; off: () => void }): () => void {
+    let set = this.waiting.get(ownerId); if (!set) this.waiting.set(ownerId, (set = new Set()));
+    set.add(w);
+    return () => { set!.delete(w); if (!set!.size) this.waiting.delete(ownerId); };
+  }
 
   /** ส่งอีเวนต์ให้ overlay ของเจ้าของ (เช่น โดเนทที่ยืนยันแล้ว) */
   emitOwner(userId: string, username: string, event: string, payload: unknown): void {
@@ -70,7 +104,7 @@ export class RoomHub {
    */
   fireAction(ownerId: string, username: string, fire: object & { action: { type: string } }): void {
     const spk = RoomHub.speakerChannel(ownerId);
-    const speakers = this.io.sockets.adapter.rooms.get(spk)?.size ?? 0;
+    const speakers = this.io.sockets.adapter.rooms.get(RoomHub.soundChannel(ownerId))?.size ?? 0;
     this.io.to(spk).emit('action', fire);
     this.io.to(RoomHub.ownerChannel(ownerId, username)).emit('action', speakers && fire.action.type === 'sound' ? { ...fire, elsewhere: true } : fire);
   }

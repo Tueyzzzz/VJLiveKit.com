@@ -76,11 +76,16 @@ export function setupRealtime(httpServer: HttpServer): RoomHub {
         const user = claims ? await prisma.user.findUnique({ where: { id: claims.userId }, select: { tiktokUsername: true } }).catch(() => null) : null;
         if (!claims || !user?.tiktokUsername || socket.disconnected) { socket.disconnect(true); return; }
         socket.join(RoomHub.speakerChannel(claims.userId));
+        hub.presenceUp(claims.userId); // เปิดเว็บอยู่ → วิดเจ็ตของวีเจทำงาน
+        const snd = RoomHub.soundChannel(claims.userId);
+        if (socket.handshake.query.play !== '0') socket.join(snd);
+        socket.on('speaker', (p: { play?: boolean }) => { if (p?.play) socket.join(snd); else socket.leave(snd); });
+        socket.once('disconnect', () => hub.presenceDown(claims.userId));
         const room = user.tiktokUsername;
+        socket.emit('ready', { username: room });
         await hub.attach(room, claims.userId).catch(() => null);
         if (socket.disconnected) { hub.detach(room, claims.userId); return; }
         socket.once('disconnect', () => hub.detach(room, claims.userId));
-        socket.emit('ready', { username: room });
       })();
       return;
     }
@@ -101,8 +106,6 @@ export function setupRealtime(httpServer: HttpServer): RoomHub {
 
       const { username: room, ownerId } = viewer;
       socket.emit('brand', { show: !!viewer.watermark }); // ป้าย VJLiveKit มุมจอ (ฟรี/ทดลอง) — Pro ไม่มี
-      socket.join(RoomHub.roomChannel(room));
-      if (ownerId) socket.join(RoomHub.ownerChannel(ownerId, room));
       // ตั้งค่าวิดเจ็ตที่บันทึกจาก Dashboard → ส่งให้ overlay (แก้ใน Dashboard แล้วจอเปลี่ยนทันที ไม่ต้องเปลี่ยนลิงก์)
       if (ownerId && widget && isWidgetType(widget)) {
         socket.join(RoomHub.configChannel(ownerId, widget));
@@ -112,11 +115,31 @@ export function setupRealtime(httpServer: HttpServer): RoomHub {
         } catch (err) { console.error('[socket] load widget config failed', err); }
         if (widget === 'fxmenu') socket.emit('menu', await hub.menuFor(ownerId));
       }
-      const state = await hub.attach(room, ownerId);
-      // หลุดไประหว่างรอเชื่อมต่อ -> คืนที่นั่งทันที
-      if (socket.disconnected) { hub.detach(room, ownerId); return; }
-      socket.once('disconnect', () => hub.detach(room, ownerId));
-      socket.emit('state', state);
+      // รับอีเวนต์ไลฟ์ + ต่อ TikTok (attach) — ลิงก์จริงต้องเปิดหน้าเว็บค้างไว้ (แบบ TikFinity) · โหมดเดโมไม่ล็อก
+      let active = false;
+      const on = () => {
+        if (active || socket.disconnected) return; active = true;
+        socket.join(RoomHub.roomChannel(room));
+        if (ownerId) socket.join(RoomHub.ownerChannel(ownerId, room));
+        socket.emit('status', { type: 'resumed' });
+        void hub.attach(room, ownerId).then((state) => {
+          if (!active) return;
+          if (socket.disconnected) { active = false; hub.detach(room, ownerId); return; }
+          socket.emit('state', state);
+        }).catch(() => { active = false; });
+      };
+      const off = () => {
+        if (!active) return; active = false;
+        socket.leave(RoomHub.roomChannel(room));
+        if (ownerId) socket.leave(RoomHub.ownerChannel(ownerId, room));
+        hub.detach(room, ownerId);
+        if (!socket.disconnected) socket.emit('status', { type: 'error', fatal: true, message: '⏸ เปิดหน้าเว็บ vjlivekit.com ค้างไว้ระหว่างไลฟ์ วิดเจ็ตถึงจะทำงาน' });
+      };
+      if (!ownerId) { on(); socket.once('disconnect', off); return; }
+      const unwatch = hub.watchPresence(ownerId, { on, off });
+      socket.once('disconnect', () => { unwatch(); off(); });
+      if (hub.isPresent(ownerId)) on(); else off_notice();
+      function off_notice() { socket.emit('status', { type: 'error', fatal: true, message: '⏸ เปิดหน้าเว็บ vjlivekit.com ค้างไว้ระหว่างไลฟ์ วิดเจ็ตถึงจะทำงาน' }); }
     })();
   });
 

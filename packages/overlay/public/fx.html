@@ -26,21 +26,20 @@
   .trow { display:flex; gap:calc(18px * var(--s,1)); justify-content:center; align-items:flex-start; }
   .tslot { width:calc(260px * var(--s,1)); perspective:1200px; }
   .tslot .lbl { font-size:calc(22px * var(--s,1) + 4px); margin-bottom:8px; color:#ffe7b0; text-shadow:0 2px 6px rgba(0,0,0,.7); animation:tPop .4s both; white-space:nowrap; }
-  .tcard { position:relative; width:260px; height:430px; transform-origin:0 0; transform-style:preserve-3d; animation:tFlip 1.1s cubic-bezier(.5,0,.2,1) both; }
-  .tbox { width:calc(260px * var(--s,1)); height:calc(430px * var(--s,1)); }
+  .tcard { position:relative; width:260px; height:390px; transform-origin:0 0; transform-style:preserve-3d; animation:tFlip 1.1s cubic-bezier(.5,0,.2,1) both; }
+  .tbox { width:calc(260px * var(--s,1)); height:calc(390px * var(--s,1)); }
   .tbox > .tcard { transform:scale(var(--s,1)); transform-origin:0 0; animation:none; }
   .tbox > .tcard > .tin { position:absolute; inset:0; transform-style:preserve-3d; animation:tFlip 1.1s cubic-bezier(.5,0,.2,1) both; animation-delay:inherit; }
-  .tface { position:absolute; inset:0; border-radius:20px; backface-visibility:hidden; -webkit-backface-visibility:hidden; overflow:hidden;
-    box-shadow:0 20px 50px rgba(30,10,60,.55), 0 0 0 4px #e9c97a inset, 0 0 0 9px #2a1a4a inset, 0 0 0 11px #e9c97a inset; }
-  .tback { background:radial-gradient(circle at 50% 50%, #5a3a9a 0, #2a1650 60%, #170b30 100%); display:grid; place-items:center; }
-  .tback::before { content:'✦'; font-size:120px; color:#e9c97a; text-shadow:0 0 20px rgba(233,201,122,.8); }
-  .tback::after { content:''; position:absolute; inset:24px; border-radius:14px; border:2px dashed rgba(233,201,122,.55); }
-  .tfront { transform:rotateY(180deg); background:linear-gradient(180deg,#fff8ea,#f6e7c8); color:#3a2350; display:flex; flex-direction:column; align-items:center; padding:26px 20px; box-sizing:border-box; }
-  .tfront .num { font-size:26px; color:#9a6b1f; letter-spacing:2px; }
-  .tfront .sym { font-size:120px; line-height:1; margin:18px 0 10px; filter:drop-shadow(0 6px 10px rgba(120,80,40,.3)); }
-  .tfront .th { font-size:34px; font-weight:bold; }
-  .tfront .en { font-size:16px; color:#8a6aa8; margin-top:2px; }
-  .tfront .mean { font-size:19px; margin-top:16px; line-height:1.35; }
+  /* รูปไพ่วาดขอบทองมาในตัวแล้ว — แถบม่วงด้านล่าง (~84–96%) เว้นไว้ใส่ชื่อไพ่ */
+  .tface { position:absolute; inset:0; border-radius:12px; backface-visibility:hidden; -webkit-backface-visibility:hidden; overflow:hidden;
+    background:#1c1036 center/cover no-repeat; box-shadow:0 20px 50px rgba(20,8,45,.6); }
+  .tback { background-image:url(tarot/back.webp); }
+  .tfront { transform:rotateY(180deg); }
+  .tfront .tname { position:absolute; left:8%; right:8%; top:84%; bottom:4.5%; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .tfront .th { font-size:25px; font-weight:bold; color:#ffe7b0; text-shadow:0 0 10px rgba(255,200,120,.55), 0 2px 3px rgba(0,0,0,.6); line-height:1.15; white-space:nowrap; }
+  .tfront .en { font-size:12px; color:#d7c3ff; letter-spacing:1px; margin-top:2px; white-space:nowrap; }
+  .tslot .mean { width:calc(260px * var(--s,1)); margin-top:calc(10px * var(--s,1)); font-size:calc(17px * var(--s,1) + 3px); line-height:1.35; color:#fff;
+    text-shadow:0 2px 6px rgba(0,0,0,.85), 0 0 2px rgba(0,0,0,.8); animation:tPop .5s both; }
   .tarot .extra { font-size:22px; margin-top:12px; text-shadow:0 2px 6px rgba(0,0,0,.7); animation:tPop .5s 1.7s both; }
   .tglow { position:absolute; left:50%; top:50%; width:520px; height:520px; transform:translate(-50%,-50%); border-radius:50%; pointer-events:none;
     background:radial-gradient(circle, rgba(255,226,150,.55), rgba(255,226,150,0) 65%); animation:tGlow 1.6s 1.3s ease-out both; z-index:-1; }
@@ -68,31 +67,88 @@
     function fill(text,ev){ const u=ev&&ev.user?(ev.user.nickname||ev.user.uniqueId):''; return String(text||'').replace(/\{user\}/g,u); }
     function showText(text,dur){ const t=document.createElement('div'); t.className='text'; t.textContent=text; fx.appendChild(t); clearLater(t,dur); }
 
-    // ---- ไพ่ทาโร่ (Major Arcana 22 ใบ) — ต่อคิวเปิดทีละใบ ----
+    // ---- ไพ่ทาโร่ครบสำรับ 78 ใบ (รูปใน /overlay/tarot/) — [ไฟล์, เลข, ชื่อไทย, English, คำทำนาย] ----
     const TAROT=[
-      ['0','คนโง่','The Fool','🃏','การเริ่มต้นใหม่ กล้าลองสิ่งใหม่ โอกาสดีกำลังมา'],
-      ['I','นักมายากล','The Magician','🪄','พลังสร้างสรรค์เต็มเปี่ยม ลงมือทำอะไรก็สำเร็จ'],
-      ['II','นักบวชหญิง','The High Priestess','🌙','สัญชาตญาณแม่นยำ ฟังเสียงหัวใจตัวเอง'],
-      ['III','จักรพรรดินี','The Empress','👑','ความอุดมสมบูรณ์ ความรักและโชคลาภงอกงาม'],
-      ['IV','จักรพรรดิ','The Emperor','🏛️','มั่นคง เป็นผู้นำ คุมเกมได้ทุกสถานการณ์'],
-      ['V','พระสังฆราช','The Hierophant','📜','จะได้คำแนะนำดี ๆ จากคนที่หวังดี'],
-      ['VI','คู่รัก','The Lovers','💞','ความรักหวานซึ้ง การเลือกที่ใช่สำหรับคุณ'],
-      ['VII','รถศึก','The Chariot','🏇','ชัยชนะอยู่ไม่ไกล มุ่งหน้าต่อไปอย่าหยุด'],
-      ['VIII','พลัง','Strength','🦁','เข้มแข็งจากข้างใน ใจเย็นแต่หนักแน่น'],
-      ['IX','ฤๅษี','The Hermit','🏮','ช่วงเวลาทบทวน คำตอบอยู่ในตัวคุณเอง'],
-      ['X','กงล้อแห่งโชคชะตา','Wheel of Fortune','🎡','โชคหมุนมาหา จังหวะชีวิตกำลังดีขึ้น'],
-      ['XI','ความยุติธรรม','Justice','⚖️','สิ่งดีที่ทำไว้ กำลังจะได้รับผลตอบแทน'],
-      ['XII','คนแขวน','The Hanged Man','🙃','ลองมองมุมใหม่ แล้วจะเห็นทางออก'],
-      ['XIII','การเปลี่ยนแปลง','Death','🦋','ปิดฉากเก่า เปิดบทใหม่ที่ดีกว่าเดิม'],
-      ['XIV','ความพอดี','Temperance','🏺','ชีวิตสมดุล ทุกอย่างลงตัวพอดี'],
-      ['XV','ปีศาจ','The Devil','😈','ระวังสิ่งล่อใจ แล้วคุณจะเป็นอิสระ'],
-      ['XVI','หอคอย','The Tower','🗼','เรื่องเซอร์ไพรส์ เปิดทางสู่สิ่งใหม่'],
-      ['XVII','ดวงดาว','The Star','⭐','ความหวังเป็นจริง สิ่งที่ขอกำลังจะสมหวัง'],
-      ['XVIII','ดวงจันทร์','The Moon','🌕','ฝันดี จินตนาการพาไปไกล ใช้ใจนำทาง'],
-      ['XIX','ดวงอาทิตย์','The Sun','☀️','ความสุข ความสำเร็จ พลังบวกเต็มร้อย'],
-      ['XX','การพิพากษา','Judgement','📯','การตื่นรู้ และโอกาสครั้งใหม่'],
-      ['XXI','โลก','The World','🌍','สำเร็จสมบูรณ์ ครบทุกด้าน'],
+      ['m00','0','คนโง่','The Fool','การเริ่มต้นใหม่ กล้าลองสิ่งใหม่ โอกาสดีกำลังมา'],
+      ['m01','I','นักมายากล','The Magician','พลังสร้างสรรค์เต็มเปี่ยม ลงมือทำอะไรก็สำเร็จ'],
+      ['m02','II','นักบวชหญิง','The High Priestess','สัญชาตญาณแม่นยำ ฟังเสียงหัวใจตัวเอง'],
+      ['m03','III','จักรพรรดินี','The Empress','ความอุดมสมบูรณ์ ความรักและโชคลาภงอกงาม'],
+      ['m04','IV','จักรพรรดิ','The Emperor','มั่นคง เป็นผู้นำ คุมเกมได้ทุกสถานการณ์'],
+      ['m05','V','พระสังฆราช','The Hierophant','จะได้คำแนะนำดี ๆ จากคนที่หวังดี'],
+      ['m06','VI','คู่รัก','The Lovers','ความรักหวานซึ้ง การเลือกที่ใช่สำหรับคุณ'],
+      ['m07','VII','รถศึก','The Chariot','ชัยชนะอยู่ไม่ไกล มุ่งหน้าต่อไปอย่าหยุด'],
+      ['m08','VIII','พลัง','Strength','เข้มแข็งจากข้างใน ใจเย็นแต่หนักแน่น'],
+      ['m09','IX','ฤๅษี','The Hermit','ช่วงเวลาทบทวน คำตอบอยู่ในตัวคุณเอง'],
+      ['m10','X','กงล้อแห่งโชคชะตา','Wheel of Fortune','โชคหมุนมาหา จังหวะชีวิตกำลังดีขึ้น'],
+      ['m11','XI','ความยุติธรรม','Justice','สิ่งดีที่ทำไว้ กำลังจะได้รับผลตอบแทน'],
+      ['m12','XII','คนแขวน','The Hanged Man','ลองมองมุมใหม่ แล้วจะเห็นทางออก'],
+      ['m13','XIII','การเปลี่ยนแปลง','Death','ปิดฉากเก่า เปิดบทใหม่ที่ดีกว่าเดิม'],
+      ['m14','XIV','ความพอดี','Temperance','ชีวิตสมดุล ทุกอย่างลงตัวพอดี'],
+      ['m15','XV','ปีศาจ','The Devil','ระวังสิ่งล่อใจ แล้วคุณจะเป็นอิสระ'],
+      ['m16','XVI','หอคอย','The Tower','เรื่องเซอร์ไพรส์ เปิดทางสู่สิ่งใหม่'],
+      ['m17','XVII','ดวงดาว','The Star','ความหวังเป็นจริง สิ่งที่ขอกำลังจะสมหวัง'],
+      ['m18','XVIII','ดวงจันทร์','The Moon','ฝันดี จินตนาการพาไปไกล ใช้ใจนำทาง'],
+      ['m19','XIX','ดวงอาทิตย์','The Sun','ความสุข ความสำเร็จ พลังบวกเต็มร้อย'],
+      ['m20','XX','การพิพากษา','Judgement','การตื่นรู้ และโอกาสครั้งใหม่'],
+      ['m21','XXI','โลก','The World','สำเร็จสมบูรณ์ ครบทุกด้าน'],
+      ['w-01','','เอซไม้เท้า','Ace of Wands','ไฟแห่งแรงบันดาลใจ เริ่มโปรเจกต์ใหม่ได้เลย'],
+      ['w-02','','2 ไม้เท้า','Two of Wands','วางแผนไกล โอกาสใหม่รออยู่ข้างหน้า'],
+      ['w-03','','3 ไม้เท้า','Three of Wands','สิ่งที่ลงมือทำกำลังเริ่มเห็นผล'],
+      ['w-04','','4 ไม้เท้า','Four of Wands','ฉลองความสำเร็จ บ้านอบอุ่นมีความสุข'],
+      ['w-05','','5 ไม้เท้า','Five of Wands','การแข่งขันที่ทำให้เก่งขึ้น สู้ต่อไป'],
+      ['w-06','','6 ไม้เท้า','Six of Wands','ชัยชนะ ได้รับคำชื่นชมจากคนรอบตัว'],
+      ['w-07','','7 ไม้เท้า','Seven of Wands','ยืนหยัดในสิ่งที่เชื่อ แล้วจะชนะ'],
+      ['w-08','','8 ไม้เท้า','Eight of Wands','ข่าวดีมาเร็ว ทุกอย่างกำลังเดินหน้า'],
+      ['w-09','','9 ไม้เท้า','Nine of Wands','อดทนอีกนิด เส้นชัยอยู่ใกล้แล้ว'],
+      ['w-10','','10 ไม้เท้า','Ten of Wands','งานเยอะแต่คุ้มค่า แบ่งเบาภาระบ้างนะ'],
+      ['w-page','','เพจไม้เท้า','Page of Wands','ข่าวดีและไอเดียสดใหม่กำลังมา'],
+      ['w-knight','','อัศวินไม้เท้า','Knight of Wands','พลังเต็มเปี่ยม ออกเดินทางผจญภัย'],
+      ['w-queen','','ราชินีไม้เท้า','Queen of Wands','มั่นใจ มีเสน่ห์ ใครเห็นก็หลงรัก'],
+      ['w-king','','ราชาไม้เท้า','King of Wands','ผู้นำที่มีวิสัยทัศน์ ทำอะไรก็สำเร็จ'],
+      ['c-01','','เอซถ้วย','Ace of Cups','ความรักใหม่ หัวใจเปี่ยมด้วยความสุข'],
+      ['c-02','','2 ถ้วย','Two of Cups','ความสัมพันธ์ที่ลงตัว ใจตรงกัน'],
+      ['c-03','','3 ถ้วย','Three of Cups','งานฉลองกับเพื่อน มิตรภาพแสนดี'],
+      ['c-04','','4 ถ้วย','Four of Cups','ลองมองสิ่งดี ๆ ที่มีอยู่ตรงหน้า'],
+      ['c-05','','5 ถ้วย','Five of Cups','ปล่อยวางเรื่องเก่า ยังมีสิ่งดีเหลืออยู่'],
+      ['c-06','','6 ถ้วย','Six of Cups','ความทรงจำหวาน ๆ คนเก่าคิดถึง'],
+      ['c-07','','7 ถ้วย','Seven of Cups','มีทางเลือกเยอะ เลือกด้วยใจ'],
+      ['c-08','','8 ถ้วย','Eight of Cups','ถึงเวลาก้าวไปหาสิ่งที่ดีกว่า'],
+      ['c-09','','9 ถ้วย','Nine of Cups','สมหวังในสิ่งที่ขอ ไพ่แห่งคำอธิษฐาน'],
+      ['c-10','','10 ถ้วย','Ten of Cups','ครอบครัวอบอุ่น ความสุขสมบูรณ์'],
+      ['c-page','','เพจถ้วย','Page of Cups','ข่าวดีเรื่องความรัก มีคนแอบชอบ'],
+      ['c-knight','','อัศวินถ้วย','Knight of Cups','คำเชิญชวนโรแมนติก รักกำลังมา'],
+      ['c-queen','','ราชินีถ้วย','Queen of Cups','อ่อนโยน เข้าใจผู้อื่น ใจดีเป็นที่รัก'],
+      ['c-king','','ราชาถ้วย','King of Cups','ใจเย็น สุขุม ดูแลทุกคนได้ดี'],
+      ['s-01','','เอซดาบ','Ace of Swords','ความคิดเฉียบคม เห็นความจริงชัดเจน'],
+      ['s-02','','2 ดาบ','Two of Swords','ใจเย็นก่อนตัดสินใจ คำตอบจะชัดเอง'],
+      ['s-03','','3 ดาบ','Three of Swords','ปล่อยความเศร้า แล้วใจจะเบาสบาย'],
+      ['s-04','','4 ดาบ','Four of Swords','พักผ่อนให้เต็มที่ ชาร์จพลังใหม่'],
+      ['s-05','','5 ดาบ','Five of Swords','เลือกสู้ในเรื่องที่สำคัญจริง ๆ'],
+      ['s-06','','6 ดาบ','Six of Swords','กำลังเดินทางสู่ช่วงเวลาที่ดีกว่า'],
+      ['s-07','','7 ดาบ','Seven of Swords','ใช้ไหวพริบ วางแผนให้รอบคอบ'],
+      ['s-08','','8 ดาบ','Eight of Swords','ทางออกมีเสมอ แค่เปิดตาให้กว้าง'],
+      ['s-09','','9 ดาบ','Nine of Swords','อย่าคิดมาก พรุ่งนี้จะดีกว่าวันนี้'],
+      ['s-10','','10 ดาบ','Ten of Swords','จบเรื่องร้าย เริ่มต้นใหม่ที่สดใส'],
+      ['s-page','','เพจดาบ','Page of Swords','อยากรู้อยากเห็น เรียนรู้ได้ไว'],
+      ['s-knight','','อัศวินดาบ','Knight of Swords','มุ่งมั่นพุ่งชน ไปถึงเป้าหมายเร็ว'],
+      ['s-queen','','ราชินีดาบ','Queen of Swords','ฉลาด ตรงไปตรงมา น่าเชื่อถือ'],
+      ['s-king','','ราชาดาบ','King of Swords','มีเหตุผล ตัดสินใจเด็ดขาด'],
+      ['p-01','','เอซเหรียญ','Ace of Pentacles','โอกาสทางการเงินใหม่ ๆ เข้ามา'],
+      ['p-02','','2 เหรียญ','Two of Pentacles','บริหารหลายอย่างได้คล่อง'],
+      ['p-03','','3 เหรียญ','Three of Pentacles','ทำงานเป็นทีม ได้รับการยอมรับ'],
+      ['p-04','','4 เหรียญ','Four of Pentacles','เก็บออมได้ดี การเงินมั่นคง'],
+      ['p-05','','5 เหรียญ','Five of Pentacles','ยังมีคนพร้อมช่วยเหลือเสมอ'],
+      ['p-06','','6 เหรียญ','Six of Pentacles','ให้แล้วได้รับกลับคืน แบ่งปันความสุข'],
+      ['p-07','','7 เหรียญ','Seven of Pentacles','ลงทุนลงแรงไว้ ใกล้เก็บเกี่ยวผล'],
+      ['p-08','','8 เหรียญ','Eight of Pentacles','ฝีมือพัฒนาขึ้น ตั้งใจแล้วสำเร็จ'],
+      ['p-09','','9 เหรียญ','Nine of Pentacles','สบาย มีความสุขกับผลงานตัวเอง'],
+      ['p-10','','10 เหรียญ','Ten of Pentacles','ร่ำรวย มั่นคง ครอบครัวพร้อมหน้า'],
+      ['p-page','','เพจเหรียญ','Page of Pentacles','โอกาสเรียนรู้สิ่งใหม่ที่มีค่า'],
+      ['p-knight','','อัศวินเหรียญ','Knight of Pentacles','ค่อยเป็นค่อยไป แต่มั่นคงแน่นอน'],
+      ['p-queen','','ราชินีเหรียญ','Queen of Pentacles','อุดมสมบูรณ์ ดูแลทุกคนได้ดี'],
+      ['p-king','','ราชาเหรียญ','King of Pentacles','มั่งคั่ง ประสบความสำเร็จเต็มที่'],
     ];
+    const deckOf=(d)=>d==='major'?TAROT.slice(0,22):TAROT; // ตั้งค่า deck=major = ใช้เฉพาะชุดใหญ่ 22 ใบ
     const tarotQ=[]; let tarotBusy=false;
     function tarot(a,ev){ tarotQ.push([a,ev]); if(!tarotBusy) nextTarot(); }
     const LABELS={1:[''],3:['อดีต','ปัจจุบัน','อนาคต'],7:['อดีต','ปัจจุบัน','อนาคตอันใกล้','คำแนะนำ','สิ่งรอบตัว','ความหวัง','ผลลัพธ์']};
@@ -103,8 +159,8 @@
       const portrait=innerHeight>innerWidth*1.05;
       // การจัดวาง: แนวนอน = แถวเดียว (7 ใบโค้งเกือกม้า) · แนวตั้ง = 7 ใบเป็น 2-3-2
       const rows=n===7&&portrait?[2,3,2]:[n], maxRow=Math.max(...rows), arc=n===7&&!portrait;
-      const scale=Math.min(n===7?(portrait?0.78:0.62):n===3?(portrait?0.95:0.85):1, (innerWidth*0.94-(maxRow-1)*18)/(maxRow*260), (innerHeight*0.86-rows.length*36-(rows.length-1)*22-(arc?60:0))/(rows.length*430)), step=n===1?0:(n===7?0.9:1.4); // ขนาดไพ่/ระยะเวลาเปิดทีละใบ (วินาที)
-      const deck=TAROT.slice().sort(()=>Math.random()-0.5).slice(0,n); // ไม่ซ้ำกันในชุดเดียว
+      const scale=Math.min(n===7?(portrait?0.78:0.62):n===3?(portrait?0.95:0.85):1, (innerWidth*0.94-(maxRow-1)*18)/(maxRow*260), (innerHeight*0.86-rows.length*36-(rows.length-1)*22-(arc?60:0))/(rows.length*470)), step=n===1?0:(n===7?0.9:1.4); // ขนาดไพ่/ระยะเวลาเปิดทีละใบ (วินาที)
+      const deck=deckOf(Overlay.param('deck','full')).slice().sort(()=>Math.random()-0.5).slice(0,n); // ไม่ซ้ำกันในชุดเดียว
       const u=ev&&ev.user?(ev.user.nickname||ev.user.uniqueId):'';
       const el=document.createElement('div'); el.className='tarot'; el.style.setProperty('--s',String(scale));
       const who=document.createElement('div'); who.className='who'; who.textContent=(u?`🔮 ไพ่ของ ${u}`:'🔮 ไพ่ของคุณ')+(n>1?` · ${n} ใบ`:''); el.appendChild(who);
@@ -116,16 +172,23 @@
         const slot=document.createElement('div'); slot.className='tslot';
         if(LABELS[n][k]){ const l=document.createElement('div'); l.className='lbl'; l.textContent=LABELS[n][k]; l.style.animationDelay=delay+'s'; slot.appendChild(l); }
         const box=document.createElement('div'); box.className='tbox';
-        box.innerHTML='<div class="tcard"><div class="tin"><div class="tglow"></div><div class="tface tback"></div><div class="tface tfront"><div class="num"></div><div class="sym"></div><div class="th"></div><div class="en"></div><div class="mean"></div></div></div></div>';
+        box.innerHTML='<div class="tcard"><div class="tin"><div class="tglow"></div><div class="tface tback"></div><div class="tface tfront"><div class="tname"><div class="th"></div><div class="en"></div></div></div></div></div>';
         box.querySelector('.tin').style.animationDelay=delay+'s'; box.querySelector('.tglow').style.animationDelay=(delay+0.6)+'s';
-        const f=box.querySelector('.tfront'); f.querySelector('.num').textContent=c[0]; f.querySelector('.sym').textContent=c[3];
-        f.querySelector('.th').textContent=c[1]; f.querySelector('.en').textContent=c[2]; f.querySelector('.mean').textContent=c[4];
+        const f=box.querySelector('.tfront'); f.style.backgroundImage=`url(tarot/${c[0]}.webp)`;
+        const th=f.querySelector('.th'); th.textContent=c[2]; if(c[2].length>13) th.style.fontSize=Math.max(16,25-(c[2].length-13)*1.3)+'px';
+        f.querySelector('.en').textContent=(c[1]?c[1]+' · ':'')+c[3];
         if(arc){ const t=(k-3)/3; slot.style.transform=`translateY(${(t*t*60*scale).toFixed(1)}px) rotate(${(t*9).toFixed(1)}deg)`; } // โค้งเกือกม้า
-        slot.appendChild(box); rowOf(k).appendChild(slot);
+        slot.appendChild(box);
+        const m=document.createElement('div'); m.className='mean'; m.textContent=c[4]; m.style.animationDelay=(delay+1.1)+'s'; slot.appendChild(m);
+        rowOf(k).appendChild(slot);
       });
       const extra=fill(a.text,ev); if(extra){ const x=document.createElement('div'); x.className='extra'; x.textContent=extra; x.style.animationDelay=(1+n*step)+'s'; el.appendChild(x); }
-      fx.appendChild(el);
-      setTimeout(()=>{ el.style.animation='fade .5s forwards'; setTimeout(()=>{ el.remove(); nextTarot(); },500); }, dur);
+      // โหลดรูปไพ่ที่สุ่มได้ให้เสร็จก่อนค่อยโชว์ (กันไพ่พลิกแล้วเจอกรอบว่าง) — รอไม่เกิน 2.5 วิ
+      const imgs=['back',...deck.map((c)=>c[0])].map((f)=>new Promise((r)=>{ const i=new Image(); i.onload=i.onerror=r; i.src=`tarot/${f}.webp`; }));
+      Promise.race([Promise.all(imgs), new Promise((r)=>setTimeout(r,2500))]).then(()=>{
+        fx.appendChild(el);
+        setTimeout(()=>{ el.style.animation='fade .5s forwards'; setTimeout(()=>{ el.remove(); nextTarot(); },500); }, dur);
+      });
     }
 
     function play(a,ev){

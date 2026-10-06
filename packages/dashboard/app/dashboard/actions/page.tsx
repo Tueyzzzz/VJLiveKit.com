@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { Check, Copy, Pencil, Play, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { Alert, Badge, Button, Card, Field, Input, PageHeader, Select, Spinner } from '@/components/ui';
-import { GiftPicker } from '@/components/GiftPicker';
+import { GiftCell, GiftPicker } from '@/components/GiftPicker';
 import { toDigits } from '@/components/NumberInput';
 import { api, ApiError, type OverlayTokenRow, type ActionType, type Rule, type TarotDeck, type TarotTopic, type TriggerEvent } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -330,7 +330,7 @@ export default function ActionsPage() {
       ) : (
         <Card className="p-0">
           <div className="flex items-center justify-between border-b border-line px-5 py-3 text-xs text-muted">
-            <span>{rules.length}/{entitlements?.maxActionRules ?? '-'} กฎ</span>
+            <span className="flex items-center gap-3"><span className="w-11 shrink-0" /><span className="w-24 text-center">ของขวัญ</span><span>{rules.length}/{entitlements?.maxActionRules ?? '-'} กฎ</span></span>
             <span>มีผลกับไลฟ์ทันทีหลังบันทึก</span>
           </div>
           <ul className="divide-y divide-line">
@@ -340,6 +340,7 @@ export default function ActionsPage() {
                   className={`relative h-6 w-11 shrink-0 rounded-full transition ${r.enabled ? 'bg-mint' : 'bg-gray-200'}`}>
                   <span className={`absolute top-0.5 size-5 rounded-full bg-white shadow transition ${r.enabled ? 'left-5.5' : 'left-0.5'}`} />
                 </button>
+                <GiftCell name={r.trigger.giftName} event={r.trigger.event} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 font-medium">{r.name} {!r.enabled && <Badge tone="gray">ปิดอยู่</Badge>}</div>
                   <div className="truncate text-sm text-muted">{describe(r)}</div>

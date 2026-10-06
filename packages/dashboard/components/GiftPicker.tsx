@@ -10,6 +10,36 @@ const EMOJI: Record<string, string> = { rose: '🌹', 'finger heart': '🫰', pe
 
 let cache: Gift[] | null = null;
 
+let pending: Promise<Gift[]> | null = null;
+/** รายการของขวัญ (โหลดครั้งเดียว ใช้ร่วมกันทั้งหน้า) */
+export function useGifts(): Gift[] {
+  const [gifts, setGifts] = useState<Gift[]>(cache ?? []);
+  useEffect(() => {
+    if (cache) return;
+    pending ??= api<{ gifts: Gift[] }>('/api/gifts').then((r) => (cache = r.gifts)).catch(() => []);
+    void pending.then(setGifts);
+  }, []);
+  return gifts;
+}
+
+/** ช่องของขวัญในรายการกฎ: รูป + ชื่อ + ราคา · ไม่ระบุ = ทุกกิฟต์ */
+export function GiftCell({ name, event }: { name?: string; event: string }) {
+  const gifts = useGifts();
+  const g = name ? gifts.find((x) => x.name.toLowerCase() === name.toLowerCase()) : undefined;
+  const icon = event === 'gift' ? (name ? null : '🎁') : ({ follow: '➕', share: '🔗', like: '❤️', chat: '💬' } as Record<string, string>)[event] ?? '✨';
+  const label = event === 'gift' ? (name || 'ทุกกิฟต์') : ({ follow: 'ติดตาม', share: 'แชร์', like: 'กดไลก์', chat: 'แชท' } as Record<string, string>)[event] ?? event;
+  return (
+    <div className="flex w-24 shrink-0 flex-col items-center gap-0.5 text-center">
+      <div className="grid size-12 place-items-center rounded-xl bg-pink-soft/60">
+        {g?.image ? <img src={g.image} alt={g.name} className="size-10 object-contain" loading="lazy" />
+          : <span className="text-2xl">{icon ?? EMOJI[(name ?? '').toLowerCase()] ?? '🎁'}</span>}
+      </div>
+      <span className="w-full truncate text-xs font-medium" title={g?.th ? `${label} · ${g.th}` : label}>{g?.th || label}</span>
+      {g && <span className="text-[10px] text-muted">💎 {g.diamonds.toLocaleString()}</span>}
+    </div>
+  );
+}
+
 /** ดรอปดาวน์เลือกของขวัญ (มีรูป + ราคา) — พิมพ์ค้นหาหรือใส่ชื่อเองได้ · ว่าง = ทุกกิฟต์ */
 export function GiftPicker({ value, onChange }: { value: string; onChange: (name: string) => void }) {
   const [gifts, setGifts] = useState<Gift[]>(cache ?? []);

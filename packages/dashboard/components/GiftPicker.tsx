@@ -61,7 +61,7 @@ export function GiftPicker({ value, onChange }: { value: string; onChange: (name
               </button>
             )}
           </div>
-          <p className="mt-2 text-[10px] text-muted">รูปของขวัญจะขึ้นเองเมื่อมีคนส่งกิฟต์นั้นในไลฟ์ครั้งแรก · ชื่อต้องตรงกับชื่อภาษาอังกฤษใน TikTok</p>
+          <p className="mt-2 text-[10px] text-muted">รายการของขวัญและรูปจริงอัปเดตจาก TikTok อัตโนมัติ · ไม่เจอให้พิมพ์ชื่ออังกฤษตามใน TikTok</p>
         </div>
       )}
     </div>

@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events';
-import { recordGift } from './giftCatalog.js';
+import { recordGift, refreshFromRoom } from './giftCatalog.js';
 import { config } from '../config/index.js';
 import { emptyStats, type LiveStats, type NormalizedUser, type TikTokEvent, type TikTokEventType, type TopGifter } from './types.js';
 
@@ -123,6 +123,8 @@ export class TikTokRoom extends EventEmitter {
     this.connected = true;
     this.roomId = state?.roomId ? String(state.roomId) : null;
     this.emit('status', { type: 'connected', message: `เชื่อมต่อ @${this.username} สำเร็จ`, roomId: this.roomId });
+    const conn = this.connection as { fetchAvailableGifts?: () => Promise<unknown> };
+    if (conn?.fetchAvailableGifts) refreshFromRoom(() => conn.fetchAvailableGifts!()); // คลังของขวัญครบทุกตัวพร้อมรูปจริง
   }
 
   private bindRealEvents(): void {

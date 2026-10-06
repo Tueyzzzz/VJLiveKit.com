@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { Check, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { Alert, Badge, Button, Card, Field, Input, PageHeader, Select, Spinner } from '@/components/ui';
 import { GiftPicker } from '@/components/GiftPicker';
@@ -94,6 +94,10 @@ export default function ActionsPage() {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [error, setError] = useState<{ text: string; upgrade?: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
+  // กดแก้ไข/เพิ่มกฎ → เลื่อนขึ้นไปที่ฟอร์ม (ฟอร์มอยู่บนสุด ถ้าไม่เลื่อนจะดูเหมือนกดไม่ติด)
+  const formRef = useRef<HTMLDivElement>(null);
+  const draftKey = draft ? draft.id ?? 'new' : null;
+  useEffect(() => { if (draftKey) formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, [draftKey]);
 
   const load = useCallback(async () => {
     try { setRules((await api<{ rules: Rule[] }>('/api/actions')).rules); }
@@ -159,7 +163,8 @@ export default function ActionsPage() {
       {error && <div className="mb-5"><Alert>{error.text} {error.upgrade && <Link href="/dashboard/billing/" className="font-medium underline">อัปเกรด</Link>}</Alert></div>}
 
       {draft && (
-        <Card className="mb-6">
+        <div ref={formRef} className="scroll-mt-4">
+        <Card className="mb-6 ring-2 ring-pink/40">
           <form onSubmit={save} className="space-y-4">
             <h2 className="font-medium">{draft.id ? 'แก้ไขกฎ' : 'กฎใหม่'}</h2>
             <Field label="ชื่อกฎ"><Input required maxLength={80} value={draft.name} onChange={(e) => set('name', e.target.value)} placeholder="เช่น ได้ Rose เล่นเสียงปรบมือ" /></Field>
@@ -223,6 +228,7 @@ export default function ActionsPage() {
             </div>
           </form>
         </Card>
+        </div>
       )}
 
       {!draft && rules && (

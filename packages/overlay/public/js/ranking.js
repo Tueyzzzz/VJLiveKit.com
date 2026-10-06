@@ -59,7 +59,19 @@ window.Ranking = (function () {
   @keyframes pShine{0%,55%{background-position:-120% 0}85%,100%{background-position:140% 0}}
   @keyframes spk{0%,100%{opacity:0;transform:scale(.4) rotate(0)}50%{opacity:1;transform:scale(1) rotate(90deg)}}
   @keyframes pfThrone{0%{transform:translateY(60px) scale(.5);opacity:0}60%{transform:translateY(-14px) scale(1.12);opacity:1}100%{transform:none}}
-  @keyframes burst{to{box-shadow:0 0 0 90px rgba(255,215,106,0);opacity:0}}`;
+  @keyframes burst{to{box-shadow:0 0 0 90px rgba(255,215,106,0);opacity:0}}
+  /* ---- มินิมอล: วงแหวนโลหะบาง ๆ วาดด้วยโค้ด (ทอง/เงิน/ทองแดง) ---- */
+  .mring{position:absolute;inset:14%;border-radius:50%;padding:var(--bw,4px);background:conic-gradient(from var(--a,0deg),var(--c1),var(--c2),var(--c1),var(--c3),var(--c1));
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);
+    animation:mspin 6s linear infinite;box-shadow:0 0 18px var(--glow)}
+  @property --a{syntax:'<angle>';inherits:false;initial-value:0deg}
+  @keyframes mspin{to{--a:360deg}}
+  .mhalo{position:absolute;inset:8%;border-radius:50%;border:1px solid var(--c1);opacity:.45}
+  .mcrown{position:absolute;left:50%;top:-1%;width:30%;transform:translateX(-50%);filter:drop-shadow(0 2px 3px rgba(0,0,0,.35));animation:mcrown 2.4s ease-in-out infinite}
+  @keyframes mcrown{50%{transform:translateX(-50%) translateY(-4px) rotate(-4deg)}}
+  .mbadge{position:absolute;left:50%;bottom:8%;transform:translateX(-50%);min-width:22%;height:16%;padding:0 6%;border-radius:999px;display:grid;place-items:center;
+    background:linear-gradient(135deg,var(--c2),var(--c1) 55%,var(--c3));color:#2b1a10;font-family:'Itim',sans-serif;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+  .mname{margin-top:2px;max-width:100%;font-family:'Itim',sans-serif;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}`;
   /** กรอบ: ตำแหน่งรูของรูปโปรไฟล์ (สัดส่วนของรูปกรอบ) + แถบริบบิ้นใส่ชื่อ — วัดจากรูปจริง */
   const FRAMES = {
     r1: { cx: .5001, cy: .5221, r: .25, rib: .845, ribH: .095, ink: '#fff', sh: 'rgba(120,0,20,.7)' },
@@ -77,7 +89,14 @@ window.Ranking = (function () {
     t1: { cx: .5051, cy: .5144, r: .216, rib: .85, ribH: .085, ink: '#fff', sh: 'rgba(210,60,130,.95)' },
     t3: { cx: .4983, cy: .4799, r: .234, rib: .83, ribH: .085, ink: '#fff', sh: 'rgba(210,60,120,.95)' },
   };
-  const FRAME_SETS = { a: ['r1', 'r2', 'r3'], b: ['r1b', 'r2', 'r3b'], gaming: ['g1', 'g2', 'g3'], singer: ['s1', 's2', 's3'], toy: ['t1', 't3', 't3'] };
+  /** มินิมอล (วาดด้วยโค้ด) — สีโลหะ c1 หลัก · c2 ไฮไลต์ · c3 เงา */
+  const MINI = [
+    { c1: '#f3c969', c2: '#fff4c9', c3: '#b8862b', glow: 'rgba(243,201,105,.55)', bw: 5 },
+    { c1: '#cfd6e2', c2: '#ffffff', c3: '#8b95a7', glow: 'rgba(207,214,226,.45)', bw: 4 },
+    { c1: '#e0a37a', c2: '#ffe0c9', c3: '#9c5f3a', glow: 'rgba(224,163,122,.45)', bw: 4 },
+  ];
+  const CROWN = '<svg viewBox="0 0 64 40"><path d="M4 36 L8 10 L22 24 L32 4 L42 24 L56 10 L60 36 Z" fill="url(#mg)" stroke="#fff6d8" stroke-width="2" stroke-linejoin="round"/><defs><linearGradient id="mg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff1b8"/><stop offset="1" stop-color="#e2a93a"/></linearGradient></defs><circle cx="32" cy="4" r="3.5" fill="#fff6d8"/><circle cx="8" cy="10" r="3" fill="#fff6d8"/><circle cx="56" cy="10" r="3" fill="#fff6d8"/></svg>';
+  const FRAME_SETS = { minimal: 'minimal', a: ['r1', 'r2', 'r3'], b: ['r1b', 'r2', 'r3b'], gaming: ['g1', 'g2', 'g3'], singer: ['s1', 's2', 's3'], toy: ['t1', 't3', 't3'] };
 
   function mount(opts) {
     const P = (k, d) => Overlay.param(k, d);
@@ -104,13 +123,33 @@ window.Ranking = (function () {
       board.classList.add('pod');
       podium = document.createElement('div'); podium.className = 'podium';
       board.insertBefore(podium, list);
-      fset.forEach((f) => { const i = new Image(); i.src = 'frames/' + f + '.webp'; }); // โหลดกรอบล่วงหน้า
+      if (Array.isArray(fset)) fset.forEach((f) => { const i = new Image(); i.src = 'frames/' + f + '.webp'; }); // โหลดกรอบล่วงหน้า
     }
     function avaFill(el, g, size) {
       if (g.avatar && /^https:\/\//.test(g.avatar)) el.style.backgroundImage = `url("${g.avatar.replace(/"/g, '')}")`;
       else { el.style.background = colOf(g.nm); el.textContent = (g.nm || '?')[0]; el.style.fontSize = Math.round(size * 0.45) + 'px'; }
     }
+    function miniCard(g, rank) {
+      const M = MINI[rank], w = rank === 0 ? 130 : 104;
+      const pd = document.createElement('div'); pd.className = 'pd p' + (rank + 1); pd.style.setProperty('--w', w + 'px');
+      const pf = document.createElement('div'); pf.className = 'pf';
+      Object.entries({ '--c1': M.c1, '--c2': M.c2, '--c3': M.c3, '--glow': M.glow, '--bw': M.bw + 'px' }).forEach(([k, v]) => pf.style.setProperty(k, v));
+      const d = Math.round(w * 0.72 - M.bw * 2);
+      const pa = document.createElement('div'); pa.className = 'pa';
+      Object.assign(pa.style, { width: d + 'px', height: d + 'px', left: (w / 2 - d / 2) + 'px', top: (w / 2 - d / 2) + 'px', animationDelay: `${-rank * 1.7}s, ${-rank * .6}s` });
+      avaFill(pa, g, d);
+      const halo = document.createElement('div'); halo.className = 'mhalo';
+      const ring = document.createElement('div'); ring.className = 'mring';
+      const badge = document.createElement('div'); badge.className = 'mbadge'; badge.textContent = String(rank + 1); badge.style.fontSize = Math.round(w * 0.11) + 'px';
+      pf.append(halo, pa, ring, badge);
+      if (rank === 0) { const c = document.createElement('div'); c.className = 'mcrown'; c.innerHTML = CROWN; pf.appendChild(c); }
+      const nm = document.createElement('div'); nm.className = 'mname'; nm.textContent = g.nm; nm.style.fontSize = (rank === 0 ? 16 : 14) + 'px';
+      const val = document.createElement('div'); val.className = 'pval'; val.textContent = opts.icon + ' ' + Overlay.fmt(g.value);
+      pd.append(pf, nm, val);
+      return pd;
+    }
     function podiumCard(g, rank) {
+      if (fset === 'minimal') return miniCard(g, rank);
       const key = fset[rank], F = FRAMES[key];
       const pd = document.createElement('div'); pd.className = 'pd p' + (rank + 1);
       const w = rank === 0 ? 150 : 118;

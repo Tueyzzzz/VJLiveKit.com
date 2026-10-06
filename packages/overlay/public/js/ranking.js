@@ -8,6 +8,7 @@
  *   ?bg=35        ความทึบพื้นหลัง % (0 = ใสทั้งหมด)
  *   ?pos=tr       ตำแหน่ง tr | tl | br | bl (บนขวา/บนซ้าย/ล่างขวา/ล่างซ้าย)
  *   ?reset=1      ล้างอันดับที่จำไว้ (ปกติล้างเองเมื่อเริ่มไลฟ์ใหม่)
+ *   ?list=false   ซ่อนรายการอันดับ 4 ลงไป (เหลือแค่แท่น Top 3)
  *   ?frames=a     แท่น Top 3: a | b (พระราชวัง) | gaming | singer | toy | off
  *
  * Ranking.mount({ mode: 'gifts' | 'likes', title, icon })
@@ -197,7 +198,7 @@ window.Ranking = (function () {
         }
         lastFirst = first || lastFirst;
         }
-        list.style.display = rest.length ? '' : 'none';
+        list.style.display = rest.length && P('list', 'true') !== 'false' ? '' : 'none'; // ?list=false = โชว์แค่แท่น Top 3
       }
       rest.forEach(([id, g], j) => { const i = fset ? j + 3 : j;
         const li = document.createElement('li'); if (id === bumpId) li.className = 'bump';

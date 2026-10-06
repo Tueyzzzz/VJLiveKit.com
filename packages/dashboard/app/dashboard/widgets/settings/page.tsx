@@ -24,30 +24,67 @@ function groupOptions(options: Opt[]): [string, Opt[]][] {
   return out;
 }
 
-/** ลิงก์ OBS ของวิดเจ็ตนี้ (จากชุดลิงก์แรก) + ปุ่มคัดลอก */
-function WidgetLinkBox({ type }: { type: string }) {
-  const [url, setUrl] = useState<string | null | undefined>(undefined);
+const COLLECT_TYPES = ['giftjar', 'aquarium', 'belly', 'snowglobe', 'spacedome', 'vehicle', 'tree', 'garden', 'coinjar'];
+
+function CopyLink({ url, label = 'คัดลอกลิงก์' }: { url: string; label?: string }) {
   const [copied, setCopied] = useState(false);
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <code className="min-w-0 flex-1 truncate rounded-lg bg-canvas px-3 py-2 text-xs text-muted">{url}</code>
+      <Button variant="secondary" onClick={() => { void navigator.clipboard?.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 1500); }}>
+        {copied ? <><Check className="size-4" /> คัดลอกแล้ว</> : <><Copy className="size-4" /> {label}</>}
+      </Button>
+    </div>
+  );
+}
+
+/** ลิงก์ OBS ของวิดเจ็ตนี้ (จากชุดลิงก์แรก) + ปุ่มคัดลอก · แบบสะสมของขวัญ = แสดงลิงก์เดียว (collect) เป็นหลัก */
+function WidgetLinkBox({ type }: { type: string }) {
+  const isCollect = COLLECT_TYPES.includes(type);
+  const [url, setUrl] = useState<string | null | undefined>(undefined);
+  const [collectUrl, setCollectUrl] = useState<string | null>(null);
+  const [active, setActive] = useState<string | null>(null);
   useEffect(() => {
     api<{ tokens: OverlayTokenRow[] }>('/api/overlay-tokens')
-      .then((r) => { const w = r.tokens[0]?.urls.find((u) => u.type === type); setUrl(w && !w.locked ? w.url : null); })
+      .then((r) => {
+        const urls = r.tokens[0]?.urls ?? [];
+        const w = urls.find((u) => u.type === type); setUrl(w && !w.locked ? w.url : null);
+        const c = urls.find((u) => u.type === 'collect'); setCollectUrl(c && !c.locked ? c.url : null);
+      })
       .catch(() => setUrl(null));
-  }, [type]);
+    if (isCollect) api<{ config: Record<string, unknown> }>('/api/widgets/collect/config').then((r) => setActive(String(r.config?.style ?? 'giftjar'))).catch(() => {});
+  }, [type, isCollect]);
+  async function useThis() {
+    try { await api('/api/widgets/collect/config', { method: 'PUT', body: { style: type } }); setActive(type); } catch { /* ignore */ }
+  }
   if (url === undefined) return null;
   return (
     <Card className="mb-6">
-      <div className="mb-2 text-sm font-semibold text-violet">ลิงก์สำหรับ OBS / TikTok Live Studio</div>
-      {url ? (
-        <div className="flex flex-wrap items-center gap-2">
-          <code className="min-w-0 flex-1 truncate rounded-lg bg-canvas px-3 py-2 text-xs text-muted">{url}</code>
-          <Button variant="secondary" onClick={() => { void navigator.clipboard?.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 1500); }}>
-            {copied ? <><Check className="size-4" /> คัดลอกแล้ว</> : <><Copy className="size-4" /> คัดลอกลิงก์</>}
-          </Button>
-        </div>
+      {isCollect && collectUrl ? (
+        <>
+          <div className="mb-2 flex flex-wrap items-center gap-2 text-sm font-semibold text-violet">
+            🔗 ลิงก์เดียว (สะสมของขวัญทุกแบบ)
+            {active === type ? <span className="rounded-full bg-pink-soft px-2 py-0.5 text-xs text-pink">✓ ลิงก์เดียวกำลังใช้แบบนี้</span>
+              : <Button variant="secondary" className="px-3 py-1 text-xs" onClick={useThis}>ใช้แบบนี้กับลิงก์เดียว</Button>}
+          </div>
+          <CopyLink url={collectUrl} />
+          <p className="mt-2 text-xs text-muted">ลิงก์นี้ลิงก์เดียวกับในหน้าวิดเจ็ต — ใส่ OBS ครั้งเดียว เปลี่ยนแบบได้ตลอดโดยไม่ต้องเปลี่ยนลิงก์ · ตั้งค่าด้านล่างมีผลกับแบบนี้</p>
+          {url && (
+            <details className="mt-3 text-xs text-muted">
+              <summary className="cursor-pointer">ลิงก์เฉพาะแบบนี้ (ใช้แยกได้ ถ้าอยากโชว์หลายแบบพร้อมกัน)</summary>
+              <div className="mt-2"><CopyLink url={url} /></div>
+            </details>
+          )}
+        </>
       ) : (
-        <p className="text-sm text-muted">ยังไม่มีลิงก์ — <Link href="/dashboard/widgets/" className="text-pink underline">สร้างชุดลิงก์ที่หน้าวิดเจ็ต</Link> ก่อน</p>
+        <>
+          <div className="mb-2 text-sm font-semibold text-violet">ลิงก์สำหรับ OBS / TikTok Live Studio</div>
+          {url ? <CopyLink url={url} /> : (
+            <p className="text-sm text-muted">ยังไม่มีลิงก์ — <Link href="/dashboard/widgets/" className="text-pink underline">สร้างชุดลิงก์ที่หน้าวิดเจ็ต</Link> ก่อน</p>
+          )}
+          <p className="mt-2 text-xs text-muted">ลิงก์เดิมใช้ได้ตลอด — แก้แบบแล้วกดบันทึก จอใน OBS เปลี่ยนเองภายในไม่กี่วินาที ไม่ต้องรีเฟรช</p>
+        </>
       )}
-      <p className="mt-2 text-xs text-muted">ลิงก์เดิมใช้ได้ตลอด — แก้แบบแล้วกดบันทึก จอใน OBS เปลี่ยนเองภายในไม่กี่วินาที ไม่ต้องรีเฟรช</p>
     </Card>
   );
 }

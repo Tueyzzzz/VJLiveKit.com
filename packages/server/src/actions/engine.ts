@@ -1,4 +1,5 @@
 import type { TikTokEvent } from '../tiktok/types.js';
+import { giftIdOf } from '../tiktok/giftCatalog.js';
 
 /** กฎทริกเกอร์: ถ้าเหตุการณ์เข้าเงื่อนไข trigger ให้ทำ action */
 export interface RuleTrigger {
@@ -50,7 +51,11 @@ export function ruleMatches(rule: ActionRule, e: TikTokEvent): boolean {
 
   if (e.type === 'gift') {
     if (e.streaking) return false; // นับเฉพาะตอน streak จบ
-    if (t.giftName && (e.giftName ?? '').toLowerCase() !== t.giftName.toLowerCase()) return false;
+    if (t.giftName && (e.giftName ?? '').trim().toLowerCase() !== t.giftName.trim().toLowerCase()) {
+      // ชื่อไม่ตรง (TikTok ส่งชื่อตามภาษาแอปคนส่ง) → เทียบด้วย id ของของขวัญแทน
+      const id = giftIdOf(t.giftName);
+      if (!id || !e.giftId || id !== e.giftId) return false;
+    }
     const value = e.totalValue ?? (e.diamondCount ?? 0) * (e.repeatCount ?? 1);
     if (t.minDiamonds != null && value < t.minDiamonds) return false;
   }

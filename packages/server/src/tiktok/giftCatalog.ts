@@ -42,6 +42,11 @@ export function recordGift(name: string, id: number | undefined, image: string |
   }
 }
 
+/** id ของของขวัญจากชื่อ — ใช้จับคู่กฎ เผื่อชื่อในไลฟ์ไม่ตรงกับชื่อในรายการ (ภาษา/ตัวสะกด) */
+export function giftIdOf(name: string): number | undefined {
+  return gifts.get(name.trim().toLowerCase())?.id;
+}
+
 /** รายการทั้งหมด เรียงตามราคา */
 export function listGifts(): GiftInfo[] {
   return [...gifts.values()].filter((g) => g.image || g.seen > 0).sort((a, b) => a.diamonds - b.diamonds || a.name.localeCompare(b.name));

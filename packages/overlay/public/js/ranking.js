@@ -8,6 +8,7 @@
  *   ?bg=35        ความทึบพื้นหลัง % (0 = ใสทั้งหมด)
  *   ?pos=tr       ตำแหน่ง tr | tl | br | bl (บนขวา/บนซ้าย/ล่างขวา/ล่างซ้าย)
  *   ?reset=1      ล้างอันดับที่จำไว้ (ปกติล้างเองเมื่อเริ่มไลฟ์ใหม่)
+ *   ?frames=a     แท่น Top 3 กรอบพระราชวัง/องครักษ์: a | b (แบบสำรอง) | off
  *
  * Ranking.mount({ mode: 'gifts' | 'likes', title, icon })
  */
@@ -28,7 +29,46 @@ window.Ranking = (function () {
   .ava{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:#fff;font-family:'Itim',sans-serif;background-size:cover;background-position:center;flex:none;border:2px solid rgba(255,255,255,.7)}
   .nm{flex:1;min-width:0;font-size:16px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.7);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .val{font-family:'Itim',sans-serif;font-size:15px;color:#ffd76a;text-shadow:0 1px 3px rgba(0,0,0,.7);font-variant-numeric:tabular-nums}
-  .empty{font-size:14px;color:rgba(255,255,255,.8);background:none;text-shadow:0 1px 3px rgba(0,0,0,.6)}`;
+  .empty{font-size:14px;color:rgba(255,255,255,.8);background:none;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+  /* ---- แท่น Top 3: กรอบพระราชวัง (ที่ 1) · องครักษ์ (ที่ 2–3) — รูปโปรไฟล์ขยับทั้งรูป ไม่แก้หน้าตา ---- */
+  #board.pod{width:min(400px,94vw)}
+  .podium{display:flex;justify-content:center;align-items:flex-end;margin:2px 0 8px;perspective:600px}
+  .pd{position:relative;display:flex;flex-direction:column;align-items:center;width:var(--w);margin:0 -6px}
+  .pd.p1{--w:150px;z-index:2} .pd.p2,.pd.p3{--w:118px;margin-bottom:10px}
+  .pf{position:relative;width:var(--w);height:var(--w);animation:pfFloat 3.2s ease-in-out infinite}
+  .pd.p2 .pf{animation:pfSway 2.6s ease-in-out infinite;transform-origin:50% 90%} .pd.p3 .pf{animation:pfSway 2.6s ease-in-out -1.3s infinite;transform-origin:50% 90%}
+  .pa{position:absolute;border-radius:50%;background:#3a2350 center/cover no-repeat;display:grid;place-items:center;color:#fff;font-family:'Itim',sans-serif;
+    animation:paLook 6s ease-in-out infinite, paBreath 2.4s ease-in-out infinite;transform-style:preserve-3d}
+  .pa::after{content:'';position:absolute;inset:0;border-radius:50%;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.45) 50%,transparent 65%) -150% 0/250% 100% no-repeat;animation:paGloss 6s ease-in-out infinite}
+  .pfi{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;filter:drop-shadow(0 6px 10px rgba(40,10,50,.45))}
+  .pshine{position:absolute;inset:0;pointer-events:none;-webkit-mask:var(--m) center/100% 100% no-repeat;mask:var(--m) center/100% 100% no-repeat;
+    background:linear-gradient(110deg,transparent 40%,rgba(255,255,230,.85) 50%,transparent 60%) -120% 0/260% 100% no-repeat;animation:pShine 3.5s ease-in-out infinite;mix-blend-mode:screen}
+  .pd.p2 .pshine{animation-delay:1.1s} .pd.p3 .pshine{animation-delay:2.2s}
+  .prib{position:absolute;left:22%;right:22%;display:flex;align-items:center;justify-content:center;font-family:'Itim',sans-serif;font-weight:700;white-space:nowrap;overflow:hidden;line-height:1}
+  .pval{margin-top:1px;font-family:'Itim',sans-serif;font-size:15px;color:#ffd76a;text-shadow:0 1px 3px rgba(0,0,0,.8);font-variant-numeric:tabular-nums}
+  .pd.p1 .pval{font-size:17px}
+  .spk{position:absolute;color:#fff6c2;text-shadow:0 0 6px #ffd76a;pointer-events:none;animation:spk 2.2s ease-in-out infinite;font-size:12px}
+  .pd.crown .pf{animation:pfThrone 1.4s cubic-bezier(.2,1.4,.4,1), pfFloat 3.2s ease-in-out 1.4s infinite}
+  .burst{position:absolute;left:50%;top:45%;width:10px;height:10px;border-radius:50%;pointer-events:none;transform:translate(-50%,-50%);
+    box-shadow:0 0 0 0 rgba(255,215,106,.9);animation:burst 1.2s ease-out forwards}
+  @keyframes pfFloat{50%{transform:translateY(-5px)}}
+  @keyframes pfSway{0%,100%{transform:rotate(-2.2deg)}50%{transform:rotate(2.2deg)}}
+  @keyframes paLook{0%,100%{transform:rotateY(0) rotateX(0)}20%{transform:rotateY(14deg) rotateX(-3deg)}45%{transform:rotateY(0)}70%{transform:rotateY(-14deg) rotateX(3deg)}}
+  @keyframes paBreath{50%{scale:1.035}}
+  @keyframes paGloss{0%,60%{background-position:-150% 0}85%,100%{background-position:150% 0}}
+  @keyframes pShine{0%,55%{background-position:-120% 0}85%,100%{background-position:140% 0}}
+  @keyframes spk{0%,100%{opacity:0;transform:scale(.4) rotate(0)}50%{opacity:1;transform:scale(1) rotate(90deg)}}
+  @keyframes pfThrone{0%{transform:translateY(60px) scale(.5);opacity:0}60%{transform:translateY(-14px) scale(1.12);opacity:1}100%{transform:none}}
+  @keyframes burst{to{box-shadow:0 0 0 90px rgba(255,215,106,0);opacity:0}}`;
+  /** กรอบ: ตำแหน่งรูของรูปโปรไฟล์ (สัดส่วนของรูปกรอบ) + แถบริบบิ้นใส่ชื่อ — วัดจากรูปจริง */
+  const FRAMES = {
+    r1: { cx: .5001, cy: .5221, r: .25, rib: .845, ribH: .095, ink: '#fff', sh: 'rgba(120,0,20,.7)' },
+    r2: { cx: .4997, cy: .5097, r: .26, rib: .862, ribH: .09, ink: '#173a6b', sh: 'rgba(255,255,255,.6)' },
+    r3: { cx: .4995, cy: .4934, r: .28, rib: .868, ribH: .09, ink: '#6b2f1e', sh: 'rgba(255,255,255,.6)' },
+    r1b: { cx: .5006, cy: .5292, r: .265, rib: .865, ribH: .095, ink: '#fff', sh: 'rgba(120,0,20,.7)' },
+    r3b: { cx: .5001, cy: .4624, r: .26, rib: .857, ribH: .09, ink: '#6b2f1e', sh: 'rgba(255,255,255,.6)' },
+  };
+  const FRAME_SETS = { a: ['r1', 'r2', 'r3'], b: ['r1b', 'r2', 'r3b'] };
 
   function mount(opts) {
     const P = (k, d) => Overlay.param(k, d);
@@ -49,12 +89,69 @@ window.Ranking = (function () {
     const colOf = (nm) => cols[(nm || '?').charCodeAt(0) % cols.length];
     const MEDAL = ['🥇', '🥈', '🥉'];
     const totals = new Map(); // id -> { nm, avatar, value }
+    const fset = FRAME_SETS[P('frames', 'a')] || null; // off = ป้ายรายการธรรมดาเหมือนเดิม
+    let podium = null, lastFirst = null;
+    if (fset) {
+      board.classList.add('pod');
+      podium = document.createElement('div'); podium.className = 'podium';
+      board.insertBefore(podium, list);
+      fset.forEach((f) => { const i = new Image(); i.src = 'frames/' + f + '.webp'; }); // โหลดกรอบล่วงหน้า
+    }
+    function avaFill(el, g, size) {
+      if (g.avatar && /^https:\/\//.test(g.avatar)) el.style.backgroundImage = `url("${g.avatar.replace(/"/g, '')}")`;
+      else { el.style.background = colOf(g.nm); el.textContent = (g.nm || '?')[0]; el.style.fontSize = Math.round(size * 0.45) + 'px'; }
+    }
+    function podiumCard(g, rank) {
+      const key = fset[rank], F = FRAMES[key];
+      const pd = document.createElement('div'); pd.className = 'pd p' + (rank + 1);
+      const w = rank === 0 ? 150 : 118;
+      const pf = document.createElement('div'); pf.className = 'pf'; pf.style.setProperty('--m', `url(frames/${key}.webp)`);
+      const d = Math.round(w * F.r * 2 * 1.04);
+      const pa = document.createElement('div'); pa.className = 'pa';
+      Object.assign(pa.style, { width: d + 'px', height: d + 'px', left: (w * F.cx - d / 2) + 'px', top: (w * F.cy - d / 2) + 'px', animationDelay: `${-rank * 1.7}s, ${-rank * .6}s` });
+      avaFill(pa, g, d);
+      const fi = document.createElement('img'); fi.className = 'pfi'; fi.src = 'frames/' + key + '.webp'; fi.alt = '';
+      const sh = document.createElement('div'); sh.className = 'pshine';
+      const rib = document.createElement('div'); rib.className = 'prib'; rib.textContent = g.nm;
+      const fs = Math.max(9, Math.min(w * F.ribH * 1.0, (w * 0.6) / Math.max(4, [...(g.nm || '')].length) * 1.7));
+      Object.assign(rib.style, { top: (w * (F.rib - F.ribH / 2)) + 'px', height: (w * F.ribH) + 'px', fontSize: fs + 'px', color: F.ink, textShadow: `0 1px 1px ${F.sh}` });
+      pf.append(pa, fi, sh, rib);
+      for (let k = 0; k < (rank === 0 ? 5 : 3); k++) { // ประกายดาวรอบกรอบ
+        const sp = document.createElement('span'); sp.className = 'spk'; sp.textContent = '✦';
+        const a = Math.random() * Math.PI * 2, rr = 0.42 + Math.random() * 0.08;
+        Object.assign(sp.style, { left: (50 + Math.cos(a) * rr * 100) + '%', top: (45 + Math.sin(a) * rr * 100) + '%', animationDelay: (-Math.random() * 2.2) + 's', fontSize: (9 + Math.random() * 7) + 'px' });
+        pf.appendChild(sp);
+      }
+      const val = document.createElement('div'); val.className = 'pval'; val.textContent = opts.icon + ' ' + Overlay.fmt(g.value);
+      pd.append(pf, val);
+      return pd;
+    }
 
     function render(bumpId) {
       const top = [...totals.entries()].sort((a, b) => b[1].value - a[1].value).slice(0, MAX);
       if (!top.length) return;
       list.innerHTML = '';
-      top.forEach(([id, g], i) => {
+      const rest = fset ? top.slice(3) : top;
+      if (fset) {
+        // คนเดิมอันดับเดิม → อัปเดตแค่ยอด (ไม่สร้างใหม่ ภาพเคลื่อนไหวไม่สะดุด)
+        const sig = top.slice(0, 3).map(([id, g]) => id + '|' + g.avatar).join(',');
+        if (sig === podium.dataset.sig) {
+          top.slice(0, 3).forEach(([, g], r) => { const v = podium.querySelector(`.p${r + 1} .pval`); if (v) v.textContent = opts.icon + ' ' + Overlay.fmt(g.value); });
+        } else {
+        podium.dataset.sig = sig;
+        podium.innerHTML = '';
+        const cards = top.slice(0, 3).map(([, g], i) => podiumCard(g, i));
+        [cards[1], cards[0], cards[2]].forEach((c) => c && podium.appendChild(c)); // ที่ 2 · ที่ 1 · ที่ 3
+        const first = top[0] && top[0][0];
+        if (first && lastFirst !== null && first !== lastFirst && cards[0]) { // ขึ้นบัลลังก์ใหม่!
+          cards[0].classList.add('crown');
+          const b = document.createElement('div'); b.className = 'burst'; cards[0].querySelector('.pf').appendChild(b);
+        }
+        lastFirst = first || lastFirst;
+        }
+        list.style.display = rest.length ? '' : 'none';
+      }
+      rest.forEach(([id, g], j) => { const i = fset ? j + 3 : j;
         const li = document.createElement('li'); if (id === bumpId) li.className = 'bump';
         const ava = document.createElement('div'); ava.className = 'ava';
         if (g.avatar && /^https:\/\//.test(g.avatar)) ava.style.backgroundImage = `url("${g.avatar.replace(/"/g, '')}")`;

@@ -14,7 +14,7 @@ const NAV = [
   { href: '/dashboard/', label: 'ภาพรวม', icon: LayoutDashboard },
   { href: '/dashboard/widgets/', label: 'วิดเจ็ต & ลิงก์ OBS', icon: LayoutTemplate },
   { href: '/dashboard/actions/', label: 'Actions & Events', icon: Zap },
-  { href: '/dashboard/donate/', label: 'โดเนทขึ้นจอ', icon: Wallet },
+  { href: '/dashboard/donate/', label: 'โดเนทขึ้นจอ', icon: Wallet, soon: true }, // กำลังพัฒนา — เทาไว้ก่อน
   { href: '/dashboard/billing/', label: 'แพลน & การชำระเงิน', icon: CreditCard },
   { href: '/dashboard/referral/', label: 'แนะนำเพื่อน รับฟรี', icon: Gift },
   { href: '/dashboard/guide/', label: 'คู่มือการใช้งาน', icon: BookOpen },
@@ -38,7 +38,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <Logo href="/dashboard/" />
         </div>
         <nav className="flex gap-1 overflow-x-auto px-3 pb-3 md:flex-col md:pb-0">
-          {[...NAV, ...(isAdmin ? [{ href: '/dashboard/admin/', label: 'หลังบ้าน (แอดมิน)', icon: Shield }] : [])].map(({ href, label, icon: Icon }) => {
+          {[...NAV, ...(isAdmin ? [{ href: '/dashboard/admin/', label: 'หลังบ้าน (แอดมิน)', icon: Shield }] : [])].map(({ href, label, icon: Icon, ...rest }) => {
+            if ('soon' in rest && rest.soon && !isAdmin) return (
+              <span key={href} title="กำลังพัฒนา เร็ว ๆ นี้" className="flex shrink-0 cursor-not-allowed items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-gray-300">
+                <Icon className="size-4" /> {label} <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-400">กำลังพัฒนา</span>
+              </span>
+            );
             const active = pathname === href || pathname === href.replace(/\/$/, '');
             return (
               <Link key={href} href={href}

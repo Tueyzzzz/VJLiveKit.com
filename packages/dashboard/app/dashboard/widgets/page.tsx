@@ -35,7 +35,6 @@ const WIDGET_GROUPS: [string, string[]][] = [
   ['🔔 แจ้งเตือนและแชท', ['alerts', 'chat', 'follower', 'tts']],
   ['🥇 อันดับผู้ชม', ['topgifters', 'toplikers']],
   ['✨ เอฟเฟกต์', ['fx', 'fxmenu']],
-  ['💸 โดเนทขึ้นจอ', ['donate']],
 ];
 
 /** คำอธิบายสั้นในแกลเลอรี */
@@ -227,7 +226,7 @@ export default function WidgetsPage() {
       <h2 className="mb-3 text-sm font-semibold text-violet">ตัวอย่างวิดเจ็ตทั้งหมด</h2>
       {(() => {
         const all = tokens?.[0]?.urls ?? Object.keys(WIDGET_BLURB).map((type) => ({ type, url: '', locked: false }));
-        const grouped = new Set([...WIDGET_GROUPS.flatMap(([, t]) => t), 'collect']);
+        const grouped = new Set([...WIDGET_GROUPS.flatMap(([, t]) => t), 'collect', 'donate']); // donate = กำลังพัฒนา ซ่อนไว้ก่อน
         const collectUrl = all.find((w) => w.type === 'collect' && !w.locked)?.url;
         const groups: [string, typeof all][] = WIDGET_GROUPS.map(([title, types]) => [title, types.flatMap((t) => all.filter((w) => w.type === t))]);
         const rest = all.filter((w) => !grouped.has(w.type));

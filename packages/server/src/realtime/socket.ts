@@ -92,6 +92,7 @@ export function setupRealtime(httpServer: HttpServer): RoomHub {
           const cfg = await prisma.widgetConfig.findUnique({ where: { userId_type: { userId: ownerId, type: widget } }, select: { settings: true } });
           socket.emit('config', cfg?.settings ?? {});
         } catch (err) { console.error('[socket] load widget config failed', err); }
+        if (widget === 'fxmenu') socket.emit('menu', await hub.menuFor(ownerId));
       }
       const state = await hub.attach(room, ownerId);
       // หลุดไประหว่างรอเชื่อมต่อ -> คืนที่นั่งทันที

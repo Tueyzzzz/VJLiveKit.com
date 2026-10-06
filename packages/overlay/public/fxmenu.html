@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Gift Menu Overlay</title>
+<link rel="icon" href="favicon.svg" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Itim&family=Mali:wght@500;700&display=swap');
+  html,body { margin:0; width:100%; height:100%; background:transparent; overflow:hidden; font-family:'Mali','Itim',sans-serif; }
+  #box { position:fixed; transform-origin:var(--o,0 0); transform:scale(var(--s,1)); width:340px; }
+  #box.tl { left:16px; top:16px; --o:0 0 } #box.tr { right:16px; top:16px; --o:100% 0 }
+  #box.bl { left:16px; bottom:16px; --o:0 100% } #box.br { right:16px; bottom:16px; --o:100% 100% }
+  .panel { border-radius:22px; padding:12px 12px 10px; color:#fff; background:rgba(40,20,60,var(--bg,.45)); backdrop-filter:blur(8px);
+    border:1.5px solid rgba(255,255,255,.35); box-shadow:0 10px 26px rgba(60,20,80,.3); }
+  .title { font-family:'Itim',sans-serif; font-size:21px; text-align:center; margin:0 0 8px; text-shadow:0 2px 4px rgba(60,10,60,.5); }
+  .row { display:flex; align-items:center; gap:10px; padding:6px 8px; border-radius:16px; margin-top:6px;
+    background:linear-gradient(90deg,rgba(255,111,170,.35),rgba(150,110,240,.25)); animation:in .5s ease both; }
+  .row.hot { animation:in .5s ease both, hot 1s ease-in-out 2; }
+  .ico { width:48px; height:48px; flex:none; display:grid; place-items:center; border-radius:14px; background:rgba(255,255,255,.18); font-size:28px; }
+  .ico img { width:44px; height:44px; object-fit:contain; filter:drop-shadow(0 2px 3px rgba(0,0,0,.3)); animation:bob 2.4s ease-in-out infinite; }
+  .txt { min-width:0; flex:1; }
+  .what { font-size:17px; font-weight:700; line-height:1.25; text-shadow:0 1px 3px rgba(60,10,60,.6); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .how { font-size:13px; opacity:.92; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .how b { color:#fff2a8; }
+  .empty { font-size:14px; text-align:center; opacity:.85; padding:10px; }
+  /* แบบหมุนทีละรายการ */
+  #box.rotate .row { margin-top:0; }
+  @keyframes in { from { opacity:0; transform:translateX(-14px) } to { opacity:1; transform:none } }
+  @keyframes bob { 50% { transform:translateY(-3px) rotate(-4deg) } }
+  @keyframes hot { 50% { box-shadow:0 0 0 3px #ffe17a, 0 0 22px #ffcf5c; transform:scale(1.04) } }
+</style>
+</head>
+<body>
+  <div id="box"><div class="panel"><div class="title" id="title"></div><div id="list"></div></div></div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/overlay-client.js"></script>
+  <script>
+  (function () {
+    // เมนูของขวัญ: บอกผู้ชมว่าส่งอะไร → เกิดอะไรบนจอ (ดึงจากกฎ Actions ที่เปิดอยู่ อัปเดตเองเมื่อแก้กฎ)
+    // ?title= · ?pos=tl|tr|bl|br · ?layout=list|rotate · ?every=5 (วินาที, แบบหมุน) · ?max=6 · ?scale=1 · ?bg=45 · ?other=true (รวมแชท/ติดตาม/แชร์)
+    const P = (k, d) => Overlay.param(k, d);
+    const box = document.getElementById('box'), list = document.getElementById('list');
+    const POS = ['tl', 'tr', 'bl', 'br'].includes(P('pos', 'tl')) ? P('pos', 'tl') : 'tl';
+    const LAYOUT = P('layout', 'list') === 'rotate' ? 'rotate' : 'list';
+    box.className = POS + ' ' + LAYOUT;
+    box.style.setProperty('--s', Math.max(.4, Math.min(2.5, parseFloat(P('scale', '1')) || 1)));
+    box.querySelector('.panel').style.setProperty('--bg', Math.max(0, Math.min(100, parseFloat(P('bg', '45')))) / 100);
+    document.getElementById('title').textContent = P('title', '🎁 ส่งของขวัญเพื่อ…');
+    const MAX = Math.max(1, Math.min(12, parseInt(P('max', '6'), 10) || 6));
+    const EVERY = Math.max(2, Math.min(30, parseFloat(P('every', '5')) || 5)) * 1000;
+    const OTHER = P('other', 'true') !== 'false';
+    const EV = { follow: ['➕', 'กดติดตาม'], share: ['🔗', 'แชร์ไลฟ์'], like: ['❤️', 'กดไลก์'], chat: ['💬', 'พิมพ์'] };
+    const fmt = (n) => Number(n).toLocaleString('en-US');
+
+    function rowEl(m) {
+      const r = document.createElement('div'); r.className = 'row';
+      const ico = document.createElement('div'); ico.className = 'ico';
+      if (m.image) { const im = document.createElement('img'); im.src = m.image; im.alt = ''; ico.appendChild(im); }
+      else ico.textContent = m.event === 'gift' ? '🎁' : (EV[m.event] || ['✨'])[0];
+      const tx = document.createElement('div'); tx.className = 'txt';
+      const what = document.createElement('div'); what.className = 'what'; what.textContent = m.label;
+      const how = document.createElement('div'); how.className = 'how';
+      if (m.event === 'gift') {
+        if (m.gift) how.innerHTML = `ส่ง <b></b>${m.diamonds ? ` · 💎${fmt(m.diamonds)}` : ''}`, how.querySelector('b').textContent = m.th || m.gift;
+        else how.innerHTML = m.minDiamonds ? `ส่งของขวัญ <b>💎${fmt(m.minDiamonds)}</b> ขึ้นไป` : 'ส่ง <b>ของขวัญอะไรก็ได้</b>';
+      } else if (m.event === 'chat') { how.innerHTML = 'พิมพ์ <b></b> ในแชท'; how.querySelector('b').textContent = `“${m.keyword || ''}”`; }
+      else how.innerHTML = `<b>${(EV[m.event] || ['', m.event])[1]}</b>`;
+      tx.append(what, how); r.append(ico, tx); return r;
+    }
+
+    let items = [], timer = null, idx = 0;
+    function render() {
+      clearInterval(timer); list.innerHTML = '';
+      const show = items.filter((m) => OTHER || m.event === 'gift');
+      if (!show.length) { list.innerHTML = '<div class="empty">ยังไม่มีกฎ — ตั้งที่เมนู Actions &amp; Events</div>'; return; }
+      if (LAYOUT === 'rotate') {
+        const step = () => { list.innerHTML = ''; list.appendChild(rowEl(show[idx++ % show.length])); };
+        step(); if (show.length > 1) timer = setInterval(step, EVERY);
+      } else show.slice(0, MAX).forEach((m, i) => { const r = rowEl(m); r.style.animationDelay = i * 0.08 + 's'; list.appendChild(r); });
+    }
+    if (Overlay.socket) Overlay.socket.on('menu', (m) => { items = Array.isArray(m) ? m : []; render(); });
+
+    // มีคนส่งกิฟต์ที่อยู่ในเมนู → ไฮไลต์แถวนั้น ให้คนอื่นเห็นว่าใช้ได้จริง
+    Overlay.on('action', (f) => {
+      if (LAYOUT !== 'list' || !f || !f.name) return;
+      [...list.children].forEach((r) => { if (r.querySelector('.what')?.textContent === f.name) { r.classList.remove('hot'); void r.offsetWidth; r.classList.add('hot'); } });
+    });
+
+    if (!Overlay.connected) {
+      const IMG = 'https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/';
+      items = [
+        { event: 'gift', gift: 'Rose', th: 'กุหลาบ', diamonds: 1, label: '🔮 เปิดไพ่ทาโร่ 1 ใบ', image: IMG + 'eba3a9bb85c33e017f3648eaf88d7189~tplv-obj.webp' },
+        { event: 'gift', gift: 'Finger Heart', th: 'หัวใจนิ้ว', diamonds: 5, label: '🦋 ผีเสื้อเทพนิยาย', image: IMG + 'a4c4dc437fd3a6632aba149769491f49.png~tplv-obj.webp' },
+        { event: 'gift', minDiamonds: 99, label: '🃏 ไพ่ 3 ใบ อดีต · ปัจจุบัน · อนาคต' },
+        { event: 'chat', keyword: 'ดูดวง', label: '💬 ดูดวงฟรี 1 ใบ' },
+        { event: 'follow', label: '💗 ขอบคุณที่ติดตาม' },
+      ];
+      render();
+    }
+  })();
+  </script>
+</body>
+</html>

@@ -47,6 +47,11 @@ export function giftIdOf(name: string): number | undefined {
   return gifts.get(name.trim().toLowerCase())?.id;
 }
 
+/** ข้อมูลของขวัญจากชื่อ (รูป · ราคา · ชื่อไทย) */
+export function giftInfo(name: string): GiftInfo | undefined {
+  return gifts.get(name.trim().toLowerCase());
+}
+
 /** รายการทั้งหมด เรียงตามราคา */
 export function listGifts(): GiftInfo[] {
   return [...gifts.values()].filter((g) => g.image || g.seen > 0).sort((a, b) => a.diamonds - b.diamonds || a.name.localeCompare(b.name));

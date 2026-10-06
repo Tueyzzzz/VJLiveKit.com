@@ -429,6 +429,20 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
       ] },
     ],
   },
+  fxmenu: {
+    sections: [
+      { title: 'เมนูของขวัญ', fields: [
+        { key: 'title', label: 'หัวข้อ', type: 'text', def: '🎁 ส่งของขวัญเพื่อ…' },
+        { key: 'layout', label: 'รูปแบบ', type: 'select', def: 'list', options: [['list', 'รายการ (โชว์หลายข้อ)'], ['rotate', 'หมุนทีละข้อ (ประหยัดที่)']] },
+        { key: 'max', label: 'จำนวนที่แสดง', type: 'number', min: 1, max: 12, def: 6, when: (v) => v.layout !== 'rotate' },
+        { key: 'every', label: 'เปลี่ยนทุก (วินาที)', type: 'number', min: 2, max: 30, def: 5, when: (v) => v.layout === 'rotate' },
+        { key: 'other', label: 'รวมกฎแชท / ติดตาม / แชร์', type: 'toggle', def: true },
+        { key: 'pos', label: 'มุมจอ', type: 'select', def: 'tl', options: [['tl', 'บนซ้าย'], ['tr', 'บนขวา'], ['bl', 'ล่างซ้าย'], ['br', 'ล่างขวา']] },
+        bg(45),
+        size(),
+      ] },
+    ],
+  },
   donate: {
     sections: [
       { title: 'บัญชีรับโดเนท', fields: [

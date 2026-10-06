@@ -7,6 +7,7 @@ import { Badge, Card, cx } from './ui';
 
 export const WIDGET_LABELS: Record<string, string> = {
   donate: 'โดเนทขึ้นจอ (พร้อมเพย์)',
+  fxmenu: 'เมนูของขวัญ (บอกผู้ชมว่าส่งอะไร)',
   coinjar: 'Coin Jar',
   giftjar: 'โหลแก้วของขวัญ',
   aquarium: 'ตู้ปลาของขวัญ',

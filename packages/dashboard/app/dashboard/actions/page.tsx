@@ -117,9 +117,17 @@ export default function ActionsPage() {
   const [copied, setCopied] = useState(false);
   useEffect(() => {
     api<{ tokens: OverlayTokenRow[] }>('/api/overlay-tokens')
-      .then((r) => setFxUrl(r.tokens[0]?.urls.find((u) => u.type === 'fx')?.url ?? null))
+      .then((r) => { const u = r.tokens[0]?.urls; setFxUrl(u?.find((x) => x.type === 'fx')?.url ?? null); setMenuUrl(u?.find((x) => x.type === 'fxmenu')?.url ?? null); })
       .catch(() => setFxUrl(null));
   }, []);
+  // ลิงก์ "เมนูของขวัญ" — บอกผู้ชมว่าส่งอะไรแล้วจะเกิดอะไร (ดึงจากกฎในหน้านี้)
+  const [menuUrl, setMenuUrl] = useState<string | null>(null);
+  const [menuCopied, setMenuCopied] = useState(false);
+  async function copyMenu() {
+    if (!menuUrl) return;
+    try { await navigator.clipboard.writeText(menuUrl); } catch { window.prompt('คัดลอกลิงก์นี้', menuUrl); return; }
+    setMenuCopied(true); setTimeout(() => setMenuCopied(false), 1500);
+  }
   async function copyFx() {
     if (!fxUrl) return;
     try { await navigator.clipboard.writeText(fxUrl); } catch { window.prompt('คัดลอกลิงก์นี้', fxUrl); return; }
@@ -209,6 +217,15 @@ export default function ActionsPage() {
             <Link href="/dashboard/widgets/" className="text-sm font-medium text-pink underline">สร้างลิงก์ที่หน้าวิดเจ็ตก่อน</Link>
           ) : <Spinner />}
         </div>
+        {menuUrl && (
+          <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-line pt-4">
+            <div className="min-w-0 flex-1">
+              <div className="font-medium">📜 เมนูของขวัญ (ให้ผู้ชมรู้ว่าต้องส่งอะไร)</div>
+              <p className="text-sm text-muted">โชว์รูปกิฟต์ + สิ่งที่จะเกิดบนจอ จากกฎด้านล่างอัตโนมัติ แก้กฎแล้วเมนูบนจอเปลี่ยนทันที · ปรับหน้าตาได้ที่ <Link href="/dashboard/widgets/settings/?type=fxmenu" className="text-pink underline">ตั้งค่าเมนู</Link></p>
+            </div>
+            <Button variant="secondary" onClick={copyMenu}>{menuCopied ? <><Check className="size-4 text-mint" /> คัดลอกแล้ว</> : <><Copy className="size-4" /> คัดลอกลิงก์เมนู</>}</Button>
+          </div>
+        )}
       </Card>
 
       {fxLocked && (

@@ -1,5 +1,5 @@
 import { TikTokRoom } from '../tiktok/manager.js';
-import { evaluate, type ActionRule } from '../actions/engine.js';
+import { evaluate, menuItems, type ActionRule, type MenuItem } from '../actions/engine.js';
 import type { Server } from 'socket.io';
 import { loadSession, saveSession } from './sessions.js';
 import { connStats } from './connstats.js';
@@ -85,7 +85,13 @@ export class RoomHub {
   }
 
   /** ล้างแคชกฎของผู้ใช้ (เรียกหลัง CRUD /api/actions ให้มีผลทันที) */
-  invalidateRules(userId: string): void { this.rulesCache.delete(userId); }
+  invalidateRules(userId: string): void {
+    this.rulesCache.delete(userId);
+    void this.menuFor(userId).then((m) => this.io.to(RoomHub.configChannel(userId, 'fxmenu')).emit('menu', m)); // จอเมนูอัปเดตทันที
+  }
+
+  /** รายการเมนูของขวัญของวีเจ (จากกฎ Actions ที่เปิดอยู่) */
+  async menuFor(userId: string): Promise<MenuItem[]> { return menuItems(await this.getRules(userId)); }
 
   /** มี socket เข้ามาดูห้อง — สร้าง/เชื่อมต่อถ้ายังไม่มี แล้วคืน state ปัจจุบัน */
   async attach(username: string, ownerId?: string): Promise<ReturnType<TikTokRoom['getState']>> {

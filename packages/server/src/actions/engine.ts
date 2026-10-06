@@ -1,5 +1,5 @@
 import type { TikTokEvent } from '../tiktok/types.js';
-import { giftIdOf } from '../tiktok/giftCatalog.js';
+import { giftIdOf, giftInfo } from '../tiktok/giftCatalog.js';
 
 /** กฎทริกเกอร์: ถ้าเหตุการณ์เข้าเงื่อนไข trigger ให้ทำ action */
 export interface RuleTrigger {
@@ -73,4 +73,32 @@ export function evaluate(rules: ActionRule[], e: TikTokEvent): ActionFire[] {
     if (ruleMatches(r, e)) out.push({ ruleId: r.id, name: r.name, action: r.action, event: e, ts: Date.now() });
   }
   return out;
+}
+
+/** รายการในจอ "เมนูของขวัญ" — บอกผู้ชมว่าส่งอะไรแล้วจะเกิดอะไร */
+export interface MenuItem {
+  event: RuleTrigger['event'];
+  gift?: string;
+  th?: string;
+  image?: string;
+  diamonds?: number;
+  minDiamonds?: number;
+  keyword?: string;
+  label: string;
+  kind: RuleAction['type'];
+  cards?: number;
+}
+
+export function menuItems(rules: ActionRule[]): MenuItem[] {
+  const items = rules.filter((r) => r.enabled).map((r): MenuItem => {
+    const t = r.trigger, g = t.giftName ? giftInfo(t.giftName) : undefined;
+    return {
+      event: t.event, gift: t.giftName, th: g?.th, image: g?.image, diamonds: g?.diamonds,
+      minDiamonds: t.giftName ? undefined : t.minDiamonds, keyword: t.keyword,
+      label: r.name, kind: r.action.type, cards: r.action.cards,
+    };
+  });
+  // ของขวัญเรียงถูก → แพง แล้วตามด้วยแชท/ติดตาม/แชร์
+  const rank = (m: MenuItem) => (m.event === 'gift' ? (m.diamonds ?? m.minDiamonds ?? 0) : 1e9 + ['chat', 'follow', 'share', 'like'].indexOf(m.event));
+  return items.sort((a, b) => rank(a) - rank(b));
 }

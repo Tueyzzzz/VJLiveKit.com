@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE),
   title: { default: TITLE, template: '%s · VJLiveKit' },
   description: DESC,
-  keywords: ['วิดเจ็ตไลฟ์ TikTok', 'TikTok LIVE overlay', 'OBS TikTok', 'TikTok LIVE Studio', 'Coin Jar TikTok', 'โหลของขวัญ TikTok', 'Top Gifters', 'แจ้งเตือนของขวัญ TikTok', 'ลีก TikTok', 'ไพ่ทาโร่ไลฟ์', 'สตรีมเมอร์ TikTok', 'TikFinity ภาษาไทย', 'VJ ไลฟ์สด'],
+  keywords: ['วิดเจ็ตไลฟ์ TikTok', 'TikTok LIVE overlay', 'OBS TikTok', 'TikTok LIVE Studio', 'Coin Jar TikTok', 'โหลของขวัญ TikTok', 'Top Gifters', 'แจ้งเตือนของขวัญ TikTok', 'ลีก TikTok', 'ไพ่ทาโร่ไลฟ์', 'สตรีมเมอร์ TikTok', 'TikFinity ภาษาไทย', 'วีเจ.com', 'VJ Studio', 'VJ ไลฟ์สด'],
   applicationName: 'VJLiveKit',
   alternates: { canonical: '/' },
   icons: { icon: '/favicon.svg' },

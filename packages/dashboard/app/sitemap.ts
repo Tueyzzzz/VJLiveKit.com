@@ -9,6 +9,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     { url: `${BASE}/`, lastModified: now, changeFrequency: 'weekly', priority: 1 },
     { url: `${BASE}/tikfinity-alternative/`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${BASE}/vj-studio-alternative/`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${BASE}/register/`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE}/login/`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
   ];

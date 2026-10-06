@@ -71,6 +71,7 @@ window.Overlay = (function () {
       }
       badge.textContent = 'VJLiveKit: ' + text;
       badge.style.display = 'block';
+      clearTimeout(badge._t); badge._t = setTimeout(() => { badge.style.display = 'none'; }, 8000); // ไม่ค้างบนจอไลฟ์
     };
     socket.on('disconnect', (reason) => { if (reason === 'io server disconnect') setTimeout(() => socket.connect(), 60_000); }); // ต่ออายุแล้วกลับมาเอง
     socket.on('status', (s) => {

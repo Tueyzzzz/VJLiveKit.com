@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
-import { Check, Copy, Pencil, Play, Plus, Sparkles, Trash2 } from 'lucide-react';
+import { Check, Copy, Pencil, Play, Plus, Sparkles, Trash2, Upload as UploadIcon } from 'lucide-react';
 import { Alert, Badge, Button, Card, Field, Input, PageHeader, Select, Spinner } from '@/components/ui';
 import { GiftCell, GiftPicker } from '@/components/GiftPicker';
 import { toDigits } from '@/components/NumberInput';
@@ -77,6 +77,9 @@ async function playSfx(id: string) {
   sfxLoad ??= new Promise((ok, bad) => { const s = document.createElement('script'); s.src = `${process.env.NEXT_PUBLIC_API_BASE ?? ''}/overlay/js/sfx.js`; s.onload = () => ok(); s.onerror = bad; document.head.appendChild(s); });
   try { await sfxLoad; w.VJLSfx?.play(id); } catch { sfxLoad = null; }
 }
+
+interface Upload { id: string; name: string; size: number; url: string }
+const readAsDataUrl = (f: File) => new Promise<string>((ok, bad) => { const r = new FileReader(); r.onload = () => ok(String(r.result)); r.onerror = () => bad(new Error('อ่านไฟล์ไม่ได้')); r.readAsDataURL(f); });
 
 function toDraft(r: Rule): Draft {
   return {
@@ -206,6 +209,21 @@ export default function ActionsPage() {
     catch (err) { setError({ text: (err as Error).message }); }
   }
 
+  // ไฟล์เสียงที่อัปโหลดไว้ (ใช้กับกฎ "เล่นเสียง")
+  const [uploads, setUploads] = useState<Upload[]>([]);
+  const [uploading, setUploading] = useState(false);
+  useEffect(() => { api<{ sounds: Upload[] }>('/api/sounds').then((r) => setUploads(r.sounds)).catch(() => {}); }, []);
+  async function uploadSound(f: File) {
+    if (f.size > 5 * 1024 * 1024) { setError({ text: 'ไฟล์ใหญ่เกิน 5MB — ตัดให้สั้นลง หรือแปลงเป็น mp3' }); return; }
+    setUploading(true); setError(null);
+    try {
+      const data = await readAsDataUrl(f);
+      const r = await api<{ sound: Upload }>('/api/sounds', { method: 'POST', body: { name: f.name.replace(/\.[^.]+$/, '').slice(0, 60) || 'เสียง', data } });
+      setUploads((u) => [r.sound, ...u]);
+      setDraft((d) => (d ? { ...d, sound: '', url: r.sound.url } : d));
+    } catch (err) { setError({ text: (err as Error).message }); } finally { setUploading(false); }
+  }
+
   const fxLocked = entitlements ? !entitlements.widgets.includes('fx') : false;
   const [adding, setAdding] = useState<string | null>(null);
   async function applyTemplate(t: Template) {
@@ -287,17 +305,23 @@ export default function ActionsPage() {
                 </Select>
               </Field>
               {draft.type === 'sound' && (
-                <Field label="เสียง" hint="เสียงสำเร็จรูป ไม่ต้องหาไฟล์ · กด ▶ เพื่อฟัง">
-                  <div className="flex gap-2">
-                    <Select value={draft.sound} onChange={(e) => set('sound', e.target.value)}>
-                      {SFX.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
-                      <option value="">🔗 ใช้ไฟล์เสียงของฉันเอง (ลิงก์)</option>
+                <Field label="เสียง" hint="เลือกเสียงสำเร็จรูป หรืออัปโหลดเพลง/เสียงของคุณ (mp3 · wav · ogg · m4a ไม่เกิน 5MB) · กด ▶ เพื่อฟัง">
+                  <div className="flex flex-wrap gap-2">
+                    <Select className="min-w-0 flex-1" value={draft.sound || (uploads.some((u) => u.url === draft.url) ? 'url:' + draft.url : '')}
+                      onChange={(e) => { const v = e.target.value; setDraft((d) => (d ? (v.startsWith('url:') ? { ...d, sound: '', url: v.slice(4) } : { ...d, sound: v, url: v ? d.url : (uploads.some((u) => u.url === d.url) ? '' : d.url) }) : d)); }}>
+                      <optgroup label="เสียงสำเร็จรูป">{SFX.map(([id, name]) => <option key={id} value={id}>{name}</option>)}</optgroup>
+                      {uploads.length > 0 && <optgroup label="🎵 ไฟล์ที่อัปโหลด">{uploads.map((u) => <option key={u.id} value={'url:' + u.url}>🎵 {u.name}</option>)}</optgroup>}
+                      <option value="">🔗 ใช้ลิงก์ไฟล์เสียงเอง</option>
                     </Select>
-                    {draft.sound && <Button type="button" variant="secondary" className="px-3" aria-label="ฟังเสียง" onClick={() => void playSfx(draft.sound)}><Play className="size-4" /></Button>}
+                    <Button type="button" variant="secondary" className="px-3" aria-label="ฟังเสียง" onClick={() => { if (draft.sound) void playSfx(draft.sound); else if (draft.url) void new Audio(draft.url).play().catch(() => {}); }}><Play className="size-4" /></Button>
+                    <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-line bg-white px-3 py-2 text-sm hover:bg-pink-soft">
+                      {uploading ? <Spinner /> : <UploadIcon className="size-4" />} อัปโหลด
+                      <input type="file" accept="audio/*" className="hidden" disabled={uploading} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void uploadSound(f); }} />
+                    </label>
                   </div>
                 </Field>
               )}
-              {((draft.type === 'sound' && !draft.sound) || draft.type === 'image' || draft.type === 'video') && (
+              {((draft.type === 'sound' && !draft.sound && !uploads.some((u) => u.url === draft.url)) || draft.type === 'image' || draft.type === 'video') && (
                 <Field label="ลิงก์ไฟล์" hint="ลิงก์ตรงไปยังไฟล์ .mp3 / .png / .gif / .mp4 (https://)">
                   <Input type="url" required value={draft.url} onChange={(e) => set('url', e.target.value)} placeholder="https://..." />
                 </Field>

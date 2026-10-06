@@ -39,7 +39,8 @@
     wrap.className = ['top', 'center', 'bottom'].includes(P('pos', 'top')) ? P('pos', 'top') : 'top';
     const SCALE = Math.max(.4, Math.min(2.5, parseFloat(P('scale', '1')) || 1));
     const DUR = Math.max(3, Math.min(30, parseFloat(P('dur', '8')) || 8)) * 1000;
-    const SOUND = P('sound', 'true') !== 'false', COINS = P('coins', 'true') !== 'false';
+    // พรีวิว/เดโม (ไม่มีลิงก์จริง) วนโชว์ตลอด → ปิดเสียง ไม่งั้นกริ๊งไม่หยุดตอนเปิดหน้าแดชบอร์ด
+    const SOUND = P('sound', 'true') !== 'false' && (Overlay.connected || new URLSearchParams(location.search).get('sound') === '1'), COINS = P('coins', 'true') !== 'false';
     const fmt = (n) => Number(n).toLocaleString('th-TH', { maximumFractionDigits: 2 });
 
     let ac = null;

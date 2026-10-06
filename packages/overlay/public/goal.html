@@ -42,7 +42,7 @@
   #iheart { position:fixed; left:50%; top:10px; transform:translateX(-50%); display:none; flex-direction:column; align-items:center; width:calc(280px * var(--hs,1)); }
   #iheart.on { display:flex; }
   #iheart .ht { font-family:'Itim',sans-serif; font-size:calc(22px * var(--hs,1)); color:#fff; text-shadow:0 2px 5px rgba(0,0,0,.7); white-space:nowrap; margin-bottom:-6%; position:relative; z-index:2; }
-  #iheart .box { position:relative; width:100%; aspect-ratio:1; animation:hBeat 2.6s ease-in-out infinite; filter:drop-shadow(0 10px 16px rgba(60,10,50,.3)); }
+  #iheart .box { position:relative; width:calc(280px * var(--hs,1)); height:calc(280px * var(--hs,1)); flex:none; animation:hBeat 2.6s ease-in-out infinite; filter:drop-shadow(0 10px 16px rgba(60,10,50,.3)); }
   #iheart .liq { position:absolute; inset:0; }
   #iheart .liq svg { width:100%; height:100%; display:block; }
   #iheart .glass { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
@@ -191,9 +191,11 @@
     Overlay.on('stats',(s)=>render(s[key]||0));
     Overlay.on('state',(s)=>render((s.stats&&s.stats[key])||0));
 
-    if(!Overlay.connected){ let v=0; const step={like:120,follow:1,share:1,diamond:260,gift:2}[type];
+    const TEST=parseFloat(Overlay.param('test','')); // ?test=50 = ค้างที่ 50% (ใช้ตรวจหน้าตา)
+    if(!Overlay.connected && TEST>=0){ render(target*TEST/100); }
+    else if(!Overlay.connected){ let v=0; const step={like:120,follow:1,share:1,diamond:260,gift:2}[type];
       setInterval(()=>{ v+=Math.ceil(Math.random()*step); render(v); if(v>target) v=0; }, 900); }
-    render(0);
+    if(!(TEST>=0)) render(0);
   })();
   </script>
 </body>

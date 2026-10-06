@@ -1,11 +1,14 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { Coins, Bell, Target, MessageCircle, Volume2, Sparkles, Trophy, UserPlus, Gift, Trees, Car, WandSparkles } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { PlanCards, usePlans } from '@/components/Pricing';
 import { Button, Card, Spinner } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
+import { getToken } from '@/lib/api';
 
 const FEATURES = [
   { icon: Gift, title: 'โหลของขวัญ & ตู้ปลา', text: 'ของขวัญจริงตกลงโหล ตู้ปลา ลูกแก้ว โดมอวกาศ ของแพงชิ้นใหญ่ตามราคา' },
@@ -46,8 +49,14 @@ const JSONLD = [
 ];
 
 export default function Home() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const { plans } = usePlans();
+  const router = useRouter();
+  // ล็อกอินค้างไว้ → เข้าหน้าแรกแล้วเด้งไป Dashboard เลย (ระหว่างเช็ก session ไม่โชว์หน้าแรกให้กระพริบ)
+  const [hasSession, setHasSession] = useState(false);
+  useEffect(() => { if (getToken()) setHasSession(true); }, []);
+  useEffect(() => { if (user) router.replace('/dashboard/'); }, [user, router]);
+  if (hasSession && (loading || user)) return <div className="flex min-h-dvh items-center justify-center"><Spinner /></div>;
   return (
     <div>
       <header className="mx-auto flex max-w-6xl items-center justify-between px-4 py-5">

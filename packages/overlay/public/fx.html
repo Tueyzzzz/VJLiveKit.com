@@ -289,7 +289,10 @@
     Overlay.on('action',(fire)=>{
       // เสียงเล่นที่แดชบอร์ด (ลำโพง) แล้ว → จอนี้โชว์แค่ข้อความ ไม่เล่นเสียงซ้ำ
       if(fire.elsewhere && fire.action.type==='sound'){ const t=fill(fire.action.text,fire.event); if(t) showText(t,fire.action.durationMs||5000); return; }
-      play(fire.action,fire.event);
+      // ส่งคอมโบ (เช่น กุหลาบ 10 ดอก) → เล่นซ้ำตามจำนวน ไม่เกินที่วีเจตั้ง (ไพ่ทาโร่ = 1 เสมอ)
+      const a=fire.action, n=a.type==='tarot'?1:Math.max(1,Math.min(20,fire.times||1));
+      const gap=a.type==='sound'?700:a.type==='effect'?1400:(a.durationMs||5000)+300;
+      for(let i=0;i<n;i++) setTimeout(()=>play(a,fire.event), i*gap);
     });
     if(Overlay.param('debug','0')==='1') window.__play=play;
 

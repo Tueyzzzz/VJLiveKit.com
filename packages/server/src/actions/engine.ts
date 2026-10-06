@@ -15,6 +15,8 @@ export interface RuleAction {
   effect?: 'butterflies';
   /** จำนวนตัว/ชิ้นของเอฟเฟกต์ */
   count?: number;
+  /** ส่งคอมโบ (เช่น กุหลาบ 100 ดอก) เล่นซ้ำได้สูงสุดกี่ครั้ง — ค่าเริ่มต้น 1 · ไพ่ทาโร่ล็อก 1 เสมอ */
+  repeat?: number;
   url?: string;
   /** เสียงสำเร็จรูป (ไม่ต้องมีไฟล์) เช่น chime · coin · fanfare */
   sound?: string;
@@ -43,6 +45,8 @@ export interface ActionFire {
   action: RuleAction;
   event: TikTokEvent;
   ts: number;
+  /** จำนวนครั้งที่ให้เล่น (ตามจำนวนชิ้นในคอมโบ ไม่เกิน repeat) */
+  times?: number;
 }
 
 /** ตรวจว่าเหตุการณ์หนึ่งเข้ากฎข้อนี้ไหม */
@@ -72,7 +76,10 @@ export function ruleMatches(rule: ActionRule, e: TikTokEvent): boolean {
 export function evaluate(rules: ActionRule[], e: TikTokEvent): ActionFire[] {
   const out: ActionFire[] = [];
   for (const r of rules) {
-    if (ruleMatches(r, e)) out.push({ ruleId: r.id, name: r.name, action: r.action, event: e, ts: Date.now() });
+    if (!ruleMatches(r, e)) continue;
+    const limit = r.action.type === 'tarot' ? 1 : Math.max(1, Math.min(20, r.action.repeat ?? 1));
+    const times = e.type === 'gift' ? Math.min(limit, Math.max(1, e.repeatCount ?? 1)) : 1;
+    out.push({ ruleId: r.id, name: r.name, action: r.action, event: e, ts: Date.now(), times });
   }
   return out;
 }

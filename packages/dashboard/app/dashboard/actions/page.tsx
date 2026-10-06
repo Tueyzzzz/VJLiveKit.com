@@ -30,9 +30,11 @@ interface Draft {
   deck: TarotDeck;
   topic: TarotTopic;
   count: string;
+  /** คอมโบเล่นซ้ำสูงสุดกี่ครั้ง */
+  repeat: string;
 }
 
-const EMPTY: Draft = { name: '', enabled: true, event: 'gift', giftName: '', minDiamonds: '', keyword: '', type: 'sound', url: '', sound: 'chime', text: '', durationSec: '5', cards: '1', deck: 'full', topic: 'general', count: '12' };
+const EMPTY: Draft = { name: '', enabled: true, event: 'gift', giftName: '', minDiamonds: '', keyword: '', type: 'sound', url: '', sound: 'chime', text: '', durationSec: '5', cards: '1', deck: 'full', topic: 'general', count: '12', repeat: '1' };
 
 /** เทมเพลตยอดนิยม — กดครั้งเดียวสร้างกฎได้เลย (ไม่ต้องหาไฟล์เสียง/รูปเอง) */
 interface Template { icon: string; title: string; desc: string; rule: { name: string; trigger: Rule['trigger']; action: Rule['action'] } }
@@ -87,6 +89,7 @@ function toDraft(r: Rule): Draft {
     deck: r.action.deck ?? 'full',
     topic: r.action.topic ?? 'general',
     count: String(r.action.count ?? 12),
+    repeat: String(r.action.repeat ?? 1),
   };
 }
 
@@ -104,6 +107,7 @@ function toBody(d: Draft) {
   if (d.type === 'effect') { action.effect = 'butterflies'; action.count = Math.max(1, Math.min(30, Number(d.count) || 12)); }
   if (d.text.trim()) action.text = d.text.trim();
   if (d.type === 'tarot') { action.cards = Number(d.cards) || 1; if (d.deck !== 'full') action.deck = d.deck; if (d.topic !== 'general') action.topic = d.topic; }
+  if (d.type !== 'tarot' && d.event === 'gift') { const n = Math.max(1, Math.min(20, Math.floor(Number(d.repeat) || 1))); if (n > 1) action.repeat = n; }
   const sec = Number(d.durationSec);
   if (sec > 0) action.durationMs = Math.min(60_000, Math.round(sec * 1000));
   return { name: d.name.trim(), enabled: d.enabled, trigger, action };
@@ -337,6 +341,11 @@ export default function ActionsPage() {
                   </Select>
                 </Field>
               )}
+              {draft.event === 'gift' && (draft.type === 'tarot'
+                ? <Field label="ส่งคอมโบ (เช่น กุหลาบ 100 ดอก)"><div className="rounded-xl bg-canvas px-3 py-2 text-sm text-muted">🔒 เปิดไพ่ 1 ครั้งต่อคอมโบ (ไพ่ล็อกไว้ ไม่เปิดรัว)</div></Field>
+                : <Field label="ส่งคอมโบ เล่นซ้ำสูงสุด (ครั้ง)" hint="เช่น ตั้ง 1 = ส่งกุหลาบ 100 ดอกรวดเดียว เล่นแค่ครั้งเดียว · ตั้ง 5 = เล่นตามจำนวนชิ้น ไม่เกิน 5 ครั้ง (สูงสุด 20)">
+                    <Input type="text" inputMode="numeric" value={draft.repeat} onChange={(e) => set('repeat', toDigits(e.target.value))} placeholder="1" />
+                  </Field>)}
               <Field label="แสดงนาน (วินาที)"><Input type="text" inputMode="decimal" value={draft.durationSec} onChange={(e) => set('durationSec', toDigits(e.target.value, true))} /></Field>
             </div>
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={draft.enabled} onChange={(e) => set('enabled', e.target.checked)} className="accent-pink" /> เปิดใช้งาน</label>

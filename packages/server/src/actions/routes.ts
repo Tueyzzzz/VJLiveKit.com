@@ -16,6 +16,7 @@ const actionSchema = z.object({
   type: z.enum(['sound', 'image', 'video', 'text', 'tarot', 'effect']),
   effect: z.enum(['butterflies']).optional(),
   count: z.number().int().min(1).max(30).optional(),
+  repeat: z.number().int().min(1).max(20).optional(),
   url: z.string().url().optional(),
   sound: z.string().regex(/^[a-z]{2,20}$/).optional(), // เสียงสำเร็จรูป (overlay/js/sfx.js) — ไม่ต้องมีลิงก์
   text: z.string().max(200).optional(),

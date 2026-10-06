@@ -8,7 +8,7 @@ import { cx } from './ui';
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
 const KEY = 'vjl-speaker';
 
-interface Fire { name: string; action: Rule['action']; event?: { user?: { nickname?: string; uniqueId?: string } } }
+interface Fire { name: string; times?: number; action: Rule['action']; event?: { user?: { nickname?: string; uniqueId?: string } } }
 interface SocketLike { on: (ev: string, fn: (d: never) => void) => void; disconnect: () => void }
 type IoFn = (url: string, opts: object) => SocketLike;
 type Sfx = { play: (id: string, vol?: number) => boolean };
@@ -54,10 +54,13 @@ export function Speaker({ username }: { username?: string | null }) {
         const who = f.event?.user?.nickname || f.event?.user?.uniqueId || '';
         if (f.action.type === 'sound') {
           const sfx = (window as unknown as { VJLSfx?: Sfx }).VJLSfx;
-          if (f.action.sound && sfx) sfx.play(f.action.sound);
-          else if (f.action.url) void new Audio(f.action.url).play().catch(() => {});
+          const n = Math.max(1, Math.min(20, f.times ?? 1)); // คอมโบ → ดังซ้ำตามจำนวน (ไม่เกินที่ตั้ง)
+          for (let i = 0; i < n; i++) setTimeout(() => {
+            if (f.action.sound && sfx) sfx.play(f.action.sound);
+            else if (f.action.url) void new Audio(f.action.url).play().catch(() => {});
+          }, i * 700);
         }
-        setToast(`${who ? who + ' → ' : ''}${f.name}`);
+        setToast(`${who ? who + ' → ' : ''}${f.name}${(f.times ?? 1) > 1 ? ` ×${f.times}` : ''}`);
         if (toastT.current) clearTimeout(toastT.current);
         toastT.current = setTimeout(() => setToast(null), 4000);
       });

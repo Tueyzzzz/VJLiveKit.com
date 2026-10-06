@@ -26,6 +26,9 @@ const PARAM_HINTS: Record<string, string> = {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
 
+/** วิดเจ็ตที่กำลังพัฒนา — ลูกค้าเห็นเป็นสีเทา ใช้ไม่ได้ (แอดมินยังใช้ทดสอบได้) */
+const SOON = new Set(['league']);
+
 const COLLECT_GROUP = '🎁 สะสมของขวัญ — โหล ตู้ ต้นไม้ เครื่องจักร';
 
 /** จัดหมวดวิดเจ็ตในแกลเลอรี (ประเภทเดียวกันอยู่ด้วยกัน) */
@@ -154,7 +157,8 @@ function CopyButton({ text }: { text: string }) {
 }
 
 export default function WidgetsPage() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
+  const soon = (type: string) => SOON.has(type) && !isAdmin;
   const [tokens, setTokens] = useState<OverlayTokenRow[] | null>(null);
   const [maxTokens, setMaxTokens] = useState(0);
   const [error, setError] = useState<{ text: string; upgrade?: boolean } | null>(null);
@@ -244,7 +248,13 @@ export default function WidgetsPage() {
         </Card>
       )}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {list.map((w) => (
+        {list.map((w) => soon(w.type) ? (
+          <Card key={w.type} className="relative p-3 opacity-60 grayscale">
+            <div className="grid aspect-video place-items-center rounded-xl bg-canvas text-4xl">🚧</div>
+            <div className="mt-3 flex items-center gap-2 text-sm font-medium">{WIDGET_LABELS[w.type] ?? w.type} <Badge tone="gray">กำลังพัฒนา</Badge></div>
+            <p className="mt-0.5 text-xs text-muted">กำลังพัฒนา เปิดให้ใช้เร็ว ๆ นี้</p>
+          </Card>
+        ) : (
           <Card key={w.type} className={`p-3 ${title === COLLECT_GROUP && collectStyle === w.type ? 'ring-2 ring-pink' : ''}`}>
             <WidgetPreview type={w.type} config={configs[w.type]} live={livePreview === w.type}
               onLive={(on) => setLivePreview((cur) => (on ? w.type : cur === w.type ? null : cur))} />
@@ -302,7 +312,7 @@ export default function WidgetsPage() {
                 <Button variant="danger" onClick={() => revoke(t.id)}><Trash2 className="size-4" /> เพิกถอน</Button>
               </div>
               <ul className="divide-y divide-line">
-                {t.urls.map((w) => (
+                {t.urls.filter((w) => !soon(w.type)).map((w) => (
                   <li key={w.type} className="flex flex-wrap items-center gap-3 py-3">
                     <div className="w-44 shrink-0">
                       <div className="flex items-center gap-2 text-sm font-medium">

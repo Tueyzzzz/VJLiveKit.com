@@ -84,12 +84,13 @@ export interface Plan { code: string; name: string; priceCents: number; currency
 
 export type TriggerEvent = 'gift' | 'follow' | 'share' | 'like' | 'chat';
 export type ActionType = 'sound' | 'image' | 'video' | 'text' | 'tarot';
+export type TarotDeck = 'full' | 'major' | 'wands' | 'cups' | 'swords' | 'pentacles';
 export interface Rule {
   id: string;
   name: string;
   enabled: boolean;
   trigger: { event: TriggerEvent; giftName?: string; minDiamonds?: number; keyword?: string };
-  action: { type: ActionType; url?: string; text?: string; durationMs?: number; cards?: number };
+  action: { type: ActionType; url?: string; text?: string; durationMs?: number; cards?: number; deck?: TarotDeck };
   createdAt: string;
 }
 export interface PaymentRow { id: string; amountCents: number; currency: string; status: string; createdAt: string; rawPayload: { hosted_invoice_url?: string; number?: string } | null }

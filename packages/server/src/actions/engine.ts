@@ -15,6 +15,8 @@ export interface RuleAction {
   durationMs?: number;
   /** สุ่มไพ่ทาโร่: จำนวนใบ 1 | 3 | 7 */
   cards?: number;
+  /** สำรับที่สุ่ม: ทั้งสำรับ / ชุดใหญ่ / เฉพาะชุดไม้เท้า·ถ้วย·ดาบ·เหรียญ */
+  deck?: 'full' | 'major' | 'wands' | 'cups' | 'swords' | 'pentacles';
 }
 
 export interface ActionRule {

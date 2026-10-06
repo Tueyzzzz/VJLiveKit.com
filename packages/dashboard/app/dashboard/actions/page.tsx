@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Check, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { Alert, Badge, Button, Card, Field, Input, PageHeader, Select, Spinner } from '@/components/ui';
 import { GiftPicker } from '@/components/GiftPicker';
-import { api, ApiError, type ActionType, type Rule, type TriggerEvent } from '@/lib/api';
+import { api, ApiError, type ActionType, type Rule, type TarotDeck, type TriggerEvent } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 
 const EVENT_LABELS: Record<TriggerEvent, string> = { gift: '🎁 ได้รับกิฟต์', follow: '➕ มีคนติดตาม', share: '🔁 มีคนแชร์', like: '❤️ มีคนกดไลค์', chat: '💬 แชทมีคำว่า' };
@@ -24,9 +24,10 @@ interface Draft {
   text: string;
   durationSec: string;
   cards: string;
+  deck: TarotDeck;
 }
 
-const EMPTY: Draft = { name: '', enabled: true, event: 'gift', giftName: '', minDiamonds: '', keyword: '', type: 'sound', url: '', text: '', durationSec: '5', cards: '1' };
+const EMPTY: Draft = { name: '', enabled: true, event: 'gift', giftName: '', minDiamonds: '', keyword: '', type: 'sound', url: '', text: '', durationSec: '5', cards: '1', deck: 'full' };
 
 /** เทมเพลตยอดนิยม — กดครั้งเดียวสร้างกฎได้เลย (ไม่ต้องหาไฟล์เสียง/รูปเอง) */
 interface Template { icon: string; title: string; desc: string; rule: { name: string; trigger: Rule['trigger']; action: Rule['action'] } }
@@ -39,6 +40,8 @@ const TEMPLATES: Template[] = [
     rule: { name: 'ไพ่ 7 ใบ (1,000 เพชร+)', trigger: { event: 'gift', minDiamonds: 1000 }, action: { type: 'tarot', cards: 7, text: '👑 ดูดวงเต็มชุดให้ {user}', durationMs: 20000 } } },
   { icon: '💬', title: 'พิมพ์ “ดูดวง” ในแชท → ไพ่ 1 ใบ', desc: 'ให้คนดูเล่นได้ทุกคน',
     rule: { name: 'แชทดูดวง', trigger: { event: 'chat', keyword: 'ดูดวง' }, action: { type: 'tarot', cards: 1, text: '🔮 ไพ่ของ {user}', durationMs: 8000 } } },
+  { icon: '⚔️', title: 'ร่างกายต้องการดาบ', desc: 'ได้กิฟต์ → สุ่มไพ่ชุดดาบ 1 ใบ ตามเทรนด์',
+    rule: { name: 'ร่างกายต้องการดาบ', trigger: { event: 'gift', minDiamonds: 1 }, action: { type: 'tarot', cards: 1, deck: 'swords', text: '⚔️ ร่างกายของ {user} ต้องการดาบ!', durationMs: 8000 } } },
   { icon: '💖', title: 'มีคนติดตาม → ข้อความขอบคุณ', desc: '“ขอบคุณ {user} ที่กดติดตามนะ”',
     rule: { name: 'ขอบคุณผู้ติดตามใหม่', trigger: { event: 'follow' }, action: { type: 'text', text: '💖 ขอบคุณ {user} ที่กดติดตามนะ!', durationMs: 4000 } } },
   { icon: '🔁', title: 'มีคนแชร์ → ข้อความขอบคุณ', desc: 'กระตุ้นให้คนช่วยแชร์ไลฟ์',
@@ -56,6 +59,7 @@ function toDraft(r: Rule): Draft {
     keyword: r.trigger.keyword ?? '', type: r.action.type, url: r.action.url ?? '', text: r.action.text ?? '',
     durationSec: r.action.durationMs ? String(r.action.durationMs / 1000) : '5',
     cards: String(r.action.cards ?? 1),
+    deck: r.action.deck ?? 'full',
   };
 }
 
@@ -69,7 +73,7 @@ function toBody(d: Draft) {
   const action: Rule['action'] = { type: d.type };
   if (d.type !== 'text' && d.url.trim()) action.url = d.url.trim();
   if (d.text.trim()) action.text = d.text.trim();
-  if (d.type === 'tarot') action.cards = Number(d.cards) || 1;
+  if (d.type === 'tarot') { action.cards = Number(d.cards) || 1; if (d.deck !== 'full') action.deck = d.deck; }
   const sec = Number(d.durationSec);
   if (sec > 0) action.durationMs = Math.min(60_000, Math.round(sec * 1000));
   return { name: d.name.trim(), enabled: d.enabled, trigger, action };
@@ -195,6 +199,18 @@ export default function ActionsPage() {
                     <option value="1">🃏 เปิด 1 ใบ — คำทำนายเดียว</option>
                     <option value="3">🃏🃏🃏 เปิด 3 ใบ — อดีต · ปัจจุบัน · อนาคต</option>
                     <option value="7">เปิด 7 ใบ — ดูดวงเต็มชุด</option>
+                  </Select>
+                </Field>
+              )}
+              {draft.type === 'tarot' && (
+                <Field label="สำรับไพ่">
+                  <Select value={draft.deck} onChange={(e) => set('deck', e.target.value as TarotDeck)}>
+                    <option value="full">ครบสำรับ 78 ใบ</option>
+                    <option value="major">ชุดใหญ่ 22 ใบ (Major Arcana)</option>
+                    <option value="swords">⚔️ เฉพาะชุดดาบ — “ร่างกายต้องการดาบ”</option>
+                    <option value="cups">🏆 เฉพาะชุดถ้วย (ความรัก)</option>
+                    <option value="wands">🔥 เฉพาะชุดไม้เท้า (พลัง/งาน)</option>
+                    <option value="pentacles">💰 เฉพาะชุดเหรียญ (การเงิน)</option>
                   </Select>
                 </Field>
               )}

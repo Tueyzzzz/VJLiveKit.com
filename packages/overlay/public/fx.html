@@ -148,7 +148,8 @@
       ['p-queen','','ราชินีเหรียญ','Queen of Pentacles','อุดมสมบูรณ์ ดูแลทุกคนได้ดี'],
       ['p-king','','ราชาเหรียญ','King of Pentacles','มั่งคั่ง ประสบความสำเร็จเต็มที่'],
     ];
-    const deckOf=(d)=>d==='major'?TAROT.slice(0,22):TAROT; // ตั้งค่า deck=major = ใช้เฉพาะชุดใหญ่ 22 ใบ
+    const SUIT={wands:'w-',cups:'c-',swords:'s-',pentacles:'p-'};
+    const deckOf=(d)=>d==='major'?TAROT.slice(0,22):SUIT[d]?TAROT.filter((c)=>c[0].startsWith(SUIT[d])):TAROT; // สำรับ: full | major | wands | cups | swords | pentacles
     const tarotQ=[]; let tarotBusy=false;
     function tarot(a,ev){ tarotQ.push([a,ev]); if(!tarotBusy) nextTarot(); }
     const LABELS={1:[''],3:['อดีต','ปัจจุบัน','อนาคต'],7:['อดีต','ปัจจุบัน','อนาคตอันใกล้','คำแนะนำ','สิ่งรอบตัว','ความหวัง','ผลลัพธ์']};
@@ -160,10 +161,10 @@
       // การจัดวาง: แนวนอน = แถวเดียว (7 ใบโค้งเกือกม้า) · แนวตั้ง = 7 ใบเป็น 2-3-2
       const rows=n===7&&portrait?[2,3,2]:[n], maxRow=Math.max(...rows), arc=n===7&&!portrait;
       const scale=Math.min(n===7?(portrait?0.78:0.62):n===3?(portrait?0.95:0.85):1, (innerWidth*0.94-(maxRow-1)*18)/(maxRow*260), (innerHeight*0.86-rows.length*36-(rows.length-1)*22-(arc?60:0))/(rows.length*470)), step=n===1?0:(n===7?0.9:1.4); // ขนาดไพ่/ระยะเวลาเปิดทีละใบ (วินาที)
-      const deck=deckOf(Overlay.param('deck','full')).slice().sort(()=>Math.random()-0.5).slice(0,n); // ไม่ซ้ำกันในชุดเดียว
+      const deck=deckOf(a.deck||Overlay.param('deck','full')).slice().sort(()=>Math.random()-0.5).slice(0,n); // ไม่ซ้ำกันในชุดเดียว
       const u=ev&&ev.user?(ev.user.nickname||ev.user.uniqueId):'';
       const el=document.createElement('div'); el.className='tarot'; el.style.setProperty('--s',String(scale));
-      const who=document.createElement('div'); who.className='who'; who.textContent=(u?`🔮 ไพ่ของ ${u}`:'🔮 ไพ่ของคุณ')+(n>1?` · ${n} ใบ`:''); el.appendChild(who);
+      const who=document.createElement('div'); who.className='who'; const head=fill(a.text,ev); who.textContent=head||((u?`🔮 ไพ่ของ ${u}`:'🔮 ไพ่ของคุณ')+(n>1?` · ${n} ใบ`:'')); el.appendChild(who); // ข้อความของกฎ = หัวเรื่อง
       const spread=document.createElement('div'); spread.className='tspread'; el.appendChild(spread);
       const rowEls=rows.map(()=>{ const r=document.createElement('div'); r.className='trow'; spread.appendChild(r); return r; });
       const rowOf=(k)=>{ let acc=0; for(let r=0;r<rows.length;r++){ acc+=rows[r]; if(k<acc) return rowEls[r]; } return rowEls[rowEls.length-1]; };
@@ -182,7 +183,7 @@
         const m=document.createElement('div'); m.className='mean'; m.textContent=c[4]; m.style.animationDelay=(delay+1.1)+'s'; slot.appendChild(m);
         rowOf(k).appendChild(slot);
       });
-      const extra=fill(a.text,ev); if(extra){ const x=document.createElement('div'); x.className='extra'; x.textContent=extra; x.style.animationDelay=(1+n*step)+'s'; el.appendChild(x); }
+      const extra=''; if(extra){ const x=document.createElement('div'); x.className='extra'; x.textContent=extra; x.style.animationDelay=(1+n*step)+'s'; el.appendChild(x); }
       // โหลดรูปไพ่ที่สุ่มได้ให้เสร็จก่อนค่อยโชว์ (กันไพ่พลิกแล้วเจอกรอบว่าง) — รอไม่เกิน 2.5 วิ
       const imgs=['back',...deck.map((c)=>c[0])].map((f)=>new Promise((r)=>{ const i=new Image(); i.onload=i.onerror=r; i.src=`tarot/${f}.webp`; }));
       Promise.race([Promise.all(imgs), new Promise((r)=>setTimeout(r,2500))]).then(()=>{

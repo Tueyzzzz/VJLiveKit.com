@@ -389,4 +389,12 @@ export const EN_CORE: Record<string, string> = {
   "🎬 วิดีโอ": "🎬 Video",
   "ขึ้นบนจอ FX ในโปรแกรมไลฟ์ 4 วินาที พร้อมเสียง": "Shows on the FX screen for 4 seconds with the sound",
   "วิดีโอ/รูปใหญ่เกิน 20MB — ตัดให้สั้นลงก่อน": "Video/image is over 20MB — trim it first",
+  "ตัดท่อนเสียง": "Trim sound",
+  "เปิดไฟล์นี้ไม่ได้ — ลองไฟล์ mp3 / mp4 ทั่วไป": "Can’t open this file — try a regular mp3 / mp4",
+  "เริ่ม": "Start",
+  "จบ": "End",
+  "ความยาว {s} วินาที (ไม่เกิน {max} วินาที) · แตะบนคลื่นเพื่อย้ายจุดเริ่ม/จบ": "Length {s}s (max {max}s) · tap the waveform to move start/end",
+  "หยุด": "Stop",
+  "ฟังท่อนนี้": "Play clip",
+  "อัปโหลดท่อนนี้": "Upload clip",
 };

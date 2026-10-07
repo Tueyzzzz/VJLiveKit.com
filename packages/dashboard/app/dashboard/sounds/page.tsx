@@ -6,6 +6,7 @@ import { Play, Plus, Search, Trash2, Upload as UploadIcon, X } from 'lucide-reac
 import { Alert, Button, Card, Input, PageHeader, Select, Spinner } from '@/components/ui';
 import { GiftCell, GiftPicker } from '@/components/GiftPicker';
 import { api, ApiError, type Rule, type TriggerEvent } from '@/lib/api';
+import { SoundUpload } from '@/components/SoundUpload';
 import { translate, useT } from '@/lib/i18n';
 import { SFX, enqueueSound, getSoundPrefs, playSound, readAsDataUrl, toAudioDataUrl, setSoundPrefs, type SoundPrefs, type Upload } from '@/lib/sounds';
 
@@ -176,10 +177,7 @@ function SoundLibrary({ uploads, maxBytes, onUploaded, onDeleted, onPick, onClos
         </div>
         <div className="space-y-3 border-b border-line p-4">
           <div className="flex flex-wrap items-center gap-2 text-sm">
-            <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-line px-3 py-2 hover:bg-pink-soft">
-              {busy ? <Spinner /> : <UploadIcon className="size-4" />} {t('อัปโหลดเสียง')}
-              <input type="file" accept="audio/*,video/*" className="hidden" disabled={busy} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void upload(f); }} />
-            </label>
+            <SoundUpload label={t('อัปโหลดเสียง')} onUploaded={(u) => onUploaded(u)} />
             <span className="text-muted">{t('หรือเลือกจากคลังด้านล่าง · mp3 / wav / ogg / m4a ไม่เกิน {mb}MB', { mb: Math.round(maxBytes / 1048576) })}</span>
           </div>
           <div className="relative"><Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" /><Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('ค้นหาเสียง…')} className="pl-9" /></div>

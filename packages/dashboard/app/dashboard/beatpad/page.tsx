@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Lock, Pencil, Plus, Trash2, Upload as UploadIcon, X } from 'lucide-react';
 import { Alert, Button, Input, PageHeader, Select, Spinner } from '@/components/ui';
 import { api } from '@/lib/api';
+import { SoundUpload } from '@/components/SoundUpload';
 import { useAuth } from '@/lib/auth';
 import { useT } from '@/lib/i18n';
 import { SFX, playSound, readAsDataUrl, toAudioDataUrl, type Upload } from '@/lib/sounds';
@@ -36,8 +37,8 @@ export default function BeatPadPage() {
   useEffect(() => {
     api<{ board: Board }>('/api/beatpad').then((r) => setBoard(r.board)).catch((e) => setNote({ tone: 'error', text: (e as Error).message }));
     api<{ sounds: Upload[] }>('/api/sounds').then((r) => setUploads(r.sounds)).catch(() => {});
-    // ค่าเริ่มต้น: คอม (เมาส์) = เล่นที่เครื่องนี้ · มือถือ = เป็นรีโมท ส่งเสียงไปดังที่คอม
-    try { const v = localStorage.getItem('vjl-pad-here'); setHere(v === null ? matchMedia('(pointer: fine)').matches : v === '1'); } catch { setHere(true); }
+    // ค่าเริ่มต้น = เล่นที่เครื่องนี้ด้วย (ติ๊กออกได้ ถ้าใช้มือถือเป็นรีโมทอย่างเดียว)
+    try { setHere(localStorage.getItem('vjl-pad-here') !== '0'); } catch { setHere(true); }
   }, []);
   const save = useCallback(async (b: Board) => {
     setBoard(b);
@@ -179,10 +180,7 @@ function PadEditor({ pad, uploads, onUploaded, onChange, onClose, onDelete }: {
                 {uploads.length > 0 && <optgroup label={t('🎵 ไฟล์ที่อัปโหลด')}>{uploads.map((u) => <option key={u.id} value={'url:' + u.url}>🎵 {u.name}</option>)}</optgroup>}
               </Select>
               <Button variant="secondary" className="px-3" onClick={() => void playSound(pad)}>▶</Button>
-              <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-line px-3 py-2 text-sm hover:bg-pink-soft">
-                {busy ? <Spinner /> : <UploadIcon className="size-4" />} {t('อัปโหลด')}
-                <input type="file" accept="audio/*,video/*" className="hidden" disabled={busy} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void upload(f); }} />
-              </label>
+              <SoundUpload onUploaded={(u) => { onUploaded(u); onChange({ url: u.url, sound: undefined, label: pad.label || u.name.slice(0, 24) }); }} />
             </div>
           </div>
           <div>

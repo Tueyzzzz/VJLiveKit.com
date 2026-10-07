@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { Check, Copy, Pencil, Play, Plus, Sparkles, Trash2, Upload as UploadIcon } from 'lucide-react';
 import { Alert, Badge, Button, Card, Field, Input, PageHeader, Select, Spinner } from '@/components/ui';
 import { GiftCell, GiftPicker } from '@/components/GiftPicker';
+import { SoundUpload } from '@/components/SoundUpload';
 import { toDigits } from '@/components/NumberInput';
 import { toAudioDataUrl } from '@/lib/sounds';
 import { api, ApiError, type OverlayTokenRow, type ActionType, type Rule, type TarotDeck, type TarotTopic, type TriggerEvent } from '@/lib/api';
@@ -341,10 +342,7 @@ export default function ActionsPage() {
                       <option value="">{t('🔗 ใช้ลิงก์ไฟล์เสียงเอง')}</option>
                     </Select>
                     <Button type="button" variant="secondary" className="px-3" aria-label={t('ฟังเสียง')} onClick={() => { if (draft.sound) void playSfx(draft.sound); else if (draft.url) void new Audio(draft.url).play().catch(() => {}); }}><Play className="size-4" /></Button>
-                    <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-line bg-white px-3 py-2 text-sm hover:bg-pink-soft">
-                      {uploading ? <Spinner /> : <UploadIcon className="size-4" />} {t('อัปโหลด')}
-                      <input type="file" accept="audio/*,video/*" className="hidden" disabled={uploading} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void uploadSound(f); }} />
-                    </label>
+                    <SoundUpload onUploaded={(u) => { setUploads((x) => [u, ...x]); setDraft((d) => (d ? { ...d, sound: '', url: u.url } : d)); }} />
                   </div>
                 </Field>
               )}

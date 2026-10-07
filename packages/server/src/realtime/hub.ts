@@ -222,6 +222,11 @@ export class RoomHub {
     entry.attempts++;
     entry.connecting = entry.room.connect(this.demo)
       .then(async () => {
+        // TikTok บางทีให้ต่อเข้าห้องที่ไลฟ์จบไปแล้วได้ (ห้องค้าง) → ถามซ้ำว่าไลฟ์อยู่จริงไหม ไม่ไลฟ์ = ถือว่ายังไม่ได้ไลฟ์ แล้วลองใหม่ทีหลัง
+        if (!this.demo && (await entry.room.checkLive()) === false) {
+          await entry.room.disconnect().catch(() => {});
+          throw new Error('ยังไม่ได้เริ่มไลฟ์ (ห้องเก่าที่จบแล้ว)');
+        }
         entry.connectedAt = Date.now(); entry.lastError = null;
         if (this.demo) return;
         connStats.bump('success');

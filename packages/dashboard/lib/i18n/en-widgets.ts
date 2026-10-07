@@ -527,4 +527,7 @@ export const EN_WIDGETS: Record<string, string> = {
   "🍬 พาสเทลแคนดี้": "🍬 Pastel candy",
   "👑 หรูทองคำ": "👑 Luxury gold",
   "🫧 ฟองลอย (ไม่มีกรอบ)": "🫧 Floating bubbles (no frame)",
+  "หน้าตาแต่ละข้อ": "Item style",
+  "🎁 รูปของขวัญ + คำอธิบายใต้รูป (ไม่มีพื้นหลัง)": "🎁 Gift image + caption below (no background)",
+  "▭ แถบ: รูปซ้าย + \"ส่ง … เหรียญ\"": "▭ Bar: image left + \"Send … coins\"",
 };

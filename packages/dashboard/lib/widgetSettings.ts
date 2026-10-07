@@ -470,6 +470,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
         { key: 'theme', label: 'เทมเพลตหน้าตา', type: 'select', def: 'glass', options: [['glass', '🔮 กระจกม่วง (เดิม)'], ['candy', '🍬 พาสเทลแคนดี้'], ['white', '◻️ มินิมอล ขาว'], ['neon', '🌈 นีออน'], ['gold', '👑 หรูทองคำ'], ['bubble', '🫧 ฟองลอย (ไม่มีกรอบ)']] },
         { key: 'title', label: 'หัวข้อ', type: 'text', def: '🎁 ส่งของขวัญเพื่อ…' },
         { key: 'items', label: 'รายการที่แสดง', type: 'menuItems', def: '', hint: 'ดึงจากกฎ Actions อัตโนมัติ · ติ๊กออก = ไม่แสดง · กดรูปเพื่อเลือกรูปของขวัญ · แก้คำในเมนูได้' },
+        { key: 'item', label: 'หน้าตาแต่ละข้อ', type: 'select', def: 'tile', options: [['tile', '🎁 รูปของขวัญ + คำอธิบายใต้รูป (ไม่มีพื้นหลัง)'], ['row', '▭ แถบ: รูปซ้าย + "ส่ง … เหรียญ"']] },
         { key: 'layout', label: 'รูปแบบ', type: 'select', def: 'list', options: [['list', 'รายการ (โชว์หลายข้อ)'], ['rotate', 'หมุนทีละข้อ (ประหยัดที่)']] },
         { key: 'dir', label: 'แนวการเรียง', type: 'select', def: 'vertical', options: [['vertical', '↕️ แนวตั้ง (เรียงลงมา)'], ['horizontal', '↔️ แนวนอน (เรียงเป็นแถว)']], when: (v) => v.layout !== 'rotate' },
         { key: 'move', label: 'ของขวัญขยับ', type: 'select', def: 'bounce', options: [['bounce', '🦘 เด้งดึ๋ง'], ['bob', '🎈 ลอยเบา ๆ'], ['wiggle', '👋 ส่ายไปมา'], ['pulse', '💓 เต้นตุบ ๆ'], ['spin', '🔄 หมุน'], ['none', '⏸ นิ่ง']] },

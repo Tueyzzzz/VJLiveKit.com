@@ -51,6 +51,12 @@
   #box.horiz .ico { width:58px; height:58px; } #box.horiz .ico img { width:54px; height:54px; }
   #box.horiz .what { white-space:normal; font-size:15px; line-height:1.2; } #box.horiz .how { font-size:12px; }
   /* ของขวัญขยับ */
+  /* แบบไอคอน (ค่าเริ่มต้น): รูปของขวัญไม่มีพื้นหลัง คำอธิบายอยู่ใต้รูป ไม่ต้องบอก "ส่ง กุหลาบ x เหรียญ" (เห็นรูปก็รู้) */
+  .it-tile .row { flex-direction:column; text-align:center; gap:2px; padding:6px 4px; background:none !important; border:0 !important; box-shadow:none !important; }
+  .it-tile .ico { background:none !important; width:64px; height:64px; } .it-tile .ico img { width:62px; height:62px; }
+  .it-tile .what { white-space:normal; font-size:16px; max-width:150px; }
+  .it-tile .row.gift .how { display:none; }
+  .it-tile.horiz .row { width:120px; }
   .mv-bounce .ico img { animation:mvBounce 1.1s cubic-bezier(.3,1.6,.5,1) infinite; }
   .mv-spin .ico img { animation:mvSpin 3.2s linear infinite; }
   .mv-pulse .ico img { animation:mvPulse 1.3s ease-in-out infinite; }
@@ -79,7 +85,7 @@
     const DIR = P('dir', 'vertical') === 'horizontal' ? 'horiz' : 'vert';
     const MOVE = ['bob', 'bounce', 'spin', 'pulse', 'wiggle', 'none'].includes(P('move', 'bounce')) ? P('move', 'bounce') : 'bounce';
     const THEME = ['glass', 'candy', 'white', 'neon', 'gold', 'bubble'].includes(P('theme', 'glass')) ? P('theme', 'glass') : 'glass';
-    box.className = POS + ' ' + LAYOUT + ' ' + DIR + ' mv-' + MOVE + ' th-' + THEME;
+    box.className = POS + ' ' + LAYOUT + ' ' + DIR + ' mv-' + MOVE + ' th-' + THEME + ' it-' + (P('item', 'tile') === 'row' ? 'row' : 'tile');
     box.style.setProperty('--bgx', Math.max(.3, Math.min(1, parseFloat(P('bg', '45')) / 100 + .45)));
     box.style.setProperty('--s', Math.max(.4, Math.min(2.5, parseFloat(P('scale', '1')) || 1)));
     box.querySelector('.panel').style.setProperty('--bg', Math.max(0, Math.min(100, parseFloat(P('bg', '45')))) / 100);
@@ -94,7 +100,7 @@
     const HIDE = new Set(SEL.hide || []), ICONS = SEL.icons || {}, LABELS = SEL.labels || {}; // LABELS = คำในเมนูที่วีเจแก้เอง (แทนชื่อกฎ)
 
     function rowEl(m) {
-      const r = document.createElement('div'); r.className = 'row'; if (m.id) r.dataset.rule = m.id;
+      const r = document.createElement('div'); r.className = 'row' + (m.event === 'gift' ? ' gift' : ''); if (m.id) r.dataset.rule = m.id;
       const ico = document.createElement('div'); ico.className = 'ico';
       if (m.image) { const im = document.createElement('img'); im.src = m.image; im.alt = ''; ico.appendChild(im); }
       else ico.textContent = m.event === 'gift' ? '🎁' : (EV[m.event] || ['✨'])[0];

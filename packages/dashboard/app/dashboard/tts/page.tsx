@@ -44,11 +44,12 @@ export default function TtsPage() {
   const [log, setLog] = useState<string[]>([]);
   const [test, setTest] = useState('');
   const [busy, setBusy] = useState(false);
+  const [cloud, setCloud] = useState(false);
   const [note, setNote] = useState<{ tone: 'error' | 'success' | 'info'; text: string } | null>(null);
 
   useEffect(() => {
     api<{ config: Partial<TTS.TtsCfg> }>('/api/widgets/tts/config').then((r) => { const c = TTS.withDefaults(r.config); setCfg(c); setSaved(c); }).catch((e) => setNote({ tone: 'error', text: (e as Error).message }));
-    setHereS(TTS.getHere()); setVoice(TTS.getVoiceName());
+    setHereS(TTS.getHere()); setVoice(TTS.getVoiceName()); void TTS.cloudReady().then(setCloud);
     const fill = () => setList(TTS.voices());
     fill(); if (typeof speechSynthesis !== 'undefined') speechSynthesis.addEventListener('voiceschanged', fill);
     const off = TTS.onSay((text) => setLog((l) => [text, ...l].slice(0, 8)));
@@ -88,13 +89,21 @@ export default function TtsPage() {
       <div className="grid gap-5 lg:grid-cols-2">
         <Card className="space-y-4">
           <h3 className="font-display text-lg font-semibold">{t('🗣️ เสียง')}</h3>
-          {!thai && list.length > 0 && <Alert tone="info">{t('เครื่องนี้ไม่มีเสียงภาษาไทย — แนะนำเปิดด้วย Microsoft Edge (มีเสียงไทยธรรมชาติ) หรือติดตั้งเสียงพูดภาษาไทยใน Windows')}</Alert>}
-          <Field label={t('เสียงที่ใช้ (เครื่องนี้)')} hint={t('Edge: เลือก "Premwadee Online (Natural)" หรือ "Niwat" จะเป็นธรรมชาติที่สุด')}>
+          {cloud && (
+            <Field label={t('เสียงพูด')} hint={t('เสียงไทยจากเซิร์ฟเวอร์ ใช้ได้ทุกเบราว์เซอร์ทุกเครื่อง')}>
+              <Select value={cfg.cloudVoice} onChange={(e) => { set('cloudVoice', e.target.value); setTimeout(() => TTS.say(t('สวัสดีค่ะ นี่คือเสียงอ่านแชท'), true), 0); }}>
+                {TTS.CLOUD_VOICES.map(([v, l]) => <option key={v} value={v}>{t(l)}</option>)}
+                <option value="browser">{t('ใช้เสียงในเครื่อง (ไม่ผ่านเซิร์ฟเวอร์)')}</option>
+              </Select>
+            </Field>
+          )}
+          {(!cloud || cfg.cloudVoice === 'browser') && !thai && list.length > 0 && <Alert tone="info">{t('เบราว์เซอร์นี้ไม่มีเสียงพูดภาษาไทย เลยอ่านภาษาไทยไม่ได้ — เปิดเว็บนี้ด้วย Microsoft Edge แทน (มีเสียงไทยในตัว)')}</Alert>}
+          {(!cloud || cfg.cloudVoice === 'browser') && <Field label={t('เสียงที่ใช้ (เครื่องนี้)')} hint={t('Edge: เลือก "Premwadee Online (Natural)" หรือ "Niwat" จะเป็นธรรมชาติที่สุด')}>
             <Select value={voice} onChange={(e) => pickVoice(e.target.value)}>
               <option value="">{t('อัตโนมัติ (เสียงไทยที่ดีที่สุด)')}</option>
               {list.map((v) => <option key={v.name} value={v.name}>{v.name} ({v.lang})</option>)}
             </Select>
-          </Field>
+          </Field>}
           {([['rate', 'ความเร็ว', 0.5, 2], ['pitch', 'ระดับเสียง', 0.5, 1.6], ['volume', 'ความดัง', 0.1, 1]] as const).map(([k, label, min, max]) => (
             <Field key={k} label={`${t(label)}: ${cfg[k].toFixed(2)}`}>
               <input type="range" min={min} max={max} step={0.05} value={cfg[k]} onChange={(e) => set(k, parseFloat(e.target.value))} className="w-full accent-pink" />

@@ -1,5 +1,7 @@
 'use client';
 
+import { getToken } from './api';
+
 /**
  * อ่านแชทออกเสียง (TTS) แบบ TikFinity — เสียงดังที่หน้าเว็บที่เปิดค้างไว้ ไม่ต้องใส่ลิงก์ในโปรแกรมไลฟ์
  * ใช้เสียงของเบราว์เซอร์ (Web Speech) — Edge มีเสียงไทยธรรมชาติ (Premwadee/Niwat), Chrome/มือถือใช้เสียงไทยของเครื่อง
@@ -21,6 +23,8 @@ export interface TtsCfg {
   /** คำต้องห้าม (คั่นด้วย ,) — เจอแล้วไม่อ่านข้อความนั้น */
   blocked: string;
   maxQueue: number;
+  /** เสียงจากเซิร์ฟเวอร์ (Google) — 'browser' = ใช้เสียงในเครื่อง */
+  cloudVoice: string;
 }
 
 export const TTS_DEF: TtsCfg = {
@@ -31,7 +35,24 @@ export const TTS_DEF: TtsCfg = {
   tmplChat: '{name} พูดว่า {text}', tmplGift: '{name} ส่ง {gift} ขอบคุณค่ะ', tmplFollow: 'ขอบคุณ {name} ที่กดติดตามค่ะ', tmplShare: 'ขอบคุณ {name} ที่แชร์ไลฟ์ค่ะ',
   rate: 1, pitch: 1, volume: 1,
   maxLen: 120, userCooldown: 0, skipLinks: true, blocked: '', maxQueue: 10,
+  cloudVoice: 'th-TH-Neural2-C',
 };
+
+/** เสียงไทยของ Google ที่เลือกได้ */
+export const CLOUD_VOICES: [string, string][] = [
+  ['th-TH-Neural2-C', 'หญิง — ธรรมชาติ (Neural2)'],
+  ['th-TH-Chirp3-HD-Achernar', 'หญิง — HD ใส ๆ'],
+  ['th-TH-Chirp3-HD-Kore', 'หญิง — HD นุ่ม'],
+  ['th-TH-Chirp3-HD-Puck', 'ชาย — HD สดใส'],
+  ['th-TH-Chirp3-HD-Charon', 'ชาย — HD ทุ้ม'],
+  ['th-TH-Standard-A', 'หญิง — มาตรฐาน'],
+];
+
+// เซิร์ฟเวอร์เปิดเสียง Google ไว้ไหม (เช็กครั้งเดียว)
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
+let cloud: boolean | null = null;
+export const cloudReady = (): Promise<boolean> => (cloud !== null ? Promise.resolve(cloud) : fetch(`${API_BASE}/api/tts/status`).then((r) => r.json()).then((s: { enabled?: boolean }) => (cloud = !!s.enabled)).catch(() => (cloud = false)));
+export const cloudOn = () => cloud === true;
 
 export const withDefaults = (c: Partial<TtsCfg> | null | undefined): TtsCfg => ({ ...TTS_DEF, ...(c ?? {}) });
 
@@ -107,13 +128,33 @@ const listeners = new Set<(text: string) => void>();
 export const onSay = (fn: (text: string) => void) => { listeners.add(fn); return () => { listeners.delete(fn); }; };
 
 let cur: TtsCfg = TTS_DEF;
-export const setCfg = (c: TtsCfg) => { cur = c; };
+export const setCfg = (c: TtsCfg) => { cur = c; void cloudReady(); };
 export const getCfg = () => cur;
 
+const player = typeof Audio === 'undefined' ? null : new Audio();
 function next() {
-  if (speaking || !queue.length || typeof window === 'undefined' || !window.speechSynthesis) return;
+  if (speaking || !queue.length || typeof window === 'undefined') return;
   const text = queue.shift()!;
   speaking = true;
+  listeners.forEach((f) => f(text));
+  if (cloud && cur.cloudVoice !== 'browser' && player && text.trim()) return void speakCloud(text);
+  speakBrowser(text);
+}
+/** เสียงจากเซิร์ฟเวอร์ (mp3) — ล้มเหลว → ใช้เสียงในเครื่องแทน */
+async function speakCloud(text: string) {
+  let url = '';
+  const done = () => { if (url) URL.revokeObjectURL(url); speaking = false; next(); };
+  try {
+    const r = await fetch(`${API_BASE}/api/tts/say`, { method: 'POST', headers: { 'content-type': 'application/json', Authorization: `Bearer ${getToken() ?? ''}` },
+      body: JSON.stringify({ text, voice: cur.cloudVoice, rate: cur.rate, pitch: Math.round((cur.pitch - 1) * 20) }) });
+    if (!r.ok) throw new Error(String(r.status));
+    url = URL.createObjectURL(await r.blob());
+    player!.src = url; player!.volume = cur.volume; player!.onended = done; player!.onerror = done;
+    await player!.play();
+  } catch { if (url) URL.revokeObjectURL(url); speakBrowser(text); }
+}
+function speakBrowser(text: string) {
+  if (!window.speechSynthesis) { speaking = false; return next(); }
   const u = new SpeechSynthesisUtterance(text);
   const v = pickVoice();
   if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'th-TH';
@@ -122,7 +163,6 @@ function next() {
   const done = () => { if (ended) return; ended = true; speaking = false; clearTimeout(guard); next(); };
   u.onend = done; u.onerror = done;
   const guard = setTimeout(done, 4000 + text.length * 250); // บางเครื่อง onend ไม่ยิง → กันคิวค้าง
-  listeners.forEach((f) => f(text));
   speechSynthesis.speak(u);
 }
 
@@ -134,7 +174,7 @@ export function say(text: string, force = false) {
   if (queue.length > cur.maxQueue) queue.splice(0, queue.length - cur.maxQueue); // คนแชทเยอะ → ทิ้งข้อความเก่า
   next();
 }
-export function stop() { queue.length = 0; speaking = false; try { speechSynthesis.cancel(); } catch { /* ignore */ } }
+export function stop() { queue.length = 0; speaking = false; try { player?.pause(); speechSynthesis.cancel(); } catch { /* ignore */ } }
 export const queued = () => queue.length;
 
 // ---------- แท็บหลัก: เปิดหลายแท็บ อ่านแท็บเดียว ----------

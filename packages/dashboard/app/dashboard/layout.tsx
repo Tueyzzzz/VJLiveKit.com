@@ -41,7 +41,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-dvh md:flex">
-      <aside className="sticky top-0 z-40 border-b border-line bg-white md:h-dvh md:w-64 md:shrink-0 md:border-b-0 md:border-r">
+      <aside className="sticky top-0 z-40 border-b border-line bg-white md:flex md:h-dvh md:w-64 md:shrink-0 md:flex-col md:overflow-y-auto md:border-b-0 md:border-r">
         <div className="flex items-center justify-between px-5 py-3 md:py-4">
           <Logo href="/dashboard/" />
           {/* มือถือ: ปุ่มเมนู (เดิมเป็นแถบเลื่อนข้าง มองไม่เห็นเมนูครบ) */}
@@ -71,17 +71,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </nav>
         <div className={cx('px-3 pb-3 md:block md:pt-2', menu ? 'block' : 'hidden')}><Speaker /></div>
         <div className={cx('px-5 pb-3 md:hidden', menu ? 'block' : 'hidden')}><LangSwitch /></div>
-        <div className="hidden px-5 py-6 md:absolute md:bottom-0 md:block md:w-64">
-          <div className="mb-3 flex items-center gap-2.5">
-            <TikTokAvatar username={user.tiktokUsername} size={36} />
-            <div className="min-w-0"><div className="truncate text-sm">{user.displayName ?? user.email}</div>{user.tiktokUsername && <div className="truncate text-xs text-muted">@{user.tiktokUsername}</div>}</div>
+        {/* การ์ดผู้ใช้มุมล่าง: รูป+ชื่อ+แพลน → ภาษา / ออกจากระบบ → เลขเวอร์ชัน */}
+        <div className="hidden px-3 pb-4 pt-4 md:mt-auto md:block">
+          <div className="rounded-2xl border border-line bg-gradient-to-br from-pink-soft/60 to-white p-3 shadow-sm">
+            <div className="flex items-center gap-2.5">
+              <TikTokAvatar username={user.tiktokUsername} size={40} />
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-medium">{user.displayName ?? user.email}</div>
+                {user.tiktokUsername && <div className="truncate text-xs text-muted">@{user.tiktokUsername}</div>}
+              </div>
+            </div>
+            <div className="mt-2.5"><Badge tone={entitlements?.plan === 'free' ? 'gray' : 'pink'}>{planLabel(entitlements)}</Badge></div>
+            <div className="mt-3 flex items-center justify-between border-t border-line/70 pt-3">
+              <LangSwitch />
+              <button onClick={() => { logout(); router.replace('/'); }} title={t('ออกจากระบบ')} aria-label={t('ออกจากระบบ')}
+                className="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs text-muted transition hover:bg-white hover:text-ink">
+                <LogOut className="size-3.5" /> {t('ออกจากระบบ')}
+              </button>
+            </div>
           </div>
-          <div className="mb-4"><Badge tone={entitlements?.plan === 'free' ? 'gray' : 'pink'}>{planLabel(entitlements)}</Badge></div>
-          <div className="mb-4"><LangSwitch /></div>
-          <button onClick={() => { logout(); router.replace('/'); }} className="flex items-center gap-2 text-sm text-muted hover:text-ink">
-            <LogOut className="size-4" /> {t('ออกจากระบบ')}
-          </button>
-          <div className="mt-3 text-[10px] text-muted/70" title={process.env.NEXT_PUBLIC_BUILD_ID}>v{process.env.NEXT_PUBLIC_VERSION}</div>
+          <div className="mt-2 text-center text-[10px] text-muted/60" title={process.env.NEXT_PUBLIC_BUILD_ID}>v{process.env.NEXT_PUBLIC_VERSION}</div>
         </div>
         <div className={cx('px-5 pb-3 text-[10px] text-muted/70 md:hidden', menu ? 'block' : 'hidden')}>v{process.env.NEXT_PUBLIC_VERSION}</div>
       </aside>

@@ -36,7 +36,7 @@ interface Draft {
   /** คอมโบเล่นซ้ำสูงสุดกี่ครั้ง */
   repeat: string;
   /** ป้ายไฟ */
-  signStyle: 'led' | 'neon' | 'bulb' | 'cute' | 'pixel' | 'y2k' | 'glass' | 'surreal' | 'boho' | 'victorian' | 'graffiti' | 'future';
+  signStyle: 'led' | 'neon' | 'bulb' | 'cute' | 'pixel' | 'y2k' | 'glass' | 'surreal' | 'boho' | 'victorian' | 'graffiti' | 'future' | 'mwhite' | 'mblack' | 'mline' | 'mpill';
   signMode: 'scroll' | 'static' | 'blink' | 'pulse';
   signPos: 'top' | 'center' | 'bottom';
   color: string;
@@ -408,7 +408,7 @@ export default function ActionsPage() {
                 <>
                   <Field label={t('แบบป้าย')}>
                     <Select value={draft.signStyle} onChange={(e) => set('signStyle', e.target.value as Draft['signStyle'])}>
-                      <option value="led">{t('🟥 LED จุด')}</option><option value="neon">{t('🌈 นีออน')}</option><option value="bulb">{t('💡 ไฟหลอดรอบป้าย')}</option><option value="cute">{t('🍬 พาสเทลน่ารัก')}</option><option value="pixel">{t('👾 Pixel (เกม 8-bit)')}</option><option value="y2k">{t('💿 Y2K')}</option><option value="glass">{t('🫧 Glassmorphism (กระจกฝ้า)')}</option><option value="surreal">{t('🌀 Surrealism (ฝันเหนือจริง)')}</option><option value="boho">{t('🌻 Bohemian (โบฮีเมียน)')}</option><option value="victorian">{t('👑 Victorian (วิกตอเรียน)')}</option><option value="graffiti">{t('🎨 Graffiti (กราฟฟิตี้)')}</option><option value="future">{t('🚀 Futuristic (ไซเบอร์)')}</option>
+                      <option value="led">{t('🟥 LED จุด')}</option><option value="neon">{t('🌈 นีออน')}</option><option value="bulb">{t('💡 ไฟหลอดรอบป้าย')}</option><option value="cute">{t('🍬 พาสเทลน่ารัก')}</option><option value="pixel">{t('👾 Pixel (เกม 8-bit)')}</option><option value="y2k">{t('💿 Y2K')}</option><option value="glass">{t('🫧 Glassmorphism (กระจกฝ้า)')}</option><option value="surreal">{t('🌀 Surrealism (ฝันเหนือจริง)')}</option><option value="boho">{t('🌻 Bohemian (โบฮีเมียน)')}</option><option value="victorian">{t('👑 Victorian (วิกตอเรียน)')}</option><option value="graffiti">{t('🎨 Graffiti (กราฟฟิตี้)')}</option><option value="future">{t('🚀 Futuristic (ไซเบอร์)')}</option><option value="mwhite">{t('◻️ มินิมอล ขาว')}</option><option value="mblack">{t('◼️ มินิมอล ดำ')}</option><option value="mline">{t('▁ มินิมอล เส้นใต้')}</option><option value="mpill">{t('◯ มินิมอล แคปซูล')}</option>
                     </Select>
                   </Field>
                   <Field label={t('การเคลื่อนไหว')}>

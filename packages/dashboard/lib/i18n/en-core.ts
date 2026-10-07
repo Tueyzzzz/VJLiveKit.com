@@ -397,4 +397,6 @@ export const EN_CORE: Record<string, string> = {
   "หยุด": "Stop",
   "ฟังท่อนนี้": "Play clip",
   "อัปโหลดท่อนนี้": "Upload clip",
+  "เปลี่ยนเป็นชุดเสียงมีม 12 ปุ่ม? (ปุ่มที่ตั้งไว้จะถูกแทนที่)": "Switch to the 12 meme sound pads? (your pads will be replaced)",
+  "ใช้ชุดเสียงมีม (ค่าเริ่มต้น)": "Use meme sound set (default)",
 };

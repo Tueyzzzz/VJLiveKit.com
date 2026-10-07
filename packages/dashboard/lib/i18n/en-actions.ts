@@ -272,4 +272,8 @@ export const EN_ACTIONS: Record<string, string> = {
   "📈 หวีดขึ้น (Slide whistle)": "📈 Slide whistle up",
   "📉 หวีดลง (ร่วง)": "📉 Slide whistle down",
   "วิดีโอ/รูปใหญ่เกิน 20MB — ตัดให้สั้นลงก่อน": "Video/image is over 20MB — trim it first",
+  "◻️ มินิมอล ขาว": "◻️ Minimal white",
+  "◼️ มินิมอล ดำ": "◼️ Minimal black",
+  "▁ มินิมอล เส้นใต้": "▁ Minimal underline",
+  "◯ มินิมอล แคปซูล": "◯ Minimal pill",
 };

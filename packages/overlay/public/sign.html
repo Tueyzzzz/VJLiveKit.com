@@ -58,7 +58,7 @@
     const P = (k, d) => Overlay.param(k, d);
     const num = (k, d, lo, hi) => Math.max(lo, Math.min(hi, parseFloat(P(k, d)) || parseFloat(d)));
     const wrap = document.getElementById('wrap'), txt = document.getElementById('txt'), bulbs = document.getElementById('bulbs');
-    const STYLE = ['led', 'neon', 'bulb', 'cute', 'pixel', 'y2k', 'glass', 'surreal', 'boho', 'victorian', 'graffiti', 'future'].includes(P('style', 'led')) ? P('style', 'led') : 'led';
+    const STYLE = ['led', 'neon', 'bulb', 'cute', 'pixel', 'y2k', 'glass', 'surreal', 'boho', 'victorian', 'graffiti', 'future', 'mwhite', 'mblack', 'mline', 'mpill'].includes(P('style', 'led')) ? P('style', 'led') : 'led';
     const MODE = ['scroll', 'static', 'blink', 'pulse'].includes(P('mode', 'scroll')) ? P('mode', 'scroll') : 'scroll';
     const RAINBOW = ['1', 'true'].includes(String(P('rainbow', '0')));
     document.body.className = [STYLE, 'st-' + STYLE, MODE, RAINBOW ? 'rainbow' : '', STYLE === 'neon' ? 'flicker' : ''].join(' ');

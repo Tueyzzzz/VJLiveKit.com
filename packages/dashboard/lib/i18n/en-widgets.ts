@@ -518,4 +518,8 @@ export const EN_WIDGETS: Record<string, string> = {
   "⏸ นิ่ง": "⏸ Still",
   "ดึงจากกฎ Actions อัตโนมัติ · ติ๊กออก = ไม่แสดง · กดรูปเพื่อเลือกรูปของขวัญ · แก้คำในเมนูได้": "From your Actions rules · untick to hide · tap the image to pick a gift · edit the menu text",
   "คำในเมนู": "Menu text",
+  "◻️ มินิมอล ขาว": "◻️ Minimal white",
+  "◼️ มินิมอล ดำ": "◼️ Minimal black",
+  "▁ มินิมอล เส้นใต้": "▁ Minimal underline",
+  "◯ มินิมอล แคปซูล": "◯ Minimal pill",
 };

@@ -308,7 +308,7 @@
 
     // ป้ายไฟชั่วคราว: LED / นีออน / ไฟหลอด / พาสเทล · วิ่ง / อยู่กับที่ / กะพริบ / เต้น
     function sign(a,ev){
-      const dur=Math.max(2000,a.durationMs||6000), st=['led','neon','bulb','cute','pixel','y2k','glass','surreal','boho','victorian','graffiti','future'].includes(a.signStyle)?a.signStyle:'led';
+      const dur=Math.max(2000,a.durationMs||6000), st=['led','neon','bulb','cute','pixel','y2k','glass','surreal','boho','victorian','graffiti','future','mwhite','mblack','mline','mpill'].includes(a.signStyle)?a.signStyle:'led';
       const md=['scroll','static','blink','pulse'].includes(a.signMode)?a.signMode:'scroll', pos=['top','center','bottom'].includes(a.signPos)?a.signPos:'top';
       const el=document.createElement('div'); el.className='sgn '+st+' st-'+st+' '+md+' '+pos;
       if(/^#[0-9a-f]{3,8}$/i.test(a.color||'')) el.style.setProperty('--c',a.color);

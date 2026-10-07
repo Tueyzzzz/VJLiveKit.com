@@ -44,7 +44,7 @@ export function NotificationBell() {
         {unread > 0 && <span className="absolute -right-1 -top-1 grid min-w-5 place-items-center rounded-full bg-pink px-1 text-[11px] font-bold text-white ring-2 ring-white">{unread > 9 ? '9+' : unread}</span>}
       </button>
       {open && (
-        <div className="fixed inset-x-3 top-16 z-50 max-h-[75dvh] overflow-hidden rounded-2xl border border-line bg-white shadow-2xl md:absolute md:inset-x-auto md:left-0 md:top-12 md:w-80">
+        <div className="fixed inset-x-3 top-16 z-50 max-h-[75dvh] overflow-hidden rounded-2xl border border-line bg-white shadow-2xl md:inset-x-auto md:left-[13rem] md:top-16 md:w-80">
           <div className="flex items-center justify-between border-b border-line px-4 py-3">
             <span className="font-medium">{t('การแจ้งเตือน')}</span>
             <button onClick={() => setOpen(false)} aria-label={t('ปิด')} className="text-muted hover:text-ink"><X className="size-4" /></button>

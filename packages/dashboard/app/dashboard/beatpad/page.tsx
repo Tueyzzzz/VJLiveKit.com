@@ -18,7 +18,7 @@ const EMOJIS = ['👏', '🥁', '🔔', '🎺', '💗', '✨', '🚨', '🥊', '
 const FREE_PADS = 8, MAX_PADS = 24;
 
 /**
- * Beat Pad (TAP TAP!) — กดปุ่มเล่นเสียงระหว่างไลฟ์ · เปิดบนมือถือเป็นรีโมทได้
+ * Beat Pad — กดปุ่มเล่นเสียงระหว่างไลฟ์ · เปิดบนมือถือเป็นรีโมทได้
  * เสียงไปดังที่คอมที่เปิดเว็บไว้ (หรือจอ FX) · ปุ่ม 1–9 บนคีย์บอร์ดกดได้
  */
 export default function BeatPadPage() {
@@ -83,8 +83,10 @@ export default function BeatPadPage() {
             {/* ตัวเลือกในรายการต้องเป็นตัวเข้มบนพื้นขาว (ปุ่มเป็นตัวขาวบนพื้นมืด — เดิมรายการเป็นขาวบนขาว มองไม่เห็น) */}
             {[2, 3, 4, 5].map((c) => <option key={c} value={c} style={{ color: '#3d2f45', background: '#fff' }}>{t('{n} คอลัมน์', { n: c })}</option>)}
           </Select>
-          <h2 className="font-display text-2xl font-black tracking-[.3em] sm:text-3xl">
-            {'TAP TAP!'.split('').map((ch, i) => <span key={i} style={{ color: ['#ff6aa8', '#ffb03a', '#ffe14a', '', '#4ade80', '#38bdf8', '#818cf8', '#c084fc'][i] || '#fff' }}>{ch}</span>)}
+          {/* หัวแผงแบบ VJLiveKit: หัวใจในวงกลมทอง + ชื่อไล่สีชมพู-ม่วง */}
+          <h2 className="flex items-center gap-2 font-display text-xl font-bold sm:text-2xl">
+            <svg width="28" height="28" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="33" r="27" fill="#ffcf5c"/><path d="M32 50c-8-5.6-15-11-15-18.6A8 8 0 0 1 32 27a8 8 0 0 1 15 4.4C47 39 40 44.4 32 50z" fill="#ff6aa8"/></svg>
+            <span className="bg-gradient-to-r from-[#ff8ac2] via-[#e0b0ff] to-[#9ad9ff] bg-clip-text text-transparent">VJ Beat Pad</span>
           </h2>
           <label className="flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2 text-xs text-white/80">
             <input type="checkbox" className="accent-pink" checked={here} onChange={(e) => { setHere(e.target.checked); try { localStorage.setItem('vjl-pad-here', e.target.checked ? '1' : '0'); } catch { /* ignore */ } }} />
@@ -123,7 +125,11 @@ export default function BeatPadPage() {
             );
           })}
         </div>
-        <p className="mt-4 text-center text-xs text-white/50">{t('กด 1–9 บนคีย์บอร์ดได้ · เสียงดังที่คอมที่เปิดเว็บนี้ไว้ (เปิด “เสียงจากกฎ” ที่เมนูข้าง) หรือที่ลิงก์ FX')}</p>
+        <div className="mt-4 flex justify-center">
+          <button onClick={async () => { if (!confirm(t('เปลี่ยนเป็นชุดเสียงมีม 12 ปุ่ม? (ปุ่มที่ตั้งไว้จะถูกแทนที่)'))) return; const r = await api<{ board: Board }>('/api/beatpad/default'); void save(r.board); }}
+            className="rounded-full bg-white/10 px-4 py-1.5 text-xs text-white/80 hover:bg-white/20">🎭 {t('ใช้ชุดเสียงมีม (ค่าเริ่มต้น)')}</button>
+        </div>
+        <p className="mt-3 text-center text-xs text-white/50">{t('กด 1–9 บนคีย์บอร์ดได้ · เสียงดังที่คอมที่เปิดเว็บนี้ไว้ (เปิด “เสียงจากกฎ” ที่เมนูข้าง) หรือที่ลิงก์ FX')}</p>
       </div>
 
       {edit !== null && board.pads[edit] && (

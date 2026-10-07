@@ -32,14 +32,25 @@ type Board = z.infer<typeof boardSchema>;
 const DEFAULT: Board = {
   cols: 4,
   pads: [
-    { label: 'ปรบมือ', color: '#a78bfa', sound: 'applause', emoji: '👏', volume: 1 }, { label: 'ตึ่งโป๊ะ', color: '#60a5fa', sound: 'drum', emoji: '🥁', volume: 1 }, { label: 'กริ๊ง', color: '#38bdf8', sound: 'chime', emoji: '🔔', volume: 1 },
-    { label: 'ฟันแฟร์', color: '#c084fc', sound: 'fanfare', emoji: '🎺', volume: 1 }, { label: 'หัวใจ', color: '#f472b6', sound: 'heart', emoji: '💗', volume: 1 }, { label: 'เวทมนตร์', color: '#84cc16', sound: 'magic', emoji: '✨', volume: 1 },
-    { label: 'ไซเรน', color: '#fb923c', sound: 'alarm', emoji: '🚨', volume: 1 }, { label: 'ต่อยน่ารัก', color: '#facc15', sound: 'punch', emoji: '🥊', volume: 1 }, { label: 'ดึ๋ง', color: '#4ade80', sound: 'boing', emoji: '🌀', volume: 1 },
+    { label: 'บูม!', color: '#a78bfa', sound: 'boom', emoji: '💥', volume: 1 },
+    { label: 'แตรลม', color: '#fb923c', sound: 'airhorn', emoji: '📯', volume: 1 },
+    { label: 'แป่วว', color: '#60a5fa', sound: 'sadtrombone', emoji: '🎺', volume: 1 },
+    { label: 'เงียบกริบ', color: '#4ade80', sound: 'crickets', emoji: '🦗', volume: 1 },
+    { label: 'โป๊ก!', color: '#facc15', sound: 'bonk', emoji: '🔨', volume: 1 },
+    { label: 'ถูกต้อง', color: '#2dd4bf', sound: 'correct', emoji: '✅', volume: 1 },
+    { label: 'ผิด!', color: '#f87171', sound: 'wrong', emoji: '❌', volume: 1 },
+    { label: 'ลุ้น…', color: '#c084fc', sound: 'suspense', emoji: '😱', volume: 1 },
+    { label: 'ตีกลองรัว', color: '#38bdf8', sound: 'drumroll', emoji: '🥁', volume: 1 },
+    { label: 'ทาด๊า!', color: '#f472b6', sound: 'tada', emoji: '🎉', volume: 1 },
+    { label: 'กริ๊งเงิน', color: '#84cc16', sound: 'kaching', emoji: '💰', volume: 1 },
+    { label: 'ขูดแผ่น', color: '#94a3b8', sound: 'scratch', emoji: '💿', volume: 1 },
   ],
 };
 function load(uid: string): Board { try { return boardSchema.parse(JSON.parse(fs.readFileSync(fileOf(uid), 'utf8'))); } catch { return DEFAULT; } }
 
 export async function beatpadRoutes(app: FastifyInstance): Promise<void> {
+  // ชุดเริ่มต้น (เสียงมีม) — หน้า Beat Pad มีปุ่ม "ใช้ชุดเสียงมีม" เรียกค่านี้
+  app.get('/api/beatpad/default', { preHandler: requireUser }, async () => ({ board: DEFAULT }));
   app.get('/api/beatpad', { preHandler: requireUser }, async (req) => ({ board: load(getUser(req)!.userId) }));
 
   app.put('/api/beatpad', { preHandler: requireUser }, async (req, reply) => {

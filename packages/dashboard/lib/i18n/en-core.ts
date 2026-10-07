@@ -495,4 +495,9 @@ export const EN_CORE: Record<string, string> = {
   "แจ้งปัญหา ถามวิธีใช้ — ตอบกลับที่นี่": "Report issues or ask — we reply here",
   "แชทกับทีมงาน": "Chat with our team",
   "ปิด": "Close",
+  "🔒 แชทนี้จะถูกลบเมื่อแก้ไขปัญหาเสร็จ": "🔒 This chat is deleted once the issue is resolved",
+  "ขั้นแรก: ใส่ชื่อ TikTok ที่คุณไลฟ์": "Step 1: enter the TikTok username you go live with",
+  "ใส่ชื่อหลัง @ ในลิงก์โปรไฟล์ เช่น tiktok.com/@mimi_live → mimi_live แล้ววิดเจ็ตทุกตัวจะต่อกับไลฟ์ของคุณเอง": "The name after @ in your profile link, e.g. tiktok.com/@mimi_live → mimi_live. Every widget then connects to your LIVE automatically.",
+  "บันทึกชื่อ TikTok": "Save TikTok name",
+  "ชื่อ TikTok ไม่ถูกต้อง": "Invalid TikTok username",
 };

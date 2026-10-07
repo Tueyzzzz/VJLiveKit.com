@@ -119,10 +119,18 @@ export async function supportRoutes(app: FastifyInstance): Promise<void> {
     getHub()?.emitUser(userId, 'support', { from: 'admin' });
     return reply.code(201).send({ msg });
   });
+  // แก้ปัญหาเสร็จ → ลบแชททิ้งทั้งห้อง (ข้อความ + รูปแนบ) ลูกค้าเริ่มเรื่องใหม่ได้ทุกเมื่อ
   app.post('/api/admin/support/:userId/status', { preHandler: requireAdmin }, async (req, reply) => {
-    const t = threads[(req.params as { userId: string }).userId];
+    const { userId } = req.params as { userId: string };
+    const t = threads[userId];
     if (!t) return reply.code(404).send({ error: 'ไม่พบ' });
-    t.status = (req.body as { status?: string })?.status === 'done' ? 'done' : 'open'; save();
+    if ((req.body as { status?: string })?.status === 'done') {
+      for (const m of t.msgs) if (m.img) fs.rm(path.join(IMG_DIR, m.img), { force: true }, () => {});
+      delete threads[userId]; save();
+      getHub()?.emitUser(userId, 'support', { from: 'admin', done: true });
+      return { ok: true, deleted: true };
+    }
+    t.status = 'open'; save();
     return { ok: true };
   });
 }

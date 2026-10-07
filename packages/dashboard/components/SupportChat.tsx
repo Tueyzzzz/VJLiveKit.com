@@ -70,6 +70,7 @@ export function SupportChat({ load, send, me, height = 'h-[60dvh]' }: {
             );
           })}
       </div>
+      {me === 'user' && <p className="border-t border-line bg-canvas/60 px-3 py-1.5 text-center text-[11px] text-muted">{t('🔒 แชทนี้จะถูกลบเมื่อแก้ไขปัญหาเสร็จ')}</p>}
       {err && <div className="px-3 pt-2"><Alert>{err}</Alert></div>}
       {img && (
         <div className="relative mx-3 mt-2 w-fit">

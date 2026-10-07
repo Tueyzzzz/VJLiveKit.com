@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Eye, Gem, Heart, Pencil } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
 import { useT } from '@/lib/i18n';
 import { TikTokAvatar } from './TikTokAvatar';
 
@@ -18,9 +19,38 @@ const nf = (n: number) => n.toLocaleString('en-US');
 export function LiveStatusBar() {
   const t = useT();
   const [s, setS] = useState<Status | null>(null);
+  const { refresh } = useAuth();
+  const [name, setName] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState('');
   const load = useCallback(() => api<Status>('/api/live/status').then(setS).catch(() => {}), []);
   useEffect(() => { void load(); const tm = setInterval(load, 15_000); return () => clearInterval(tm); }, [load]);
   if (!s) return null;
+
+  async function saveName(e: FormEvent) {
+    e.preventDefault();
+    const v = name.trim().replace(/^@/, '').replace(/^https?:\/\/(www\.)?tiktok\.com\/@/i, '').split(/[/?]/)[0];
+    if (!/^[A-Za-z0-9._]{2,24}$/.test(v)) { setErr(t('ชื่อ TikTok ไม่ถูกต้อง')); return; }
+    setSaving(true); setErr('');
+    try { await api('/api/auth/me', { method: 'PATCH', body: { tiktokUsername: v } }); await refresh(); await load(); }
+    catch (er) { setErr((er as Error).message); } finally { setSaving(false); }
+  }
+
+  if (s.state === 'no-username') return (
+    <form onSubmit={saveName} className="mb-6 rounded-2xl border-2 border-pink/50 bg-gradient-to-r from-pink-soft to-white p-4 shadow-sm">
+      <div className="flex items-center gap-2 font-semibold text-ink"><span className="grid size-7 place-items-center rounded-full bg-pink text-sm text-white">1</span>{t('ขั้นแรก: ใส่ชื่อ TikTok ที่คุณไลฟ์')}</div>
+      <p className="mt-1 text-sm text-muted">{t('ใส่ชื่อหลัง @ ในลิงก์โปรไฟล์ เช่น tiktok.com/@mimi_live → mimi_live แล้ววิดเจ็ตทุกตัวจะต่อกับไลฟ์ของคุณเอง')}</p>
+      <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+        <div className="flex min-w-0 flex-1">
+          <span className="grid place-items-center rounded-l-xl border border-r-0 border-line bg-white px-3 text-muted">@</span>
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="your_tiktok" autoFocus
+            className="min-w-0 flex-1 rounded-r-xl border border-line bg-white px-3 py-2.5 text-base focus:border-pink focus:outline-none focus:ring-2 focus:ring-pink/20" />
+        </div>
+        <button type="submit" disabled={saving || !name.trim()} className="rounded-xl bg-pink px-5 py-2.5 font-medium text-white shadow-sm disabled:opacity-50">{saving ? '…' : t('บันทึกชื่อ TikTok')}</button>
+      </div>
+      {err && <p className="mt-2 text-sm text-red-600">{err}</p>}
+    </form>
+  );
 
   const look = {
     live: { dot: 'bg-red-500 animate-pulse', box: 'border-red-200 bg-gradient-to-r from-red-50 to-pink-soft/60', badge: 'bg-red-500 text-white', text: t('🔴 กำลังไลฟ์') },
@@ -55,7 +85,6 @@ export function LiveStatusBar() {
       {s.state === 'live' && <div className="text-xs text-muted sm:w-24 sm:text-right">{t('ไลฟ์มา {m} นาที', { m: mins })}</div>}
       {s.state === 'waiting' && <p className="text-xs text-muted sm:max-w-56">{t('ระบบต่อเข้าไลฟ์ให้อัตโนมัติเมื่อเริ่มไลฟ์ — เปิดเว็บนี้ค้างไว้ได้เลย')}</p>}
       {s.state === 'idle' && <p className="text-xs text-muted sm:max-w-56">{t('เริ่มไลฟ์ใน TikTok แล้วเปิดวิดเจ็ตในโปรแกรมไลฟ์ — สถานะจะเปลี่ยนเอง')}</p>}
-      {s.state === 'no-username' && <Link href="/dashboard/" className="rounded-xl bg-pink px-4 py-2 text-center text-sm font-medium text-white">{t('ตั้งชื่อ TikTok')}</Link>}
     </div>
   );
 }

@@ -30,7 +30,12 @@ export function AdminSupport() {
   const cur = rows?.find((r) => r.userId === sel);
   const shown = (rows ?? []).filter((r) => filter === 'all' || r.status === 'open');
 
-  async function setStatus(status: 'open' | 'done') { await api(`/api/admin/support/${sel}/status`, { method: 'POST', body: { status } }); void list(); }
+  async function setStatus(status: 'open' | 'done') {
+    if (status === 'done' && !confirm('แก้ปัญหาเสร็จแล้ว? แชทนี้จะถูกลบทั้งหมด (ข้อความ + รูป)')) return;
+    await api(`/api/admin/support/${sel}/status`, { method: 'POST', body: { status } });
+    if (status === 'done') setSel(null);
+    void list();
+  }
 
   return (
     <div className="grid gap-4 lg:grid-cols-[18rem_1fr]">
@@ -54,7 +59,7 @@ export function AdminSupport() {
           <div className="flex flex-wrap items-center gap-2">
             <button onClick={() => setSel(null)} className="rounded-lg p-1.5 hover:bg-canvas lg:hidden" aria-label="กลับ"><ArrowLeft className="size-4" /></button>
             <span className="min-w-0 flex-1 truncate text-sm"><b>{cur?.name || cur?.email}</b> {cur?.tiktok && <span className="text-muted">@{cur.tiktok}</span>} <span className="text-xs text-muted">{cur?.email}</span></span>
-            {cur && <Button variant="secondary" onClick={() => void setStatus(cur.status === 'done' ? 'open' : 'done')}>{cur.status === 'done' ? 'เปิดใหม่' : '✓ ปิดเรื่อง'}</Button>}
+            {cur && <Button variant="secondary" onClick={() => void setStatus('done')}>✓ แก้เสร็จ (ลบแชท)</Button>}
           </div>
           <SupportChat key={sel} load={load} send={send} me="admin" />
         </div>

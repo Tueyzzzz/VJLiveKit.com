@@ -6,8 +6,7 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import { ArrowLeft, Check, Copy, RotateCcw, Save } from 'lucide-react';
 import { WIDGET_LABELS } from '@/components/Pricing';
 
-/** วิดเจ็ตกลุ่มสะสมของขวัญ (ลิงก์เดียวกัน เปลี่ยนแบบได้) — ลำดับเดียวกับหน้าโอเวอร์เลย์ */
-const COLLECT_TYPES = ['pile', 'giftjar', 'aquarium', 'belly', 'snowglobe', 'spacedome', 'vehicle', 'tree', 'garden', 'coinjar'];
+/** ไอคอนแถบสลับแบบสะสมของขวัญ */
 const COLLECT_ICON: Record<string, string> = { pile: '🏔️', giftjar: '🫙', aquarium: '🐠', belly: '🐷', snowglobe: '❄️', spacedome: '🪐', vehicle: '🚗', tree: '🌳', garden: '🌷', coinjar: '⚙️' };
 import { Alert, Button, Card, Field, Input, PageHeader, Select, Spinner } from '@/components/ui';
 import { api, ApiError, type OverlayTokenRow } from '@/lib/api';

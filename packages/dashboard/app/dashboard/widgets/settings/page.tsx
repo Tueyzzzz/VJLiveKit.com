@@ -94,7 +94,9 @@ function WidgetLinkBox({ type }: { type: string }) {
 }
 
 interface MenuRow { id: string; event: string; gift?: string; th?: string; image?: string; minDiamonds?: number; keyword?: string; label: string }
-interface MenuSel { hide?: string[]; icons?: Record<string, string> }
+/** รายการที่วีเจเพิ่มเอง (ไม่ต้องมีกฎ Actions) เช่น Rose → ร้องเพลง 1 เพลง */
+interface MenuCustom { id: string; gift: string; image?: string; diamonds?: number; th?: string; label: string }
+interface MenuSel { hide?: string[]; icons?: Record<string, string>; custom?: MenuCustom[] }
 
 /** เลือกว่าจะโชว์กฎไหนในเมนูของขวัญ + เปลี่ยนรูปของขวัญที่แสดง (เช่น กฎ "ทุกกิฟต์ 99💎" ให้โชว์รูป Galaxy) */
 function MenuItemsEditor({ value, onChange }: { value: string; onChange: (v: string) => void }) {
@@ -108,9 +110,15 @@ function MenuItemsEditor({ value, onChange }: { value: string; onChange: (v: str
   const hide = new Set(sel.hide ?? []), icons = sel.icons ?? {};
   const put = (next: MenuSel) => onChange(JSON.stringify(next));
   if (!rows) return <Spinner />;
-  if (!rows.length) return <p className="text-sm text-muted">{t('ยังไม่มีกฎ —')} <Link href="/dashboard/actions/" className="text-pink underline">{t('ตั้งกฎที่ Actions & Events')}</Link></p>;
+  const custom = sel.custom ?? [];
+  const setCustom = (list: MenuCustom[]) => put({ ...sel, custom: list });
+  const addCustom = (name: string) => {
+    const g = gifts.find((x) => x.name === name); if (!g) return;
+    setCustom([...custom, { id: 'c' + Date.now().toString(36), gift: g.name, image: g.image, diamonds: g.diamonds, th: g.th, label: '' }]);
+  };
   return (
     <div className="space-y-2">
+      {rows.length === 0 && <p className="text-xs text-muted">{t('ยังไม่มีกฎ —')} <Link href="/dashboard/actions/" className="text-pink underline">{t('ตั้งกฎที่ Actions & Events')}</Link> {t('หรือเพิ่มของขวัญเองด้านล่าง')}</p>}
       {rows.map((r) => {
         const img = icons[r.id] || r.image;
         const how = r.event === 'gift' ? (r.gift ? t('ส่ง {gift}', { gift: (lang === 'en' ? r.gift : r.th) || r.gift }) : r.minDiamonds ? t('กิฟต์ 💎{n}+', { n: r.minDiamonds }) : t('ทุกกิฟต์')) : r.event === 'chat' ? t('พิมพ์ “{keyword}”', { keyword: r.keyword ?? '' }) : r.event;
@@ -141,6 +149,22 @@ function MenuItemsEditor({ value, onChange }: { value: string; onChange: (v: str
           </div>
         );
       })}
+      {/* ของขวัญที่เพิ่มเอง: เลือกกิฟต์ + พิมพ์ว่าส่งแล้วได้อะไร */}
+      {custom.map((c, i) => (
+        <div key={c.id} className="flex items-center gap-2 rounded-xl border border-pink/40 bg-pink-soft/20 p-2">
+          <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-white">{c.image ? <img src={c.image} alt="" className="size-8 object-contain" /> : '🎁'}</span>
+          <div className="min-w-0 flex-1">
+            <Input value={c.label} maxLength={60} placeholder={t('ส่งแล้วได้อะไร เช่น ร้องเพลง 1 เพลง')}
+              onChange={(e) => { const next = custom.slice(); next[i] = { ...c, label: e.target.value }; setCustom(next); }} />
+            <div className="mt-0.5 truncate text-xs text-muted">{t('ส่ง {gift}', { gift: (lang === 'en' ? c.gift : c.th) || c.gift })}{c.diamonds ? ` · 💎${c.diamonds}` : ''}</div>
+          </div>
+          <button type="button" aria-label={t('ลบ')} onClick={() => setCustom(custom.filter((x) => x.id !== c.id))} className="px-1 text-muted hover:text-red-600">✕</button>
+        </div>
+      ))}
+      <div className="rounded-xl border border-dashed border-line p-2">
+        <div className="mb-1.5 text-xs font-medium text-muted">{t('+ เพิ่มของขวัญเอง (ไม่ต้องตั้งกฎ)')}</div>
+        <GiftPicker value="" onChange={(name) => { if (name) addCustom(name); }} />
+      </div>
     </div>
   );
 }

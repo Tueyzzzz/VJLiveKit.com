@@ -504,4 +504,7 @@ export const EN_WIDGETS: Record<string, string> = {
   "จำนวนสูงสุด (ชิ้น)": "Max pieces",
   "ของแพงเรืองแสง": "Glow on pricey gifts",
   "เกินแล้วชิ้นเก่าสุดค่อย ๆ จางไป": "Oldest pieces fade out beyond this",
+  "หรือเพิ่มของขวัญเองด้านล่าง": "or add gifts yourself below",
+  "ส่งแล้วได้อะไร เช่น ร้องเพลง 1 เพลง": "What they get, e.g. I sing a song",
+  "+ เพิ่มของขวัญเอง (ไม่ต้องตั้งกฎ)": "+ Add a gift yourself (no rule needed)",
 };

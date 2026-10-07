@@ -242,7 +242,7 @@ export default function ActionsPage() {
         actions={!draft && <Button onClick={() => { setError(null); setDraft({ ...EMPTY }); }}><Plus className="size-4" /> เพิ่มกฎ</Button>} />
 
       <Card className="mb-6">
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="min-w-0 flex-1">
             <div className="font-medium">✨ ลิงก์วิดเจ็ตเอฟเฟกต์ (FX)</div>
             <p className="text-sm text-muted">Actions ทุกกฎจะแสดงผ่านวิดเจ็ตนี้ — วางในโปรแกรมไลฟ์ <b>ให้เต็มจอ</b> และไว้ <b>ชั้นบนสุด</b> ครั้งเดียวพอ</p>

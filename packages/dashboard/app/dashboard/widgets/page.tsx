@@ -240,7 +240,7 @@ export default function WidgetsPage() {
       <section key={title} className="mb-8">
       <h3 className="mb-3 text-sm font-semibold">{title}</h3>
       {title === COLLECT_GROUP && (
-        <Card className="mb-4 flex flex-wrap items-center gap-3 ring-2 ring-pink/30">
+        <Card className="mb-4 flex flex-col gap-3 ring-2 ring-pink/30 sm:flex-row sm:items-center">
           <div className="min-w-0 flex-1">
             <div className="text-sm font-medium">🔗 ลิงก์เดียวใช้ได้ทุกแบบ — ตอนนี้ใช้: <b className="text-pink">{WIDGET_LABELS[collectStyle] ?? collectStyle}</b></div>
             <p className="text-xs text-muted">วางลิงก์นี้ใน OBS / LIVE Studio ครั้งเดียว แล้วกด “ใช้แบบนี้” ที่การ์ดด้านล่าง จอเปลี่ยนแบบเองทันที ไม่ต้องเปลี่ยนลิงก์</p>

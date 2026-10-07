@@ -127,7 +127,7 @@ window.Ranking = (function () {
       if (Array.isArray(fset)) fset.forEach((f) => { const i = new Image(); i.src = 'frames/' + f + '.webp'; }); // โหลดกรอบล่วงหน้า
     }
     function avaFill(el, g, size) {
-      if (g.avatar && /^https:\/\//.test(g.avatar)) el.style.backgroundImage = `url("${g.avatar.replace(/"/g, '')}")`;
+      if (g.avatar && /^(https:\/\/|avatars\/demo)/.test(g.avatar)) el.style.backgroundImage = `url("${g.avatar.replace(/"/g, '')}")`;
       else { el.style.background = colOf(g.nm); el.textContent = (g.nm || '?')[0]; el.style.fontSize = Math.round(size * 0.45) + 'px'; }
     }
     function miniCard(g, rank) {
@@ -203,7 +203,7 @@ window.Ranking = (function () {
       rest.forEach(([id, g], j) => { const i = fset ? j + 3 : j;
         const li = document.createElement('li'); if (id === bumpId) li.className = 'bump';
         const ava = document.createElement('div'); ava.className = 'ava';
-        if (g.avatar && /^https:\/\//.test(g.avatar)) ava.style.backgroundImage = `url("${g.avatar.replace(/"/g, '')}")`;
+        if (g.avatar && /^(https:\/\/|avatars\/demo)/.test(g.avatar)) ava.style.backgroundImage = `url("${g.avatar.replace(/"/g, '')}")`;
         else { ava.style.background = colOf(g.nm); ava.textContent = (g.nm || '?')[0]; }
         const rk = document.createElement('span'); rk.className = 'rk'; rk.textContent = MEDAL[i] || String(i + 1);
         const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = g.nm;
@@ -253,7 +253,10 @@ window.Ranking = (function () {
     if (!Overlay.connected) {
       const names = ['mimi', 'บิ๊ก', 'lisa', 'ต้นน้ำ', 'somchai', 'เฟิร์น', 'gamer_x'];
       const vals = opts.mode === 'likes' ? [1, 3, 8, 15, 30] : [1, 5, 20, 99, 1000];
-      setInterval(() => { const nm = names[Math.floor(Math.random() * names.length)]; add({ uniqueId: nm, nickname: nm }, vals[Math.floor(Math.random() * vals.length)]); }, 1400);
+      // รูปโปรไฟล์ตัวอย่าง (ตัวละคร VJ ของเราเอง) · ?fill=N ใส่ N ครั้งรวดเดียว (ถ่ายภาพตัวอย่าง)
+      const one = () => { const i = Math.floor(Math.random() * names.length), nm = names[i]; add({ uniqueId: nm, nickname: nm, avatar: 'avatars/demo' + (i + 1) + '.webp' }, vals[Math.floor(Math.random() * vals.length)]); };
+      for (let i = 0, n = Math.min(80, parseInt(P('fill', '0'), 10) || 0); i < n; i++) setTimeout(one, i * 40);
+      setInterval(one, 1400);
     }
   }
 

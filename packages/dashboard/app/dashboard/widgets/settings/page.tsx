@@ -5,6 +5,10 @@ import { useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Check, Copy, RotateCcw, Save } from 'lucide-react';
 import { WIDGET_LABELS } from '@/components/Pricing';
+
+/** วิดเจ็ตกลุ่มสะสมของขวัญ (ลิงก์เดียวกัน เปลี่ยนแบบได้) — ลำดับเดียวกับหน้าโอเวอร์เลย์ */
+const COLLECT_TYPES = ['pile', 'giftjar', 'aquarium', 'belly', 'snowglobe', 'spacedome', 'vehicle', 'tree', 'garden', 'coinjar'];
+const COLLECT_ICON: Record<string, string> = { pile: '🏔️', giftjar: '🫙', aquarium: '🐠', belly: '🐷', snowglobe: '❄️', spacedome: '🪐', vehicle: '🚗', tree: '🌳', garden: '🌷', coinjar: '⚙️' };
 import { Alert, Button, Card, Field, Input, PageHeader, Select, Spinner } from '@/components/ui';
 import { api, ApiError, type OverlayTokenRow } from '@/lib/api';
 import { NumberInput } from '@/components/NumberInput';
@@ -321,6 +325,20 @@ function WidgetSettings() {
       <PageHeader title={t('ตั้งค่า: {name}', { name: t(WIDGET_LABELS[type] ?? type) })}
         description={t('ตั้งค่าแล้วกดบันทึก — วิดเจ็ตที่เปิดอยู่ใน OBS / TikTok Live Studio จะเปลี่ยนตามทันที')}
         actions={<Link href="/dashboard/widgets/"><Button variant="secondary"><ArrowLeft className="size-4" /> {t('กลับ')}</Button></Link>} />
+
+      {/* สะสมของขวัญ: แถบสลับประเภท (โหล ตู้ปลา ลูกแก้ว …) ไม่ต้องกลับไปหน้าโอเวอร์เลย์ */}
+      {COLLECT_TYPES.includes(type) && (
+        <div className="-mx-4 mb-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+          <div className="flex w-max gap-1.5 rounded-2xl border border-line bg-white p-1.5 shadow-sm">
+            {COLLECT_TYPES.map((k) => (
+              <Link key={k} href={`/dashboard/widgets/settings/?type=${k}`}
+                className={`whitespace-nowrap rounded-xl px-3 py-1.5 text-sm transition ${k === type ? 'bg-pink font-medium text-white' : 'text-muted hover:bg-pink-soft hover:text-ink'}`}>
+                {COLLECT_ICON[k]} {t(WIDGET_LABELS[k] ?? k)}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       <WidgetLinkBox type={type} />
 

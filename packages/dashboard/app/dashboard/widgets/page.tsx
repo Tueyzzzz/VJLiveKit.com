@@ -93,6 +93,7 @@ function posterOf(type: string, config?: Record<string, unknown>): string | null
   }
   // วิดเจ็ตที่ไม่มีธีมรูป → ใช้รูปจริงของแบบที่เลือก (กรอบ Top 3 · หัวใจแก้ว · ไพ่ทาโร่)
   const v = (k: string, d: string) => String(config?.[k] ?? d);
+  if ((type === 'topgifters' || type === 'toplikers') && v('frames', 'a') !== 'off') return `${API_BASE}/overlay/thumbs/${type}-${v('frames', 'a')}.webp`; // แท่น Top 3 มีรูปโปรไฟล์
   if (type === 'topgifters' || type === 'toplikers') {
     const first: Record<string, string> = { a: 'r1', b: 'r1b', gaming: 'g1', singer: 's1', toy: 't1', minimal: type === 'toplikers' ? 't1' : 'r1' };
     const k = first[v('frames', 'a')] ?? (type === 'toplikers' ? 't1' : 'r1');
@@ -242,7 +243,8 @@ export default function WidgetsPage() {
         const collectUrl = all.find((w) => w.type === 'collect' && !w.locked)?.url;
         const groups: [string, typeof all][] = WIDGET_GROUPS.map(([title, types]) => [title, types.flatMap((ty) => all.filter((w) => w.type === ty))]);
         const rest = all.filter((w) => !grouped.has(w.type));
-        if (rest.length) groups.push(['อื่น ๆ', rest]);
+        const others = rest.filter((w) => w.type !== 'tts'); // TTS ย้ายไปเมนูข้าง (เสียงออกที่เว็บ)
+        if (others.length) groups.push(['อื่น ๆ', others]);
         return groups.filter(([, list]) => list.length).map(([title, list]) => (
       <section key={title} className="mb-8">
       <h3 className="mb-3 text-sm font-semibold">{t(title)}</h3>

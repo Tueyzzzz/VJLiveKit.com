@@ -6,9 +6,10 @@ import { PasswordInput } from './PasswordInput';
 import { api } from '@/lib/api';
 import { useT } from '@/lib/i18n';
 
-/** เปลี่ยนรหัสผ่าน (ต้องใส่รหัสเดิม) */
-export function ChangePassword() {
+/** เปลี่ยนรหัสผ่าน (ต้องใส่รหัสเดิม) · inline = อยู่ในการ์ดโปรไฟล์ กดแล้วค่อยกางฟอร์ม */
+export function ChangePassword({ inline = false }: { inline?: boolean }) {
   const [busy, setBusy] = useState(false);
+  const [open, setOpen] = useState(!inline);
   const t = useT();
   const [msg, setMsg] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
 
@@ -29,16 +30,21 @@ export function ChangePassword() {
     } finally { setBusy(false); }
   }
 
-  return (
-    <Card>
-      <h2 className="mb-3 font-medium">{t('เปลี่ยนรหัสผ่าน')}</h2>
-      <form onSubmit={onSubmit} className="space-y-3">
+  if (!open) return (
+    <button type="button" onClick={() => setOpen(true)} className="text-sm font-medium text-violet hover:text-pink hover:underline">🔒 {t('เปลี่ยนรหัสผ่าน')}</button>
+  );
+  const form = (
+      <form onSubmit={onSubmit} className={inline ? 'grid gap-3 sm:grid-cols-3' : 'space-y-3'}>
         <Field label={t('รหัสผ่านปัจจุบัน')}><PasswordInput name="current" required autoComplete="current-password" /></Field>
         <Field label={t('รหัสผ่านใหม่')} hint={t('อย่างน้อย 8 ตัวอักษร')}><PasswordInput name="next" required minLength={8} autoComplete="new-password" /></Field>
         <Field label={t('ยืนยันรหัสผ่านใหม่')}><PasswordInput name="confirm" required minLength={8} autoComplete="new-password" /></Field>
-        {msg && <Alert tone={msg.tone === 'success' ? 'success' : undefined}>{msg.text}</Alert>}
-        <Button type="submit" loading={busy}>{t('เปลี่ยนรหัสผ่าน')}</Button>
+        {msg && <div className={inline ? 'sm:col-span-3' : ''}><Alert tone={msg.tone === 'success' ? 'success' : undefined}>{msg.text}</Alert></div>}
+        <div className={inline ? 'flex gap-2 sm:col-span-3' : ''}>
+          <Button type="submit" loading={busy}>{t('เปลี่ยนรหัสผ่าน')}</Button>
+          {inline && <Button type="button" variant="ghost" onClick={() => { setOpen(false); setMsg(null); }}>{t('ยกเลิก')}</Button>}
+        </div>
       </form>
-    </Card>
   );
+  if (inline) return <div className="space-y-3 rounded-xl bg-canvas p-4"><h3 className="text-sm font-medium">🔒 {t('เปลี่ยนรหัสผ่าน')}</h3>{form}</div>;
+  return <Card><h2 className="mb-3 font-medium">{t('เปลี่ยนรหัสผ่าน')}</h2>{form}</Card>;
 }

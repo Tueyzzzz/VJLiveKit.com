@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { LayoutDashboard, LayoutTemplate, Zap, CreditCard, LogOut, Gift, Shield, BookOpen, Wallet, Menu, X, ScrollText, Lightbulb, Volume2, Grid3x3, Speech } from 'lucide-react';
+import { LogOut, Shield, Menu, X } from 'lucide-react';
+import { NAV } from '@/lib/nav';
 import { Logo } from '@/components/Logo';
 import { Speaker } from '@/components/Speaker';
 import { TikTokAvatar } from '@/components/TikTokAvatar';
@@ -13,21 +14,6 @@ import { Badge, Spinner, cx } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { api, planLabel } from '@/lib/api';
 import { LangSwitch, useT } from '@/lib/i18n';
-
-const NAV = [
-  { href: '/dashboard/', label: 'ภาพรวม', img: 'overview', icon: LayoutDashboard },
-  { href: '/dashboard/widgets/', label: 'โอเวอร์เลย์', img: 'overlay', icon: LayoutTemplate },
-  { href: '/dashboard/actions/', label: 'Actions & Events', img: 'actions', icon: Zap },
-  { href: '/dashboard/sounds/', label: 'เสียงแจ้งเตือน', img: 'sounds', icon: Volume2 },
-  { href: '/dashboard/beatpad/', label: 'Beat Pad (กดเสียง)', img: 'beatpad', icon: Grid3x3 },
-  { href: '/dashboard/tts/', label: 'อ่านแชทออกเสียง (TTS)', img: 'tts', icon: Speech },
-  { href: '/dashboard/widgets/settings/?type=fxmenu', label: 'เมนูของขวัญ', img: 'fxmenu', icon: ScrollText },
-  { href: '/dashboard/widgets/settings/?type=sign', label: 'ป้ายไฟ LED', img: 'sign', icon: Lightbulb },
-  { href: '/dashboard/donate/', label: 'โดเนทขึ้นจอ', img: 'donate', icon: Wallet, soon: true }, // กำลังพัฒนา — เทาไว้ก่อน
-  { href: '/dashboard/billing/', label: 'แพลน & การชำระเงิน', img: 'billing', icon: CreditCard },
-  { href: '/dashboard/referral/', label: 'แนะนำเพื่อน รับฟรี', img: 'referral', icon: Gift },
-  { href: '/dashboard/guide/', label: 'คู่มือการใช้งาน', img: 'guide', icon: BookOpen },
-];
 
 /** รูปประจำเมนู (VJ ทำกิจกรรมตามเมนู) — โหลดไม่ได้ถอยไปใช้ไอคอนเส้น */
 function NavImg({ img, Icon, active, dim }: { img?: string; Icon: React.ComponentType<{ className?: string }>; active?: boolean; dim?: boolean }) {

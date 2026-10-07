@@ -8,6 +8,7 @@ import { Alert, Badge, Button, Card, Input, PageHeader, Spinner } from '@/compon
 import { api, ApiError, type OverlayTokenRow } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useLang, useT } from '@/lib/i18n';
+import { measureFit, fitTransform, type Fit } from '@/lib/previewFit';
 import { WIDGET_SETTINGS } from '@/lib/widgetSettings';
 
 /** พารามิเตอร์เสริมที่ต่อท้าย URL ได้ (แสดงเป็นคำแนะนำ) */
@@ -121,6 +122,9 @@ function WidgetPreview({ type, config, live, onLive }: { type: string; config?: 
   const FW = PREVIEW_W[type] ?? 1920, FH = Math.round(FW * 9 / 16);
   const ref = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0);
+  const frameRef = useRef<HTMLIFrameElement | null>(null);
+  const [fit, setFit] = useState<Fit | null>(null); // ซูมให้วิดเจ็ตเต็มการ์ด (วัดจากหน้าจริง)
+  useEffect(() => { if (!live) setFit(null); }, [live]);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -136,8 +140,9 @@ function WidgetPreview({ type, config, live, onLive }: { type: string; config?: 
       style={{ background: 'radial-gradient(circle at 30% 20%, #3a2d52, #17121f 70%)' }}>
       {live && scale > 0 ? (
         <iframe src={`${API_BASE}/overlay/${type}.html?demo=1&reset=1${configQuery(config)}`} title={t('ตัวอย่าง {type}', { type })}
+          ref={frameRef} onLoad={() => { for (const ms of [500, 1400, 2800]) setTimeout(() => { const f = measureFit(frameRef.current, FW, FH, 2.5); if (f) setFit(f); }, ms); }}
           className="pointer-events-none absolute left-0 top-0 origin-top-left border-0"
-          style={{ width: FW, height: FH, transform: `scale(${scale})` }} />
+          style={{ width: FW, height: FH, transform: fit ? fitTransform(fit, FW, FH, scale * FW, scale * FH) : `scale(${scale})`, transition: 'transform .4s ease' }} />
       ) : (
         <button type="button" onClick={() => onLive(true)} aria-label={t('เล่นตัวอย่าง')}
           className="absolute inset-0 grid place-items-center">

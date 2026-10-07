@@ -9,6 +9,7 @@ import { Speaker } from '@/components/Speaker';
 import { Badge, Spinner, cx } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { api, planLabel } from '@/lib/api';
+import { LangSwitch, useT } from '@/lib/i18n';
 
 const NAV = [
   { href: '/dashboard/', label: 'ภาพรวม', icon: LayoutDashboard },
@@ -27,6 +28,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { user, entitlements, isAdmin, loading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const t = useT();
 
   const [notice, setNotice] = useState('');
   const [menu, setMenu] = useState(false); // มือถือ: เมนูพับ
@@ -42,16 +44,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="flex items-center justify-between px-5 py-3 md:py-4">
           <Logo href="/dashboard/" />
           {/* มือถือ: ปุ่มเมนู (เดิมเป็นแถบเลื่อนข้าง มองไม่เห็นเมนูครบ) */}
-          <button onClick={() => setMenu((m) => !m)} aria-label="เมนู" aria-expanded={menu}
+          <button onClick={() => setMenu((m) => !m)} aria-label={t('เมนู')} aria-expanded={menu}
             className="flex items-center gap-1.5 rounded-xl border border-line px-3 py-2 text-sm md:hidden">
-            {menu ? <X className="size-4" /> : <Menu className="size-4" />} เมนู
+            {menu ? <X className="size-4" /> : <Menu className="size-4" />} {t('เมนู')}
           </button>
         </div>
         <nav className={cx('grid-cols-2 gap-1 px-3 pb-3 md:flex md:flex-col md:pb-0', menu ? 'grid' : 'hidden')}>
           {[...NAV, ...(isAdmin ? [{ href: '/dashboard/admin/', label: 'หลังบ้าน (แอดมิน)', icon: Shield }] : [])].map(({ href, label, icon: Icon, ...rest }) => {
             if ('soon' in rest && rest.soon && !isAdmin) return (
-              <span key={href} title="กำลังพัฒนา เร็ว ๆ นี้" className="flex min-h-11 shrink-0 cursor-not-allowed flex-wrap items-center gap-x-2.5 rounded-xl px-3 py-2 text-sm text-gray-300">
-                <Icon className="size-4" /> {label} <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-400">กำลังพัฒนา</span>
+              <span key={href} title={t('กำลังพัฒนา เร็ว ๆ นี้')} className="flex min-h-11 shrink-0 cursor-not-allowed flex-wrap items-center gap-x-2.5 rounded-xl px-3 py-2 text-sm text-gray-300">
+                <Icon className="size-4" /> {t(label)} <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-400">{t('กำลังพัฒนา')}</span>
               </span>
             );
             // ลิงก์ที่มี ?type= (เช่น เมนูของขวัญ) → ไฮไลต์เมื่ออยู่หน้าตั้งค่าของวิดเจ็ตนั้น
@@ -61,17 +63,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Link key={href} href={href}
                 className={cx('flex min-h-11 shrink-0 items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition',
                   active ? 'bg-pink-soft font-medium text-pink' : 'text-muted hover:bg-violet-soft hover:text-ink')}>
-                <Icon className="size-4" /> {label}
+                <Icon className="size-4" /> {t(label)}
               </Link>
             );
           })}
         </nav>
         <div className={cx('px-3 pb-3 md:block md:pt-2', menu ? 'block' : 'hidden')}><Speaker /></div>
+        <div className={cx('px-5 pb-3 md:hidden', menu ? 'block' : 'hidden')}><LangSwitch /></div>
         <div className="hidden px-5 py-6 md:absolute md:bottom-0 md:block md:w-64">
           <div className="mb-3 truncate text-sm">{user.displayName ?? user.email}</div>
           <div className="mb-4"><Badge tone={entitlements?.plan === 'free' ? 'gray' : 'pink'}>{planLabel(entitlements)}</Badge></div>
+          <div className="mb-4"><LangSwitch /></div>
           <button onClick={() => { logout(); router.replace('/'); }} className="flex items-center gap-2 text-sm text-muted hover:text-ink">
-            <LogOut className="size-4" /> ออกจากระบบ
+            <LogOut className="size-4" /> {t('ออกจากระบบ')}
           </button>
         </div>
       </aside>
@@ -79,7 +83,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {notice && <div className="mb-6 rounded-2xl bg-pink-soft px-4 py-3 text-sm text-ink">📢 {notice}</div>}
         {children}
         <button onClick={() => { logout(); router.replace('/'); }} className="mt-10 flex items-center gap-2 text-sm text-muted hover:text-ink md:hidden">
-          <LogOut className="size-4" /> ออกจากระบบ
+          <LogOut className="size-4" /> {t('ออกจากระบบ')}
         </button>
       </main>
     </div>

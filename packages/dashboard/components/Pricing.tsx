@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Check, Lock } from 'lucide-react';
 import { api, formatMoney, type Plan } from '@/lib/api';
 import { Badge, Card, cx } from './ui';
+import { useT } from '@/lib/i18n';
 
 export const WIDGET_LABELS: Record<string, string> = {
   donate: 'โดเนทขึ้นจอ (พร้อมเพย์)',
@@ -48,6 +49,7 @@ export function PlanCards({ plans, currentPlan, renderAction }: {
   currentPlan?: string;
   renderAction: (plan: Plan) => React.ReactNode;
 }) {
+  const t = useT();
   return (
     <div className="grid gap-5 md:grid-cols-2">
       {plans.map((p) => {
@@ -56,26 +58,26 @@ export function PlanCards({ plans, currentPlan, renderAction }: {
           <Card key={p.code} className={cx('flex flex-col', pro && 'border-pink/40 ring-2 ring-pink/15')}>
             <div className="flex items-center justify-between">
               <h3 className="font-display text-xl">{p.name}</h3>
-              {currentPlan === p.code ? <Badge tone="mint">แพลนปัจจุบัน</Badge> : pro && <Badge tone="pink">แนะนำ</Badge>}
+              {currentPlan === p.code ? <Badge tone="mint">{t('แพลนปัจจุบัน')}</Badge> : pro && <Badge tone="pink">{t('แนะนำ')}</Badge>}
             </div>
             <p className="mt-3">
-              <span className="font-display text-4xl">{pro ? formatMoney(p.priceCents, p.currency) : 'ฟรี'}</span>
-              {pro && <span className="text-sm text-muted"> / เดือน</span>}
+              <span className="font-display text-4xl">{pro ? formatMoney(p.priceCents, p.currency) : t('ฟรี')}</span>
+              {pro && <span className="text-sm text-muted"> {t('/ เดือน')}</span>}
             </p>
-            {pro && <p className="mt-1 text-sm font-medium text-pink">🎁 สมัครใหม่ใช้ฟรีทุกฟีเจอร์ 30 วันแรก</p>}
+            {pro && <p className="mt-1 text-sm font-medium text-pink">{t('🎁 สมัครใหม่ใช้ฟรีทุกฟีเจอร์ 30 วันแรก')}</p>}
             <ul className="mt-5 flex-1 space-y-2 text-sm">
               {ALL_WIDGETS.map((w) => {
                 const ok = p.features.widgets.includes(w);
                 return (
                   <li key={w} className={cx('flex items-center gap-2', !ok && 'text-muted/70')}>
-                    {ok ? <Check className="size-4 text-mint" /> : <Lock className="size-4" />} {WIDGET_LABELS[w]}
+                    {ok ? <Check className="size-4 text-mint" /> : <Lock className="size-4" />} {t(WIDGET_LABELS[w] ?? w)}
                   </li>
                 );
               })}
-              <li className="flex items-center gap-2"><Check className="size-4 text-mint" /> กฎ Actions สูงสุด {p.features.maxActionRules} ข้อ</li>
-              <li className="flex items-center gap-2"><Check className="size-4 text-mint" /> ลิงก์ overlay {p.features.maxTokens} ชุด</li>
+              <li className="flex items-center gap-2"><Check className="size-4 text-mint" /> {t('กฎ Actions สูงสุด {n} ข้อ', { n: p.features.maxActionRules })}</li>
+              <li className="flex items-center gap-2"><Check className="size-4 text-mint" /> {t('ลิงก์ overlay {n} ชุด', { n: p.features.maxTokens })}</li>
               <li className={cx('flex items-center gap-2', !p.features.noWatermark && 'text-muted/70')}>
-                {p.features.noWatermark ? <Check className="size-4 text-mint" /> : <Lock className="size-4" />} ไม่มีป้าย VJLiveKit บนจอ
+                {p.features.noWatermark ? <Check className="size-4 text-mint" /> : <Lock className="size-4" />} {t('ไม่มีป้าย VJLiveKit บนจอ')}
               </li>
             </ul>
             <div className="mt-6">{renderAction(p)}</div>

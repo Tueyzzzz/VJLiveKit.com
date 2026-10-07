@@ -9,6 +9,7 @@ import { PlanCards, usePlans } from '@/components/Pricing';
 import { Button, Card, Spinner } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { getToken } from '@/lib/api';
+import { LangSwitch, useT } from '@/lib/i18n';
 
 const FEATURES = [
   { icon: Gift, title: 'โหลของขวัญ & ตู้ปลา', text: 'ของขวัญจริงตกลงโหล ตู้ปลา ลูกแก้ว โดมอวกาศ ของแพงชิ้นใหญ่ตามราคา' },
@@ -50,6 +51,7 @@ const JSONLD = [
 
 export default function Home() {
   const { user, loading } = useAuth();
+  const t = useT();
   const { plans } = usePlans();
   const router = useRouter();
   // ล็อกอินค้างไว้ → เข้าหน้าแรกแล้วเด้งไป Dashboard เลย (ระหว่างเช็ก session ไม่โชว์หน้าแรกให้กระพริบ)
@@ -62,29 +64,30 @@ export default function Home() {
       <header className="mx-auto flex max-w-6xl items-center justify-between px-4 py-5">
         <Logo />
         <nav className="flex items-center gap-2">
-          <a href="#pricing" className="hidden px-3 text-sm text-muted hover:text-ink sm:inline">ราคา</a>
+          <LangSwitch />
+          <a href="#pricing" className="hidden px-3 text-sm text-muted hover:text-ink sm:inline">{t('ราคา')}</a>
           {user ? (
-            <Link href="/dashboard/"><Button>ไปที่ Dashboard</Button></Link>
+            <Link href="/dashboard/"><Button>{t('ไปที่ Dashboard')}</Button></Link>
           ) : (
             <>
-              <Link href="/login/"><Button variant="ghost">เข้าสู่ระบบ</Button></Link>
-              <Link href="/register/"><Button>สมัครฟรี</Button></Link>
+              <Link href="/login/"><Button variant="ghost">{t('เข้าสู่ระบบ')}</Button></Link>
+              <Link href="/register/"><Button>{t('สมัครฟรี')}</Button></Link>
             </>
           )}
         </nav>
       </header>
 
       <section className="mx-auto max-w-6xl px-4 pb-16 pt-10 text-center sm:pt-20">
-        <p className="mx-auto mb-4 w-fit rounded-full bg-pink-soft px-4 py-1 text-sm text-pink">สำหรับสตรีมเมอร์ TikTok LIVE</p>
+        <p className="mx-auto mb-4 w-fit rounded-full bg-pink-soft px-4 py-1 text-sm text-pink">{t('สำหรับสตรีมเมอร์ TikTok LIVE')}</p>
         <h1 className="font-display text-4xl leading-tight sm:text-6xl">
-          วิดเจ็ตไลฟ์ TikTok<br /><span className="text-gradient">ครบ จบในที่เดียว</span>
+          {t('วิดเจ็ตไลฟ์ TikTok')}<br /><span className="text-gradient">{t('ครบ จบในที่เดียว')}</span>
         </h1>
         <p className="mx-auto mt-5 max-w-xl text-muted">
-          วิดเจ็ตสวยแบบเกม วางใน OBS / TikTok LIVE Studio ได้ทันที — ของขวัญจริงตกลงโหล ตู้ปลา ต้นไม้ รถลาก · อันดับ Top Gifters · ลีก · ไพ่ทาโร่ เชื่อมกับไลฟ์แบบเรียลไทม์ ตั้งค่าครั้งเดียวใช้ได้ตลอด
+          {t('วิดเจ็ตสวยแบบเกม วางใน OBS / TikTok LIVE Studio ได้ทันที — ของขวัญจริงตกลงโหล ตู้ปลา ต้นไม้ รถลาก · อันดับ Top Gifters · ลีก · ไพ่ทาโร่ เชื่อมกับไลฟ์แบบเรียลไทม์ ตั้งค่าครั้งเดียวใช้ได้ตลอด')}
         </p>
         <div className="mt-8 flex justify-center gap-3">
-          <Link href={user ? '/dashboard/' : '/register/'}><Button className="px-6 py-3 text-base">ใช้ฟรีเดือนแรก</Button></Link>
-          <a href="/overlay/coinjar.html?demo=1" target="_blank" rel="noreferrer"><Button variant="secondary" className="px-6 py-3 text-base">ดูเดโม</Button></a>
+          <Link href={user ? '/dashboard/' : '/register/'}><Button className="px-6 py-3 text-base">{t('ใช้ฟรีเดือนแรก')}</Button></Link>
+          <a href="/overlay/coinjar.html?demo=1" target="_blank" rel="noreferrer"><Button variant="secondary" className="px-6 py-3 text-base">{t('ดูเดโม')}</Button></a>
         </div>
       </section>
 
@@ -92,21 +95,21 @@ export default function Home() {
         {FEATURES.map(({ icon: Icon, title, text }) => (
           <Card key={title}>
             <div className="mb-3 grid size-10 place-items-center rounded-xl brand-gradient text-white"><Icon className="size-5" /></div>
-            <h3 className="font-medium">{title}</h3>
-            <p className="mt-1 text-sm text-muted">{text}</p>
+            <h3 className="font-medium">{t(title)}</h3>
+            <p className="mt-1 text-sm text-muted">{t(text)}</p>
           </Card>
         ))}
       </section>
 
       <section id="pricing" className="mx-auto max-w-3xl px-4 pb-24">
-        <h2 className="mb-8 text-center font-display text-3xl">แพลนและราคา</h2>
+        <h2 className="mb-8 text-center font-display text-3xl">{t('แพลนและราคา')}</h2>
         {!plans ? <Spinner /> : (
           <PlanCards
             plans={plans}
             renderAction={(p) => (
               <Link href={user ? '/dashboard/billing/' : '/register/'}>
                 <Button variant={p.priceCents > 0 ? 'primary' : 'secondary'} className="w-full">
-                  {p.priceCents > 0 ? 'อัปเกรดเป็น Pro' : 'เริ่มใช้ฟรี'}
+                  {p.priceCents > 0 ? t('อัปเกรดเป็น Pro') : t('เริ่มใช้ฟรี')}
                 </Button>
               </Link>
             )}
@@ -115,12 +118,12 @@ export default function Home() {
       </section>
 
       <section id="faq" className="mx-auto max-w-3xl px-4 pb-24">
-        <h2 className="mb-6 text-center font-display text-3xl">คำถามที่พบบ่อย</h2>
+        <h2 className="mb-6 text-center font-display text-3xl">{t('คำถามที่พบบ่อย')}</h2>
         <div className="space-y-3">
           {FAQ.map(([q, a]) => (
             <details key={q} className="rounded-xl border border-line bg-white px-4 py-3">
-              <summary className="cursor-pointer font-medium">{q}</summary>
-              <p className="mt-2 text-sm text-muted">{a}</p>
+              <summary className="cursor-pointer font-medium">{t(q)}</summary>
+              <p className="mt-2 text-sm text-muted">{t(a)}</p>
             </details>
           ))}
         </div>
@@ -129,7 +132,7 @@ export default function Home() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSONLD) }} />
 
       <footer className="border-t border-line py-8 text-center text-xs text-muted">
-        <a href="https://www.instagram.com/vjlivekit/" target="_blank" rel="noopener" className="mr-2 underline">Instagram</a> · <a href="https://www.facebook.com/profile.php?id=61595273575386" target="_blank" rel="noopener" className="mr-2 underline">Facebook</a> · <a href="/guides/" className="mr-2 underline">คู่มือ</a> · <a href="/tikfinity-alternative/" className="mr-2 underline">ทางเลือก TikFinity ภาษาไทย</a> · <a href="/vj-studio-alternative/" className="mr-2 underline">ทางเลือก วีเจ.com</a> · © {new Date().getFullYear()} VJLiveKit · งานพัฒนาอิสระ ไม่เกี่ยวข้องกับ TikTok อย่างเป็นทางการ
+        <a href="https://www.instagram.com/vjlivekit/" target="_blank" rel="noopener" className="mr-2 underline">Instagram</a> · <a href="https://www.facebook.com/profile.php?id=61595273575386" target="_blank" rel="noopener" className="mr-2 underline">Facebook</a> · <a href="/guides/" className="mr-2 underline">{t('คู่มือ')}</a> · <a href="/tikfinity-alternative/" className="mr-2 underline">{t('ทางเลือก TikFinity ภาษาไทย')}</a> · <a href="/vj-studio-alternative/" className="mr-2 underline">{t('ทางเลือก วีเจ.com')}</a> · © {new Date().getFullYear()} VJLiveKit · {t('งานพัฒนาอิสระ ไม่เกี่ยวข้องกับ TikTok อย่างเป็นทางการ')}
       </footer>
     </div>
   );

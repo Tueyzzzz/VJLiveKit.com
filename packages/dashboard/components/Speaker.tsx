@@ -6,6 +6,7 @@ import { enqueueSound } from '@/lib/sounds';
 import { Volume2, VolumeX } from 'lucide-react';
 import { api, getToken, type Rule } from '@/lib/api';
 import { cx } from './ui';
+import { useT } from '@/lib/i18n';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
 const KEY = 'vjl-speaker';
@@ -96,6 +97,7 @@ export function LiveLink() {
 /** สถานะการเชื่อมต่อ + สวิตช์เสียง (ในเมนูแดชบอร์ด) */
 export function Speaker() {
   const st = useStore();
+  const t = useT();
   function toggle() {
     store.on = !store.on; emit();
     try { localStorage.setItem(KEY, store.on ? 'on' : 'off'); } catch { /* ignore */ }
@@ -104,15 +106,15 @@ export function Speaker() {
   }
   return (
     <div className="space-y-1">
-      <div className="flex items-center gap-2 px-3 py-1 text-xs text-muted" title="วิดเจ็ตในโปรแกรมไลฟ์ทำงานเฉพาะตอนเปิดเว็บนี้ค้างไว้ (หน้าไหนก็ได้ ขอแค่ล็อกอินอยู่)">
+      <div className="flex items-center gap-2 px-3 py-1 text-xs text-muted" title={t('วิดเจ็ตในโปรแกรมไลฟ์ทำงานเฉพาะตอนเปิดเว็บนี้ค้างไว้ (หน้าไหนก็ได้ ขอแค่ล็อกอินอยู่)')}>
         <span className={cx('size-2 shrink-0 rounded-full', st.live ? 'bg-mint' : 'bg-gray-300')} />
-        {st.live ? 'วิดเจ็ตทำงาน — เปิดเว็บค้างไว้ระหว่างไลฟ์' : 'กำลังเชื่อมต่อ…'}
+        {st.live ? t('วิดเจ็ตทำงาน — เปิดเว็บค้างไว้ระหว่างไลฟ์') : t('กำลังเชื่อมต่อ…')}
       </div>
       {st.hasSound && (
-        <button onClick={toggle} title={st.on ? 'เสียงจากกฎ Actions ดังที่เครื่องนี้' : 'ปิดเสียงที่เครื่องนี้อยู่ — เสียงจะเล่นที่ลิงก์ FX แทน'}
+        <button onClick={toggle} title={st.on ? t('เสียงจากกฎ Actions ดังที่เครื่องนี้') : t('ปิดเสียงที่เครื่องนี้อยู่ — เสียงจะเล่นที่ลิงก์ FX แทน')}
           className={cx('flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm transition', st.on ? 'bg-mint/15 text-ink' : 'text-muted hover:bg-violet-soft')}>
           {st.on ? <Volume2 className="size-4 text-mint" /> : <VolumeX className="size-4" />}
-          <span className="min-w-0 flex-1 truncate">{st.on ? 'เสียงจากกฎ: ดังที่นี่' : 'เสียงจากกฎ: ปิด (ดังที่ลิงก์ FX)'}</span>
+          <span className="min-w-0 flex-1 truncate">{st.on ? t('เสียงจากกฎ: ดังที่นี่') : t('เสียงจากกฎ: ปิด (ดังที่ลิงก์ FX)')}</span>
         </button>
       )}
     </div>

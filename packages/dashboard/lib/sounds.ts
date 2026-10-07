@@ -1,13 +1,16 @@
 /** เสียงที่ใช้ร่วมกัน: เสียงสำเร็จรูป (overlay/js/sfx.js) + ไฟล์ที่อัปโหลด — เล่นในเบราว์เซอร์ของวีเจ */
 
+import { translate } from './i18n';
+
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
 
+/** ชื่อแสดงเป็นภาษาไทย — แปลตอนแสดงผลด้วย t(name) */
 export const SFX: [string, string][] = [['chime', '🔔 กริ๊ง'], ['coin', '🪙 เหรียญ'], ['levelup', '⬆️ เลเวลอัป'], ['fanfare', '🎺 ฟันแฟร์'], ['magic', '✨ เวทมนตร์'], ['pop', '🫧 ป๊อป'], ['whoosh', '💨 วู้ช'], ['drum', '🥁 ตึ่งโป๊ะ'], ['boing', '🌀 ดึ๋ง'], ['heart', '💗 หัวใจ'], ['applause', '👏 ปรบมือ'], ['alarm', '🚨 ไซเรน']];
 /** ความยาวโดยประมาณของเสียงสำเร็จรูป (ms) — ใช้ต่อคิว */
 const SFX_MS: Record<string, number> = { chime: 900, coin: 500, levelup: 600, fanfare: 1800, magic: 1000, pop: 200, whoosh: 650, drum: 800, boing: 500, heart: 1000, applause: 1700, alarm: 1300 };
 
 export interface Upload { id: string; name: string; size: number; url: string }
-export const readAsDataUrl = (f: File) => new Promise<string>((ok, bad) => { const r = new FileReader(); r.onload = () => ok(String(r.result)); r.onerror = () => bad(new Error('อ่านไฟล์ไม่ได้')); r.readAsDataURL(f); });
+export const readAsDataUrl = (f: File) => new Promise<string>((ok, bad) => { const r = new FileReader(); r.onload = () => ok(String(r.result)); r.onerror = () => bad(new Error(translate('อ่านไฟล์ไม่ได้'))); r.readAsDataURL(f); });
 
 let sfxLoad: Promise<void> | null = null;
 function loadSfx(): Promise<void> {

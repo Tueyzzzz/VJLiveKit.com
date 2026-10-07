@@ -7,6 +7,7 @@ import { WIDGET_LABELS } from '@/components/Pricing';
 import { Alert, Badge, Button, Card, Input, PageHeader, Spinner } from '@/components/ui';
 import { api, ApiError, type OverlayTokenRow } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { useLang, useT } from '@/lib/i18n';
 import { WIDGET_SETTINGS } from '@/lib/widgetSettings';
 
 /** พารามิเตอร์เสริมที่ต่อท้าย URL ได้ (แสดงเป็นคำแนะนำ) */
@@ -120,22 +121,23 @@ function WidgetPreview({ type, config, live, onLive }: { type: string; config?: 
     ro.observe(el);
     return () => ro.disconnect();
   }, [FW]);
+  const t = useT();
   const poster = posterOf(type, config);
   return (
     <div ref={ref} className="group relative aspect-video overflow-hidden rounded-xl"
       onMouseEnter={() => onLive(true)} onMouseLeave={() => onLive(false)}
       style={{ background: 'radial-gradient(circle at 30% 20%, #3a2d52, #17121f 70%)' }}>
       {live && scale > 0 ? (
-        <iframe src={`${API_BASE}/overlay/${type}.html?demo=1&reset=1${configQuery(config)}`} title={`ตัวอย่าง ${type}`}
+        <iframe src={`${API_BASE}/overlay/${type}.html?demo=1&reset=1${configQuery(config)}`} title={t('ตัวอย่าง {type}', { type })}
           className="pointer-events-none absolute left-0 top-0 origin-top-left border-0"
           style={{ width: FW, height: FH, transform: `scale(${scale})` }} />
       ) : (
-        <button type="button" onClick={() => onLive(true)} aria-label="เล่นตัวอย่าง"
+        <button type="button" onClick={() => onLive(true)} aria-label={t('เล่นตัวอย่าง')}
           className="absolute inset-0 grid place-items-center">
           {poster
             ? <img src={poster} alt="" loading="lazy" className="h-4/5 w-auto object-contain drop-shadow-lg" />
             : <span className="text-5xl">{ICON[type] ?? '🎁'}</span>}
-          <span className="absolute bottom-2 right-2 rounded-full bg-black/45 px-2.5 py-1 text-[11px] text-white opacity-80 group-hover:opacity-100">▶ ดูตัวอย่าง</span>
+          <span className="absolute bottom-2 right-2 rounded-full bg-black/45 px-2.5 py-1 text-[11px] text-white opacity-80 group-hover:opacity-100">{t('▶ ดูตัวอย่าง')}</span>
         </button>
       )}
     </div>
@@ -143,22 +145,25 @@ function WidgetPreview({ type, config, live, onLive }: { type: string; config?: 
 }
 
 function CopyButton({ text }: { text: string }) {
+  const t = useT();
   const [copied, setCopied] = useState(false);
   return (
-    <Button variant="secondary" className="px-3" aria-label="คัดลอกลิงก์"
+    <Button variant="secondary" className="px-3" aria-label={t('คัดลอกลิงก์')}
       onClick={async () => {
-        try { await navigator.clipboard.writeText(text); } catch { window.prompt('คัดลอกลิงก์นี้', text); return; }
+        try { await navigator.clipboard.writeText(text); } catch { window.prompt(t('คัดลอกลิงก์นี้'), text); return; }
         setCopied(true);
         setTimeout(() => setCopied(false), 1500);
       }}>
       {copied ? <Check className="size-4 text-mint" /> : <Copy className="size-4" />}
-      <span className="hidden sm:inline">{copied ? 'คัดลอกแล้ว' : 'คัดลอก'}</span>
+      <span className="hidden sm:inline">{copied ? t('คัดลอกแล้ว') : t('คัดลอก')}</span>
     </Button>
   );
 }
 
 export default function WidgetsPage() {
   const { user, isAdmin } = useAuth();
+  const t = useT();
+  const [lang] = useLang();
   const soon = (type: string) => SOON.has(type) && !isAdmin;
   const [tokens, setTokens] = useState<OverlayTokenRow[] | null>(null);
   const [maxTokens, setMaxTokens] = useState(0);
@@ -206,7 +211,7 @@ export default function WidgetsPage() {
   }
 
   async function revoke(id: string) {
-    if (!confirm('เพิกถอนลิงก์ชุดนี้? overlay ที่ใช้ลิงก์นี้ใน OBS จะหยุดทำงานทันที')) return;
+    if (!confirm(t('เพิกถอนลิงก์ชุดนี้? overlay ที่ใช้ลิงก์นี้ใน OBS จะหยุดทำงานทันที'))) return;
     try {
       await api(`/api/overlay-tokens/${id}`, { method: 'DELETE' });
       await load();
@@ -219,41 +224,41 @@ export default function WidgetsPage() {
 
   return (
     <div>
-      <PageHeader title="โอเวอร์เลย์"
-        description="คัดลอกลิงก์ไปวางใน OBS → Sources → Browser (แนะนำขนาด 1920×1080) ลิงก์เป็นความลับ อย่าแชร์ให้ใคร" />
+      <PageHeader title={t('โอเวอร์เลย์')}
+        description={t('คัดลอกลิงก์ไปวางใน OBS → Sources → Browser (แนะนำขนาด 1920×1080) ลิงก์เป็นความลับ อย่าแชร์ให้ใคร')} />
 
       {!user.tiktokUsername && (
         <div className="mb-5">
-          <Alert tone="info">ยังไม่ได้ตั้งชื่อ TikTok — <Link href="/dashboard/" className="font-medium text-pink underline">ตั้งที่หน้าภาพรวม</Link> ก่อนสร้างลิงก์</Alert>
+          <Alert tone="info">{t('ยังไม่ได้ตั้งชื่อ TikTok —')} <Link href="/dashboard/" className="font-medium text-pink underline">{t('ตั้งที่หน้าภาพรวม')}</Link> {t('ก่อนสร้างลิงก์')}</Alert>
         </div>
       )}
 
-      <h2 className="mb-3 text-sm font-semibold text-violet">ตัวอย่างวิดเจ็ตทั้งหมด</h2>
+      <h2 className="mb-3 text-sm font-semibold text-violet">{t('ตัวอย่างวิดเจ็ตทั้งหมด')}</h2>
       {(() => {
         const all = tokens?.[0]?.urls ?? Object.keys(WIDGET_BLURB).map((type) => ({ type, url: '', locked: false }));
-        const grouped = new Set([...WIDGET_GROUPS.flatMap(([, t]) => t), 'collect', 'donate']); // donate = กำลังพัฒนา ซ่อนไว้ก่อน
+        const grouped = new Set([...WIDGET_GROUPS.flatMap(([, ts]) => ts), 'collect', 'donate']); // donate = กำลังพัฒนา ซ่อนไว้ก่อน
         const collectUrl = all.find((w) => w.type === 'collect' && !w.locked)?.url;
-        const groups: [string, typeof all][] = WIDGET_GROUPS.map(([title, types]) => [title, types.flatMap((t) => all.filter((w) => w.type === t))]);
+        const groups: [string, typeof all][] = WIDGET_GROUPS.map(([title, types]) => [title, types.flatMap((ty) => all.filter((w) => w.type === ty))]);
         const rest = all.filter((w) => !grouped.has(w.type));
         if (rest.length) groups.push(['อื่น ๆ', rest]);
         return groups.filter(([, list]) => list.length).map(([title, list]) => (
       <section key={title} className="mb-8">
-      <h3 className="mb-3 text-sm font-semibold">{title}</h3>
+      <h3 className="mb-3 text-sm font-semibold">{t(title)}</h3>
       {title === COLLECT_GROUP && (
         <Card className="mb-4 flex flex-col gap-3 ring-2 ring-pink/30 sm:flex-row sm:items-center">
           <div className="min-w-0 flex-1">
-            <div className="text-sm font-medium">🔗 ลิงก์เดียวใช้ได้ทุกแบบ — ตอนนี้ใช้: <b className="text-pink">{WIDGET_LABELS[collectStyle] ?? collectStyle}</b></div>
-            <p className="text-xs text-muted">วางลิงก์นี้ใน OBS / LIVE Studio ครั้งเดียว แล้วกด “ใช้แบบนี้” ที่การ์ดด้านล่าง จอเปลี่ยนแบบเองทันที ไม่ต้องเปลี่ยนลิงก์</p>
+            <div className="text-sm font-medium">{t('🔗 ลิงก์เดียวใช้ได้ทุกแบบ — ตอนนี้ใช้:')} <b className="text-pink">{t(WIDGET_LABELS[collectStyle] ?? collectStyle)}</b></div>
+            <p className="text-xs text-muted">{t('วางลิงก์นี้ใน OBS / LIVE Studio ครั้งเดียว แล้วกด “ใช้แบบนี้” ที่การ์ดด้านล่าง จอเปลี่ยนแบบเองทันที ไม่ต้องเปลี่ยนลิงก์')}</p>
           </div>
-          {collectUrl ? <CopyButton text={collectUrl} /> : <span className="text-xs text-muted">ตั้งชื่อ TikTok ที่หน้าภาพรวมก่อน</span>}
+          {collectUrl ? <CopyButton text={collectUrl} /> : <span className="text-xs text-muted">{t('ตั้งชื่อ TikTok ที่หน้าภาพรวมก่อน')}</span>}
         </Card>
       )}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {list.map((w) => soon(w.type) ? (
           <Card key={w.type} className="relative p-3 opacity-60 grayscale">
             <div className="grid aspect-video place-items-center rounded-xl bg-canvas text-4xl">🚧</div>
-            <div className="mt-3 flex items-center gap-2 text-sm font-medium">{WIDGET_LABELS[w.type] ?? w.type} <Badge tone="gray">กำลังพัฒนา</Badge></div>
-            <p className="mt-0.5 text-xs text-muted">กำลังพัฒนา เปิดให้ใช้เร็ว ๆ นี้</p>
+            <div className="mt-3 flex items-center gap-2 text-sm font-medium">{t(WIDGET_LABELS[w.type] ?? w.type)} <Badge tone="gray">{t('กำลังพัฒนา')}</Badge></div>
+            <p className="mt-0.5 text-xs text-muted">{t('กำลังพัฒนา เปิดให้ใช้เร็ว ๆ นี้')}</p>
           </Card>
         ) : (
           <Card key={w.type} className={`p-3 ${title === COLLECT_GROUP && collectStyle === w.type ? 'ring-2 ring-pink' : ''}`}>
@@ -262,17 +267,17 @@ export default function WidgetsPage() {
             <div className="mt-3 flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 text-sm font-medium">
-                  {WIDGET_LABELS[w.type] ?? w.type}
+                  {t(WIDGET_LABELS[w.type] ?? w.type)}
                   {w.locked && <Badge tone="pink"><Lock className="size-3" /> Pro</Badge>}
                 </div>
-                <p className="mt-0.5 text-xs text-muted">{WIDGET_BLURB[w.type] ?? ''}</p>
+                <p className="mt-0.5 text-xs text-muted">{WIDGET_BLURB[w.type] ? t(WIDGET_BLURB[w.type]) : ''}</p>
               </div>
               <div className="flex shrink-0 gap-1.5">
                 {title === COLLECT_GROUP ? (
-                  collectStyle === w.type ? <Badge tone="pink"><Check className="size-3" /> ใช้อยู่</Badge>
-                    : !w.locked && <Button variant="secondary" className="px-3 text-xs" onClick={() => pickCollect(w.type)}>ใช้แบบนี้</Button>
+                  collectStyle === w.type ? <Badge tone="pink"><Check className="size-3" /> {t('ใช้อยู่')}</Badge>
+                    : !w.locked && <Button variant="secondary" className="px-3 text-xs" onClick={() => pickCollect(w.type)}>{t('ใช้แบบนี้')}</Button>
                 ) : w.url && !w.locked && <CopyButton text={w.url} />}
-                <Link href={`/dashboard/widgets/settings/?type=${w.type}`} aria-label="ตั้งค่าวิดเจ็ต">
+                <Link href={`/dashboard/widgets/settings/?type=${w.type}`} aria-label={t('ตั้งค่าวิดเจ็ต')}>
                   <Button variant="secondary" className="px-3"><Settings className="size-4" /></Button>
                 </Link>
               </div>
@@ -283,55 +288,55 @@ export default function WidgetsPage() {
       </section>
         ));
       })()}
-      {tokens && tokens.length === 0 && <p className="-mt-5 mb-6 text-xs text-muted">สร้างลิงก์ชุดแรกด้านล่างก่อน จึงจะมีปุ่มคัดลอกลิงก์ในแต่ละการ์ด</p>}
+      {tokens && tokens.length === 0 && <p className="-mt-5 mb-6 text-xs text-muted">{t('สร้างลิงก์ชุดแรกด้านล่างก่อน จึงจะมีปุ่มคัดลอกลิงก์ในแต่ละการ์ด')}</p>}
 
-      <h2 className="mb-3 text-sm font-semibold text-violet">ชุดลิงก์ของคุณ</h2>
+      <h2 className="mb-3 text-sm font-semibold text-violet">{t('ชุดลิงก์ของคุณ')}</h2>
       <Card className="mb-6">
         <form onSubmit={create} className="flex flex-wrap items-center gap-3">
-          <Input name="label" placeholder="ชื่อชุดลิงก์ (เช่น OBS คอมบ้าน)" maxLength={60} className="max-w-xs flex-1" />
-          <Button type="submit" loading={busy} disabled={!user.tiktokUsername}><Plus className="size-4" /> สร้างลิงก์ชุดใหม่</Button>
-          <span className="text-xs text-muted">ใช้แล้ว {tokens?.length ?? 0}/{maxTokens} ชุด</span>
+          <Input name="label" placeholder={t('ชื่อชุดลิงก์ (เช่น OBS คอมบ้าน)')} maxLength={60} className="max-w-xs flex-1" />
+          <Button type="submit" loading={busy} disabled={!user.tiktokUsername}><Plus className="size-4" /> {t('สร้างลิงก์ชุดใหม่')}</Button>
+          <span className="text-xs text-muted">{t('ใช้แล้ว {used}/{max} ชุด', { used: tokens?.length ?? 0, max: maxTokens })}</span>
         </form>
         {error && (
           <div className="mt-4">
-            <Alert>{error.text} {error.upgrade && <Link href="/dashboard/billing/" className="font-medium underline">อัปเกรด</Link>}</Alert>
+            <Alert>{error.text} {error.upgrade && <Link href="/dashboard/billing/" className="font-medium underline">{t('อัปเกรด')}</Link>}</Alert>
           </div>
         )}
       </Card>
 
       {!tokens ? <Spinner /> : tokens.length === 0 ? (
-        <Card className="py-10 text-center text-sm text-muted">ยังไม่มีลิงก์ — กด “สร้างลิงก์ชุดใหม่”</Card>
+        <Card className="py-10 text-center text-sm text-muted">{t('ยังไม่มีลิงก์ — กด “สร้างลิงก์ชุดใหม่”')}</Card>
       ) : (
         <div className="space-y-6">
-          {tokens.map((t) => (
-            <Card key={t.id}>
+          {tokens.map((tok) => (
+            <Card key={tok.id}>
               <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <h2 className="font-medium">{t.label || 'ลิงก์ไม่มีชื่อ'}</h2>
-                  <p className="text-xs text-muted">สร้างเมื่อ {new Date(t.createdAt).toLocaleString('th-TH')}</p>
+                  <h2 className="font-medium">{tok.label || t('ลิงก์ไม่มีชื่อ')}</h2>
+                  <p className="text-xs text-muted">{t('สร้างเมื่อ {date}', { date: new Date(tok.createdAt).toLocaleString(lang === 'en' ? 'en-US' : 'th-TH') })}</p>
                 </div>
-                <Button variant="danger" onClick={() => revoke(t.id)}><Trash2 className="size-4" /> เพิกถอน</Button>
+                <Button variant="danger" onClick={() => revoke(tok.id)}><Trash2 className="size-4" /> {t('เพิกถอน')}</Button>
               </div>
               <ul className="divide-y divide-line">
-                {t.urls.filter((w) => !soon(w.type)).map((w) => (
+                {tok.urls.filter((w) => !soon(w.type)).map((w) => (
                   <li key={w.type} className="flex flex-wrap items-center gap-3 py-3">
                     <div className="w-44 shrink-0">
                       <div className="flex items-center gap-2 text-sm font-medium">
-                        {WIDGET_LABELS[w.type] ?? w.type}
+                        {t(WIDGET_LABELS[w.type] ?? w.type)}
                         {w.locked && <Badge tone="pink"><Lock className="size-3" /> Pro</Badge>}
                       </div>
-                      {PARAM_HINTS[w.type] && <div className="mt-0.5 truncate text-xs text-muted" title={`ปรับผ่านลิงก์ได้ด้วย: ${PARAM_HINTS[w.type]}`}>กด “ตั้งค่า” เพื่อปรับแต่ง</div>}
+                      {PARAM_HINTS[w.type] && <div className="mt-0.5 truncate text-xs text-muted" title={t('ปรับผ่านลิงก์ได้ด้วย: {params}', { params: PARAM_HINTS[w.type] })}>{t('กด “ตั้งค่า” เพื่อปรับแต่ง')}</div>}
                     </div>
                     {w.locked ? (
-                      <Link href="/dashboard/billing/" className="text-sm text-pink hover:underline">อัปเกรดเป็น Pro เพื่อใช้วิดเจ็ตนี้</Link>
+                      <Link href="/dashboard/billing/" className="text-sm text-pink hover:underline">{t('อัปเกรดเป็น Pro เพื่อใช้วิดเจ็ตนี้')}</Link>
                     ) : (
                       <>
                         <code className="min-w-0 flex-1 truncate rounded-lg bg-canvas px-3 py-2 text-xs text-muted">{w.url}</code>
                         <CopyButton text={w.url} />
-                        <Link href={`/dashboard/widgets/settings/?type=${w.type}`} aria-label="ตั้งค่าวิดเจ็ต">
-                          <Button variant="secondary" className="px-3"><Settings className="size-4" /><span className="hidden sm:inline">ตั้งค่า</span></Button>
+                        <Link href={`/dashboard/widgets/settings/?type=${w.type}`} aria-label={t('ตั้งค่าวิดเจ็ต')}>
+                          <Button variant="secondary" className="px-3"><Settings className="size-4" /><span className="hidden sm:inline">{t('ตั้งค่า')}</span></Button>
                         </Link>
-                        <a href={w.url} target="_blank" rel="noreferrer" aria-label="เปิดดูตัวอย่าง">
+                        <a href={w.url} target="_blank" rel="noreferrer" aria-label={t('เปิดดูตัวอย่าง')}>
                           <Button variant="ghost" className="px-3"><ExternalLink className="size-4" /></Button>
                         </a>
                       </>

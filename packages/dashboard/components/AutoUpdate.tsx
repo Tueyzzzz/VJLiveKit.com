@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { useT } from '@/lib/i18n';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
 const MINE = process.env.NEXT_PUBLIC_BUILD_ID ?? '';
@@ -16,6 +17,7 @@ export function AutoUpdate() {
   const staleRef = useRef(false);
   const pathname = usePathname();
   const first = useRef(true);
+  const t = useT();
 
   useEffect(() => {
     if (!MINE) return;
@@ -46,7 +48,7 @@ export function AutoUpdate() {
   return (
     <button onClick={() => location.reload()}
       className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-full bg-ink px-4 py-2 text-sm text-white shadow-lg">
-      ✨ มีเวอร์ชันใหม่ — แตะเพื่ออัปเดต
+      {t('✨ มีเวอร์ชันใหม่ — แตะเพื่ออัปเดต')}
     </button>
   );
 }

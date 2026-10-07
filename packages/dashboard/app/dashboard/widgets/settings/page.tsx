@@ -9,6 +9,7 @@ import { Alert, Button, Card, Field, Input, PageHeader, Select, Spinner } from '
 import { api, ApiError, type OverlayTokenRow } from '@/lib/api';
 import { NumberInput } from '@/components/NumberInput';
 import { GiftPicker, useGifts } from '@/components/GiftPicker';
+import { useLang, useT } from '@/lib/i18n';
 import { WIDGET_SETTINGS, defaultsOf, toOverlayParams, type FieldDef, type Values } from '@/lib/widgetSettings';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
@@ -28,12 +29,13 @@ function groupOptions(options: Opt[]): [string, Opt[]][] {
 const COLLECT_TYPES = ['giftjar', 'aquarium', 'belly', 'snowglobe', 'spacedome', 'vehicle', 'tree', 'garden', 'coinjar'];
 
 function CopyLink({ url, label = 'คัดลอกลิงก์' }: { url: string; label?: string }) {
+  const t = useT();
   const [copied, setCopied] = useState(false);
   return (
     <div className="flex flex-wrap items-center gap-2">
       <code className="min-w-0 flex-1 truncate rounded-lg bg-canvas px-3 py-2 text-xs text-muted">{url}</code>
       <Button variant="secondary" onClick={() => { void navigator.clipboard?.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 1500); }}>
-        {copied ? <><Check className="size-4" /> คัดลอกแล้ว</> : <><Copy className="size-4" /> {label}</>}
+        {copied ? <><Check className="size-4" /> {t('คัดลอกแล้ว')}</> : <><Copy className="size-4" /> {t(label)}</>}
       </Button>
     </div>
   );
@@ -41,6 +43,7 @@ function CopyLink({ url, label = 'คัดลอกลิงก์' }: { url: s
 
 /** ลิงก์ OBS ของวิดเจ็ตนี้ (จากชุดลิงก์แรก) + ปุ่มคัดลอก · แบบสะสมของขวัญ = แสดงลิงก์เดียว (collect) เป็นหลัก */
 function WidgetLinkBox({ type }: { type: string }) {
+  const t = useT();
   const isCollect = COLLECT_TYPES.includes(type);
   const [url, setUrl] = useState<string | null | undefined>(undefined);
   const [collectUrl, setCollectUrl] = useState<string | null>(null);
@@ -64,26 +67,26 @@ function WidgetLinkBox({ type }: { type: string }) {
       {isCollect && collectUrl ? (
         <>
           <div className="mb-2 flex flex-wrap items-center gap-2 text-sm font-semibold text-violet">
-            🔗 ลิงก์เดียว (สะสมของขวัญทุกแบบ)
-            {active === type ? <span className="rounded-full bg-pink-soft px-2 py-0.5 text-xs text-pink">✓ ลิงก์เดียวกำลังใช้แบบนี้</span>
-              : <Button variant="secondary" className="px-3 py-1 text-xs" onClick={useThis}>ใช้แบบนี้กับลิงก์เดียว</Button>}
+            {t('🔗 ลิงก์เดียว (สะสมของขวัญทุกแบบ)')}
+            {active === type ? <span className="rounded-full bg-pink-soft px-2 py-0.5 text-xs text-pink">{t('✓ ลิงก์เดียวกำลังใช้แบบนี้')}</span>
+              : <Button variant="secondary" className="px-3 py-1 text-xs" onClick={useThis}>{t('ใช้แบบนี้กับลิงก์เดียว')}</Button>}
           </div>
           <CopyLink url={collectUrl} />
-          <p className="mt-2 text-xs text-muted">ลิงก์นี้ลิงก์เดียวกับในหน้าวิดเจ็ต — ใส่ OBS ครั้งเดียว เปลี่ยนแบบได้ตลอดโดยไม่ต้องเปลี่ยนลิงก์ · ตั้งค่าด้านล่างมีผลกับแบบนี้</p>
+          <p className="mt-2 text-xs text-muted">{t('ลิงก์นี้ลิงก์เดียวกับในหน้าวิดเจ็ต — ใส่ OBS ครั้งเดียว เปลี่ยนแบบได้ตลอดโดยไม่ต้องเปลี่ยนลิงก์ · ตั้งค่าด้านล่างมีผลกับแบบนี้')}</p>
           {url && (
             <details className="mt-3 text-xs text-muted">
-              <summary className="cursor-pointer">ลิงก์เฉพาะแบบนี้ (ใช้แยกได้ ถ้าอยากโชว์หลายแบบพร้อมกัน)</summary>
+              <summary className="cursor-pointer">{t('ลิงก์เฉพาะแบบนี้ (ใช้แยกได้ ถ้าอยากโชว์หลายแบบพร้อมกัน)')}</summary>
               <div className="mt-2"><CopyLink url={url} /></div>
             </details>
           )}
         </>
       ) : (
         <>
-          <div className="mb-2 text-sm font-semibold text-violet">ลิงก์สำหรับ OBS / TikTok Live Studio</div>
+          <div className="mb-2 text-sm font-semibold text-violet">{t('ลิงก์สำหรับ OBS / TikTok Live Studio')}</div>
           {url ? <CopyLink url={url} /> : (
-            <p className="text-sm text-muted">ยังไม่มีลิงก์ — <Link href="/dashboard/" className="text-pink underline">ตั้งชื่อ TikTok ที่หน้าภาพรวมก่อน แล้วลิงก์จะสร้างให้อัตโนมัติ</Link></p>
+            <p className="text-sm text-muted">{t('ยังไม่มีลิงก์ —')} <Link href="/dashboard/" className="text-pink underline">{t('ตั้งชื่อ TikTok ที่หน้าภาพรวมก่อน แล้วลิงก์จะสร้างให้อัตโนมัติ')}</Link></p>
           )}
-          <p className="mt-2 text-xs text-muted">ลิงก์เดิมใช้ได้ตลอด — แก้แบบแล้วกดบันทึก จอใน OBS เปลี่ยนเองภายในไม่กี่วินาที ไม่ต้องรีเฟรช</p>
+          <p className="mt-2 text-xs text-muted">{t('ลิงก์เดิมใช้ได้ตลอด — แก้แบบแล้วกดบันทึก จอใน OBS เปลี่ยนเองภายในไม่กี่วินาที ไม่ต้องรีเฟรช')}</p>
         </>
       )}
     </Card>
@@ -96,6 +99,8 @@ interface MenuSel { hide?: string[]; icons?: Record<string, string> }
 /** เลือกว่าจะโชว์กฎไหนในเมนูของขวัญ + เปลี่ยนรูปของขวัญที่แสดง (เช่น กฎ "ทุกกิฟต์ 99💎" ให้โชว์รูป Galaxy) */
 function MenuItemsEditor({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [rows, setRows] = useState<MenuRow[] | null>(null);
+  const t = useT();
+  const [lang] = useLang();
   const [picking, setPicking] = useState<string | null>(null);
   const gifts = useGifts();
   useEffect(() => { api<{ items: MenuRow[] }>('/api/actions/menu').then((r) => setRows(r.items)).catch(() => setRows([])); }, []);
@@ -103,24 +108,24 @@ function MenuItemsEditor({ value, onChange }: { value: string; onChange: (v: str
   const hide = new Set(sel.hide ?? []), icons = sel.icons ?? {};
   const put = (next: MenuSel) => onChange(JSON.stringify(next));
   if (!rows) return <Spinner />;
-  if (!rows.length) return <p className="text-sm text-muted">ยังไม่มีกฎ — <Link href="/dashboard/actions/" className="text-pink underline">ตั้งกฎที่ Actions &amp; Events</Link></p>;
+  if (!rows.length) return <p className="text-sm text-muted">{t('ยังไม่มีกฎ —')} <Link href="/dashboard/actions/" className="text-pink underline">{t('ตั้งกฎที่ Actions & Events')}</Link></p>;
   return (
     <div className="space-y-2">
       {rows.map((r) => {
         const img = icons[r.id] || r.image;
-        const how = r.event === 'gift' ? (r.gift ? `ส่ง ${r.th || r.gift}` : r.minDiamonds ? `กิฟต์ 💎${r.minDiamonds}+` : 'ทุกกิฟต์') : r.event === 'chat' ? `พิมพ์ “${r.keyword ?? ''}”` : r.event;
+        const how = r.event === 'gift' ? (r.gift ? t('ส่ง {gift}', { gift: (lang === 'en' ? r.gift : r.th) || r.gift }) : r.minDiamonds ? t('กิฟต์ 💎{n}+', { n: r.minDiamonds }) : t('ทุกกิฟต์')) : r.event === 'chat' ? t('พิมพ์ “{keyword}”', { keyword: r.keyword ?? '' }) : r.event;
         return (
           <div key={r.id} className={`rounded-xl border border-line p-2 ${hide.has(r.id) ? 'opacity-50' : ''}`}>
             <div className="flex items-center gap-2">
-              <input type="checkbox" className="size-4 accent-pink" checked={!hide.has(r.id)} aria-label="แสดงในเมนู"
+              <input type="checkbox" className="size-4 accent-pink" checked={!hide.has(r.id)} aria-label={t('แสดงในเมนู')}
                 onChange={(e) => { const h = new Set(hide); if (e.target.checked) h.delete(r.id); else h.add(r.id); put({ ...sel, hide: [...h] }); }} />
-              <button type="button" title="เลือกรูปของขวัญที่จะแสดง" onClick={() => setPicking(picking === r.id ? null : r.id)}
+              <button type="button" title={t('เลือกรูปของขวัญที่จะแสดง')} onClick={() => setPicking(picking === r.id ? null : r.id)}
                 className="grid size-10 shrink-0 place-items-center rounded-lg bg-pink-soft/60 ring-pink hover:ring-2">
                 {img ? <img src={img} alt="" className="size-8 object-contain" /> : <span className="text-xl">🎁</span>}
               </button>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-medium">{r.label}</div>
-                <div className="truncate text-xs text-muted">{how}{icons[r.id] ? ' · รูปที่เลือกเอง' : ''}</div>
+                <div className="truncate text-xs text-muted">{how}{icons[r.id] ? ' · ' + t('รูปที่เลือกเอง') : ''}</div>
               </div>
             </div>
             {picking === r.id && (
@@ -130,7 +135,7 @@ function MenuItemsEditor({ value, onChange }: { value: string; onChange: (v: str
                   if (g?.image) next[r.id] = g.image; else delete next[r.id];
                   put({ ...sel, icons: next }); setPicking(null);
                 }} /></div>
-                {icons[r.id] && <Button type="button" variant="ghost" className="px-2 text-xs" onClick={() => { const next = { ...icons }; delete next[r.id]; put({ ...sel, icons: next }); setPicking(null); }}>ใช้รูปเดิม</Button>}
+                {icons[r.id] && <Button type="button" variant="ghost" className="px-2 text-xs" onClick={() => { const next = { ...icons }; delete next[r.id]; put({ ...sel, icons: next }); setPicking(null); }}>{t('ใช้รูปเดิม')}</Button>}
               </div>
             )}
           </div>
@@ -141,6 +146,7 @@ function MenuItemsEditor({ value, onChange }: { value: string; onChange: (v: str
 }
 
 function FieldInput({ f, value, onChange }: { f: FieldDef; value: Values[string]; onChange: (v: Values[string]) => void }) {
+  const t = useT();
   switch (f.type) {
     case 'menuItems':
       return <MenuItemsEditor value={String(value ?? '')} onChange={onChange} />;
@@ -164,7 +170,7 @@ function FieldInput({ f, value, onChange }: { f: FieldDef; value: Values[string]
           {f.options.map(([v, color, name]) => {
             const on = Number(value) === v;
             return (
-              <button key={v} type="button" title={name} aria-label={name} aria-pressed={on} onClick={() => onChange(v)}
+              <button key={v} type="button" title={t(name)} aria-label={t(name)} aria-pressed={on} onClick={() => onChange(v)}
                 className={`size-9 rounded-full border-2 shadow-sm transition ${on ? 'scale-110 border-ink ring-2 ring-pink/40' : 'border-white hover:scale-105'}`}
                 style={{ background: color }} />
             );
@@ -179,19 +185,19 @@ function FieldInput({ f, value, onChange }: { f: FieldDef; value: Values[string]
         <div className="space-y-3">
           {groupOptions(f.options).map(([g, opts]) => (
             <div key={g || '-'}>
-              {g && <div className="mb-1.5 text-xs font-semibold text-violet">{g}</div>}
+              {g && <div className="mb-1.5 text-xs font-semibold text-violet">{t(g)}</div>}
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                 {opts.map(([v, l, , thumb]) => {
                   const on = String(value) === v;
                   return (
-                    <button key={v} type="button" onClick={() => onChange(v)} aria-pressed={on} title={l}
+                    <button key={v} type="button" onClick={() => onChange(v)} aria-pressed={on} title={t(l)}
                       className={`flex flex-col items-center gap-1 rounded-xl border-2 p-1.5 text-center transition ${on ? 'border-pink bg-pink-soft' : 'border-line bg-white hover:border-pink/40'}`}>
                       <span className="grid aspect-square w-full place-items-center overflow-hidden rounded-lg bg-canvas">
                         {thumb
                           ? <img src={thumb.startsWith('/') ? `${API_BASE}${thumb}` : `${API_BASE}/overlay/themes/thumbs/${thumb}.webp`} alt="" loading="lazy" className="max-h-full max-w-full object-contain p-1" />
                           : <span className="text-2xl">✏️</span>}
                       </span>
-                      <span className={`line-clamp-2 text-[11px] leading-tight ${on ? 'font-medium text-pink' : 'text-muted'}`}>{l}</span>
+                      <span className={`line-clamp-2 text-[11px] leading-tight ${on ? 'font-medium text-pink' : 'text-muted'}`}>{t(l)}</span>
                     </button>
                   );
                 })}
@@ -203,20 +209,21 @@ function FieldInput({ f, value, onChange }: { f: FieldDef; value: Values[string]
       return (
         <Select value={String(value)} onChange={(e) => onChange(e.target.value)}>
           {groupOptions(f.options).map(([g, opts]) => g
-            ? <optgroup key={g} label={g}>{opts.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</optgroup>
-            : opts.map(([v, l]) => <option key={v} value={v}>{l}</option>))}
+            ? <optgroup key={g} label={t(g)}>{opts.map(([v, l]) => <option key={v} value={v}>{t(l)}</option>)}</optgroup>
+            : opts.map(([v, l]) => <option key={v} value={v}>{t(l)}</option>))}
         </Select>
       );
     case 'color':
       return <input type="color" value={String(value)} onChange={(e) => onChange(e.target.value)} className="h-9 w-16 cursor-pointer rounded-lg border border-line bg-white" />;
     case 'text':
-      return <Input value={String(value)} placeholder={f.placeholder} onChange={(e) => onChange(e.target.value)} />;
+      return <Input value={String(value)} placeholder={f.placeholder ? t(f.placeholder) : f.placeholder} onChange={(e) => onChange(e.target.value)} />;
   }
 }
 
 function WidgetSettings() {
   const type = useSearchParams().get('type') ?? '';
   const def = WIDGET_SETTINGS[type];
+  const t = useT();
   const [values, setValues] = useState<Values | null>(null);
   const [saved, setSaved] = useState<string>('');
   const [busy, setBusy] = useState(false);
@@ -243,11 +250,11 @@ function WidgetSettings() {
   // พรีวิวสด (โหมดเดโม) — หน่วงเล็กน้อยกันโหลดถี่ตอนลากสไลเดอร์
   useEffect(() => {
     if (!values) return;
-    const t = setTimeout(() => {
+    const tm = setTimeout(() => {
       const q = new URLSearchParams({ demo: '1', reset: '1', ...toOverlayParams(values) });
       setPreviewSrc(`${API_BASE}/overlay/${type}.html?${q.toString()}`);
     }, 400);
-    return () => clearTimeout(t);
+    return () => clearTimeout(tm);
   }, [values, type]);
 
   const dirty = useMemo(() => values !== null && JSON.stringify(values) !== saved, [values, saved]);
@@ -258,27 +265,27 @@ function WidgetSettings() {
     try {
       await api(`/api/widgets/${type}/config`, { method: 'PUT', body: { ...toOverlayParams(values), ...extra } });
       setSaved(JSON.stringify(values));
-      setMsg({ tone: 'success', text: extra.resetAt ? 'ล้างข้อมูลแล้ว — วิดเจ็ตบนจอเริ่มใหม่' : 'บันทึกแล้ว — วิดเจ็ตบนจอเปลี่ยนตามทันที (ไม่ต้องเปลี่ยนลิงก์)' });
+      setMsg({ tone: 'success', text: extra.resetAt ? t('ล้างข้อมูลแล้ว — วิดเจ็ตบนจอเริ่มใหม่') : t('บันทึกแล้ว — วิดเจ็ตบนจอเปลี่ยนตามทันที (ไม่ต้องเปลี่ยนลิงก์)') });
     } catch (err) {
-      setMsg({ tone: 'error', text: err instanceof ApiError ? err.message : 'บันทึกไม่สำเร็จ' });
+      setMsg({ tone: 'error', text: err instanceof ApiError ? err.message : t('บันทึกไม่สำเร็จ') });
     } finally { setBusy(false); }
   }
 
   if (!def) {
     return (
       <div>
-        <PageHeader title="ตั้งค่าวิดเจ็ต" />
-        <Alert tone="info">วิดเจ็ตนี้ไม่มีตั้งค่าเพิ่มเติม{type === 'fx' ? ' — ตั้งกฎได้ที่หน้า Actions & Events' : ''}</Alert>
-        <Link href="/dashboard/widgets/" className="mt-4 inline-flex items-center gap-1 text-sm text-pink hover:underline"><ArrowLeft className="size-4" /> กลับหน้าวิดเจ็ต</Link>
+        <PageHeader title={t('ตั้งค่าวิดเจ็ต')} />
+        <Alert tone="info">{t('วิดเจ็ตนี้ไม่มีตั้งค่าเพิ่มเติม')}{type === 'fx' ? t(' — ตั้งกฎได้ที่หน้า Actions & Events') : ''}</Alert>
+        <Link href="/dashboard/widgets/" className="mt-4 inline-flex items-center gap-1 text-sm text-pink hover:underline"><ArrowLeft className="size-4" /> {t('กลับหน้าวิดเจ็ต')}</Link>
       </div>
     );
   }
 
   return (
     <div>
-      <PageHeader title={`ตั้งค่า: ${WIDGET_LABELS[type] ?? type}`}
-        description="ตั้งค่าแล้วกดบันทึก — วิดเจ็ตที่เปิดอยู่ใน OBS / TikTok Live Studio จะเปลี่ยนตามทันที"
-        actions={<Link href="/dashboard/widgets/"><Button variant="secondary"><ArrowLeft className="size-4" /> กลับ</Button></Link>} />
+      <PageHeader title={t('ตั้งค่า: {name}', { name: t(WIDGET_LABELS[type] ?? type) })}
+        description={t('ตั้งค่าแล้วกดบันทึก — วิดเจ็ตที่เปิดอยู่ใน OBS / TikTok Live Studio จะเปลี่ยนตามทันที')}
+        actions={<Link href="/dashboard/widgets/"><Button variant="secondary"><ArrowLeft className="size-4" /> {t('กลับ')}</Button></Link>} />
 
       <WidgetLinkBox type={type} />
 
@@ -290,15 +297,15 @@ function WidgetSettings() {
               if (!fields.length) return null;
               return (
                 <Card key={s.title}>
-                  <h2 className="mb-3 text-sm font-semibold text-violet">{s.title}</h2>
+                  <h2 className="mb-3 text-sm font-semibold text-violet">{t(s.title)}</h2>
                   <div className="space-y-4">
                     {fields.map((f) => f.type === 'toggle' ? (
                       <div key={f.key} className="flex items-center justify-between gap-3">
-                        <span className="text-sm font-medium text-ink">{f.label}</span>
+                        <span className="text-sm font-medium text-ink">{t(f.label)}</span>
                         <FieldInput f={f} value={values[f.key]} onChange={(v) => setValues({ ...values, [f.key]: v })} />
                       </div>
                     ) : (
-                      <Field key={f.key} label={f.label} hint={f.hint}>
+                      <Field key={f.key} label={t(f.label)} hint={f.hint ? t(f.hint) : f.hint}>
                         <FieldInput f={f} value={values[f.key]} onChange={(v) => setValues({ ...values, [f.key]: v })} />
                       </Field>
                     ))}
@@ -311,12 +318,12 @@ function WidgetSettings() {
           <div className="space-y-4 lg:sticky lg:top-4 lg:self-start">
             <Card className="p-3">
               <div className="mb-2 flex items-center justify-between text-xs text-muted">
-                <span>พรีวิว (ข้อมูลจำลอง)</span><span>16:9</span>
+                <span>{t('พรีวิว (ข้อมูลจำลอง)')}</span><span>16:9</span>
               </div>
               <div className="relative aspect-video overflow-hidden rounded-xl"
                 style={{ background: 'repeating-conic-gradient(#ece6f5 0% 25%, #f8f5fc 0% 50%) 50% / 24px 24px' }}>
                 {previewSrc && (
-                  <iframe key={previewSrc} src={previewSrc} title="พรีวิววิดเจ็ต"
+                  <iframe key={previewSrc} src={previewSrc} title={t('พรีวิววิดเจ็ต')}
                     className="absolute left-0 top-0 h-[1080px] w-[1920px] origin-top-left border-0"
                     style={{ transform: 'scale(var(--s))' }}
                     ref={(el) => { if (el?.parentElement) el.style.setProperty('--s', String(el.parentElement.clientWidth / 1920)); }} />
@@ -325,11 +332,11 @@ function WidgetSettings() {
             </Card>
             {msg && <Alert tone={msg.tone}>{msg.text}</Alert>}
             <div className="flex flex-wrap gap-2">
-              <Button onClick={() => save()} loading={busy} disabled={!dirty}><Save className="size-4" /> บันทึก</Button>
-              <Button variant="secondary" onClick={() => setValues(defaultsOf(def))}><RotateCcw className="size-4" /> คืนค่าเริ่มต้น</Button>
+              <Button onClick={() => save()} loading={busy} disabled={!dirty}><Save className="size-4" /> {t('บันทึก')}</Button>
+              <Button variant="secondary" onClick={() => setValues(defaultsOf(def))}><RotateCcw className="size-4" /> {t('คืนค่าเริ่มต้น')}</Button>
               {def.resettable && (
-                <Button variant="danger" onClick={() => { if (confirm(`${def.resettable}? (ทำย้อนกลับไม่ได้)`)) void save({ resetAt: Date.now() }); }} loading={busy}>
-                  {def.resettable}
+                <Button variant="danger" onClick={() => { if (confirm(t('{action}? (ทำย้อนกลับไม่ได้)', { action: t(def.resettable!) }))) void save({ resetAt: Date.now() }); }} loading={busy}>
+                  {t(def.resettable)}
                 </Button>
               )}
             </div>

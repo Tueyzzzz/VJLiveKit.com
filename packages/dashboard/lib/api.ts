@@ -1,5 +1,7 @@
 /** ตัวช่วยเรียก API ของ @vjlivekit/server (same-origin ใน production) */
 
+import { translate } from './i18n';
+
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
 const TOKEN_KEY = 'vjl_token';
 
@@ -11,6 +13,22 @@ export function setToken(token: string | null, remember = true): void {
     localStorage.removeItem(TOKEN_KEY); sessionStorage.removeItem(TOKEN_KEY);
     if (token) (remember ? localStorage : sessionStorage).setItem(TOKEN_KEY, token);
   } catch { /* storage ถูกบล็อก */ }
+}
+
+/** ข้อความ error จากเซิร์ฟเวอร์ที่มีตัวเลข/ชื่อแพลนอยู่ข้างใน → แปลงเป็นคีย์คงที่ก่อนแปล */
+const ERR_PATTERNS: [RegExp, string, string[]][] = [
+  [/^แพลน (\S+) สร้างกฎได้สูงสุด (\d+) ข้อ — อัปเกรดเป็น Pro เพื่อเพิ่ม$/, 'แพลน {plan} สร้างกฎได้สูงสุด {n} ข้อ — อัปเกรดเป็น Pro เพื่อเพิ่ม', ['plan', 'n']],
+  [/^แพลน (\S+) สร้างลิงก์ได้สูงสุด (\d+) ชุด — ลบอันเก่าหรืออัปเกรด$/, 'แพลน {plan} สร้างลิงก์ได้สูงสุด {n} ชุด — ลบอันเก่าหรืออัปเกรด', ['plan', 'n']],
+  [/^ไฟล์ใหญ่เกิน ([\d.]+)MB — ตัดให้สั้นลง หรือแปลงเป็น mp3$/, 'ไฟล์ใหญ่เกิน {n}MB — ตัดให้สั้นลง หรือแปลงเป็น mp3', ['n']],
+  [/^อัปโหลดได้สูงสุด (\d+) ไฟล์ — ลบไฟล์เก่าก่อน$/, 'อัปโหลดได้สูงสุด {n} ไฟล์ — ลบไฟล์เก่าก่อน', ['n']],
+  [/^โดเนทขั้นต่ำ ([\d.,]+) บาท$/, 'โดเนทขั้นต่ำ {n} บาท', ['n']],
+];
+function translateError(msg: string): string {
+  for (const [re, key, names] of ERR_PATTERNS) {
+    const m = msg.match(re);
+    if (m) return translate(key, Object.fromEntries(names.map((n, i) => [n, m[i + 1]])));
+  }
+  return translate(msg);
 }
 
 export class ApiError extends Error {
@@ -31,12 +49,12 @@ export async function api<T>(path: string, init: { method?: string; body?: unkno
       body: init.body !== undefined ? JSON.stringify(init.body) : undefined,
     });
   } catch {
-    throw new ApiError('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้', 0);
+    throw new ApiError(translate('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้'), 0);
   }
   const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
   if (!res.ok) {
     if (res.status === 401 && token) setToken(null);
-    throw new ApiError(typeof data.error === 'string' ? data.error : `เกิดข้อผิดพลาด (${res.status})`, res.status, data);
+    throw new ApiError(typeof data.error === 'string' ? translateError(data.error) : translate('เกิดข้อผิดพลาด ({status})', { status: res.status }), res.status, data);
   }
   return data as T;
 }
@@ -61,7 +79,7 @@ export function trialDaysLeft(e: Entitlements | null | undefined): number | null
 export function planLabel(e: Entitlements | null | undefined): string {
   if (e?.plan === 'pro') return 'Pro';
   const d = trialDaysLeft(e);
-  return d !== null ? `ทดลองฟรี · เหลือ ${d} วัน` : 'Free';
+  return d !== null ? translate('ทดลองฟรี · เหลือ {n} วัน', { n: d }) : 'Free';
 }
 export interface Me {
   id: string;

@@ -132,7 +132,7 @@ export default function Home() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSONLD) }} />
 
       <footer className="border-t border-line py-8 text-center text-xs text-muted">
-        <a href="https://www.instagram.com/vjlivekit/" target="_blank" rel="noopener" className="mr-2 underline">Instagram</a> · <a href="https://www.facebook.com/profile.php?id=61595273575386" target="_blank" rel="noopener" className="mr-2 underline">Facebook</a> · <a href="/guides/" className="mr-2 underline">{t('คู่มือ')}</a> · <a href="/tikfinity-alternative/" className="mr-2 underline">{t('ทางเลือก TikFinity ภาษาไทย')}</a> · <a href="/vj-studio-alternative/" className="mr-2 underline">{t('ทางเลือก วีเจ.com')}</a> · © {new Date().getFullYear()} VJLiveKit · {t('งานพัฒนาอิสระ ไม่เกี่ยวข้องกับ TikTok อย่างเป็นทางการ')}
+        <a href="https://www.instagram.com/vjlivekit/" target="_blank" rel="noopener" className="mr-2 underline">Instagram</a> · <a href="https://www.facebook.com/profile.php?id=61595273575386" target="_blank" rel="noopener" className="mr-2 underline">Facebook</a> · <a href="/guides/" className="mr-2 underline">{t('คู่มือ')}</a> · <a href="/tikfinity-alternative/" className="mr-2 underline">{t('ทางเลือก TikFinity ภาษาไทย')}</a> · <a href="/vj-studio-alternative/" className="mr-2 underline">{t('ทางเลือก วีเจ.com')}</a> · © {new Date().getFullYear()} VJLiveKit · {t('งานพัฒนาอิสระ ไม่เกี่ยวข้องกับ TikTok อย่างเป็นทางการ')} · v{process.env.NEXT_PUBLIC_VERSION}
       </footer>
     </div>
   );

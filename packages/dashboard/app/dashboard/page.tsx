@@ -6,6 +6,7 @@ import { ArrowRight, CheckCircle2, Circle } from 'lucide-react';
 import { Alert, Badge, Button, Card, Field, Input, PageHeader } from '@/components/ui';
 import { ChangePassword } from '@/components/ChangePassword';
 import { ActiveRules } from '@/components/ActiveRules';
+import { TikTokAvatar } from '@/components/TikTokAvatar';
 import { api, planLabel, type Me } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useLang, useT } from '@/lib/i18n';
@@ -14,6 +15,7 @@ export default function OverviewPage() {
   const { user, entitlements, refresh } = useAuth();
   const t = useT();
   const [lang] = useLang();
+  const [tk, setTk] = useState<string | null>(null); // ชื่อที่กำลังพิมพ์ → ดูรูปโปรไฟล์ก่อนบันทึก
   const [msg, setMsg] = useState<{ tone: 'error' | 'success'; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
   if (!user) return null;
@@ -54,9 +56,13 @@ export default function OverviewPage() {
           <h2 className="mb-4 font-medium">{t('โปรไฟล์')}</h2>
           <form onSubmit={onSave} className="space-y-4">
             <Field label={t('ชื่อ TikTok (username)')} hint={t('ชื่อหลัง @ ในลิงก์โปรไฟล์ เช่น tiktok.com/@mimi_live → mimi_live')}>
-              <div className="flex">
-                <span className="grid place-items-center rounded-l-xl border border-r-0 border-line bg-canvas px-3 text-sm text-muted">@</span>
-                <Input name="tiktokUsername" defaultValue={user.tiktokUsername ?? ''} placeholder="your_tiktok" className="rounded-l-none" pattern="@?[A-Za-z0-9._]{2,24}" />
+              <div className="flex items-center gap-3">
+                <TikTokAvatar username={tk ?? user.tiktokUsername} size={44} />
+                <div className="flex min-w-0 flex-1">
+                  <span className="grid place-items-center rounded-l-xl border border-r-0 border-line bg-canvas px-3 text-sm text-muted">@</span>
+                  <Input name="tiktokUsername" defaultValue={user.tiktokUsername ?? ''} placeholder="your_tiktok" className="min-w-0 rounded-l-none" pattern="@?[A-Za-z0-9._]{2,24}"
+                    onBlur={(e) => setTk(e.target.value)} />
+                </div>
               </div>
             </Field>
             <Field label={t('ชื่อที่แสดง')}>

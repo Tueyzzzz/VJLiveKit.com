@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { LayoutDashboard, LayoutTemplate, Zap, CreditCard, LogOut, Gift, Shield, BookOpen, Wallet, Menu, X, ScrollText, Lightbulb, Volume2 } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { Speaker } from '@/components/Speaker';
+import { TikTokAvatar } from '@/components/TikTokAvatar';
 import { Badge, Spinner, cx } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { api, planLabel } from '@/lib/api';
@@ -71,13 +72,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className={cx('px-3 pb-3 md:block md:pt-2', menu ? 'block' : 'hidden')}><Speaker /></div>
         <div className={cx('px-5 pb-3 md:hidden', menu ? 'block' : 'hidden')}><LangSwitch /></div>
         <div className="hidden px-5 py-6 md:absolute md:bottom-0 md:block md:w-64">
-          <div className="mb-3 truncate text-sm">{user.displayName ?? user.email}</div>
+          <div className="mb-3 flex items-center gap-2.5">
+            <TikTokAvatar username={user.tiktokUsername} size={36} />
+            <div className="min-w-0"><div className="truncate text-sm">{user.displayName ?? user.email}</div>{user.tiktokUsername && <div className="truncate text-xs text-muted">@{user.tiktokUsername}</div>}</div>
+          </div>
           <div className="mb-4"><Badge tone={entitlements?.plan === 'free' ? 'gray' : 'pink'}>{planLabel(entitlements)}</Badge></div>
           <div className="mb-4"><LangSwitch /></div>
           <button onClick={() => { logout(); router.replace('/'); }} className="flex items-center gap-2 text-sm text-muted hover:text-ink">
             <LogOut className="size-4" /> {t('ออกจากระบบ')}
           </button>
+          <div className="mt-3 text-[10px] text-muted/70" title={process.env.NEXT_PUBLIC_BUILD_ID}>v{process.env.NEXT_PUBLIC_VERSION}</div>
         </div>
+        <div className={cx('px-5 pb-3 text-[10px] text-muted/70 md:hidden', menu ? 'block' : 'hidden')}>v{process.env.NEXT_PUBLIC_VERSION}</div>
       </aside>
       <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-8 sm:py-8">
         {notice && <div className="mb-6 rounded-2xl bg-pink-soft px-4 py-3 text-sm text-ink">📢 {notice}</div>}

@@ -7,7 +7,8 @@ const BUILD_ID = (process.env.VJL_BUILD_ID ||= Date.now().toString(36));
 const nextConfig = {
   output: 'export',
   generateBuildId: async () => BUILD_ID,
-  env: { NEXT_PUBLIC_BUILD_ID: BUILD_ID },
+  // เวลา build (เวลาไทย) — แสดงเป็นเลขเวอร์ชันที่มุมเมนู เช่น 2026.10.07-1606
+  env: { NEXT_PUBLIC_BUILD_ID: BUILD_ID, NEXT_PUBLIC_VERSION: (process.env.VJL_VERSION ||= new Date(Date.now() + 7 * 3600_000).toISOString().replace(/^(\d{4})-(\d\d)-(\d\d)T(\d\d):(\d\d).*/, '$1.$2.$3-$4$5')) },
   trailingSlash: true,
   images: { unoptimized: true },
   poweredByHeader: false,

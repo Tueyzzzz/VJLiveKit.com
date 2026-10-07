@@ -13,6 +13,7 @@ import { referralRoutes } from './referrals/routes.js';
 import { adminRoutes } from './admin/routes.js';
 import { donateRoutes } from './donate/routes.js';
 import { mediaRoutes } from './media/routes.js';
+import { avatarRoutes } from './tiktok/avatar.js';
 import { settings } from './settings/index.js';
 import { config } from './config/index.js';
 import { OVERLAY_DIR, OVERLAY_VERSION } from './overlay-version.js';
@@ -98,6 +99,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(adminRoutes);
   await app.register(donateRoutes);
   await app.register(mediaRoutes);
+  await app.register(avatarRoutes);
 
   // 404: API ตอบ JSON, หน้าเว็บตอบหน้า 404 ของ Dashboard
   const notFoundPage = path.join(DASHBOARD_DIR, '404.html');

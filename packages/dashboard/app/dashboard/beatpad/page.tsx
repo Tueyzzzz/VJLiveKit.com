@@ -7,7 +7,7 @@ import { Alert, Button, Input, PageHeader, Select, Spinner } from '@/components/
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useT } from '@/lib/i18n';
-import { SFX, playSound, readAsDataUrl, type Upload } from '@/lib/sounds';
+import { SFX, playSound, readAsDataUrl, toAudioDataUrl, type Upload } from '@/lib/sounds';
 import { TAB_ID } from '@/components/Speaker';
 
 interface Pad { label: string; emoji?: string; color: string; sound?: string; url?: string; volume: number; key?: string; media?: string; mediaType?: 'image' | 'video' }
@@ -141,10 +141,19 @@ function PadEditor({ pad, uploads, onUploaded, onChange, onClose, onDelete }: {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const value = pad.sound || (pad.url ? 'url:' + pad.url : '');
+  // อัปโหลดสติกเกอร์ (gif/png/webp) หรือวิดีโอ (mp4/webm) ขึ้นจอ FX
+  async function uploadMedia(f: File) {
+    if (f.size > 20 * 1024 * 1024) { setErr(t('วิดีโอ/รูปใหญ่เกิน 20MB — ตัดให้สั้นลงก่อน')); return; }
+    setBusy(true); setErr(null);
+    try {
+      const r = await api<{ sound: { url: string; kind?: string } }>('/api/sounds', { method: 'POST', body: { name: f.name.replace(/\.[^.]+$/, '').slice(0, 60) || 'media', data: await readAsDataUrl(f) } });
+      onChange({ media: r.sound.url, mediaType: f.type.startsWith('video/') ? 'video' : 'image' });
+    } catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
+  }
   async function upload(f: File) {
     setBusy(true); setErr(null);
     try {
-      const r = await api<{ sound: Upload }>('/api/sounds', { method: 'POST', body: { name: f.name.replace(/\.[^.]+$/, '').slice(0, 60) || 'เสียง', data: await readAsDataUrl(f) } });
+      const r = await api<{ sound: Upload }>('/api/sounds', { method: 'POST', body: { name: f.name.replace(/\.[^.]+$/, '').slice(0, 60) || 'เสียง', data: await toAudioDataUrl(f) } });
       onUploaded(r.sound); onChange({ url: r.sound.url, sound: undefined, label: pad.label || r.sound.name.slice(0, 24) });
     } catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
   }
@@ -172,7 +181,7 @@ function PadEditor({ pad, uploads, onUploaded, onChange, onClose, onDelete }: {
               <Button variant="secondary" className="px-3" onClick={() => void playSound(pad)}>▶</Button>
               <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-line px-3 py-2 text-sm hover:bg-pink-soft">
                 {busy ? <Spinner /> : <UploadIcon className="size-4" />} {t('อัปโหลด')}
-                <input type="file" accept="audio/*" className="hidden" disabled={busy} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void upload(f); }} />
+                <input type="file" accept="audio/*,video/*" className="hidden" disabled={busy} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void upload(f); }} />
               </label>
             </div>
           </div>
@@ -192,6 +201,10 @@ function PadEditor({ pad, uploads, onUploaded, onChange, onClose, onDelete }: {
                 <option value="image">{t('🖼️ สติกเกอร์')}</option><option value="video">{t('🎬 วิดีโอ')}</option>
               </Select>
               <Input className="min-w-0 flex-1" value={pad.media ?? ''} onChange={(e) => onChange({ media: e.target.value.trim() || undefined })} placeholder="https://…gif / .png / .mp4" />
+              <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border border-line px-3 py-2 text-sm hover:bg-pink-soft">
+                {busy ? <Spinner /> : <UploadIcon className="size-4" />}
+                <input type="file" accept="video/*,image/gif,image/png,image/webp,image/jpeg" className="hidden" disabled={busy} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void uploadMedia(f); }} />
+              </label>
             </div>
             <p className="mt-1 text-xs text-muted">{t('ขึ้นบนจอ FX ในโปรแกรมไลฟ์ 4 วินาที พร้อมเสียง')}</p>
           </div>

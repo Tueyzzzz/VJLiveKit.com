@@ -10,6 +10,30 @@ export const SFX: [string, string][] = [['chime', '🔔 กริ๊ง'], ['coi
 const SFX_MS: Record<string, number> = { chime: 900, coin: 500, levelup: 600, fanfare: 1800, magic: 1000, pop: 200, whoosh: 650, drum: 800, boing: 500, heart: 1000, applause: 1700, punch: 1000, boom: 1700, airhorn: 1300, sadtrombone: 2400, crickets: 2600, scratch: 500, bonk: 300, correct: 700, wrong: 600, drumroll: 2200, suspense: 2200, tada: 1200, pew: 300, kaching: 800, slideup: 700, slidedown: 900, alarm: 1300 };
 
 export interface Upload { id: string; name: string; size: number; url: string }
+/**
+ * ไฟล์ → data URL สำหรับอัปโหลดเป็น "เสียง"
+ * วิดีโอ (mp4/mov/webm) → ดึงเสียงออกมาแปลงเป็นไฟล์เสียง (WAV โมโน 22kHz) ในเครื่องเลย ไม่ต้องใช้โปรแกรมอื่น
+ * maxSec = ตัดเหลือไม่เกินกี่วินาที (กันไฟล์ใหญ่)
+ */
+export async function toAudioDataUrl(f: File, maxSec = 60): Promise<string> {
+  if (!f.type.startsWith('video/')) return readAsDataUrl(f);
+  const AC = (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext);
+  const ac = new AC();
+  let buf: AudioBuffer;
+  try { buf = await ac.decodeAudioData(await f.arrayBuffer()); } catch { throw new Error('ดึงเสียงจากวิดีโอนี้ไม่ได้ — ลองไฟล์ mp4 ทั่วไป'); } finally { void ac.close(); }
+  const rate = 22050, len = Math.min(buf.duration, maxSec), n = Math.floor(len * rate);
+  const off = new OfflineAudioContext(1, n, rate);
+  const src = off.createBufferSource(); src.buffer = buf; src.connect(off.destination); src.start();
+  const out = (await off.startRendering()).getChannelData(0);
+  // เขียน WAV 16-bit
+  const wav = new DataView(new ArrayBuffer(44 + n * 2));
+  const w = (o: number, s: string) => { for (let i = 0; i < s.length; i++) wav.setUint8(o + i, s.charCodeAt(i)); };
+  w(0, 'RIFF'); wav.setUint32(4, 36 + n * 2, true); w(8, 'WAVE'); w(12, 'fmt '); wav.setUint32(16, 16, true); wav.setUint16(20, 1, true); wav.setUint16(22, 1, true);
+  wav.setUint32(24, rate, true); wav.setUint32(28, rate * 2, true); wav.setUint16(32, 2, true); wav.setUint16(34, 16, true); w(36, 'data'); wav.setUint32(40, n * 2, true);
+  for (let i = 0; i < n; i++) wav.setInt16(44 + i * 2, Math.max(-1, Math.min(1, out[i]!)) * 0x7fff, true);
+  return readAsDataUrl(new File([wav.buffer], f.name.replace(/\.[^.]+$/, '') + '.wav', { type: 'audio/wav' }));
+}
+
 export const readAsDataUrl = (f: File) => new Promise<string>((ok, bad) => { const r = new FileReader(); r.onload = () => ok(String(r.result)); r.onerror = () => bad(new Error(translate('อ่านไฟล์ไม่ได้'))); r.readAsDataURL(f); });
 
 let sfxLoad: Promise<void> | null = null;

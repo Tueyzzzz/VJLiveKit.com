@@ -388,4 +388,5 @@ export const EN_CORE: Record<string, string> = {
   "🖼️ สติกเกอร์": "🖼️ Sticker",
   "🎬 วิดีโอ": "🎬 Video",
   "ขึ้นบนจอ FX ในโปรแกรมไลฟ์ 4 วินาที พร้อมเสียง": "Shows on the FX screen for 4 seconds with the sound",
+  "วิดีโอ/รูปใหญ่เกิน 20MB — ตัดให้สั้นลงก่อน": "Video/image is over 20MB — trim it first",
 };

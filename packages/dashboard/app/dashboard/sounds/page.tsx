@@ -7,7 +7,7 @@ import { Alert, Button, Card, Input, PageHeader, Select, Spinner } from '@/compo
 import { GiftCell, GiftPicker } from '@/components/GiftPicker';
 import { api, ApiError, type Rule, type TriggerEvent } from '@/lib/api';
 import { translate, useT } from '@/lib/i18n';
-import { SFX, enqueueSound, getSoundPrefs, playSound, readAsDataUrl, setSoundPrefs, type SoundPrefs, type Upload } from '@/lib/sounds';
+import { SFX, enqueueSound, getSoundPrefs, playSound, readAsDataUrl, toAudioDataUrl, setSoundPrefs, type SoundPrefs, type Upload } from '@/lib/sounds';
 
 const EVENTS: [TriggerEvent, string][] = [['gift', '🎁 ได้รับกิฟต์'], ['follow', '➕ มีคนติดตาม'], ['share', '🔁 มีคนแชร์'], ['like', '❤️ มีคนกดไลก์'], ['chat', '💬 แชทมีคำว่า']];
 const KEYS = ['', ...'1234567890QWERTYUIOPASDFGHJKLZXCVBNM'.split(''), 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10'];
@@ -158,7 +158,7 @@ function SoundLibrary({ uploads, maxBytes, onUploaded, onDeleted, onPick, onClos
     if (f.size > maxBytes) { setErr(t('ไฟล์ใหญ่เกิน {mb}MB — ตัดให้สั้นลง (เช่น mp3cut.net) หรือแปลงเป็น mp3', { mb: Math.round(maxBytes / 1048576) })); return; }
     setBusy(true); setErr(null);
     try {
-      const r = await api<{ sound: Upload }>('/api/sounds', { method: 'POST', body: { name: f.name.replace(/\.[^.]+$/, '').slice(0, 60) || 'เสียง', data: await readAsDataUrl(f) } });
+      const r = await api<{ sound: Upload }>('/api/sounds', { method: 'POST', body: { name: f.name.replace(/\.[^.]+$/, '').slice(0, 60) || 'เสียง', data: await toAudioDataUrl(f) } });
       onUploaded(r.sound);
     } catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
   }
@@ -178,7 +178,7 @@ function SoundLibrary({ uploads, maxBytes, onUploaded, onDeleted, onPick, onClos
           <div className="flex flex-wrap items-center gap-2 text-sm">
             <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-line px-3 py-2 hover:bg-pink-soft">
               {busy ? <Spinner /> : <UploadIcon className="size-4" />} {t('อัปโหลดเสียง')}
-              <input type="file" accept="audio/*" className="hidden" disabled={busy} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void upload(f); }} />
+              <input type="file" accept="audio/*,video/*" className="hidden" disabled={busy} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void upload(f); }} />
             </label>
             <span className="text-muted">{t('หรือเลือกจากคลังด้านล่าง · mp3 / wav / ogg / m4a ไม่เกิน {mb}MB', { mb: Math.round(maxBytes / 1048576) })}</span>
           </div>

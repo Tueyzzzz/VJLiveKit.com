@@ -271,4 +271,5 @@ export const EN_ACTIONS: Record<string, string> = {
   "💰 กริ๊งเงิน (Ka-ching)": "💰 Ka-ching",
   "📈 หวีดขึ้น (Slide whistle)": "📈 Slide whistle up",
   "📉 หวีดลง (ร่วง)": "📉 Slide whistle down",
+  "วิดีโอ/รูปใหญ่เกิน 20MB — ตัดให้สั้นลงก่อน": "Video/image is over 20MB — trim it first",
 };

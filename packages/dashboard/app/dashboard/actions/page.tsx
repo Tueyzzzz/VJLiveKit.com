@@ -6,6 +6,7 @@ import { Check, Copy, Pencil, Play, Plus, Sparkles, Trash2, Upload as UploadIcon
 import { Alert, Badge, Button, Card, Field, Input, PageHeader, Select, Spinner } from '@/components/ui';
 import { GiftCell, GiftPicker } from '@/components/GiftPicker';
 import { toDigits } from '@/components/NumberInput';
+import { toAudioDataUrl } from '@/lib/sounds';
 import { api, ApiError, type OverlayTokenRow, type ActionType, type Rule, type TarotDeck, type TarotTopic, type TriggerEvent } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { translate, useT } from '@/lib/i18n';
@@ -230,11 +231,20 @@ export default function ActionsPage() {
   const [uploading, setUploading] = useState(false);
   const [maxBytes, setMaxBytes] = useState(5 * 1024 * 1024);
   useEffect(() => { api<{ sounds: Upload[]; maxBytes: number }>('/api/sounds').then((r) => { setUploads(r.sounds); if (r.maxBytes) setMaxBytes(r.maxBytes); }).catch(() => {}); }, []);
+  // รูป/GIF/วิดีโอ สำหรับกฎ "แสดงรูป" / "เล่นวิดีโอ" (ไม่เกิน 20MB)
+  async function uploadVisual(f: File) {
+    if (f.size > 20 * 1024 * 1024) { setError({ text: t('วิดีโอ/รูปใหญ่เกิน 20MB — ตัดให้สั้นลงก่อน') }); return; }
+    setUploading(true); setError(null);
+    try {
+      const r = await api<{ sound: { url: string } }>('/api/sounds', { method: 'POST', body: { name: f.name.replace(/\.[^.]+$/, '').slice(0, 60) || 'media', data: await readAsDataUrl(f) } });
+      setDraft((d) => (d ? { ...d, url: r.sound.url } : d));
+    } catch (err) { setError({ text: (err as Error).message }); } finally { setUploading(false); }
+  }
   async function uploadSound(f: File) {
     if (f.size > maxBytes) { setError({ text: t('ไฟล์ใหญ่เกิน {mb}MB — ตัดให้สั้นลง หรือแปลงเป็น mp3', { mb: Math.round(maxBytes / 1048576) }) }); return; }
     setUploading(true); setError(null);
     try {
-      const data = await readAsDataUrl(f);
+      const data = await toAudioDataUrl(f);
       const r = await api<{ sound: Upload }>('/api/sounds', { method: 'POST', body: { name: f.name.replace(/\.[^.]+$/, '').slice(0, 60) || 'เสียง', data } });
       setUploads((u) => [r.sound, ...u]);
       setDraft((d) => (d ? { ...d, sound: '', url: r.sound.url } : d));
@@ -333,14 +343,23 @@ export default function ActionsPage() {
                     <Button type="button" variant="secondary" className="px-3" aria-label={t('ฟังเสียง')} onClick={() => { if (draft.sound) void playSfx(draft.sound); else if (draft.url) void new Audio(draft.url).play().catch(() => {}); }}><Play className="size-4" /></Button>
                     <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-line bg-white px-3 py-2 text-sm hover:bg-pink-soft">
                       {uploading ? <Spinner /> : <UploadIcon className="size-4" />} {t('อัปโหลด')}
-                      <input type="file" accept="audio/*" className="hidden" disabled={uploading} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void uploadSound(f); }} />
+                      <input type="file" accept="audio/*,video/*" className="hidden" disabled={uploading} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void uploadSound(f); }} />
                     </label>
                   </div>
                 </Field>
               )}
               {((draft.type === 'sound' && !draft.sound && !uploads.some((u) => u.url === draft.url)) || draft.type === 'image' || draft.type === 'video') && (
                 <Field label={t('ลิงก์ไฟล์')} hint={t('ลิงก์ตรงไปยังไฟล์ .mp3 / .png / .gif / .mp4 (https://)')}>
-                  <Input type="url" required value={draft.url} onChange={(e) => set('url', e.target.value)} placeholder="https://..." />
+                  <div className="flex gap-2">
+                    <Input type="url" required value={draft.url} onChange={(e) => set('url', e.target.value)} placeholder="https://..." className="min-w-0 flex-1" />
+                    {(draft.type === 'image' || draft.type === 'video') && (
+                      <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border border-line bg-white px-3 py-2 text-sm hover:bg-pink-soft">
+                        {uploading ? <Spinner /> : <UploadIcon className="size-4" />} {t('อัปโหลด')}
+                        <input type="file" accept={draft.type === 'video' ? 'video/*' : 'image/gif,image/png,image/webp,image/jpeg'} className="hidden" disabled={uploading}
+                          onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void uploadVisual(f); }} />
+                      </label>
+                    )}
+                  </div>
                 </Field>
               )}
               <Field label={draft.type === 'text' ? t('ข้อความ') : t('ข้อความประกอบ (ไม่บังคับ)')} hint={draft.type === 'sign' ? t('ข้อความบนป้าย · {user} = ชื่อคนส่ง · แนะนำแสดงนาน 5–8 วินาที') : draft.type === 'tarot' ? t('สุ่มไพ่ครบสำรับ 78 ใบ พร้อมคำทำนาย · {user} = ชื่อคนส่ง · แนะนำแสดงนาน 8 วินาที') : t('ใช้ {user} แทนชื่อคนที่ทำให้เกิดเหตุการณ์')}>

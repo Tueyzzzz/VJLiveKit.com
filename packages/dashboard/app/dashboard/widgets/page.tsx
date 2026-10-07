@@ -34,7 +34,7 @@ const COLLECT_GROUP = '🎁 สะสมของขวัญ — โหล ต�
 
 /** จัดหมวดวิดเจ็ตในแกลเลอรี (ประเภทเดียวกันอยู่ด้วยกัน) */
 const WIDGET_GROUPS: [string, string[]][] = [
-  [COLLECT_GROUP, ['giftjar', 'aquarium', 'belly', 'snowglobe', 'spacedome', 'vehicle', 'tree', 'garden', 'coinjar']],
+  [COLLECT_GROUP, ['pile', 'giftjar', 'aquarium', 'belly', 'snowglobe', 'spacedome', 'vehicle', 'tree', 'garden', 'coinjar']],
   ['🏆 เป้าหมายและลีก', ['league', 'goal', 'timer']],
   ['🔔 แจ้งเตือนและแชท', ['alerts', 'chat', 'follower', 'tts']],
   ['🥇 อันดับผู้ชม', ['topgifters', 'toplikers']],
@@ -44,6 +44,7 @@ const WIDGET_GROUPS: [string, string[]][] = [
 /** คำอธิบายสั้นในแกลเลอรี */
 const WIDGET_BLURB: Record<string, string> = {
   donate: 'แจ้งเตือนโดเนทผ่านพร้อมเพย์ — ตั้งค่าที่เมนู “โดเนทขึ้นจอ”',
+  pile: 'ไม่มีโหล ของขวัญตกลงมากองทับกันเป็นภูเขาที่ขอบล่างจอ ของแพงอยู่บนสุด',
   coinjar: 'เครื่องจักรพาสเทล ของขวัญวิ่งบนสายพานแล้วกองเป็นภูเขา',
   giftjar: 'ของขวัญจริงตกลงโหล — มีทรงโหล รถ ลูกแก้วหิมะ',
   belly: 'หมู แมว ไดโน หมี กบ อ้าปากงับของขวัญ แล้วไปกองในท้องใส',

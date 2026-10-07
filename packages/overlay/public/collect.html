@@ -16,7 +16,7 @@
   (function () {
     // ลิงก์เดียวสำหรับวิดเจ็ตสะสมของขวัญทุกแบบ — เลือกแบบที่แดชบอร์ด (ตั้งค่า style) แล้วจอเปลี่ยนเองไม่ต้องเปลี่ยนลิงก์ใน OBS
     // แต่ละแบบยังใช้ตั้งค่าของตัวเอง (ขนาด สี ฯลฯ) และจำของที่สะสมไว้แยกกัน
-    const STYLES = ['giftjar', 'aquarium', 'belly', 'snowglobe', 'spacedome', 'vehicle', 'tree', 'garden', 'coinjar'];
+    const STYLES = ['pile', 'giftjar', 'aquarium', 'belly', 'snowglobe', 'spacedome', 'vehicle', 'tree', 'garden', 'coinjar'];
     const style = STYLES.includes(Overlay.param('style', 'giftjar')) ? Overlay.param('style', 'giftjar') : 'giftjar';
     const q = new URLSearchParams(location.search); q.delete('style'); q.delete('_v');
     const f = document.createElement('iframe');

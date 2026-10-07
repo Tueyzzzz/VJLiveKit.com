@@ -497,4 +497,11 @@ export const EN_WIDGETS: Record<string, string> = {
   "👑 Victorian (วิกตอเรียน)": "👑 Victorian",
   "🎨 Graffiti (กราฟฟิตี้)": "🎨 Graffiti",
   "🚀 Futuristic (ไซเบอร์)": "🚀 Futuristic (cyber)",
+  "กองทับกัน": "Gift pile",
+  "ไม่มีโหล ของขวัญตกลงมากองทับกันเป็นภูเขาที่ขอบล่างจอ ของแพงอยู่บนสุด": "No jar — gifts fall and pile up into a mountain at the bottom, priciest on top",
+  "ความกว้างของกอง": "Pile width",
+  "กองอยู่กลางจอ — 100 = เต็มความกว้าง": "Centered — 100 = full width",
+  "จำนวนสูงสุด (ชิ้น)": "Max pieces",
+  "ของแพงเรืองแสง": "Glow on pricey gifts",
+  "เกินแล้วชิ้นเก่าสุดค่อย ๆ จางไป": "Oldest pieces fade out beyond this",
 };

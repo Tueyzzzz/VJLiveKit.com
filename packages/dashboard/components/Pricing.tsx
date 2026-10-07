@@ -11,6 +11,7 @@ export const WIDGET_LABELS: Record<string, string> = {
   fxmenu: 'เมนูของขวัญ (บอกผู้ชมว่าส่งอะไร)',
   collect: 'สะสมของขวัญ (ลิงก์เดียว ทุกแบบ)',
   sign: 'ป้ายไฟ LED ข้อความวิ่ง',
+  pile: 'กองทับกัน',
   coinjar: 'Coin Jar',
   giftjar: 'โหลแก้วของขวัญ',
   aquarium: 'ตู้ปลาของขวัญ',

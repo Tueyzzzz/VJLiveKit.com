@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gift Pile Overlay</title>
+  <link rel="icon" href="favicon.svg" />
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    html,body{margin:0;height:100%;background:transparent;overflow:hidden;font-family:'Kanit',sans-serif;color:#fff}
+    #fx{position:fixed;inset:0}
+    #alert{position:fixed;left:50%;top:6vh;display:flex;align-items:center;gap:10px;padding:8px 14px 8px 8px;border-radius:999px;
+      background:rgba(20,10,30,.55);backdrop-filter:blur(4px);opacity:0;transform:translate(-50%,10px);transition:opacity .35s,transform .35s;white-space:nowrap;pointer-events:none;
+      text-shadow:0 2px 4px rgba(0,0,0,.65)}
+    #alert.show{opacity:1;transform:translate(-50%,0)}
+    #alert img.ava{width:44px;height:44px;border-radius:50%;object-fit:cover;background:#b9a6f2}
+    #alert img.gift{width:36px;height:36px;object-fit:contain}
+    #alert .nm{font-weight:600;font-size:18px} #alert .sub{font-size:15px;opacity:.9}
+  </style>
+</head>
+<body>
+  <canvas id="fx"></canvas>
+  <div id="alert"><img class="ava" alt="" /><div><div class="nm"></div><div class="sub"></div></div><img class="gift" alt="" /></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/overlay-client.js"></script>
+  <script src="js/collect-store.js"></script>
+  <script src="js/juice.js"></script>
+  <script>
+  /*
+   * กองทับกัน — ไม่มีโหล ของขวัญจริงตกลงมาจากด้านบน แล้วกองซ้อนกันเป็นภูเขาที่ขอบล่างของกรอบ
+   * ใช้กองกลางร่วมกับแบบอื่น (เปลี่ยนแบบแล้วของไม่หาย)
+   *   width=60 (% ความกว้างกอง) · max=600 · giftScale=1 · alert=1 · minCoins=0 · glow=1 · reset=1
+   */
+  (function () {
+    const P = (k, d) => Overlay.param(k, d);
+    const num = (k, d) => { const v = parseFloat(P(k, d)); return Number.isFinite(v) ? v : d; };
+    const GIFT_SCALE = Math.max(.4, Math.min(3, num('giftScale', 1))), SHOW_ALERT = P('alert', '1') !== '0', MIN_COINS = num('minCoins', 0);
+    const WIDTH = Math.max(.2, Math.min(1, num('width', 60) / 100)), GLOW = P('glow', '1') !== '0';
+    const MAX = Math.round(Math.max(60, Math.min(1500, num('max', 600))));
+    const canvas = document.getElementById('fx'), ctx = canvas.getContext('2d'), $alert = document.getElementById('alert');
+    const DPR = Math.min(2, window.devicePixelRatio || 1);
+    let W = 0, H = 0;
+    function resize() { W = innerWidth; H = innerHeight; canvas.width = W * DPR; canvas.height = H * DPR; canvas.style.width = W + 'px'; canvas.style.height = H + 'px'; }
+    addEventListener('resize', resize); resize();
+    // พื้นที่กอง: กลางจอ กว้าง WIDTH ของจอ — ผนังข้างโค้งเล็กน้อยให้กองเป็นทรงภูเขา
+    const left = () => W * (1 - WIDTH) / 2, right = () => W * (1 + WIDTH) / 2, floor = () => H - 2;
+
+    const imgCache = {};
+    const giftImg = (url) => { if (!url || !/^https:\/\//.test(url)) return null; let im = imgCache[url]; if (!im) { im = new Image(); im.crossOrigin = 'anonymous'; im.src = url; imgCache[url] = im; } return im; };
+    const sizeFor = Juice.sizeFor || (() => 1);
+    const radiusFor = (d) => Math.min(80, 16 * GIFT_SCALE * sizeFor(d || 1, 3.6));
+
+    const bodies = [], fx = new Juice.Particles();
+    function addBody(g, restore) {
+      const r = radiusFor(g.d);
+      const x = left() + r + Math.random() * Math.max(1, right() - left() - 2 * r);
+      const b = { x, y: restore ? floor() - r - Math.random() * H * 0.6 : -r - Math.random() * 80, r, rot: Math.random() * 6.28, vr: (Math.random() - .5) * .2,
+        img: giftImg(g.u), e: g.e || '🎁', d: g.d || 1, src: g, life: 1 };
+      b.px = b.x + (Math.random() - .5) * 2; b.py = b.y - (restore ? 0 : 2);
+      bodies.push(b);
+      const alive = bodies.filter((k) => !k.dying);
+      if (alive.length > MAX) alive[0].dying = true; // เกินจำนวนสูงสุด → ชิ้นเก่าสุดจางออก
+    }
+
+    // ---- ฟิสิกส์ (verlet + ตารางแบ่งช่อง ให้ลื่นแม้หลายร้อยชิ้น) ----
+    const G = 0.5, CELL = 64;
+    function step() {
+      const L = left(), R = right(), F = floor();
+      for (const b of bodies) {
+        const vx = (b.x - b.px) * 0.985, vy = (b.y - b.py) * 0.985;
+        b.px = b.x; b.py = b.y; b.x += vx; b.y += vy + G; b.rot += b.vr; b.vr *= 0.97;
+      }
+      for (let it = 0; it < 4; it++) {
+        const grid = new Map();
+        for (let i = 0; i < bodies.length; i++) { const b = bodies[i], k = ((b.x / CELL) | 0) + ',' + ((b.y / CELL) | 0); (grid.get(k) || grid.set(k, []).get(k)).push(i); }
+        for (let i = 0; i < bodies.length; i++) {
+          const a = bodies[i], cx = (a.x / CELL) | 0, cy = (a.y / CELL) | 0;
+          for (let gx = cx - 1; gx <= cx + 1; gx++) for (let gy = cy - 1; gy <= cy + 1; gy++) {
+            const cell = grid.get(gx + ',' + gy); if (!cell) continue;
+            for (const j of cell) {
+              if (j <= i) continue;
+              const b = bodies[j], dx = b.x - a.x, dy = b.y - a.y, min = (a.r + b.r) * 0.92, d2 = dx * dx + dy * dy;
+              if (d2 > 0 && d2 < min * min) {
+                const d = Math.sqrt(d2), push = (min - d) / d * 0.5;
+                const wa = b.r * b.r / (a.r * a.r + b.r * b.r), wb = 1 - wa; // ชิ้นใหญ่ขยับยากกว่า
+                a.x -= dx * push * wa; a.y -= dy * push * wa; b.x += dx * push * wb; b.y += dy * push * wb;
+              }
+            }
+          }
+        }
+        for (const b of bodies) {
+          if (b.y > F - b.r) { b.y = F - b.r; b.px += (b.x - b.px) * 0.25; }
+          if (b.x < L + b.r) b.x = L + b.r;
+          if (b.x > R - b.r) b.x = R - b.r;
+        }
+      }
+    }
+
+    function drawGift(b) {
+      const size = b.r * 2;
+      const st = Juice.sticker ? Juice.sticker(b.img, size * DPR) : null;
+      if (st) { const s = size * Juice.STICKER_PAD; ctx.drawImage(st, -s / 2, -s / 2, s, s); }
+      else if (b.img && b.img.complete && b.img.naturalWidth) ctx.drawImage(b.img, -size / 2, -size / 2, size, size);
+      else { ctx.font = Math.round(size * .85) + 'px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(b.e, 0, 2); }
+    }
+    let t0 = performance.now(), last = t0, acc = 0;
+    function frame(now) {
+      const t = (now - t0) / 1000;
+      // ฟิสิกส์คงที่ 60 ครั้ง/วินาที ไม่ขึ้นกับเฟรมเรต (จอ 144Hz ไม่เร็วเกิน · เครื่องช้า/แท็บถูกพักก็ยังตกถึงพื้น)
+      acc = Math.min(acc + (now - last), 250); last = now;
+      while (acc >= 1000 / 60) { step(); fx.step(); acc -= 1000 / 60; }
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.imageSmoothingQuality = 'high';
+      // ชิ้นถูกวาดก่อน ชิ้นแพงวาดทีหลัง = อยู่บนสุด
+      const list = bodies.slice().sort((a, c) => a.d - c.d);
+      for (const b of list) {
+        if (b.dying) b.life -= 0.02;
+        if (GLOW && b.d >= 100 && b.life > 0.5) Juice.aura(ctx, b.x, b.y, b.r, b.d, t);
+        ctx.save(); ctx.globalAlpha = Math.max(0, b.life); ctx.translate(b.x, b.y); ctx.rotate(b.rot); drawGift(b); ctx.restore();
+      }
+      for (let i = bodies.length - 1; i >= 0; i--) if (bodies[i].life <= 0) bodies.splice(i, 1);
+      fx.draw(ctx);
+      requestAnimationFrame(frame);
+    }
+
+    // ---- จำกอง (กองกลางใช้ร่วมทุกแบบ) ----
+    try {
+      if (window.VJLCollect && VJLCollect.has()) VJLCollect.gifts(MAX).forEach((g) => addBody({ u: g.u, e: g.em || VJLCollect.emoji(g.name, '🎁'), d: g.d }, true));
+    } catch { /* ignore */ }
+
+    let alertT = 0;
+    function showAlert(e, count) {
+      if (!SHOW_ALERT) return;
+      const u = e.user || {};
+      $alert.querySelector('.ava').src = u.avatar || ''; $alert.querySelector('.gift').src = e.giftImage || '';
+      $alert.querySelector('.nm').textContent = u.nickname || u.uniqueId || '';
+      $alert.querySelector('.sub').textContent = `ส่ง ${e.giftName || 'ของขวัญ'} ×${count}`;
+      $alert.classList.add('show'); clearTimeout(alertT); alertT = setTimeout(() => $alert.classList.remove('show'), 3200);
+    }
+    function onGift(e) {
+      const count = e.repeatCount || 1, unit = e.diamondCount || 0;
+      if (unit < MIN_COINS) return;
+      const g = { u: e.giftImage || '', e: VJLCollect.emoji(e.giftName, '🎁'), d: unit };
+      const n = Math.min(count, 150); // ส่ง 100 ดอก = ตก 100 ชิ้น
+      if (window.VJLCollect) VJLCollect.record(e, n);
+      for (let i = 0; i < n; i++) setTimeout(() => addBody(g, false), i * (n > 30 ? 45 : 110));
+      if (unit >= 1000) fx.confetti(W / 2, H * 0.3, 50);
+      showAlert(e, count);
+    }
+    Overlay.on('event', (e) => { if (e.type === 'gift' && !e.streaking) onGift(e); });
+    requestAnimationFrame(frame);
+
+    if (!Overlay.connected) {
+      const I = 'https://p16-webcast.tiktokcdn.com/img/', list = [['Rose', 1, I + 'maliva/webcast-va/eba3a9bb85c33e017f3648eaf88d7189~tplv-obj.webp'], ['Rose', 1, I + 'maliva/webcast-va/eba3a9bb85c33e017f3648eaf88d7189~tplv-obj.webp'], ['Finger Heart', 5, I + 'maliva/webcast-va/a4c4dc437fd3a6632aba149769491f49.png~tplv-obj.webp'], ['Perfume', 20, I + 'maliva/webcast-va/20b8f61246c7b6032777bb81bf4ee055~tplv-obj.webp'], ['Galaxy', 1000, I + 'alisg/webcast-sg/resource/79a02148079526539f7599150da9fd28.png~tplv-obj.webp']];
+      const names = ['mimi', 'บิ๊ก', 'lisa', 'ต้นน้ำ'];
+      setInterval(() => { const [n, d, u] = list[(Math.random() * list.length) | 0]; onGift({ type: 'gift', giftName: n, diamondCount: d, giftImage: u, repeatCount: d >= 1000 ? 1 : 1 + ((Math.random() * 8) | 0), user: { nickname: names[(Math.random() * names.length) | 0] } }); }, 1600);
+    }
+  })();
+  </script>
+</body>
+</html>

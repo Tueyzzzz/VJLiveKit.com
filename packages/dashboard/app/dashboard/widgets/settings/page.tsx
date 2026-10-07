@@ -26,7 +26,7 @@ function groupOptions(options: Opt[]): [string, Opt[]][] {
   return out;
 }
 
-const COLLECT_TYPES = ['giftjar', 'aquarium', 'belly', 'snowglobe', 'spacedome', 'vehicle', 'tree', 'garden', 'coinjar'];
+const COLLECT_TYPES = ['pile', 'giftjar', 'aquarium', 'belly', 'snowglobe', 'spacedome', 'vehicle', 'tree', 'garden', 'coinjar'];
 
 function CopyLink({ url, label = 'คัดลอกลิงก์' }: { url: string; label?: string }) {
   const t = useT();

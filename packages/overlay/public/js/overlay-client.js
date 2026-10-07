@@ -21,14 +21,14 @@ window.Overlay = (function () {
   let cfg = {};
   try { cfg = owner ? JSON.parse(localStorage.getItem(CFG_KEY) || '{}') : {}; } catch { cfg = {}; }
   // ปุ่ม "ล้าง/เริ่มใหม่" ใน Dashboard (resetAt เปลี่ยน) → ลบข้อมูลที่วิดเจ็ตจำไว้ (กองของขวัญ, อันดับ, เวลา)
-  const STORE_PREFIX = { giftjar: 'vjl-giftjar:', belly: 'vjl-belly:', aquarium: 'vjl-aquarium:', spacedome: 'vjl-spacedome:', snowglobe: 'vjl-snowglobe:', vehicle: 'vjl-vehicle:', garden: 'vjl-garden:', tree: 'vjl-tree:', coinjar: 'vjl-coinjar2:', timer: 'vjl-timer:', league: 'vjl-league:', topgifters: 'vjl-rank:gifts:', toplikers: 'vjl-rank:likes:' };
+  const STORE_PREFIX = { giftjar: 'vjl-giftjar:', belly: 'vjl-belly:', aquarium: 'vjl-aquarium:', spacedome: 'vjl-spacedome:', snowglobe: 'vjl-snowglobe:', vehicle: 'vjl-vehicle:', garden: 'vjl-garden:', tree: 'vjl-tree:', coinjar: 'vjl-coinjar2:', pile: 'vjl-pile:', timer: 'vjl-timer:', league: 'vjl-league:', topgifters: 'vjl-rank:gifts:', toplikers: 'vjl-rank:likes:' };
   try {
     const RESET_KEY = 'vjl-resetAt:' + widgetName + ':' + owner;
     if (cfg.resetAt && localStorage.getItem(RESET_KEY) !== String(cfg.resetAt)) {
       const prefix = STORE_PREFIX[widgetName];
       if (prefix) Object.keys(localStorage).filter((k) => k.startsWith(prefix)).forEach((k) => localStorage.removeItem(k));
       // ล้างกองของขวัญ = ล้างกองกลางที่ทุกแบบใช้ร่วมกันด้วย
-      if (['giftjar', 'belly', 'aquarium', 'spacedome', 'snowglobe', 'vehicle', 'garden', 'tree', 'coinjar'].includes(widgetName)) Object.keys(localStorage).filter((k) => k.startsWith('vjl-collect:')).forEach((k) => localStorage.removeItem(k));
+      if (['giftjar', 'belly', 'aquarium', 'spacedome', 'snowglobe', 'vehicle', 'garden', 'tree', 'coinjar', 'pile'].includes(widgetName)) Object.keys(localStorage).filter((k) => k.startsWith('vjl-collect:')).forEach((k) => localStorage.removeItem(k));
       localStorage.setItem(RESET_KEY, String(cfg.resetAt));
     }
   } catch { /* storage ปิด */ }

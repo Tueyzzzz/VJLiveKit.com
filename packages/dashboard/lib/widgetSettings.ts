@@ -431,6 +431,19 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
       ] },
     ],
   },
+  pile: {
+    resettable: 'ล้างกองของขวัญ',
+    sections: [
+      { title: 'กองทับกัน', fields: [
+        { key: 'width', label: 'ความกว้างของกอง', type: 'range', min: 20, max: 100, step: 5, def: 60, unit: '%', hint: 'กองอยู่กลางจอ — 100 = เต็มความกว้าง' },
+        { key: 'max', label: 'จำนวนสูงสุด (ชิ้น)', type: 'number', min: 60, max: 1500, def: 600, hint: 'เกินแล้วชิ้นเก่าสุดค่อย ๆ จางไป' },
+        { key: 'giftScale', label: 'ขนาดของขวัญ', type: 'range', min: 0.4, max: 3, step: 0.1, def: 1, unit: '×' },
+        { key: 'minCoins', label: 'รับเฉพาะของขวัญตั้งแต่ (เหรียญ)', type: 'number', min: 0, def: 0 },
+        { key: 'glow', label: 'ของแพงเรืองแสง', type: 'toggle', def: true },
+        { key: 'alert', label: 'แสดงชื่อคนส่ง', type: 'toggle', def: true },
+      ] },
+    ],
+  },
   sign: {
     sections: [
       { title: 'ข้อความ', fields: [

@@ -333,12 +333,16 @@
       <path d="M72 104q9 9 18 0" fill="none" stroke="#4a2440" stroke-width="5" stroke-linecap="round"/>
       <ellipse cx="48" cy="104" rx="10" ry="6" fill="#ff7fb9" opacity=".8"/><ellipse cx="114" cy="104" rx="10" ry="6" fill="#ff7fb9" opacity=".8"/>
       <path d="M128 32l6-12 6 12 12 3-9 8 2 12-11-6-11 6 2-12-9-8z" fill="#fff6a8"/></svg>`;
+    const GLOVE_IMG={ok:false}; { const im=new Image(); im.onload=()=>{ GLOVE_IMG.ok=im.naturalWidth>0; }; im.src='fx/glove.webp'; }
     const POWS=['ปั้ก!','POW!','ตุ๊บ!','BAM!','ปึ้ก!'];
     function glove(a,ev){
       const n=Math.max(1,Math.min(5,a.count||1)), vol=a.volume==null?1:a.volume;
       const title=fill(a.text,ev); if(title){ const t=document.createElement('div'); t.className='ftitle'; t.textContent=title; t.style.setProperty('--out',(Math.max(3,n*1.1+1.6))+'s'); fx.appendChild(t); setTimeout(()=>t.remove(),(n*1.1+2.6)*1000); }
       for(let k=0;k<n;k++) setTimeout(()=>{
-        const side=k%2?'l':'r', g=document.createElement('div'); g.className='glv '+side; g.innerHTML=GLOVE_SVG; document.body.appendChild(g);
+        const side=k%2?'l':'r', g=document.createElement('div'); g.className='glv '+side;
+        // ใช้รูปนวม AI (fx/glove.webp) ถ้ามี · ไม่มี/โหลดไม่ได้ → นวมวาดด้วยโค้ด
+        if(GLOVE_IMG.ok){ const im=new Image(); im.src='fx/glove.webp'; im.style.width='100%'; g.appendChild(im); } else g.innerHTML=GLOVE_SVG;
+        document.body.appendChild(g);
         if(window.VJLSfx && !VJLSfx.play('punch',vol) && !audioArmed) armBtn.style.display='block';
         setTimeout(()=>{ // จังหวะโดน
           const p=document.createElement('div'); p.className='pow'; p.textContent=POWS[(Math.random()*POWS.length)|0]; document.body.appendChild(p); setTimeout(()=>p.remove(),1400);

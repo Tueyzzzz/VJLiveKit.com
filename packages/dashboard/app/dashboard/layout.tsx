@@ -20,8 +20,9 @@ import { LangSwitch, useT } from '@/lib/i18n';
 function NavImg({ img, Icon, active, dim }: { img?: string; Icon: React.ComponentType<{ className?: string }>; active?: boolean; dim?: boolean }) {
   const [bad, setBad] = useState(false);
   if (!img || bad) return <Icon className="size-4" />;
-  return <img src={`/menu/${img}.webp`} alt="" width={36} height={36} loading="lazy" onError={() => setBad(true)}
-    className={cx('-my-1.5 size-9 shrink-0 object-contain transition-transform', active ? 'scale-110 drop-shadow' : '', dim ? 'opacity-40 grayscale' : '')} />;
+  // รูปซูมเฉพาะหน้า+ของในมือ (รูปเต็มเล็กเกินจนดูไม่ออก) ในกรอบมุมมน
+  return <img src={`/menu/${img}-sm.webp`} alt="" width={40} height={40} loading="lazy" onError={() => setBad(true)}
+    className={cx('-my-1.5 size-10 shrink-0 rounded-xl bg-pink-soft/60 object-cover ring-1 ring-white transition-transform', active ? 'scale-105 shadow-md ring-pink/40' : '', dim ? 'opacity-40 grayscale' : '')} />;
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

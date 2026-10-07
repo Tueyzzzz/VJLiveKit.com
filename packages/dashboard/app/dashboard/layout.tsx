@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { LayoutDashboard, LayoutTemplate, Zap, CreditCard, LogOut, Gift, Shield, BookOpen, Wallet, Menu, X, ScrollText } from 'lucide-react';
+import { LayoutDashboard, LayoutTemplate, Zap, CreditCard, LogOut, Gift, Shield, BookOpen, Wallet, Menu, X, ScrollText, Lightbulb } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { Speaker } from '@/components/Speaker';
 import { Badge, Spinner, cx } from '@/components/ui';
@@ -15,6 +15,7 @@ const NAV = [
   { href: '/dashboard/widgets/', label: 'วิดเจ็ต & ลิงก์ OBS', icon: LayoutTemplate },
   { href: '/dashboard/actions/', label: 'Actions & Events', icon: Zap },
   { href: '/dashboard/widgets/settings/?type=fxmenu', label: 'เมนูของขวัญ', icon: ScrollText },
+  { href: '/dashboard/widgets/settings/?type=sign', label: 'ป้ายไฟ LED', icon: Lightbulb },
   { href: '/dashboard/donate/', label: 'โดเนทขึ้นจอ', icon: Wallet, soon: true }, // กำลังพัฒนา — เทาไว้ก่อน
   { href: '/dashboard/billing/', label: 'แพลน & การชำระเงิน', icon: CreditCard },
   { href: '/dashboard/referral/', label: 'แนะนำเพื่อน รับฟรี', icon: Gift },

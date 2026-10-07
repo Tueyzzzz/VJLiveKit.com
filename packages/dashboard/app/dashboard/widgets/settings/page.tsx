@@ -81,7 +81,7 @@ function WidgetLinkBox({ type }: { type: string }) {
         <>
           <div className="mb-2 text-sm font-semibold text-violet">ลิงก์สำหรับ OBS / TikTok Live Studio</div>
           {url ? <CopyLink url={url} /> : (
-            <p className="text-sm text-muted">ยังไม่มีลิงก์ — <Link href="/dashboard/widgets/" className="text-pink underline">สร้างชุดลิงก์ที่หน้าวิดเจ็ต</Link> ก่อน</p>
+            <p className="text-sm text-muted">ยังไม่มีลิงก์ — <Link href="/dashboard/" className="text-pink underline">ตั้งชื่อ TikTok ที่หน้าภาพรวมก่อน แล้วลิงก์จะสร้างให้อัตโนมัติ</Link></p>
           )}
           <p className="mt-2 text-xs text-muted">ลิงก์เดิมใช้ได้ตลอด — แก้แบบแล้วกดบันทึก จอใน OBS เปลี่ยนเองภายในไม่กี่วินาที ไม่ต้องรีเฟรช</p>
         </>

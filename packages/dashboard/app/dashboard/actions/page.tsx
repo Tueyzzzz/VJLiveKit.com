@@ -261,7 +261,7 @@ export default function ActionsPage() {
           {fxUrl ? (
             <Button variant="secondary" onClick={copyFx}>{copied ? <><Check className="size-4 text-mint" /> คัดลอกแล้ว</> : <><Copy className="size-4" /> คัดลอกลิงก์ FX</>}</Button>
           ) : fxUrl === null ? (
-            <Link href="/dashboard/widgets/" className="text-sm font-medium text-pink underline">สร้างลิงก์ที่หน้าวิดเจ็ตก่อน</Link>
+            <Link href="/dashboard/" className="text-sm font-medium text-pink underline">ตั้งชื่อ TikTok ที่หน้าภาพรวมก่อน แล้วลิงก์จะสร้างให้อัตโนมัติ</Link>
           ) : <Spinner />}
         </div>
         {menuUrl && (

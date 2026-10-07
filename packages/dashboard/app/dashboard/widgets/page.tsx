@@ -245,7 +245,7 @@ export default function WidgetsPage() {
             <div className="text-sm font-medium">🔗 ลิงก์เดียวใช้ได้ทุกแบบ — ตอนนี้ใช้: <b className="text-pink">{WIDGET_LABELS[collectStyle] ?? collectStyle}</b></div>
             <p className="text-xs text-muted">วางลิงก์นี้ใน OBS / LIVE Studio ครั้งเดียว แล้วกด “ใช้แบบนี้” ที่การ์ดด้านล่าง จอเปลี่ยนแบบเองทันที ไม่ต้องเปลี่ยนลิงก์</p>
           </div>
-          {collectUrl ? <CopyButton text={collectUrl} /> : <span className="text-xs text-muted">สร้างลิงก์ชุดแรกด้านล่างก่อน</span>}
+          {collectUrl ? <CopyButton text={collectUrl} /> : <span className="text-xs text-muted">ตั้งชื่อ TikTok ที่หน้าภาพรวมก่อน</span>}
         </Card>
       )}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

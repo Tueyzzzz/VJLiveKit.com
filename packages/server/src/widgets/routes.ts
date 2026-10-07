@@ -23,7 +23,12 @@ export async function widgetRoutes(app: FastifyInstance): Promise<void> {
   app.get('/api/overlay-tokens', { preHandler: requireUser }, async (req) => {
     const claims = getUser(req)!;
     const ent = await getEntitlements(claims.userId);
-    const rows = await prisma.overlayToken.findMany({ where: { userId: claims.userId, revoked: false }, orderBy: { createdAt: 'desc' } });
+    let rows = await prisma.overlayToken.findMany({ where: { userId: claims.userId, revoked: false }, orderBy: { createdAt: 'desc' } });
+    // ยังไม่มีลิงก์เลย → สร้างชุดแรกให้อัตโนมัติ ทุกหน้ามีปุ่มคัดลอกทันที (ไม่ต้องไปกดสร้างเอง)
+    if (rows.length === 0 && ent.maxTokens > 0) {
+      const user = await prisma.user.findUnique({ where: { id: claims.userId }, select: { tiktokUsername: true } });
+      if (user?.tiktokUsername) rows = [await prisma.overlayToken.create({ data: { userId: claims.userId, token: randomBytes(12).toString('hex'), label: 'ลิงก์หลัก' } })];
+    }
     const tokens = rows.map((r) => {
       const jwtToken = signOverlayToken({ tid: r.id, userId: claims.userId }, r.createdAt);
       return { id: r.id, label: r.label, createdAt: r.createdAt, urls: widgetUrls(jwtToken, ent.widgets) };

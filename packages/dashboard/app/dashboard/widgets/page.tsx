@@ -36,11 +36,11 @@ const COLLECT_GROUP = '🎁 สะสมของขวัญ — โหล ต�
 /** จัดหมวดวิดเจ็ตในแกลเลอรี (ประเภทเดียวกันอยู่ด้วยกัน) */
 const WIDGET_GROUPS: [string, string[]][] = [
   [COLLECT_GROUP, ['pile', 'giftjar', 'aquarium', 'belly', 'snowglobe', 'spacedome', 'vehicle', 'tree', 'garden', 'coinjar']],
+  ['🧸 ตัวแทนวีเจ', ['mascot']],
+  ['🥇 อันดับผู้ชม', ['topgifters', 'toplikers']],
   ['🏆 เป้าหมายและลีก', ['league', 'goal', 'timer']],
   ['🔔 แจ้งเตือนและแชท', ['alerts', 'chat', 'follower']],
-  ['🥇 อันดับผู้ชม', ['topgifters', 'toplikers']],
   ['✨ เอฟเฟกต์', ['fx', 'fxmenu', 'sign']],
-  ['🧸 ตัวแทนวีเจ', ['mascot']],
 ];
 
 /** คำอธิบายสั้นในแกลเลอรี */

@@ -70,7 +70,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
           ['mmic', 'โหลไมโครโฟน', '🎤 สายนักร้อง', 'gj-mmic'], ['mcoupe', 'แก้วแชมเปญยักษ์', '🎤 สายนักร้อง', 'gj-mcoupe'], ['mbox', 'กล่องดนตรี', '🎤 สายนักร้อง', 'gj-mbox'], ['mdrum', 'กลองใส', '🎤 สายนักร้อง', 'gj-mdrum'], ['mjuke', 'โดมตู้เพลง', '🎤 สายนักร้อง', 'gj-mjuke'],
         ] },
         ...tint((v) => ['heart', 'orb', 'tank', 'pig', 'sundae', 'jstar', 'jbasket', 'cauldron', 'catbank', 'jsnowman', 'catbelly', 'jdino', 'jbear', 'jfrog', 'castle', 'fishbowl', 'hearttank', 'moon', 'gacha', 'shell', 'sub', 'snow', 'van'].includes(String(v.shape))),
-        { key: 'full', label: 'เมื่อโหลเต็ม', type: 'select', when: (v) => !['car', 'globe', 'heart', 'snow', 'van', 'pig', 'sub', 'jstar', 'catbank', 'jsnowman', 'catbelly', 'jdino', 'jbear', 'jfrog'].includes(String(v.shape)), def: 'spill', options: [['spill', 'ล้นออกมากองข้างโหล'], ['fade', 'ชิ้นเก่าสุดค่อย ๆ หายไป'], ['reset', 'ฉลอง แล้วเทโหลเริ่มใหม่']] },
+        { key: 'full', label: 'เมื่อโหลเต็ม', type: 'select', when: (v) => !['car', 'van'].includes(String(v.shape)), def: 'spill', options: [['spill', 'ล้นออกมากองพื้นข้างโหล (ค่าเริ่มต้น)'], ['fade', 'ชิ้นเก่าสุดค่อย ๆ หายไป'], ['reset', 'ฉลอง แล้วเทโหลเริ่มใหม่']] },
         { key: 'fullText', label: 'ข้อความตอนโหลเต็ม', type: 'text', def: 'โหลเต็มแล้ว! 🎉', when: (v) => v.full === 'reset' },
       ] },
       { title: 'ขนาดและตำแหน่ง', fields: [
@@ -113,7 +113,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
         ] },
         { key: 'waves', label: 'ของขวัญโยกตามคลื่นใต้น้ำ', type: 'toggle', def: true },
         ...tint(() => true),
-        { key: 'full', label: 'เมื่อโหลเต็ม', type: 'select', when: (v) => !['car', 'globe', 'heart', 'snow', 'van', 'pig', 'sub', 'jstar', 'catbank', 'jsnowman', 'catbelly', 'jdino', 'jbear', 'jfrog'].includes(String(v.shape)), def: 'spill', options: [['spill', 'ล้นออกมากองข้างโหล'], ['fade', 'ชิ้นเก่าสุดค่อย ๆ หายไป'], ['reset', 'ฉลอง แล้วเทโหลเริ่มใหม่']] },
+        { key: 'full', label: 'เมื่อโหลเต็ม', type: 'select', when: (v) => !['car', 'van'].includes(String(v.shape)), def: 'spill', options: [['spill', 'ล้นออกมากองพื้นข้างโหล (ค่าเริ่มต้น)'], ['fade', 'ชิ้นเก่าสุดค่อย ๆ หายไป'], ['reset', 'ฉลอง แล้วเทโหลเริ่มใหม่']] },
         { key: 'fullText', label: 'ข้อความตอนโหลเต็ม', type: 'text', def: 'โหลเต็มแล้ว! 🎉', when: (v) => v.full === 'reset' },
       ] },
       { title: 'ขนาดและตำแหน่ง', fields: [

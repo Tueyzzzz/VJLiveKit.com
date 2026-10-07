@@ -576,4 +576,5 @@ export const EN_WIDGETS: Record<string, string> = {
   "ส่งรูปหน้าตรงชัด ๆ 1–3 รูป บอกสไตล์ที่ชอบ — ทีมงานวาดเป็นตัวละครของคุณ ครบทุกท่า (รับของขวัญ เต้น เดิน ส่งจุ๊บ) แจ้งราคาและระยะเวลาในแชท": "Send 1–3 clear front-facing photos and your preferred style — we draw your own character with every pose (gift, dance, walk, kiss). Price and timing in chat.",
   "สนใจสั่งทำมาสคอตหน้าตัวเองค่ะ/ครับ 🎨 สไตล์ที่อยากได้: ": "I'd like a custom mascot of my own face 🎨 Style I want: ",
   "🛒 สั่งทำมาสคอตหน้าตัวเอง": "🛒 Order my own mascot",
+  "ล้นออกมากองพื้นข้างโหล (ค่าเริ่มต้น)": "Overflow piles on the floor (default)",
 };

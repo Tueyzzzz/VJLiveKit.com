@@ -36,7 +36,8 @@ export default function BeatPadPage() {
   useEffect(() => {
     api<{ board: Board }>('/api/beatpad').then((r) => setBoard(r.board)).catch((e) => setNote({ tone: 'error', text: (e as Error).message }));
     api<{ sounds: Upload[] }>('/api/sounds').then((r) => setUploads(r.sounds)).catch(() => {});
-    try { setHere(localStorage.getItem('vjl-pad-here') === '1'); } catch { /* ignore */ }
+    // ค่าเริ่มต้น: คอม (เมาส์) = เล่นที่เครื่องนี้ · มือถือ = เป็นรีโมท ส่งเสียงไปดังที่คอม
+    try { const v = localStorage.getItem('vjl-pad-here'); setHere(v === null ? matchMedia('(pointer: fine)').matches : v === '1'); } catch { setHere(true); }
   }, []);
   const save = useCallback(async (b: Board) => {
     setBoard(b);

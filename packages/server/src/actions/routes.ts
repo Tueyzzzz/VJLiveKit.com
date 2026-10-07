@@ -21,6 +21,7 @@ const actionSchema = z.object({
   signPos: z.enum(['top', 'center', 'bottom']).optional(),
   color: z.string().regex(/^#[0-9a-fA-F]{3,8}$/).optional(),
   effect: z.enum(['butterflies']).optional(),
+  tint: z.enum(['pink', 'blue', 'purple', 'mint', 'gold', 'rainbow']).optional(), // สีผีเสื้อ
   count: z.number().int().min(1).max(30).optional(),
   repeat: z.number().int().min(1).max(20).optional(),
   // เสียงแจ้งเตือน: ความดัง (0–1.5) + ปุ่มลัดคีย์บอร์ดในแดชบอร์ด

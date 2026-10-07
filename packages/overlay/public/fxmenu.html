@@ -27,6 +27,24 @@
   #box.rotate .row { margin-top:0; }
   @keyframes in { from { opacity:0; transform:translateX(-14px) } to { opacity:1; transform:none } }
   @keyframes bob { 50% { transform:translateY(-3px) rotate(-4deg) } }
+
+  /* ===== เทมเพลตหน้าตา (theme) ===== */
+  .th-candy .panel { background:linear-gradient(160deg,rgba(255,214,235,var(--bgx,.95)),rgba(225,210,255,var(--bgx,.95))); border:2px solid #fff; color:#5a2b55; box-shadow:0 10px 24px rgba(200,90,160,.25); }
+  .th-candy .title { color:#e0468e; text-shadow:0 2px 0 #fff; } .th-candy .row { background:rgba(255,255,255,.75); } .th-candy .ico { background:#ffe3f1; }
+  .th-candy .what { text-shadow:none; color:#4a2347; } .th-candy .how b { color:#e0468e; }
+  .th-white .panel { background:rgba(255,255,255,var(--bgx,.96)); border:1px solid rgba(0,0,0,.06); color:#23202b; border-radius:16px; box-shadow:0 8px 22px rgba(0,0,0,.12); }
+  .th-white .title { color:#23202b; text-shadow:none; font-family:'Kanit',sans-serif; } .th-white .row { background:#f6f4f9; border-radius:12px; } .th-white .ico { background:#fff; }
+  .th-white .what { text-shadow:none; } .th-white .how b { color:#ff4fa3; }
+  .th-neon .panel { background:rgba(8,6,20,var(--bgx,.85)); border:2px solid #ff4fd8; box-shadow:0 0 16px #ff4fd8, inset 0 0 14px rgba(255,79,216,.4); }
+  .th-neon .title { color:#fff; text-shadow:0 0 6px #fff, 0 0 14px #ff4fd8, 0 0 28px #ff4fd8; } .th-neon .row { background:rgba(255,79,216,.08); border:1px solid rgba(0,229,255,.5); box-shadow:0 0 8px rgba(0,229,255,.35); }
+  .th-neon .what { text-shadow:0 0 8px #00e5ff; } .th-neon .how b { color:#00e5ff; }
+  .th-gold .panel { background:linear-gradient(180deg,rgba(60,10,25,var(--bgx,.92)),rgba(30,5,15,var(--bgx,.92))); border:2px solid #d4af37; box-shadow:0 0 0 3px rgba(212,175,55,.25), 0 12px 28px rgba(0,0,0,.45); }
+  .th-gold .title { color:#ffe08a; text-shadow:0 2px 0 #7a5410; font-family:'Kanit',sans-serif; } .th-gold .row { background:linear-gradient(90deg,rgba(212,175,55,.22),rgba(212,175,55,.06)); border:1px solid rgba(212,175,55,.45); }
+  .th-gold .what { color:#fff4d0; } .th-gold .how b { color:#ffd76a; }
+  .th-bubble .panel { background:transparent; border:0; box-shadow:none; backdrop-filter:none; padding:0; }
+  .th-bubble .title { background:linear-gradient(90deg,#ff7ab8,#b28bff); border-radius:999px; padding:6px 14px; display:inline-block; }
+  .th-bubble #box .panel, .th-bubble .panel { text-align:center; }
+  .th-bubble .row { background:rgba(255,255,255,.9); color:#4a2347; border-radius:999px; box-shadow:0 4px 12px rgba(0,0,0,.18); } .th-bubble .what { text-shadow:none; } .th-bubble .how b { color:#e0468e; } .th-bubble .ico { background:#ffe3f1; border-radius:50%; }
   /* แนวนอน: การ์ดเรียงเป็นแถว รูปอยู่บน ข้อความอยู่ล่าง */
   #box.horiz { width:auto; max-width:96vw; } #box.horiz #list { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
   #box.horiz .row { flex-direction:column; width:118px; text-align:center; margin-top:0; padding:8px 6px; }
@@ -60,7 +78,9 @@
     const LAYOUT = P('layout', 'list') === 'rotate' ? 'rotate' : 'list';
     const DIR = P('dir', 'vertical') === 'horizontal' ? 'horiz' : 'vert';
     const MOVE = ['bob', 'bounce', 'spin', 'pulse', 'wiggle', 'none'].includes(P('move', 'bounce')) ? P('move', 'bounce') : 'bounce';
-    box.className = POS + ' ' + LAYOUT + ' ' + DIR + ' mv-' + MOVE;
+    const THEME = ['glass', 'candy', 'white', 'neon', 'gold', 'bubble'].includes(P('theme', 'glass')) ? P('theme', 'glass') : 'glass';
+    box.className = POS + ' ' + LAYOUT + ' ' + DIR + ' mv-' + MOVE + ' th-' + THEME;
+    box.style.setProperty('--bgx', Math.max(.3, Math.min(1, parseFloat(P('bg', '45')) / 100 + .45)));
     box.style.setProperty('--s', Math.max(.4, Math.min(2.5, parseFloat(P('scale', '1')) || 1)));
     box.querySelector('.panel').style.setProperty('--bg', Math.max(0, Math.min(100, parseFloat(P('bg', '45')))) / 100);
     document.getElementById('title').textContent = P('title', '🎁 ส่งของขวัญเพื่อ…');

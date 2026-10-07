@@ -35,6 +35,8 @@ interface Draft {
   count: string;
   /** คอมโบเล่นซ้ำสูงสุดกี่ครั้ง */
   repeat: string;
+  /** สีผีเสื้อ */
+  tint: 'pink' | 'blue' | 'purple' | 'mint' | 'gold' | 'rainbow';
   /** ป้ายไฟ */
   signStyle: 'led' | 'neon' | 'bulb' | 'cute' | 'pixel' | 'y2k' | 'glass' | 'surreal' | 'boho' | 'victorian' | 'graffiti' | 'future' | 'mwhite' | 'mblack' | 'mline' | 'mpill';
   signMode: 'scroll' | 'static' | 'blink' | 'pulse';
@@ -42,7 +44,7 @@ interface Draft {
   color: string;
 }
 
-const EMPTY: Draft = { name: '', enabled: true, event: 'gift', giftName: '', minDiamonds: '', keyword: '', type: 'sound', url: '', sound: 'chime', text: '', durationSec: '5', cards: '1', deck: 'full', topic: 'general', count: '12', repeat: '1', signStyle: 'led', signMode: 'scroll', signPos: 'top', color: '#ff4fa3' };
+const EMPTY: Draft = { name: '', enabled: true, event: 'gift', giftName: '', minDiamonds: '', keyword: '', type: 'sound', url: '', sound: 'chime', text: '', durationSec: '5', cards: '1', deck: 'full', topic: 'general', count: '12', repeat: '1', tint: 'pink', signStyle: 'led', signMode: 'scroll', signPos: 'top', color: '#ff4fa3' };
 
 /** เทมเพลตยอดนิยม — กดครั้งเดียวสร้างกฎได้เลย (ไม่ต้องหาไฟล์เสียง/รูปเอง) */
 interface Template { icon: string; title: string; desc: string; rule: { name: string; trigger: Rule['trigger']; action: Rule['action'] } }
@@ -107,6 +109,7 @@ function toDraft(r: Rule): Draft {
     topic: r.action.topic ?? 'general',
     count: String(r.action.count ?? 12),
     repeat: String(r.action.repeat ?? 1),
+    tint: r.action.tint ?? 'pink',
     signStyle: r.action.signStyle ?? 'led', signMode: r.action.signMode ?? 'scroll', signPos: r.action.signPos ?? 'top', color: r.action.color ?? '#ff4fa3',
   };
 }
@@ -123,7 +126,7 @@ function toBody(d: Draft) {
   if (needsFile && d.url.trim()) action.url = d.url.trim();
   if (d.type === 'sound' && d.sound) action.sound = d.sound;
   if (d.type === 'glove') action.count = Math.max(1, Math.min(5, Number(d.count) || 1));
-  if (d.type === 'effect') { action.effect = 'butterflies'; action.count = Math.max(1, Math.min(30, Number(d.count) || 12)); }
+  if (d.type === 'effect') { action.tint = d.tint; action.effect = 'butterflies'; action.count = Math.max(1, Math.min(30, Number(d.count) || 12)); }
   if (d.text.trim()) action.text = d.text.trim();
   if (d.type === 'tarot') { action.cards = Number(d.cards) || 1; if (d.deck !== 'full') action.deck = d.deck; if (d.topic !== 'general') action.topic = d.topic; }
   if (d.type === 'sign') { action.signStyle = d.signStyle; action.signMode = d.signMode; action.signPos = d.signPos; if (/^#[0-9a-fA-F]{3,8}$/.test(d.color)) action.color = d.color; }
@@ -375,6 +378,14 @@ export default function ActionsPage() {
               {draft.type === 'glove' && (
                 <Field label={t('จำนวนหมัด')} hint={t('1–5 หมัด (สลับซ้ายขวา) · ข้อความประกอบขึ้นกลางจอ · มีเสียงในตัว')}>
                   <Input type="text" inputMode="numeric" value={draft.count === '12' ? '1' : draft.count} onChange={(e) => set('count', toDigits(e.target.value))} />
+                </Field>
+              )}
+              {draft.type === 'effect' && (
+                <Field label={t('สีผีเสื้อ')}>
+                  <Select value={draft.tint} onChange={(e) => set('tint', e.target.value as Draft['tint'])}>
+                    <option value="pink">{t('🩷 ชมพู (ค่าเริ่มต้น)')}</option><option value="purple">{t('💜 ม่วง')}</option><option value="blue">{t('💙 ฟ้า')}</option>
+                    <option value="mint">{t('💚 มิ้นต์')}</option><option value="gold">{t('💛 ทอง')}</option><option value="rainbow">{t('🌈 หลากสี')}</option>
+                  </Select>
                 </Field>
               )}
               {draft.type === 'effect' && (

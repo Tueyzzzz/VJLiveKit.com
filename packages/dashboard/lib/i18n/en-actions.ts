@@ -276,4 +276,11 @@ export const EN_ACTIONS: Record<string, string> = {
   "◼️ มินิมอล ดำ": "◼️ Minimal black",
   "▁ มินิมอล เส้นใต้": "▁ Minimal underline",
   "◯ มินิมอล แคปซูล": "◯ Minimal pill",
+  "สีผีเสื้อ": "Butterfly color",
+  "🩷 ชมพู (ค่าเริ่มต้น)": "🩷 Pink (default)",
+  "💜 ม่วง": "💜 Purple",
+  "💙 ฟ้า": "💙 Blue",
+  "💚 มิ้นต์": "💚 Mint",
+  "💛 ทอง": "💛 Gold",
+  "🌈 หลากสี": "🌈 Rainbow",
 };

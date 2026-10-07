@@ -522,4 +522,9 @@ export const EN_WIDGETS: Record<string, string> = {
   "◼️ มินิมอล ดำ": "◼️ Minimal black",
   "▁ มินิมอล เส้นใต้": "▁ Minimal underline",
   "◯ มินิมอล แคปซูล": "◯ Minimal pill",
+  "เทมเพลตหน้าตา": "Template",
+  "🔮 กระจกม่วง (เดิม)": "🔮 Purple glass (classic)",
+  "🍬 พาสเทลแคนดี้": "🍬 Pastel candy",
+  "👑 หรูทองคำ": "👑 Luxury gold",
+  "🫧 ฟองลอย (ไม่มีกรอบ)": "🫧 Floating bubbles (no frame)",
 };

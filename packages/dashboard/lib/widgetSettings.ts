@@ -467,6 +467,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
   fxmenu: {
     sections: [
       { title: 'เมนูของขวัญ', fields: [
+        { key: 'theme', label: 'เทมเพลตหน้าตา', type: 'select', def: 'glass', options: [['glass', '🔮 กระจกม่วง (เดิม)'], ['candy', '🍬 พาสเทลแคนดี้'], ['white', '◻️ มินิมอล ขาว'], ['neon', '🌈 นีออน'], ['gold', '👑 หรูทองคำ'], ['bubble', '🫧 ฟองลอย (ไม่มีกรอบ)']] },
         { key: 'title', label: 'หัวข้อ', type: 'text', def: '🎁 ส่งของขวัญเพื่อ…' },
         { key: 'items', label: 'รายการที่แสดง', type: 'menuItems', def: '', hint: 'ดึงจากกฎ Actions อัตโนมัติ · ติ๊กออก = ไม่แสดง · กดรูปเพื่อเลือกรูปของขวัญ · แก้คำในเมนูได้' },
         { key: 'layout', label: 'รูปแบบ', type: 'select', def: 'list', options: [['list', 'รายการ (โชว์หลายข้อ)'], ['rotate', 'หมุนทีละข้อ (ประหยัดที่)']] },

@@ -281,7 +281,7 @@
         const c=WINGS[i%WINGS.length], el=document.createElement('div'); el.className='bfly';
         if(a.style==='code') el.innerHTML=butterflySVG(c);
         else { el.classList.add('img'); el.innerHTML='<div class="bfi"><img class="il" src="fx/bfly-l.webp" alt=""><img class="ir" src="fx/bfly-r.webp" alt=""><img src="fx/bfly-b.webp" alt=""></div>';
-          const hue=[0,190,280,120,330][i%5]; if(hue) el.querySelector('.bfi').style.filter=`hue-rotate(${hue}deg) saturate(1.15)`; }
+          const TINT={pink:0,blue:190,purple:280,mint:120,gold:330}; const hue=a.tint==='rainbow'?[0,190,280,120,330][i%5]:(TINT[a.tint]||0); if(hue) el.querySelector('.bfi').style.filter=`hue-rotate(${hue}deg) saturate(1.15)`; }
         el.style.setProperty('--g',c[3]); el.style.setProperty('--fs',(0.22+Math.random()*0.16)+'s');
         const size=0.45+Math.random()*0.75; fx.appendChild(el);
         // บินจากขอบล่าง/ด้านข้าง วนเป็นเส้นโค้งสุ่ม แล้วลอยออกนอกจอ

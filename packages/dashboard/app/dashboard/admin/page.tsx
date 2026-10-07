@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Activity, BarChart3, CreditCard, Download, Gift, History, KeyRound, Radio, RefreshCw, Search, Settings2, Users } from 'lucide-react';
 import { AdminUserDetail } from '@/components/AdminUserDetail';
+import { WIDGET_LABELS } from '@/components/Pricing';
 import { Alert, Badge, Button, Card, Input, PageHeader, Spinner } from '@/components/ui';
 import { api, getToken } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -22,6 +23,7 @@ interface Reports {
   plans: { pro: number; trial: number; free: number; total: number };
   revenueByMonth: { month: string; baht: number }[];
   topReferrers: { email: string; tiktok: string | null; referred: number }[];
+  usage?: { widgetUse: Record<string, number>; actionUse: Record<string, number>; triggerUse: Record<string, number>; topGifts: [string, number][]; rules: number; usersWithRules: number };
 }
 interface Room {
   username: string; connected: boolean; widgets: number; owners: number; diamonds: number; gifts: number; likes: number; viewers: number; topGifter: string | null;
@@ -166,8 +168,24 @@ export default function AdminPage() {
       {tab === 'reports' && (!rep ? <Spinner /> : (() => {
         const maxN = Math.max(1, ...rep.signupsByDay.map((x) => x.n)), maxB = Math.max(1, ...rep.revenueByMonth.map((x) => x.baht));
         const P = rep.plans, pct = (n: number) => (P.total ? Math.round((n / P.total) * 100) : 0);
+        const U = rep.usage, bars = (o: Record<string, number>, label: (k: string) => string) => {
+          const e = Object.entries(o).sort((a, b) => b[1] - a[1]), m = Math.max(1, ...e.map((x) => x[1]));
+          return <ul className="space-y-1.5">{e.map(([k, n]) => <li key={k} className="flex items-center gap-2 text-xs"><span className="w-36 shrink-0 truncate" title={k}>{label(k)}</span><span className="h-2 rounded-full bg-pink/70" style={{ width: `${(n / m) * 60}%` }} /><span className="text-muted">{n}</span></li>)}</ul>;
+        };
         return (
           <div className="space-y-4">
+            {U && (
+              <Card>
+                <h2 className="mb-1 font-medium">ลูกค้าใช้ฟีเจอร์อะไรบ้าง</h2>
+                <p className="mb-3 text-xs text-muted">กฎ Actions ทั้งหมด {U.rules} ข้อ จาก {U.usersWithRules} คน · กดชื่อลูกค้าในแท็บ “ลูกค้า” เพื่อดูการตั้งค่ารายคน</p>
+                <div className="grid gap-5 md:grid-cols-2">
+                  <div><h3 className="mb-2 text-sm font-semibold">วิดเจ็ตที่ปรับตั้งค่า (คน)</h3>{bars(U.widgetUse, (k) => WIDGET_LABELS[k] ?? k)}</div>
+                  <div><h3 className="mb-2 text-sm font-semibold">กฎ Actions แยกตามสิ่งที่ทำ</h3>{bars(U.actionUse, (k) => ({ sound: '🔊 เล่นเสียง', tarot: '🔮 ไพ่ทาโร่', sign: '💡 ป้ายไฟ', effect: '🦋 ผีเสื้อ', text: '✏️ ข้อความ', image: '🖼️ รูป', video: '🎬 วิดีโอ' } as Record<string, string>)[k] ?? k)}</div>
+                  <div><h3 className="mb-2 text-sm font-semibold">เงื่อนไขที่ใช้</h3>{bars(U.triggerUse, (k) => ({ gift: '🎁 กิฟต์', follow: '➕ ติดตาม', share: '🔁 แชร์', like: '❤️ ไลก์', chat: '💬 แชท' } as Record<string, string>)[k] ?? k)}</div>
+                  <div><h3 className="mb-2 text-sm font-semibold">กิฟต์ที่ตั้งกฎมากที่สุด</h3>{bars(Object.fromEntries(U.topGifts), (k) => k)}</div>
+                </div>
+              </Card>
+            )}
             <Card>
               <h2 className="mb-3 font-medium">ผู้สมัครรายวัน (30 วัน) · รวม {rep.signupsByDay.reduce((a, x) => a + x.n, 0).toLocaleString('th-TH')} คน</h2>
               <div className="flex h-40 items-end gap-1">

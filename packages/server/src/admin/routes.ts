@@ -10,6 +10,7 @@ import { grantDays } from '../referrals/routes.js';
 import { getHub } from '../realtime/hub.js';
 import { connStats } from '../realtime/connstats.js';
 import { listLives } from '../realtime/lives.js';
+import { listSounds } from '../media/routes.js';
 import { audit, listAudit, isSuspended, setSuspended, suspendedInfo } from './store.js';
 import { settings, updateSettings, DEFAULTS, LIMITS, type SystemSettings } from '../settings/index.js';
 
@@ -115,7 +116,19 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
     for (const r of refs) { const by = (r.settings as { by?: string } | null)?.by; if (by) refCount[by] = (refCount[by] ?? 0) + 1; }
     const topIds = Object.entries(refCount).sort((a, b) => b[1] - a[1]).slice(0, 10);
     const topUsers = await prisma.user.findMany({ where: { id: { in: topIds.map(([id]) => id) } }, select: { id: true, email: true, tiktokUsername: true } });
+    // ลูกค้าใช้ฟีเจอร์อะไรบ้าง: ตั้งค่าวิดเจ็ตไหน (กี่คน) + กฎ Actions แต่ละแบบ
+    const cfgs = await prisma.widgetConfig.findMany({ where: { NOT: { type: { startsWith: '_' } } }, select: { type: true } });
+    const widgetUse: Record<string, number> = {};
+    for (const c of cfgs) widgetUse[c.type] = (widgetUse[c.type] ?? 0) + 1;
+    const rules = await prisma.actionRule.findMany({ select: { action: true, trigger: true, userId: true, enabled: true } });
+    const actionUse: Record<string, number> = {}, triggerUse: Record<string, number> = {}, giftUse: Record<string, number> = {};
+    for (const r of rules) {
+      const a = (r.action as { type?: string } | null)?.type ?? '?', t = r.trigger as { event?: string; giftName?: string } | null;
+      actionUse[a] = (actionUse[a] ?? 0) + 1; if (t?.event) triggerUse[t.event] = (triggerUse[t.event] ?? 0) + 1;
+      if (t?.giftName) giftUse[t.giftName] = (giftUse[t.giftName] ?? 0) + 1;
+    }
     return {
+      usage: { widgetUse, actionUse, triggerUse, topGifts: Object.entries(giftUse).sort((a, b) => b[1] - a[1]).slice(0, 10), rules: rules.length, usersWithRules: new Set(rules.map((r) => r.userId)).size },
       signupsByDay: Object.entries(byDay).map(([day, n]) => ({ day, n })),
       plans: { pro, trial, free: Math.max(0, total - pro - trial), total },
       revenueByMonth: Object.entries(revenue).sort().map(([month, baht]) => ({ month, baht })),
@@ -162,7 +175,7 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
         payments: { orderBy: { createdAt: 'desc' }, take: 20, select: { id: true, provider: true, amountCents: true, currency: true, status: true, createdAt: true } },
         overlayTokens: { orderBy: { createdAt: 'desc' }, select: { id: true, label: true, revoked: true, createdAt: true } },
         actionRules: { orderBy: { createdAt: 'desc' }, select: { id: true, name: true, enabled: true, trigger: true, action: true } },
-        widgetConfigs: { select: { type: true, updatedAt: true } } },
+        widgetConfigs: { select: { type: true, updatedAt: true, settings: true } } },
     });
     if (!u) return reply.code(404).send({ error: 'ไม่พบผู้ใช้' });
     const ent = await getEntitlements(id);
@@ -176,6 +189,7 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
       suspended: suspendedInfo(id),
       live: room ? { connected: room.connected, viewers: room.viewers, diamonds: room.diamonds, widgets: room.widgets } : null,
       webOpen: getHub()?.webOpen(id) ?? false,
+      sounds: listSounds(id),
       lives,
     };
   });

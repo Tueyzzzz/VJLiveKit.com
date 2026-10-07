@@ -20,6 +20,8 @@ const MIME: Record<string, string> = { mp3: 'audio/mpeg', wav: 'audio/wav', ogg:
 interface SoundFile { id: string; name: string; file: string; size: number; createdAt: string }
 const dirOf = (userId: string) => path.join(ROOT, userId.replace(/[^\w-]/g, ''));
 const indexOf = (userId: string) => path.join(dirOf(userId), 'index.json');
+/** รายการเสียงที่อัปโหลดของผู้ใช้ (หน้าแอดมินใช้ด้วย) */
+export function listSounds(userId: string) { return list(userId).map((f) => ({ id: f.id, name: f.name, size: f.size, url: urlOf(userId, f) })); }
 function list(userId: string): SoundFile[] {
   try { return JSON.parse(fs.readFileSync(indexOf(userId), 'utf8')) as SoundFile[]; } catch { return []; }
 }

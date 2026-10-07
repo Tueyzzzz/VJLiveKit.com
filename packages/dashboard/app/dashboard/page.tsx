@@ -49,8 +49,6 @@ export default function OverviewPage() {
     <div>
       <PageHeader title={t('สวัสดี {name} 👋', { name: user.displayName ?? '' })} description={t('ตั้งค่าครั้งเดียว วิดเจ็ตทุกตัวจะเชื่อมกับไลฟ์ของคุณอัตโนมัติ')} />
 
-      <ActiveRules />
-
       <div className="grid gap-5 lg:grid-cols-5">
         <Card className="lg:col-span-3">
           <h2 className="mb-4 font-medium">{t('โปรไฟล์')}</h2>
@@ -101,6 +99,9 @@ export default function OverviewPage() {
           <ChangePassword />
         </div>
       </div>
+
+      {/* โปรไฟล์อยู่บนสุด (ต้องตั้งชื่อ TikTok ก่อนใช้งาน) → กฎ Actions ตามมาด้านล่าง */}
+      <div className="mt-5"><ActiveRules /></div>
     </div>
   );
 }

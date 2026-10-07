@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Ban, Gift, KeyRound, Link2Off, Shield, X, XCircle } from 'lucide-react';
 import { api } from '@/lib/api';
+import { WIDGET_SETTINGS } from '@/lib/widgetSettings';
+import { WIDGET_LABELS } from './Pricing';
+import { SFX, playSound } from '@/lib/sounds';
 import { Alert, Badge, Button, Card, Spinner } from './ui';
 
 interface Detail {
@@ -11,16 +14,34 @@ interface Detail {
     subscription: { status: string; provider: string | null; currentPeriodEnd: string | null; cancelAtPeriodEnd: boolean; plan: { code: string } } | null;
     payments: { id: string; provider: string; amountCents: number; currency: string; status: string; createdAt: string }[];
     overlayTokens: { id: string; label: string | null; revoked: boolean; createdAt: string }[];
-    actionRules: { id: string; name: string; enabled: boolean; trigger: { event: string; giftName?: string; minDiamonds?: number; keyword?: string }; action: { type: string } }[];
-    widgetConfigs: { type: string; updatedAt: string }[];
+    actionRules: { id: string; name: string; enabled: boolean; trigger: { event: string; giftName?: string; minDiamonds?: number; keyword?: string }; action: { type: string; sound?: string; url?: string; text?: string; cards?: number; signStyle?: string; volume?: number; key?: string; repeat?: number } }[];
+    widgetConfigs: { type: string; updatedAt: string; settings: Record<string, unknown> | null }[];
   };
   entitlements: { plan: string; trialEndsAt?: string; widgets: string[] };
   trialEnd: string; admin: boolean; adminByEnv: boolean;
   suspended: { at: string; reason: string } | null;
   live: { connected: boolean; viewers: number; diamonds: number; widgets: number } | null;
   webOpen: boolean;
+  sounds: { id: string; name: string; size: number; url: string }[];
   lives: { roomId: string; startedAt: string; lastSeenAt: string; diamonds: number; peakViewers: number }[];
 }
+
+/** ค่าตั้งของวิดเจ็ต → ข้อความอ่านง่าย (ใช้ชื่อช่องจากหน้าตั้งค่า) */
+function describeSettings(type: string, s: Record<string, unknown> | null): [string, string][] {
+  if (!s) return [];
+  const fields = new Map((WIDGET_SETTINGS[type]?.sections ?? []).flatMap((sec) => sec.fields).map((f) => [f.key, f]));
+  return Object.entries(s).filter(([k]) => k !== 'resetAt').map(([k, v]) => {
+    const f = fields.get(k);
+    let val = typeof v === 'boolean' ? (v ? 'เปิด' : 'ปิด') : typeof v === 'object' ? JSON.stringify(v) : String(v);
+    if (f && f.type === 'select') val = f.options.find((o) => o[0] === String(v))?.[1] ?? val;
+    if (f && f.type === 'swatch') val = f.options.find((o) => o[0] === Number(v))?.[2] ?? val;
+    if (f && f.type === 'menuItems') { try { const j = JSON.parse(String(v)) as { hide?: string[]; icons?: Record<string, string> }; val = `ซ่อน ${j.hide?.length ?? 0} ข้อ · เปลี่ยนรูป ${Object.keys(j.icons ?? {}).length} ข้อ`; } catch { /* ignore */ } }
+    return [f?.label ?? k, val.length > 120 ? val.slice(0, 120) + '…' : val];
+  });
+}
+const actionText = (a: Detail['user']['actionRules'][number]['action']) =>
+  a.type === 'sound' ? `🔊 ${a.sound ? (SFX.find(([id]) => id === a.sound)?.[1] ?? a.sound) : 'ไฟล์ของลูกค้า'}${a.volume != null ? ` · ${Math.round(a.volume * 100)}%` : ''}${a.key ? ` · ปุ่มลัด ${a.key}` : ''}`
+    : a.type === 'tarot' ? `🔮 ไพ่ ${a.cards ?? 1} ใบ` : a.type === 'sign' ? `💡 ป้ายไฟ ${a.signStyle ?? 'led'}` : a.type === 'effect' ? '🦋 ผีเสื้อ' : a.type;
 
 const d = (s?: string | null) => (s ? new Date(s).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }) : '-');
 const PLAN: Record<string, string> = { pro: 'Pro', trial: 'ทดลองฟรี', free: 'Free' };
@@ -82,7 +103,7 @@ export function AdminUserDetail({ id, onClose }: { id: string; onClose: () => vo
                 <dt className="text-muted">สมัครเมื่อ</dt><dd>{d(x.user.createdAt)}</dd>
                 <dt className="text-muted">ทดลองฟรีถึง</dt><dd>{d(x.trialEnd)}</dd>
                 <dt className="text-muted">Pro</dt><dd>{x.user.subscription ? `${x.user.subscription.status} · ${x.user.subscription.provider ?? 'แอดมินแจก'} · ถึง ${d(x.user.subscription.currentPeriodEnd)}` : '-'}</dd>
-                <dt className="text-muted">วิดเจ็ตที่ตั้งค่า</dt><dd>{x.user.widgetConfigs.map((w) => w.type).join(', ') || '-'}</dd>
+                <dt className="text-muted">วิดเจ็ตที่ตั้งค่า</dt><dd>{x.user.widgetConfigs.length} ตัว (ดูรายละเอียดด้านล่าง)</dd>
                 <dt className="text-muted">ลิงก์วิดเจ็ต</dt><dd>{x.user.overlayTokens.filter((t) => !t.revoked).length} ชุดใช้งาน · {x.user.overlayTokens.filter((t) => t.revoked).length} ชุดเพิกถอน</dd>
               </dl>
             </Card>
@@ -91,7 +112,33 @@ export function AdminUserDetail({ id, onClose }: { id: string; onClose: () => vo
               <h3 className="mb-2 font-semibold">กฎ Actions ({x.user.actionRules.length})</h3>
               {x.user.actionRules.length === 0 ? <p className="text-muted">ยังไม่มีกฎ</p> : (
                 <ul className="space-y-1">{x.user.actionRules.map((r) => (
-                  <li key={r.id} className={r.enabled ? '' : 'text-muted line-through'}>{r.name} <span className="text-xs text-muted">— {r.trigger.event}{r.trigger.giftName ? ` ${r.trigger.giftName}` : ''}{r.trigger.minDiamonds ? ` ≥${r.trigger.minDiamonds}💎` : ''}{r.trigger.keyword ? ` “${r.trigger.keyword}”` : ''} → {r.action.type}</span></li>
+                  <li key={r.id} className={r.enabled ? '' : 'text-muted line-through'}>{r.name} <span className="text-xs text-muted">— {r.trigger.event}{r.trigger.giftName ? ` ${r.trigger.giftName}` : ''}{r.trigger.minDiamonds ? ` ≥${r.trigger.minDiamonds}💎` : ''}{r.trigger.keyword ? ` “${r.trigger.keyword}”` : ''} → {actionText(r.action)}{r.action.repeat && r.action.repeat > 1 ? ` ×${r.action.repeat}` : ''}{r.action.text ? ` “${r.action.text}”` : ''}</span></li>
+                ))}</ul>
+              )}
+            </Card>
+
+            <Card className="p-4 text-sm">
+              <h3 className="mb-2 font-semibold">การตั้งค่าวิดเจ็ต ({x.user.widgetConfigs.length})</h3>
+              {x.user.widgetConfigs.length === 0 ? <p className="text-muted">ยังไม่ได้ปรับตั้งค่าวิดเจ็ตไหนเลย (ใช้ค่าเริ่มต้น)</p> : (
+                <div className="space-y-2">{x.user.widgetConfigs.map((w) => {
+                  const rows = describeSettings(w.type, w.settings);
+                  return (
+                    <details key={w.type} className="rounded-xl border border-line px-3 py-2">
+                      <summary className="cursor-pointer font-medium">{WIDGET_LABELS[w.type] ?? w.type} <span className="text-xs font-normal text-muted">· {rows.length} ค่า · แก้ล่าสุด {d(w.updatedAt)}</span></summary>
+                      <dl className="mt-2 grid grid-cols-[minmax(0,10rem)_1fr] gap-x-3 gap-y-1 text-xs">
+                        {rows.map(([k, v]) => <><dt key={k + 'k'} className="truncate text-muted" title={k}>{k}</dt><dd key={k + 'v'} className="break-words">{v}</dd></>)}
+                      </dl>
+                    </details>
+                  );
+                })}</div>
+              )}
+            </Card>
+
+            <Card className="p-4 text-sm">
+              <h3 className="mb-2 font-semibold">เสียงที่อัปโหลด ({x.sounds.length})</h3>
+              {x.sounds.length === 0 ? <p className="text-muted">ยังไม่มี</p> : (
+                <ul className="space-y-1">{x.sounds.map((s) => (
+                  <li key={s.id} className="flex items-center gap-2"><button onClick={() => void playSound({ url: s.url })} className="text-pink hover:underline">▶</button> {s.name} <span className="text-xs text-muted">{(s.size / 1048576).toFixed(1)} MB</span></li>
                 ))}</ul>
               )}
             </Card>

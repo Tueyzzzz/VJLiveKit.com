@@ -531,4 +531,5 @@ export const EN_WIDGETS: Record<string, string> = {
   "🎁 รูปของขวัญ + คำอธิบายใต้รูป (ไม่มีพื้นหลัง)": "🎁 Gift image + caption below (no background)",
   "▭ แถบ: รูปซ้าย + \"ส่ง … เหรียญ\"": "▭ Bar: image left + \"Send … coins\"",
   "จอ 4K: ตั้ง Browser Source ใน OBS เป็น 3840×2160 แล้วตั้งขนาด 2× — ตัวหนังสือและรูปคมชัด": "4K screen: set the OBS Browser Source to 3840×2160 and size 2× — crisp text and images",
+  "แสดงหัวข้อ": "Show title",
 };

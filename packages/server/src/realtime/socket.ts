@@ -139,7 +139,7 @@ export function setupRealtime(httpServer: HttpServer): RoomHub {
         if (!socket.disconnected) socket.emit('status', { type: 'error', fatal: true, message: '⏸ เปิดหน้าเว็บ vjlivekit.com ค้างไว้ระหว่างไลฟ์ วิดเจ็ตถึงจะทำงาน' });
       };
       if (!ownerId) { on(); socket.once('disconnect', off); return; }
-      const unwatch = hub.watchPresence(ownerId, { on, off });
+      const unwatch = hub.watchPresence(ownerId, { on, off, room });
       socket.once('disconnect', () => { unwatch(); off(); });
       if (hub.isPresent(ownerId)) on(); else off_notice();
       function off_notice() { socket.emit('status', { type: 'error', fatal: true, message: '⏸ เปิดหน้าเว็บ vjlivekit.com ค้างไว้ระหว่างไลฟ์ วิดเจ็ตถึงจะทำงาน' }); }

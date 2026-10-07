@@ -41,6 +41,7 @@
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="js/overlay-client.js"></script>
+  <script src="js/collect-store.js"></script>
   <script src="js/juice.js"></script>
   <script>
   /*
@@ -896,10 +897,12 @@
     function restore() {
       if (P('reset', '0') === '1') { try { localStorage.removeItem(KEY); } catch { /* ignore */ } return; }
       try {
-        const s = JSON.parse(localStorage.getItem(KEY) || 'null');
-        if (!s) return;
+        const s = JSON.parse(localStorage.getItem(KEY) || 'null') || { g: [] };
         ranking = s.r || {}; totalCoins = s.t || 0;
-        const list = (s.g || []).slice(-MAX); restoreUntil = performance.now() + list.length * 8 + 300;
+        let list = (s.g || []).slice(-MAX);
+        // กองกลาง (ใช้ร่วมทุกแบบ) มาก่อน — เปลี่ยนแบบแล้วของขวัญไม่หาย
+        if (window.VJLCollect) { VJLCollect.seed(s.g || []); if (VJLCollect.has()) list = VJLCollect.gifts(MAX).map((g) => ({ img: g.u, e: g.em || VJLCollect.emoji(g.name, '🎁'), d: g.d })); }
+        restoreUntil = performance.now() + list.length * 8 + 300;
         list.forEach((g, i) => setTimeout(() => addBody(g, false), i * 8));
       } catch { /* ignore */ }
     }
@@ -910,6 +913,7 @@
       if (unit < MIN_COINS) return;
       const g = { img: e.giftImage || '', e: EMOJI[e.giftName] || '🎁', d: unit };
       const n = Math.min(count, 30);
+      if (window.VJLCollect) VJLCollect.record(e, n);
       for (let i = 0; i < n; i++) setTimeout(() => { addBody(g); save(); }, i * 110);
       const u = e.user || {}, id = u.uniqueId || u.nickname || '?';
       const row = ranking[id] || { n: u.nickname || id, a: u.avatar || '', c: 0 };

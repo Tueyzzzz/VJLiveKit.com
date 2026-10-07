@@ -24,6 +24,7 @@
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="js/overlay-client.js"></script>
+  <script src="js/collect-store.js"></script>
   <script src="js/juice.js"></script>
   <script>
   /*
@@ -113,7 +114,10 @@
     try {
       if (P('reset', '0') === '1') localStorage.removeItem(KEY);
       const s = JSON.parse(localStorage.getItem(KEY) || 'null');
-      if (s) (s.g || []).slice(-MAX).forEach((g) => addGift(g, -1e6));
+      let list = s ? (s.g || []) : [];
+      // กองกลาง (ใช้ร่วมทุกแบบ) มาก่อน — เปลี่ยนแบบแล้วของขวัญไม่หาย
+      if (window.VJLCollect) { VJLCollect.seed(list); if (VJLCollect.has()) list = VJLCollect.gifts(MAX).map((g) => ({ u: g.u, e: g.em || VJLCollect.emoji(g.name, '🎁'), d: g.d })); }
+      list.slice(-MAX).forEach((g) => addGift(g, -1e6));
     } catch { /* ignore */ }
 
     // ---- วาด ----
@@ -197,6 +201,7 @@
       if (unit < MIN_COINS) return;
       const g = { u: e.giftImage || '', e: EMOJI[e.giftName] || '🎁', d: unit };
       const n = unit >= 1000 ? 1 : Math.min(count, 25);
+      if (window.VJLCollect) VJLCollect.record(e, n);
       for (let i = 0; i < n; i++) setTimeout(() => { addGift(g, performance.now()); save(); }, i * 140);
       if (CAR.music && fx.notes) fx.notes(0, CAR_Y + CAR.y + 20, unit >= 100 ? 5 : 2);
       showAlert(e, count);

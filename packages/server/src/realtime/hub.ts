@@ -73,7 +73,7 @@ export class RoomHub {
   // ---- ล็อกแบบ TikFinity: วิดเจ็ตทำงานเฉพาะตอนวีเจเปิดหน้าเว็บ (แดชบอร์ด) ค้างไว้ ----
   // ประหยัดเซิร์ฟเวอร์: ไม่ต่อ TikTok ให้ลิงก์ที่ถูกทิ้งไว้ใน OBS ตอนวีเจไม่ได้ใช้งาน
   private presence = new Map<string, number>();
-  private waiting = new Map<string, Set<{ on: () => void; off: () => void }>>();
+  private waiting = new Map<string, Set<{ on: () => void; off: () => void; room?: string }>>();
   private graceTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private get PRESENCE_GRACE_MS() { return settings().presenceGraceSec * 1000; } // รีเฟรช/เปลี่ยนหน้าเว็บ ไม่ทำให้จอดับ (ปรับได้)
 
@@ -95,11 +95,24 @@ export class RoomHub {
     this.presence.delete(ownerId);
     this.graceTimers.set(ownerId, setTimeout(() => {
       this.graceTimers.delete(ownerId);
-      if ((this.presence.get(ownerId) ?? 0) === 0 && settings().presenceLock) for (const w of this.waiting.get(ownerId) ?? []) w.off();
+      this.pauseIdle(ownerId);
     }, this.PRESENCE_GRACE_MS));
   }
+  /**
+   * ปิดเว็บแล้ว → พักเฉพาะวิดเจ็ตที่ "ไม่ได้ไลฟ์อยู่" · ถ้ากำลังไลฟ์ ให้ทำงานต่อจนไลฟ์จบ (ของขวัญห้ามหายกลางไลฟ์)
+   * แล้วเช็กซ้ำทุก 2 นาที จนกว่าจะเปิดเว็บกลับมา หรือไลฟ์จบแล้วค่อยพัก
+   */
+  private pauseIdle(ownerId: string): void {
+    if ((this.presence.get(ownerId) ?? 0) > 0 || !settings().presenceLock) return;
+    let busy = false;
+    for (const w of this.waiting.get(ownerId) ?? []) {
+      if (w.room && this.rooms.get(normalize(w.room))?.room.getState().connected) busy = true;
+      else w.off();
+    }
+    if (busy) this.graceTimers.set(ownerId, setTimeout(() => { this.graceTimers.delete(ownerId); this.pauseIdle(ownerId); }, 2 * 60_000));
+  }
   /** วิดเจ็ตลงทะเบียนรอ — on() เมื่อแดชบอร์ดเปิด, off() เมื่อปิด · คืนฟังก์ชันยกเลิก */
-  watchPresence(ownerId: string, w: { on: () => void; off: () => void }): () => void {
+  watchPresence(ownerId: string, w: { on: () => void; off: () => void; room?: string }): () => void {
     let set = this.waiting.get(ownerId); if (!set) this.waiting.set(ownerId, (set = new Set()));
     set.add(w);
     return () => { set!.delete(w); if (!set!.size) this.waiting.delete(ownerId); };

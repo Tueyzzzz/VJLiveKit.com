@@ -27,6 +27,7 @@
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="js/overlay-client.js"></script>
+  <script src="js/collect-store.js"></script>
   <script src="js/juice.js"></script>
   <script>
   /*
@@ -425,8 +426,11 @@
       try {
         const raw = JSON.parse(localStorage.getItem(KEY) || '[]'), list = Array.isArray(raw) ? raw : (raw.g || []);
         if (!Array.isArray(raw)) { diamonds = raw.d || 0; roomId = raw.room || null; }
-        const keep = list.slice(-MAX); restoreUntil = performance.now() + keep.length * 6 + 300;
-        keep.forEach((g, i) => setTimeout(() => addBody(g, 'restore'), i * 6)); return list.length > 0;
+        let keep = list.slice(-MAX);
+        // กองกลาง (ใช้ร่วมทุกแบบ) มาก่อน — เปลี่ยนแบบแล้วของขวัญไม่หาย
+        if (window.VJLCollect) { VJLCollect.seed(list); if (VJLCollect.has()) keep = VJLCollect.gifts(MAX).map((g) => ({ u: g.u, e: g.em || VJLCollect.emoji(g.name, '🎁'), d: g.d })); }
+        restoreUntil = performance.now() + keep.length * 6 + 300;
+        keep.forEach((g, i) => setTimeout(() => addBody(g, 'restore'), i * 6)); return keep.length > 0;
       }
       catch { return false; }
     }
@@ -439,6 +443,7 @@
       if (unit >= 1000) fx.confetti((SCREEN.x0 + SCREEN.x1) / 2, M.y0 - 20, 50);
       screenImg = giftImg(e.giftImage); screenEmoji = EMOJI[e.giftName] || '🎁';
       const g = { u: e.giftImage || '', e: screenEmoji, d: unit };
+      if (window.VJLCollect) VJLCollect.record(e, Math.min(count, 30));
       for (let i = 0; i < Math.min(count, 30); i++) setTimeout(() => { addBody(g); save(); }, i * 160);
       if (SKIN && SKIN.music && fx.notes) fx.notes((SCREEN.x0 + SCREEN.x1) / 2, SCREEN.y0, unit >= 100 ? 6 : 3); // ตู้คาราโอเกะ: โน้ตลอยจากจอ
     }

@@ -30,6 +30,7 @@
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="js/overlay-client.js"></script>
+  <script src="js/collect-store.js"></script>
   <script src="js/juice.js"></script>
   <script>
   /*
@@ -438,7 +439,11 @@
     try {
       if (P('reset', '0') === '1') localStorage.removeItem(KEY);
       const s = JSON.parse(localStorage.getItem(KEY) || 'null');
-      if (s) { ranking = s.r || {}; (s.f || []).forEach((g) => addFlower(g, -1e6)); }
+      let list = s ? (s.f || []) : [];
+      if (s) ranking = s.r || {};
+      // กองกลาง (ใช้ร่วมทุกแบบ) มาก่อน — เปลี่ยนแบบแล้วของขวัญไม่หาย
+      if (window.VJLCollect) { VJLCollect.seed(list); if (VJLCollect.has()) list = VJLCollect.gifts(400).map((g) => ({ u: g.u, e: g.em || VJLCollect.emoji(g.name, '🌹'), d: g.d, big: g.d >= BIG ? 1 : 0 })); }
+      list.forEach((g) => addFlower(g, -1e6));
     } catch { /* ignore */ }
 
     const EMOJI = { Rose: '🌹', 'Finger Heart': '🫰', Perfume: '🧴', Galaxy: '🌌', Lion: '🦁', Universe: '🪐', Heart: '❤️', TikTok: '🎵' };
@@ -447,6 +452,7 @@
       if (unit < MIN_COINS) return;
       const g = { u: e.giftImage || '', e: EMOJI[e.giftName] || '🌹', d: unit, big: unit >= BIG ? 1 : 0 };
       const n = g.big ? 1 : Math.min(count, 40);
+      if (window.VJLCollect) VJLCollect.record(e, n);
       for (let i = 0; i < n; i++) setTimeout(() => { addFlower(g, performance.now()); save(); }, i * 120);
       const u = e.user || {}, id = u.uniqueId || u.nickname || '?';
       const row = ranking[id] || { n: u.nickname || id, a: u.avatar || '', c: 0 };

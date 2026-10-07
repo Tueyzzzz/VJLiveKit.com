@@ -27,6 +27,8 @@ window.Overlay = (function () {
     if (cfg.resetAt && localStorage.getItem(RESET_KEY) !== String(cfg.resetAt)) {
       const prefix = STORE_PREFIX[widgetName];
       if (prefix) Object.keys(localStorage).filter((k) => k.startsWith(prefix)).forEach((k) => localStorage.removeItem(k));
+      // ล้างกองของขวัญ = ล้างกองกลางที่ทุกแบบใช้ร่วมกันด้วย
+      if (['giftjar', 'belly', 'aquarium', 'spacedome', 'snowglobe', 'vehicle', 'garden', 'tree', 'coinjar'].includes(widgetName)) Object.keys(localStorage).filter((k) => k.startsWith('vjl-collect:')).forEach((k) => localStorage.removeItem(k));
       localStorage.setItem(RESET_KEY, String(cfg.resetAt));
     }
   } catch { /* storage ปิด */ }

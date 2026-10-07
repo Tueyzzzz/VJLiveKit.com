@@ -101,8 +101,9 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
     const now = Date.now(), since = new Date(now - 30 * DAY);
     const recent = await prisma.user.findMany({ where: { createdAt: { gte: since } }, select: { createdAt: true } });
     const byDay: Record<string, number> = {};
-    for (let i = 29; i >= 0; i--) byDay[new Date(now - i * DAY).toISOString().slice(0, 10)] = 0;
-    for (const u of recent) { const k = u.createdAt.toISOString().slice(0, 10); if (k in byDay) byDay[k]++; }
+    const thDay = (ms: number) => new Date(ms + 7 * 3_600_000).toISOString().slice(0, 10); // นับวันตามเวลาไทย
+    for (let i = 29; i >= 0; i--) byDay[thDay(now - i * DAY)] = 0;
+    for (const u of recent) { const k = thDay(u.createdAt.getTime()); if (k in byDay) byDay[k]++; }
     const [total, pro, trial] = await Promise.all([
       prisma.user.count(),
       prisma.subscription.count({ where: { status: 'ACTIVE', currentPeriodEnd: { gt: new Date() } } }),

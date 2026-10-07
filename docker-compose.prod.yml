@@ -7,6 +7,8 @@ services:
     image: ${APP_IMAGE:-ghcr.io/tueyzzzz/vjlivekit.com:latest}
     env_file: .env
     environment:
+      # เวลาไทย (log / Date ในเครื่อง) — DB เก็บเป็น UTC เหมือนเดิม ไม่ต้องเปลี่ยน
+      - TZ=Asia/Bangkok
       # จำกัด heap ของ Node ให้พอดีเครื่อง 1GB
       - NODE_OPTIONS=--max-old-space-size=384
       - SNAPSHOT_DIR=/app/data/live
@@ -48,6 +50,7 @@ services:
       - "443:443/udp"
     environment:
       - DOMAIN=${DOMAIN}
+      - TZ=Asia/Bangkok
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data

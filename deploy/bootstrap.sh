@@ -21,6 +21,12 @@ if ! swapon --show | grep -q .; then
   grep -q '^/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
 fi
 
+# ---------- 1.5) เวลาเครื่องเป็นเวลาไทย (log ของระบบ/cron) ----------
+if command -v timedatectl >/dev/null 2>&1 && [ "$(timedatectl show -p Timezone --value 2>/dev/null)" != "Asia/Bangkok" ]; then
+  log "ตั้งเวลาเครื่องเป็น Asia/Bangkok"
+  timedatectl set-timezone Asia/Bangkok || true
+fi
+
 # ---------- 2) Docker ----------
 if ! command -v docker >/dev/null 2>&1; then
   log "ติดตั้ง Docker"

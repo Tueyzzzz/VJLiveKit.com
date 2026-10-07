@@ -28,6 +28,8 @@ export default function BeatPadPage() {
   const [edit, setEdit] = useState<number | null>(null);
   const [hit, setHit] = useState<number | null>(null);
   const [here, setHere] = useState(false); // เล่นที่เครื่องนี้ด้วย
+  const [narrow, setNarrow] = useState(false); // มือถือ: ไม่เกิน 3 คอลัมน์ ปุ่มจะได้ใหญ่พอกด
+  useEffect(() => { const f = () => setNarrow(innerWidth < 640); f(); addEventListener('resize', f); return () => removeEventListener('resize', f); }, []);
   const [note, setNote] = useState<{ tone: 'error' | 'info'; text: string } | null>(null);
   const limit = entitlements?.plan === 'free' ? FREE_PADS : MAX_PADS;
 
@@ -87,7 +89,7 @@ export default function BeatPadPage() {
           </label>
         </div>
 
-        <div className="grid gap-2.5 sm:gap-3" style={{ gridTemplateColumns: `repeat(${Math.min(board.cols, 4)}, minmax(0,1fr))` }}>
+        <div className="grid gap-2.5 sm:gap-3" style={{ gridTemplateColumns: `repeat(${Math.min(board.cols, narrow ? 3 : 4)}, minmax(0,1fr))` }}>
           {Array.from({ length: slots }, (_, i) => {
             const p = board.pads[i], locked = i >= limit;
             if (locked) return (
@@ -113,7 +115,7 @@ export default function BeatPadPage() {
                     {(p.key || i < 9) && <span className="mt-0.5 block text-[10px] text-white/70">{p.key ? p.key.toUpperCase() : i + 1}</span>}
                   </span>
                 </button>
-                <button onClick={() => setEdit(i)} aria-label={t('แก้ไข')} className="absolute bottom-1.5 right-1.5 grid size-7 place-items-center rounded-full bg-black/30 text-white/90 hover:bg-black/50 sm:size-8"><Pencil className="size-3.5" /></button>
+                <button onClick={() => setEdit(i)} aria-label={t('แก้ไข')} className="absolute right-1 top-1 grid size-6 place-items-center rounded-full bg-black/25 text-white/90 hover:bg-black/50 sm:right-1.5 sm:top-1.5 sm:size-8"><Pencil className="size-3 sm:size-3.5" /></button>
               </div>
             );
           })}

@@ -39,6 +39,44 @@
       tone(c, o, { f: 420, f2: 1250, t: 0.34, d: 0.32, type: 'triangle', v: 0.22 });      // ดึ๋ง ~
       [1568, 2093, 2637].forEach((f, i) => tone(c, o, { f, t: 0.6 + i * 0.07, d: 0.25, type: 'sine', v: 0.12 })); // วิ้ง ๆ
     }],
+    boom: ['💥 บูม! (Boom)', (c, o) => {                                  // เบสตูมหนัก ๆ แบบมีมดัง
+      tone(c, o, { f: 90, f2: 38, d: 1.6, type: 'sine', v: 0.9, a: 0.004 });
+      tone(c, o, { f: 180, f2: 60, d: 0.5, type: 'triangle', v: 0.35, a: 0.004 });
+      noise(c, o, { d: 0.12, v: 0.35, hp: 200, lp: 1800 });
+    }],
+    airhorn: ['📯 แตรลม (Airhorn)', (c, o) => {
+      for (const [t, d] of [[0, 0.22], [0.26, 0.22], [0.52, 0.7]]) [466, 470, 932].forEach((f) => tone(c, o, { f, t, d, type: 'sawtooth', v: 0.09, a: 0.01 }));
+    }],
+    sadtrombone: ['🎺 แป่วว (Sad trombone)', (c, o) => {
+      [[392, 0], [370, 0.42], [349, 0.84]].forEach(([f, t]) => tone(c, o, { f, t, d: 0.4, type: 'sawtooth', v: 0.1 }));
+      tone(c, o, { f: 330, f2: 300, t: 1.26, d: 1.1, type: 'sawtooth', v: 0.1 });
+    }],
+    crickets: ['🦗 จิ้งหรีด (เงียบกริบ)', (c, o) => {
+      for (let i = 0; i < 6; i++) for (let k = 0; k < 3; k++) tone(c, o, { f: 4400, t: i * 0.42 + k * 0.045, d: 0.035, type: 'sine', v: 0.08, a: 0.003 });
+    }],
+    scratch: ['💿 ขูดแผ่น (Record scratch)', (c, o) => {
+      noise(c, o, { d: 0.18, v: 0.5, hp: 900, lp: 5000 }); noise(c, o, { t: 0.2, d: 0.14, v: 0.45, hp: 600, lp: 3500 });
+      tone(c, o, { f: 300, f2: 900, d: 0.18, type: 'sawtooth', v: 0.06 }); tone(c, o, { f: 900, f2: 250, t: 0.2, d: 0.14, type: 'sawtooth', v: 0.06 });
+    }],
+    bonk: ['🔨 โป๊ก! (Bonk)', (c, o) => {
+      tone(c, o, { f: 900, f2: 300, d: 0.12, type: 'square', v: 0.18, a: 0.002 }); tone(c, o, { f: 220, f2: 140, d: 0.18, type: 'triangle', v: 0.35, a: 0.002 });
+    }],
+    correct: ['✅ ติ๊งต่อง (ถูกต้อง)', (c, o) => { tone(c, o, { f: 1319, d: 0.25, type: 'sine', v: 0.22 }); tone(c, o, { f: 1760, t: 0.14, d: 0.5, type: 'sine', v: 0.22 }); }],
+    wrong: ['❌ บิ๊บ (ผิด!)', (c, o) => { tone(c, o, { f: 150, d: 0.5, type: 'square', v: 0.14 }); tone(c, o, { f: 147, d: 0.5, type: 'square', v: 0.1 }); }],
+    drumroll: ['🥁 ตีกลองรัว', (c, o) => {
+      for (let i = 0; i < 28; i++) noise(c, o, { t: i * 0.055, d: 0.05, v: 0.12 + i * 0.008, hp: 150, lp: 2500 });
+      tone(c, o, { f: 120, f2: 60, t: 1.6, d: 0.3, v: 0.5 }); noise(c, o, { t: 1.6, d: 0.5, v: 0.3, hp: 3000 });
+    }],
+    suspense: ['😱 ตึ่ง ตึ่ง ตึ๊ง (ลุ้น)', (c, o) => {
+      [[196, 0, 0.3], [185, 0.35, 0.3], [175, 0.7, 1.4]].forEach(([f, t, d]) => { tone(c, o, { f, t, d, type: 'sawtooth', v: 0.12 }); tone(c, o, { f: f / 2, t, d, type: 'sine', v: 0.25 }); });
+    }],
+    tada: ['🎉 ทาด๊า!', (c, o) => { [[523, 0, 0.12], [659, 0.12, 0.12], [784, 0.24, 0.12], [1047, 0.36, 0.8]].forEach(([f, t, d]) => { tone(c, o, { f, t, d, type: 'square', v: 0.08 }); tone(c, o, { f: f * 1.5, t, d, type: 'sine', v: 0.05 }); }); }],
+    pew: ['🔫 ปิ้ว (เลเซอร์)', (c, o) => { tone(c, o, { f: 1800, f2: 200, d: 0.22, type: 'square', v: 0.12, a: 0.002 }); }],
+    kaching: ['💰 กริ๊งเงิน (Ka-ching)', (c, o) => {
+      noise(c, o, { d: 0.08, v: 0.3, hp: 2000 }); tone(c, o, { f: 2637, t: 0.08, d: 0.5, type: 'triangle', v: 0.14 }); tone(c, o, { f: 3520, t: 0.12, d: 0.6, type: 'sine', v: 0.1 });
+    }],
+    slideup: ['📈 หวีดขึ้น (Slide whistle)', (c, o) => tone(c, o, { f: 500, f2: 2000, d: 0.6, type: 'sine', v: 0.2 })],
+    slidedown: ['📉 หวีดลง (ร่วง)', (c, o) => tone(c, o, { f: 2000, f2: 300, d: 0.8, type: 'sine', v: 0.2 })],
     alarm: ['🚨 ไซเรน', (c, o) => { for (let i = 0; i < 3; i++) tone(c, o, { f: 700, f2: 1300, t: i * 0.4, d: 0.38, type: 'sawtooth', v: 0.08 }); }],
   };
 

@@ -4,6 +4,7 @@
 <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>LED Sign Overlay</title>
 <link rel="icon" href="favicon.svg" />
+<link rel="stylesheet" href="css/sign-styles.css" />
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Itim&family=Mali:wght@700&family=Kanit:wght@600&family=Mitr:wght@500&display=swap');
   html,body { margin:0; width:100%; height:100%; background:transparent; overflow:hidden; }
@@ -45,7 +46,7 @@
 </style>
 </head>
 <body>
-  <div id="wrap"><div class="board"><div class="bulbs" id="bulbs"></div><div class="track"><span class="txt" id="txt"></span></div></div></div>
+  <div id="wrap"><div class="board sb"><div class="bulbs" id="bulbs"></div><div class="track"><span class="txt stx" id="txt"></span></div></div></div>
   <script src="/socket.io/socket.io.js"></script>
   <script src="js/overlay-client.js"></script>
   <script>
@@ -57,10 +58,10 @@
     const P = (k, d) => Overlay.param(k, d);
     const num = (k, d, lo, hi) => Math.max(lo, Math.min(hi, parseFloat(P(k, d)) || parseFloat(d)));
     const wrap = document.getElementById('wrap'), txt = document.getElementById('txt'), bulbs = document.getElementById('bulbs');
-    const STYLE = ['led', 'neon', 'bulb', 'cute'].includes(P('style', 'led')) ? P('style', 'led') : 'led';
+    const STYLE = ['led', 'neon', 'bulb', 'cute', 'pixel', 'y2k', 'glass', 'surreal', 'boho', 'victorian', 'graffiti', 'future'].includes(P('style', 'led')) ? P('style', 'led') : 'led';
     const MODE = ['scroll', 'static', 'blink', 'pulse'].includes(P('mode', 'scroll')) ? P('mode', 'scroll') : 'scroll';
     const RAINBOW = ['1', 'true'].includes(String(P('rainbow', '0')));
-    document.body.className = [STYLE, MODE, RAINBOW ? 'rainbow' : '', STYLE === 'neon' ? 'flicker' : ''].join(' ');
+    document.body.className = [STYLE, 'st-' + STYLE, MODE, RAINBOW ? 'rainbow' : '', STYLE === 'neon' ? 'flicker' : ''].join(' ');
     wrap.classList.add(['top', 'center', 'bottom'].includes(P('pos', 'top')) ? P('pos', 'top') : 'top');
     const S = document.documentElement.style;
     const color = /^#[0-9a-f]{3,8}$/i.test(P('color', '#ff4fa3')) ? P('color', '#ff4fa3') : '#ff4fa3';

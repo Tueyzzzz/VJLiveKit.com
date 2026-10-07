@@ -4,6 +4,7 @@
 <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>FX Overlay</title>
 <link rel="icon" href="favicon.svg" />
+<link rel="stylesheet" href="css/sign-styles.css" />
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Itim&family=Kanit:wght@600&family=Mali:wght@700&display=swap');
   html,body { margin:0; width:100%; height:100%; background:transparent; overflow:hidden; font-family:'Itim',sans-serif; }
@@ -293,12 +294,12 @@
 
     // ป้ายไฟชั่วคราว: LED / นีออน / ไฟหลอด / พาสเทล · วิ่ง / อยู่กับที่ / กะพริบ / เต้น
     function sign(a,ev){
-      const dur=Math.max(2000,a.durationMs||6000), st=['led','neon','bulb','cute'].includes(a.signStyle)?a.signStyle:'led';
+      const dur=Math.max(2000,a.durationMs||6000), st=['led','neon','bulb','cute','pixel','y2k','glass','surreal','boho','victorian','graffiti','future'].includes(a.signStyle)?a.signStyle:'led';
       const md=['scroll','static','blink','pulse'].includes(a.signMode)?a.signMode:'scroll', pos=['top','center','bottom'].includes(a.signPos)?a.signPos:'top';
-      const el=document.createElement('div'); el.className='sgn '+st+' '+md+' '+pos;
+      const el=document.createElement('div'); el.className='sgn '+st+' st-'+st+' '+md+' '+pos;
       if(/^#[0-9a-f]{3,8}$/i.test(a.color||'')) el.style.setProperty('--c',a.color);
       el.style.setProperty('--out',(dur/1000-.6)+'s');
-      el.innerHTML='<div class="bd"><div class="bl"></div><div class="tr"><span class="tx"></span></div></div>';
+      el.innerHTML='<div class="bd sb"><div class="bl"></div><div class="tr"><span class="tx stx"></span></div></div>';
       const tx=el.querySelector('.tx'); tx.textContent=fill(a.text||'✨ ขอบคุณ {user} ✨',ev);
       document.body.appendChild(el);
       if(md==='scroll') requestAnimationFrame(()=>{ el.style.setProperty('--dur',Math.max(3,Math.min(dur/1000,tx.scrollWidth/260)).toFixed(1)+'s'); });

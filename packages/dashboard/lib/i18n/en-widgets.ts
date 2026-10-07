@@ -490,4 +490,11 @@ export const EN_WIDGETS: Record<string, string> = {
   "หญิง (มาตรฐาน)": "Female (standard)",
   "ความเร็ว": "Speed",
   "ระดับเสียง": "Pitch",
+  "👾 Pixel (เกม 8-bit)": "👾 Pixel (8-bit game)",
+  "🫧 Glassmorphism (กระจกฝ้า)": "🫧 Glassmorphism (frosted glass)",
+  "🌀 Surrealism (ฝันเหนือจริง)": "🌀 Surrealism (dreamy)",
+  "🌻 Bohemian (โบฮีเมียน)": "🌻 Bohemian",
+  "👑 Victorian (วิกตอเรียน)": "👑 Victorian",
+  "🎨 Graffiti (กราฟฟิตี้)": "🎨 Graffiti",
+  "🚀 Futuristic (ไซเบอร์)": "🚀 Futuristic (cyber)",
 };

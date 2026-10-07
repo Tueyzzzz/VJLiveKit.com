@@ -440,7 +440,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
         { key: 'every', label: 'สลับข้อความทุก (วินาที)', type: 'number', min: 2, max: 60, def: 6, when: (v) => v.mode !== 'scroll' },
       ] },
       { title: 'หน้าตาป้าย', fields: [
-        { key: 'style', label: 'แบบป้าย', type: 'select', def: 'led', options: [['led', '🟥 LED จุด'], ['neon', '🌈 นีออน'], ['bulb', '💡 ไฟหลอดรอบป้าย'], ['cute', '🍬 พาสเทลน่ารัก']] },
+        { key: 'style', label: 'แบบป้าย', type: 'select', def: 'led', options: [['led', '🟥 LED จุด'], ['neon', '🌈 นีออน'], ['bulb', '💡 ไฟหลอดรอบป้าย'], ['cute', '🍬 พาสเทลน่ารัก'], ['pixel', '👾 Pixel (เกม 8-bit)'], ['y2k', '💿 Y2K'], ['glass', '🫧 Glassmorphism (กระจกฝ้า)'], ['surreal', '🌀 Surrealism (ฝันเหนือจริง)'], ['boho', '🌻 Bohemian (โบฮีเมียน)'], ['victorian', '👑 Victorian (วิกตอเรียน)'], ['graffiti', '🎨 Graffiti (กราฟฟิตี้)'], ['future', '🚀 Futuristic (ไซเบอร์)']] },
         { key: 'color', label: 'สีตัวอักษร', type: 'color', def: '#ff4fa3', when: (v) => v.style !== 'bulb' && v.style !== 'cute' },
         { key: 'rainbow', label: 'สีรุ้งไล่สี', type: 'toggle', def: false },
         { key: 'font', label: 'ฟอนต์', type: 'select', def: 'Kanit', options: [['Kanit', 'Kanit (หนา ชัด)'], ['Mitr', 'Mitr (มน)'], ['Mali', 'Mali (น่ารัก)'], ['Itim', 'Itim (ลายมือ)']] },

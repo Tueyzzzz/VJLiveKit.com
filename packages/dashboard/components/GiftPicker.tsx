@@ -74,7 +74,7 @@ export function GiftPicker({ value, onChange }: { value: string; onChange: (name
         <ChevronDown className="size-4 text-muted" />
       </button>
       {open && (
-        <div className="absolute left-0 z-30 mt-1 w-[min(26rem,calc(100vw-2rem))] min-w-full rounded-xl border border-line bg-white p-2 shadow-lg">
+        <div className="absolute left-0 z-30 mt-1 w-[calc(100vw-6rem)] min-w-full sm:w-[26rem] rounded-xl border border-line bg-white p-2 shadow-lg">
           <div className="relative mb-2">
             <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted" />
             <Input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('ค้นหาชื่อไทย/อังกฤษ หรือราคาเพชร')} className="pl-8"

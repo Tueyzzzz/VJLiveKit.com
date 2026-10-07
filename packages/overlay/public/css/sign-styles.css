@@ -1,0 +1,65 @@
+/* ธีมป้ายไฟเพิ่มเติม (ใช้ร่วมกัน: วิดเจ็ตป้ายไฟ sign.html + Action ป้ายไฟใน fx.html)
+ * โครง: ตัวครอบมีคลาส st-<ธีม> · กรอบป้าย .sb · ตัวอักษร .stx
+ * ฟอนต์มีภาษาไทยทุกตัว (Chakra Petch / Mitr / Charm / Chonburi / Sriracha / Kanit) — ฟอนต์อังกฤษเฉพาะทางเป็นตัวแรก ไทยตกไปฟอนต์ถัดไป
+ */
+@import url('https://fonts.googleapis.com/css2?family=Silkscreen&family=Chakra+Petch:wght@600&family=Mitr:wght@600&family=Charm:wght@700&family=Chonburi&family=Playfair+Display:ital,wght@1,700&family=Sriracha&family=Permanent+Marker&family=Orbitron:wght@700&display=swap');
+
+/* 👾 Pixel — เกม 8-bit: ตัวอักษรเหลี่ยม เงาเป็นขั้น กรอบพิกเซล */
+.st-pixel .sb { background:#1b1340 !important; border-radius:0 !important; border:0 !important;
+  box-shadow:0 0 0 4px #fff, 0 0 0 8px #1b1340, 8px 8px 0 8px rgba(0,0,0,.35) !important; image-rendering:pixelated; }
+.st-pixel .stx { font-family:'Silkscreen','Chakra Petch',monospace !important; color:var(--c,#7cf7ff) !important; letter-spacing:.04em;
+  text-shadow:3px 0 0 #ff4fa3, 0 3px 0 #ff4fa3, 3px 3px 0 #ff4fa3, 6px 6px 0 rgba(0,0,0,.4) !important; }
+
+/* 💿 Y2K — โครเมียมเงา ฟองสบู่ ดาวประกาย */
+.st-y2k .sb { background:linear-gradient(135deg,#ffd6f5,#c8e6ff 45%,#e9d6ff) !important; border:3px solid #fff !important; border-radius:999px !important;
+  box-shadow:inset 0 6px 14px rgba(255,255,255,.9), inset 0 -8px 16px rgba(150,120,220,.35), 0 10px 30px rgba(120,80,200,.35) !important; }
+.st-y2k .stx { font-family:'Mitr','Kanit',sans-serif !important; background:linear-gradient(180deg,#fff 0%,#c9d3e6 35%,#7d8aa8 50%,#e8eefc 62%,#9aa6c4 100%);
+  -webkit-background-clip:text; background-clip:text; color:transparent !important; -webkit-text-stroke:1.5px #5a4a9c;
+  filter:drop-shadow(0 2px 0 #ff7ad9) drop-shadow(0 0 10px rgba(255,255,255,.8)); text-shadow:none !important; }
+.st-y2k .stx::before, .st-y2k .stx::after { content:'✦'; -webkit-text-stroke:0; color:#ff7ad9; padding:0 .3em; }
+
+/* 🫧 Glassmorphism — กระจกฝ้า โปร่งแสง */
+.st-glass .sb { background:rgba(255,255,255,.16) !important; backdrop-filter:blur(14px) saturate(1.4); -webkit-backdrop-filter:blur(14px) saturate(1.4);
+  border:1.5px solid rgba(255,255,255,.55) !important; border-radius:24px !important; box-shadow:0 8px 32px rgba(31,38,135,.25), inset 0 1px 0 rgba(255,255,255,.6) !important; }
+.st-glass .sb::after { display:none !important; }
+.st-glass .stx { font-family:'Kanit',sans-serif !important; color:#fff !important; text-shadow:0 2px 12px rgba(40,20,80,.45) !important; }
+
+/* 🌀 Surrealism — ท้องฟ้าฝัน ไล่สีไหล ตัวอักษรบิดเบา ๆ */
+.st-surreal .sb { background:linear-gradient(120deg,#2b1055,#7597de,#f7b267,#f25f5c,#2b1055) !important; background-size:300% 300% !important;
+  animation:stSky 9s ease-in-out infinite; border-radius:40% 60% 55% 45% / 60% 40% 60% 40% !important; border:0 !important; }
+.st-surreal .stx { font-family:'Charm','Kanit',cursive !important; color:#fff8e7 !important; text-shadow:0 0 18px rgba(255,220,180,.9), 0 6px 0 rgba(43,16,85,.35) !important;
+  animation:stWarp 4s ease-in-out infinite; }
+@keyframes stSky { 50% { background-position:100% 50% } }
+@keyframes stWarp { 0%,100% { transform:skewX(0) } 25% { transform:skewX(-6deg) translateY(-2px) } 75% { transform:skewX(6deg) translateY(2px) } }
+.st-surreal.scroll .stx, .scroll .st-surreal .stx { animation:marq var(--dur,10s) linear infinite; }
+
+/* 🌻 Bohemian — โทนดิน ลายลูกไม้ ฟอนต์ลายมือ */
+.st-boho .sb { background:linear-gradient(180deg,#f4e3c8,#e8c99b) !important; border:3px double #b5651d !important; border-radius:18px !important;
+  box-shadow:0 0 0 6px #f4e3c8, 0 0 0 8px #c9874a, 0 10px 24px rgba(120,60,20,.3) !important; }
+.st-boho .stx { font-family:'Charm','Itim',cursive !important; color:#8a3b12 !important; text-shadow:0 2px 0 #f9d77e !important; }
+.st-boho .stx::before { content:'❀ '; color:#d4793a; } .st-boho .stx::after { content:' ❀'; color:#d4793a; }
+
+/* 👑 Victorian — ทองบนแดงเลือดหมู กรอบหรู ตัวเชิง */
+.st-victorian .sb { background:radial-gradient(ellipse at center,#5a0f22,#2a0610) !important; border:4px double #d4af37 !important; border-radius:6px !important;
+  box-shadow:0 0 0 3px #2a0610, 0 0 0 5px #d4af37, 0 12px 30px rgba(0,0,0,.45) !important; }
+.st-victorian .stx { font-family:'Playfair Display','Chonburi',serif !important; font-style:italic; background:linear-gradient(180deg,#fff3c4,#d4af37 45%,#8a6a1f 55%,#f7e08a);
+  -webkit-background-clip:text; background-clip:text; color:transparent !important; text-shadow:none !important; filter:drop-shadow(0 2px 1px rgba(0,0,0,.6)); }
+.st-victorian .stx::before { content:'❦ '; -webkit-text-fill-color:#d4af37; } .st-victorian .stx::after { content:' ❦'; -webkit-text-fill-color:#d4af37; }
+
+/* 🎨 Graffiti — สเปรย์บนกำแพงอิฐ ตัวหนาขอบดำ */
+.st-graffiti .sb { background:
+    repeating-linear-gradient(0deg,transparent 0 22px,rgba(0,0,0,.25) 22px 24px),
+    repeating-linear-gradient(90deg,transparent 0 46px,rgba(0,0,0,.2) 46px 48px),
+    linear-gradient(135deg,#7a3b2e,#5a2a22) !important; border-radius:10px !important; border:0 !important; }
+.st-graffiti .stx { font-family:'Permanent Marker','Sriracha',cursive !important; color:var(--c,#ffe14a) !important; -webkit-text-stroke:2px #111;
+  text-shadow:4px 4px 0 #ff2f92, 8px 8px 0 #111, 0 0 18px rgba(255,47,146,.6) !important; transform:rotate(-2deg); }
+
+/* 🚀 Futuristic — ไซเบอร์ เส้นสแกน มุมเฉียง เรืองฟ้า */
+.st-future .sb { background:linear-gradient(180deg,rgba(4,10,30,.92),rgba(10,24,60,.92)) !important; border:1.5px solid var(--c,#00e5ff) !important; border-radius:0 !important;
+  clip-path:polygon(18px 0,100% 0,100% calc(100% - 18px),calc(100% - 18px) 100%,0 100%,0 18px);
+  box-shadow:inset 0 0 24px rgba(0,229,255,.25) !important; }
+.st-future .sb::after { content:'' !important; display:block !important; position:absolute; inset:0; pointer-events:none;
+  background:repeating-linear-gradient(0deg,rgba(0,229,255,.08) 0 2px,transparent 2px 5px) !important; animation:stScan 3s linear infinite; }
+.st-future .stx { font-family:'Orbitron','Chakra Petch',sans-serif !important; color:#e6fdff !important; letter-spacing:.08em;
+  text-shadow:0 0 6px var(--c,#00e5ff), 0 0 18px var(--c,#00e5ff), 2px 0 0 rgba(255,0,140,.6) !important; }
+@keyframes stScan { from { background-position:0 0 } to { background-position:0 50px } }

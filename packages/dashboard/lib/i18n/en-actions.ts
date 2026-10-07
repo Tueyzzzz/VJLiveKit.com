@@ -243,4 +243,11 @@ export const EN_ACTIONS: Record<string, string> = {
   'ค้นหาชื่อไทย/อังกฤษ หรือราคาเพชร': 'Search by name or diamond price',
   'ใช้ชื่อ “{name}”': 'Use name “{name}”',
   'รายการของขวัญและรูปจริงอัปเดตจาก TikTok อัตโนมัติ · ไม่เจอให้พิมพ์ชื่ออังกฤษตามใน TikTok': 'Gift list and images update from TikTok automatically · Not listed? Type the English name exactly as in TikTok',
+  '👾 Pixel (เกม 8-bit)': '👾 Pixel (8-bit game)',
+  '🫧 Glassmorphism (กระจกฝ้า)': '🫧 Glassmorphism (frosted glass)',
+  '🌀 Surrealism (ฝันเหนือจริง)': '🌀 Surrealism (dreamy)',
+  '🌻 Bohemian (โบฮีเมียน)': '🌻 Bohemian',
+  '👑 Victorian (วิกตอเรียน)': '👑 Victorian',
+  '🎨 Graffiti (กราฟฟิตี้)': '🎨 Graffiti',
+  '🚀 Futuristic (ไซเบอร์)': '🚀 Futuristic (cyber)',
 };

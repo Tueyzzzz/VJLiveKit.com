@@ -12,7 +12,7 @@ export interface RuleTrigger {
 export interface RuleAction {
   type: 'sound' | 'image' | 'video' | 'text' | 'tarot' | 'effect' | 'sign';
   /** ป้ายไฟ (type=sign) */
-  signStyle?: 'led' | 'neon' | 'bulb' | 'cute';
+  signStyle?: 'led' | 'neon' | 'bulb' | 'cute' | 'pixel' | 'y2k' | 'glass' | 'surreal' | 'boho' | 'victorian' | 'graffiti' | 'future';
   signMode?: 'scroll' | 'static' | 'blink' | 'pulse';
   signPos?: 'top' | 'center' | 'bottom';
   color?: string;

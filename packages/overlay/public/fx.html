@@ -367,6 +367,7 @@
     }
 
     function play(a,ev){
+      if(a.type==='mascot') return; // ท่าของมาสคอต → วิดเจ็ตมาสคอตทำเอง
       if(a.type==='tarot') return tarot(a,ev);
       if(a.type==='glove') return glove(a,ev);
       if(a.type==='sign') return sign(a,ev);

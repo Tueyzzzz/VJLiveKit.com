@@ -315,6 +315,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
       { title: 'กระถาง', fields: [
         { key: 'sway', label: 'ความแรงลม (กิ่งแกว่ง)', type: 'range', min: 0, max: 3, step: 0.1, def: 1, hint: '0 = นิ่ง' },
         { key: 'big', label: 'ของขวัญที่เป็นดอกใหญ่บนยอด ตั้งแต่ (เหรียญ)', type: 'number', min: 1, def: 1000 },
+        { key: 'leafTone', label: 'สีใบไม้', type: 'select', def: 'pastel', options: [['pastel', '🌿 พาสเทลอ่อน (ไม่เขียวเข้ม)'], ['mint', '💚 มิ้นต์'], ['pink', '🩷 ชมพู'], ['lavender', '💜 ลาเวนเดอร์'], ['sakura', '🌸 ซากุระ'], ['gold', '💛 ทอง'], ['original', 'สีเดิมของแบบ']] },
         { key: 'skin', label: 'แบบกระถาง', type: 'select', def: 'image', options: [
           ['image', 'กระถางหัวใจมีปีก', '🌸 พาสเทลน่ารัก', 'gd-image'], ['cat', 'กระถางหน้าแมว', '🌸 พาสเทลน่ารัก', 'pot-cat'], ['bunny', 'กระถางกระต่าย', '🌸 พาสเทลน่ารัก', 'pot-bunny'], ['bear', 'กระถางหมี', '🌸 พาสเทลน่ารัก', 'pot-bear'], ['teacup', 'กระถางถ้วยชา', '🌸 พาสเทลน่ารัก', 'pot-teacup'], ['boot', 'กระถางรองเท้าบูท', '🌸 พาสเทลน่ารัก', 'pot-boot'], ['pumpkin', 'กระถางฟักทอง', '🌸 พาสเทลน่ารัก', 'pot-pumpkin'], ['star', 'กระถางดาว', '🌸 พาสเทลน่ารัก', 'pot-star'], ['cart', 'รถเข็นดอกไม้', '🌸 พาสเทลน่ารัก', 'pot-cart'], ['basket', 'ตะกร้าสาน', '🌸 พาสเทลน่ารัก', 'pot-basket'],
           ['tech', 'กระถางเทคนีออน', '🎮 สายเท่ เกมมิ่ง', 'pot-tech'],
@@ -441,6 +442,25 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
         { key: 'minCoins', label: 'รับเฉพาะของขวัญตั้งแต่ (เหรียญ)', type: 'number', min: 0, def: 0 },
         { key: 'glow', label: 'ของแพงเรืองแสง', type: 'toggle', def: true },
         { key: 'alert', label: 'แสดงชื่อคนส่ง', type: 'toggle', def: true },
+      ] },
+    ],
+  },
+  mascot: {
+    sections: [
+      { title: 'ตัวละคร', fields: [
+        { key: 'char', label: 'เลือกตัวแทนวีเจ', type: 'select', def: 'G1', options: [['G1', '🐰 กระต่ายหวาน', '👧 ผู้หญิง', '/overlay/mascot/G1/thumb.webp'], ['G2', '⭐ ไอดอลดาว', '👧 ผู้หญิง', '/overlay/mascot/G2/thumb.webp'], ['G4', '🔮 แม่มดไพ่ทาโร่', '👧 ผู้หญิง', '/overlay/mascot/G4/thumb.webp'], ['G6', '🎮 เกมเมอร์สาว', '👧 ผู้หญิง', '/overlay/mascot/G6/thumb.webp'], ['G8', '🌸 ชุดไทยประยุกต์', '👧 ผู้หญิง', '/overlay/mascot/G8/thumb.webp'], ['B4', '👑 เจ้าชาย', '👦 ผู้ชาย', '/overlay/mascot/B4/thumb.webp'], ['B7', '🧙 นักเวทย์', '👦 ผู้ชาย', '/overlay/mascot/B7/thumb.webp'], ['B8', '🎸 ร็อกเกอร์น่ารัก', '👦 ผู้ชาย', '/overlay/mascot/B8/thumb.webp'], ['B10', '🍜 เชฟหนุ่ม', '👦 ผู้ชาย', '/overlay/mascot/B10/thumb.webp']] },
+        { key: 'name', label: 'ป้ายชื่อใต้ตัวละคร (เว้นว่าง = ไม่มี)', type: 'text', def: '' },
+      ] },
+      { title: 'ท่าทางอัตโนมัติ', fields: [
+        { key: 'thanks', label: 'ได้ของขวัญ → ยื่นมือรับ (รูปกิฟต์จริง) + กล่องคำขอบคุณ', type: 'toggle', def: true },
+        { key: 'thankText', label: 'คำขอบคุณ', type: 'text', def: 'ขอบคุณ {user} ที่ส่ง {gift} นะคะ 💖', when: (v) => !!v.thanks },
+        { key: 'big', label: 'กิฟต์ใหญ่ (ดีใจ + เต้น) ตั้งแต่ (เหรียญ)', type: 'number', min: 1, def: 100 },
+        { key: 'follow', label: 'มีคนติดตาม → ส่งหัวใจ', type: 'toggle', def: true },
+        { key: 'followText', label: 'คำขอบคุณผู้ติดตาม', type: 'text', def: 'ขอบคุณ {user} ที่ติดตามน้า 😘', when: (v) => !!v.follow },
+      ] },
+      { title: 'ตำแหน่งและขนาด', fields: [
+        { key: 'pos', label: 'ตำแหน่ง', type: 'select', def: 'br', options: [['br', '↘️ มุมขวาล่าง'], ['bl', '↙️ มุมซ้ายล่าง'], ['bc', '⬇️ กลางล่าง']] },
+        size(),
       ] },
     ],
   },

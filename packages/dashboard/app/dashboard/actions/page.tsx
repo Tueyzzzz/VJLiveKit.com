@@ -13,7 +13,7 @@ import { useAuth } from '@/lib/auth';
 import { translate, useT } from '@/lib/i18n';
 
 const EVENT_LABELS: Record<TriggerEvent, string> = { gift: '🎁 ได้รับกิฟต์', follow: '➕ มีคนติดตาม', share: '🔁 มีคนแชร์', like: '❤️ มีคนกดไลค์', chat: '💬 แชทมีคำว่า' };
-const ACTION_LABELS: Record<ActionType, string> = { sound: '🔊 เล่นเสียง', image: '🖼️ แสดงรูป/GIF', video: '🎬 เล่นวิดีโอ', text: '✏️ แสดงข้อความ', tarot: '🔮 สุ่มไพ่ทาโร่', effect: '🦋 ผีเสื้อเทพนิยาย', sign: '💡 ป้ายไฟ', glove: '🥊 ส่งนวม' };
+const ACTION_LABELS: Record<ActionType, string> = { sound: '🔊 เล่นเสียง', image: '🖼️ แสดงรูป/GIF', video: '🎬 เล่นวิดีโอ', text: '✏️ แสดงข้อความ', tarot: '🔮 สุ่มไพ่ทาโร่', effect: '🦋 ผีเสื้อเทพนิยาย', sign: '💡 ป้ายไฟ', glove: '🥊 ส่งนวม', mascot: '🧸 มาสคอตทำท่า' };
 
 interface Draft {
   id?: string;
@@ -33,6 +33,8 @@ interface Draft {
   deck: TarotDeck;
   topic: TarotTopic;
   count: string;
+  /** มาสคอต: ท่า */
+  move: 'dance' | 'kiss' | 'joy' | 'heart';
   /** คอมโบเล่นซ้ำสูงสุดกี่ครั้ง */
   repeat: string;
   /** สีผีเสื้อ */
@@ -44,7 +46,7 @@ interface Draft {
   color: string;
 }
 
-const EMPTY: Draft = { name: '', enabled: true, event: 'gift', giftName: '', minDiamonds: '', keyword: '', type: 'sound', url: '', sound: 'chime', text: '', durationSec: '5', cards: '1', deck: 'full', topic: 'general', count: '12', repeat: '1', tint: 'pink', signStyle: 'led', signMode: 'scroll', signPos: 'top', color: '#ff4fa3' };
+const EMPTY: Draft = { name: '', enabled: true, event: 'gift', giftName: '', minDiamonds: '', keyword: '', type: 'sound', url: '', sound: 'chime', text: '', durationSec: '5', cards: '1', deck: 'full', topic: 'general', count: '12', move: 'dance', repeat: '1', tint: 'pink', signStyle: 'led', signMode: 'scroll', signPos: 'top', color: '#ff4fa3' };
 
 /** เทมเพลตยอดนิยม — กดครั้งเดียวสร้างกฎได้เลย (ไม่ต้องหาไฟล์เสียง/รูปเอง) */
 interface Template { icon: string; title: string; desc: string; rule: { name: string; trigger: Rule['trigger']; action: Rule['action'] } }
@@ -65,6 +67,10 @@ const TEMPLATES: Template[] = [
     rule: { name: 'ทำนายการเงิน', trigger: { event: 'gift', minDiamonds: 99 }, action: { type: 'tarot', cards: 3, topic: 'money', text: '💰 ดวงการเงินของ {user}', durationMs: 13000 } } },
   { icon: '🪞', title: 'ทำนายตัวตน 3 ใบ', desc: 'กิฟต์ 30 เพชรขึ้นไป → ตัวตนจริง · ที่คนอื่นมอง · จุดเด่น',
     rule: { name: 'ทำนายตัวตน', trigger: { event: 'gift', minDiamonds: 30 }, action: { type: 'tarot', cards: 3, topic: 'self', text: '🪞 ตัวตนของ {user}', durationMs: 13000 } } },
+  { icon: '💃', title: 'มาสคอตเต้น', desc: 'ได้ Finger Heart → ตัวแทนวีเจเต้นบนจอ',
+    rule: { name: 'มาสคอตเต้น', trigger: { event: 'gift', giftName: 'Finger Heart' }, action: { type: 'mascot', move: 'dance', text: '💃 เต้นให้ {user} ดู!' } } },
+  { icon: '💋', title: 'มาสคอตเดินมาส่งจุ๊บ', desc: 'ได้ Rosa → เดินเข้ามาส่งจุ๊บ แล้วเดินกลับ',
+    rule: { name: 'มาสคอตส่งจุ๊บ', trigger: { event: 'gift', giftName: 'Rosa' }, action: { type: 'mascot', move: 'kiss' } } },
   { icon: '📅', title: 'เปิดไพ่ประจำวัน', desc: 'พิมพ์ "ไพ่ประจำวัน" ในแชท → ไพ่ของวันนี้ (คนเดิมได้ใบเดิมทั้งวัน)',
     rule: { name: 'เปิดไพ่ประจำวัน', trigger: { event: 'chat', keyword: 'ไพ่ประจำวัน' }, action: { type: 'tarot', cards: 1, topic: 'daily', text: '📅 ไพ่ประจำวันของ {user}', durationMs: 9000 } } },
   { icon: '🦋', title: 'ได้ Rose → ผีเสื้อเทพนิยาย', desc: 'ผีเสื้อปีกวาวบินข้ามจอ โปรยผงประกาย',
@@ -110,6 +116,7 @@ function toDraft(r: Rule): Draft {
     deck: r.action.deck ?? 'full',
     topic: r.action.topic ?? 'general',
     count: String(r.action.count ?? 12),
+    move: r.action.move ?? 'dance',
     repeat: String(r.action.repeat ?? 1),
     tint: r.action.tint ?? 'pink',
     signStyle: r.action.signStyle ?? 'led', signMode: r.action.signMode ?? 'scroll', signPos: r.action.signPos ?? 'top', color: r.action.color ?? '#ff4fa3',
@@ -127,6 +134,7 @@ function toBody(d: Draft) {
   const needsFile = (d.type === 'sound' && !d.sound) || d.type === 'image' || d.type === 'video';
   if (needsFile && d.url.trim()) action.url = d.url.trim();
   if (d.type === 'sound' && d.sound) action.sound = d.sound;
+  if (d.type === 'mascot') action.move = d.move;
   if (d.type === 'glove') action.count = Math.max(1, Math.min(5, Number(d.count) || 1));
   if (d.type === 'effect') { action.tint = d.tint; action.effect = 'butterflies'; action.count = Math.max(1, Math.min(30, Number(d.count) || 12)); }
   if (d.text.trim()) action.text = d.text.trim();
@@ -376,6 +384,14 @@ export default function ActionsPage() {
                     <option value="1">{t('🃏 เปิด 1 ใบ — คำทำนายเดียว')}</option>
                     <option value="3">{t('🃏🃏🃏 เปิด 3 ใบ — อดีต · ปัจจุบัน · อนาคต')}</option>
                     <option value="7">{t('เปิด 7 ใบ — ดูดวงเต็มชุด')}</option>
+                  </Select>
+                </Field>
+              )}
+              {draft.type === 'mascot' && (
+                <Field label={t('ท่าของมาสคอต')} hint={t('ต้องใส่วิดเจ็ต "ตัวแทนวีเจ (มาสคอต)" บนจอด้วย')}>
+                  <Select value={draft.move} onChange={(e) => set('move', e.target.value as Draft['move'])}>
+                    <option value="dance">{t('💃 เต้น')}</option><option value="kiss">{t('💋 เดินมาส่งจุ๊บ แล้วเดินกลับ')}</option>
+                    <option value="joy">{t('🎉 ดีใจสุด ๆ')}</option><option value="heart">{t('😘 ส่งหัวใจ')}</option>
                   </Select>
                 </Field>
               )}

@@ -39,6 +39,7 @@ const WIDGET_GROUPS: [string, string[]][] = [
   ['🔔 แจ้งเตือนและแชท', ['alerts', 'chat', 'follower']],
   ['🥇 อันดับผู้ชม', ['topgifters', 'toplikers']],
   ['✨ เอฟเฟกต์', ['fx', 'fxmenu', 'sign']],
+  ['🧸 ตัวแทนวีเจ', ['mascot']],
 ];
 
 /** คำอธิบายสั้นในแกลเลอรี */
@@ -65,12 +66,13 @@ const WIDGET_BLURB: Record<string, string> = {
   tts: 'อ่านแชท/ของขวัญออกเสียง',
   fx: 'เล่นเสียง/รูป/วิดีโอตามกฎ Actions',
   fxmenu: 'เมนูบอกผู้ชมว่าส่งของขวัญอะไร → เกิดอะไรบนจอ (ดึงจากกฎ Actions อัตโนมัติ)',
+  mascot: 'ตัวละครน่ารักยืนมุมจอ รับของขวัญ (รูปจริงในมือ) ขอบคุณ เต้น ส่งจุ๊บ ส่งหัวใจ · 9 ตัว',
   sign: 'ป้ายไฟ LED / นีออน / ไฟหลอด ข้อความวิ่ง ใส่ยอดไลก์-เพชรสดได้',
 };
 
 /** พรีวิวสดของวิดเจ็ต (โหมดเดโม) — ย่อจาก 1920×1080 ให้พอดีการ์ด, โหลดเฉพาะตอนเลื่อนมาเห็น */
 /** ความกว้างจอจำลองของตัวอย่าง (ยิ่งแคบ = วิดเจ็ตดูใหญ่ขึ้น) — วิดเจ็ตเล็ก ๆ ไม่ต้องย่อจากจอ 1920 */
-const PREVIEW_W: Record<string, number> = { goal: 1500, chat: 820, follower: 640, alerts: 900, timer: 760, topgifters: 900, toplikers: 900, tts: 900, fx: 1100, fxmenu: 760, sign: 1000, league: 1400, donate: 900 };
+const PREVIEW_W: Record<string, number> = { goal: 1500, chat: 820, follower: 640, alerts: 900, timer: 760, topgifters: 900, toplikers: 900, tts: 900, fx: 1100, fxmenu: 760, sign: 1000, mascot: 900, league: 1400, donate: 900 };
 
 /** ตั้งค่าที่บันทึกไว้ → พารามิเตอร์ URL ของตัวอย่าง (พารามิเตอร์ใน URL มาก่อนค่าเริ่มต้นเสมอ) */
 function configQuery(config?: Record<string, unknown>): string {
@@ -105,10 +107,11 @@ function posterOf(type: string, config?: Record<string, unknown>): string | null
     return `${API_BASE}/overlay/hearts/thumb-${st.startsWith('h-') ? st.slice(2) : 'melody'}.webp`; // หัวใจมีน้ำ 50%
   }
   if (type === 'fx') return `${API_BASE}/overlay/tarot/m10.webp`;
+  if (type === 'mascot') return `${API_BASE}/overlay/mascot/${String(config?.char ?? 'G1')}/thumb.webp`;
   if (type === 'pile') return `${API_BASE}/overlay/thumbs/pile.webp`;
   return null;
 }
-const ICON: Record<string, string> = { league: '🏆', goal: '🎯', timer: '⏱️', alerts: '🔔', chat: '💬', follower: '➕', topgifters: '🥇', toplikers: '💗', tts: '🔊', fx: '✨', fxmenu: '📜', sign: '💡', donate: '💸' };
+const ICON: Record<string, string> = { league: '🏆', goal: '🎯', timer: '⏱️', alerts: '🔔', chat: '💬', follower: '➕', topgifters: '🥇', toplikers: '💗', tts: '🔊', fx: '✨', fxmenu: '📜', sign: '💡', donate: '💸', mascot: '🧸' };
 
 /**
  * ตัวอย่างวิดเจ็ต: ปกติแสดงรูปนิ่ง (เบา ไม่หน่วงหน้าเว็บ) — ชี้เมาส์/กดเล่น ถึงจะเปิดตัวอย่างจริง ทีละใบ

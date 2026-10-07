@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>VJ Mascot Overlay</title>
+<link rel="icon" href="favicon.svg" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Itim&family=Mali:wght@600;700&display=swap');
+  html,body { margin:0; width:100%; height:100%; background:transparent; overflow:hidden; font-family:'Mali','Itim',sans-serif; }
+  /* ตัวละคร: กล่องสูง 420px คูณ --s · ยึดมุมตาม pos */
+  #wrap { position:fixed; left:0; right:0; bottom:0; display:flex; align-items:flex-end; padding:0 10px; pointer-events:none; }
+  .bl #wrap { justify-content:flex-start; } .br #wrap { justify-content:flex-end; } .bc #wrap { justify-content:center; }
+  #stage { position:relative; width:420px; height:470px; zoom:var(--s,1); }
+  #walker { position:absolute; left:0; right:0; bottom:0; height:420px; transition:transform 1.6s cubic-bezier(.45,.05,.4,1); transform-origin:50% 100%; }
+  #shadow { position:absolute; left:50%; bottom:6px; width:230px; height:30px; margin-left:-115px; border-radius:50%;
+    background:radial-gradient(closest-side, rgba(70,30,90,.32), rgba(70,30,90,0)); animation:shadowBreath 3s ease-in-out infinite; }
+  #char { position:absolute; left:50%; bottom:10px; width:420px; height:420px; margin-left:-210px; transform-origin:50% 100%;
+    animation:breath 3s ease-in-out infinite; filter:drop-shadow(0 6px 10px rgba(80,40,110,.25)); }
+  #char img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; opacity:0; }
+  #char img.on { opacity:1; }
+  #char.hop { animation:hop .5s cubic-bezier(.3,1.6,.5,1), breath 3s ease-in-out .5s infinite; }
+  #char.dance { animation:dance .45s ease-in-out infinite; }
+  @keyframes breath { 0%,100% { transform:scale(1,1) } 50% { transform:scale(1.012,.988) translateY(1px) } }
+  @keyframes shadowBreath { 50% { transform:scaleX(1.05); opacity:.85 } }
+  @keyframes hop { 0% { transform:translateY(0) scale(1.06,.94) } 45% { transform:translateY(-26px) scale(.97,1.04) } 100% { transform:translateY(0) } }
+  @keyframes dance { 0%,100% { transform:translateY(0) rotate(-2deg) } 50% { transform:translateY(-10px) rotate(2deg) } }
+
+  /* ของขวัญในมือ (ท่ารับของขวัญ) */
+  #gift { position:absolute; left:50%; top:var(--gy,58%); width:92px; height:92px; margin:-46px 0 0 -46px; object-fit:contain; opacity:0; pointer-events:none;
+    filter:drop-shadow(0 4px 8px rgba(255,180,220,.8)) drop-shadow(0 0 14px rgba(255,255,255,.9)); }
+  #gift.on { animation:giftIn .55s cubic-bezier(.3,1.6,.5,1) forwards, giftBob 1.6s ease-in-out .55s infinite; }
+  @keyframes giftIn { from { opacity:0; transform:translateY(-120px) scale(.3) rotate(-25deg) } to { opacity:1; transform:none } }
+  @keyframes giftBob { 0%,100% { opacity:1; transform:translateY(0) } 50% { opacity:1; transform:translateY(-5px) } }
+
+  /* กล่องคำพูด */
+  #bubble { position:absolute; left:50%; bottom:430px; transform:translateX(-50%) scale(.6); opacity:0; max-width:360px; width:max-content;
+    padding:12px 18px; border-radius:22px; background:linear-gradient(180deg,#fff,#fff3fa); border:3px solid #ffc6e2; color:#7a3f6e;
+    font-size:21px; font-weight:700; line-height:1.35; text-align:center; box-shadow:0 8px 22px rgba(200,90,160,.25); transition:all .35s cubic-bezier(.3,1.5,.5,1); }
+  #bubble::after { content:''; position:absolute; left:50%; bottom:-14px; margin-left:-12px; border:12px solid transparent; border-top-color:#ffc6e2; border-bottom:0; }
+  #bubble.on { opacity:1; transform:translateX(-50%) scale(1); }
+  #bubble b { color:#e0468e; }
+  .br #bubble { left:auto; right:30px; transform:scale(.6); transform-origin:85% 100%; } .br #bubble.on { transform:scale(1); } .br #bubble::after { left:auto; right:60px; }
+  .bl #bubble { left:30px; transform:scale(.6); transform-origin:15% 100%; } .bl #bubble.on { transform:scale(1); } .bl #bubble::after { left:60px; }
+
+  /* ป้ายชื่อ */
+  #name { position:absolute; left:50%; bottom:2px; transform:translateX(-50%); padding:3px 14px; border-radius:999px; font-size:15px; font-weight:700; color:#fff;
+    background:linear-gradient(90deg,#ff8ac2,#b28bff); box-shadow:0 3px 10px rgba(180,80,160,.3); white-space:nowrap; }
+
+  /* อนุภาค */
+  .p { position:absolute; pointer-events:none; font-size:26px; animation:rise var(--d,1.8s) ease-out forwards; }
+  @keyframes rise { 0% { opacity:0; transform:translate(0,0) scale(.4) } 15% { opacity:1 } 100% { opacity:0; transform:translate(var(--x,0),-220px) scale(1.2) rotate(var(--r,0deg)) } }
+  .cf { position:absolute; width:10px; height:14px; border-radius:3px; pointer-events:none; animation:conf var(--d,1.6s) ease-out forwards; }
+  @keyframes conf { 0% { opacity:1; transform:translate(0,0) rotate(0) } 100% { opacity:0; transform:translate(var(--x),var(--y)) rotate(var(--r)) } }
+</style>
+</head>
+<body>
+  <div id="wrap"><div id="stage"><div id="walker">
+    <div id="bubble"></div>
+    <div id="shadow"></div>
+    <div id="char"></div>
+    <img id="gift" alt="" />
+    <div id="name" hidden></div>
+  </div></div></div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/overlay-client.js"></script>
+  <script src="js/collect-store.js"></script>
+  <script>
+  (function () {
+    // ตัวแทนวีเจ (มาสคอต) — ยืนมุมจอ หายใจ กะพริบตา ผมปลิว · ได้กิฟต์ยื่นมือรับ (รูปกิฟต์จริง) + ขอบคุณ · กิฟต์ใหญ่ดีใจแล้วเต้น
+    // มีคนติดตามส่งหัวใจ · Action "มาสคอต" สั่งเต้น / เดินมาส่งจุ๊บ / ดีใจ / ส่งหัวใจ ได้จากกฎ
+    // ?char=G1 · ?pos=br|bl|bc · ?scale=1 · ?thanks=1 · ?thankText=… · ?big=100 · ?follow=1 · ?name=
+    const P = (k, d) => Overlay.param(k, d);
+    const CHARS = ['G1', 'G2', 'G4', 'G6', 'G8', 'B4', 'B7', 'B8', 'B10'];
+    const C = CHARS.includes(P('char', 'G1')) ? P('char', 'G1') : 'G1';
+    const POS = ['bl', 'br', 'bc'].includes(P('pos', 'br')) ? P('pos', 'br') : 'br';
+    document.body.className = POS;
+    document.documentElement.style.setProperty('--s', Math.max(.3, Math.min(3, parseFloat(P('scale', '1')) || 1)));
+    const THANKS = P('thanks', '1') !== '0', FOLLOW = P('follow', '1') !== '0', BIG = Math.max(1, parseInt(P('big', '100'), 10) || 100);
+    const THANK_TEXT = P('thankText', 'ขอบคุณ {user} ที่ส่ง {gift} นะคะ 💖');
+    const FOLLOW_TEXT = P('followText', 'ขอบคุณ {user} ที่ติดตามน้า 😘');
+    const NAME = P('name', '');
+    if (NAME) { const n = document.getElementById('name'); n.textContent = NAME; n.hidden = false; }
+
+    // โหลดทุกท่าไว้ก่อน (สลับท่าไม่กระพริบ)
+    const $char = document.getElementById('char'), $bubble = document.getElementById('bubble'), $gift = document.getElementById('gift'), $walker = document.getElementById('walker'), $stage = document.getElementById('stage');
+    const imgs = {};
+    for (let n = 1; n <= 17; n++) { const im = new Image(); im.src = `mascot/${C}/${n}.webp`; im.alt = ''; $char.appendChild(im); imgs[n] = im; }
+    let cur = 0;
+    const pose = (n) => { if (cur === n) return; if (imgs[cur]) imgs[cur].classList.remove('on'); imgs[n].classList.add('on'); cur = n; };
+    pose(1);
+
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const esc = (s) => Overlay.esc(s);
+    const fillText = (t, e) => esc(t).replace(/\{user\}/g, `<b>${esc(e.user ? (e.user.nickname || e.user.uniqueId) : 'ทุกคน')}</b>`).replace(/\{gift\}/g, `<b>${esc(e.giftName || 'ของขวัญ')}</b>`);
+    let bubbleT = null;
+    function say(html, ms = 3200) { $bubble.innerHTML = html; $bubble.classList.add('on'); clearTimeout(bubbleT); bubbleT = setTimeout(() => $bubble.classList.remove('on'), ms); }
+    function hop() { $char.classList.remove('hop'); void $char.offsetWidth; $char.classList.add('hop'); }
+    function particles(chars, n = 10, d = 1.8) {
+      for (let i = 0; i < n; i++) setTimeout(() => {
+        const p = document.createElement('div'); p.className = 'p'; p.textContent = chars[i % chars.length];
+        p.style.left = (150 + Math.random() * 120) + 'px'; p.style.bottom = (180 + Math.random() * 80) + 'px';
+        p.style.setProperty('--x', (Math.random() * 160 - 80) + 'px'); p.style.setProperty('--r', (Math.random() * 60 - 30) + 'deg'); p.style.setProperty('--d', d + 's');
+        $walker.appendChild(p); setTimeout(() => p.remove(), d * 1000 + 100);
+      }, i * 90);
+    }
+    function confetti(n = 40) {
+      const cols = ['#ff6aa8', '#ffcf5c', '#8fe3cf', '#b9a6f2', '#7cc6ff'];
+      for (let i = 0; i < n; i++) {
+        const c = document.createElement('div'); c.className = 'cf'; c.style.background = cols[i % cols.length];
+        c.style.left = '210px'; c.style.bottom = '300px';
+        const a = Math.random() * Math.PI - Math.PI, v = 140 + Math.random() * 220;
+        c.style.setProperty('--x', Math.cos(a) * v + 'px'); c.style.setProperty('--y', (Math.sin(a) * v + 260) + 'px'); c.style.setProperty('--r', (Math.random() * 720 - 360) + 'deg'); c.style.setProperty('--d', (1.2 + Math.random() * .8) + 's');
+        $walker.appendChild(c); setTimeout(() => c.remove(), 2200);
+      }
+    }
+
+    // ---- ท่าทางเวลาว่าง: กะพริบตา · ผมปลิว ----
+    let busy = false;
+    (function idle() {
+      setTimeout(async () => {
+        if (!busy) {
+          if (Math.random() < .25) { for (let i = 0; i < 4 && !busy; i++) { pose(i % 2 ? 5 : 4); await wait(260); } if (!busy) pose(1); }
+          else { pose(2); await wait(140); if (!busy) pose(1); }
+        }
+        idle();
+      }, 2600 + Math.random() * 2600);
+    })();
+
+    // ---- คิวท่าทาง (ทีละอย่าง ไม่ทับกัน) ----
+    const queue = []; let running = false;
+    function enqueue(fn) { if (queue.length > 6) queue.shift(); queue.push(fn); if (!running) run(); }
+    async function run() { running = true; while (queue.length) { busy = true; try { await queue.shift()(); } catch (e) { /* ignore */ } pose(1); $char.classList.remove('dance'); busy = false; await wait(250); } running = false; }
+
+    async function receive(e) {
+      const img = e.giftImage || (window.VJLCollect ? VJLCollect.imgFor(e.giftName) : '');
+      pose(6); hop();
+      if (img) { $gift.src = img; $gift.classList.remove('on'); void $gift.offsetWidth; $gift.classList.add('on'); }
+      if (THANKS) say(fillText(THANK_TEXT, e), 3000);
+      particles(['✨', '💖', '⭐'], 6);
+      await wait(2600); $gift.classList.remove('on');
+    }
+    async function joy(e) {
+      pose(7); hop(); confetti(); particles(['🎉', '✨', '💖'], 10);
+      if (e && THANKS) say(fillText(THANK_TEXT, e), 3800);
+      await wait(1600);
+    }
+    async function dance(times = 3) {
+      $char.classList.add('dance');
+      for (let i = 0; i < times; i++) for (const n of [9, 10, 11]) { pose(n); await wait(380); }
+      $char.classList.remove('dance');
+    }
+    async function heart(e) {
+      pose(8); hop(); particles(['💗', '💕', '💖', '🩷'], 12, 2);
+      if (e) say(fillText(FOLLOW_TEXT, e), 3000);
+      await wait(2200);
+    }
+    async function kiss(e) {
+      // เดินเข้ามาใกล้จอ → ส่งจุ๊บ → หันหลังเดินกลับ
+      const toward = POS === 'br' ? 'translateX(-120px)' : POS === 'bl' ? 'translateX(120px)' : 'translateX(0)';
+      $walker.style.transform = `${toward} scale(1.35)`;
+      for (let i = 0; i < 6; i++) { pose(i % 2 ? 13 : 12); await wait(270); }
+      pose(14); await wait(650);
+      pose(15); particles(['💋', '💗', '💕'], 14, 2.2);
+      if (e) say(fillText('จุ๊บ ๆ ให้ {user} 💋', e), 2600);
+      await wait(1300);
+      $walker.style.transform = '';
+      for (let i = 0; i < 6; i++) { pose(i % 2 ? 17 : 16); await wait(270); }
+    }
+
+    Overlay.on('event', (e) => {
+      if (e.type === 'gift' && !e.streaking) {
+        const value = e.totalValue || (e.diamondCount || 0) * (e.repeatCount || 1);
+        if (value >= BIG) enqueue(async () => { await receive(e); await joy(null); await dance(2); });
+        else enqueue(() => receive(e));
+      } else if (e.type === 'follow' && FOLLOW) enqueue(() => heart(e));
+    });
+    // Action "มาสคอต" จากกฎ (หน้า Actions)
+    Overlay.on('action', (f) => {
+      const a = f.action || {}; if (a.type !== 'mascot') return;
+      const ev = f.event || {}, m = a.move || 'dance';
+      enqueue(async () => {
+        if (a.text) say(fillText(a.text, ev), 3200);
+        if (m === 'kiss') await kiss(a.text ? null : ev); else if (m === 'joy') await joy(null); else if (m === 'heart') await heart(a.text ? null : ev); else await dance(3);
+      });
+    });
+
+    // ---- พรีวิว (ไม่มีลิงก์จริง) ----
+    if (!Overlay.connected) {
+      const demo = window.VJLCollect ? () => VJLCollect.demoGift() : () => ({ type: 'gift', user: { nickname: 'mimi' }, giftName: 'Rose', diamondCount: 1 });
+      const seq = [() => enqueue(() => receive(demo())), () => enqueue(() => heart({ user: { nickname: 'บิ๊ก' } })), () => enqueue(() => receive(demo())),
+        () => enqueue(async () => { await joy(null); await dance(2); }), () => enqueue(() => kiss({ user: { nickname: 'lisa' } }))];
+      let i = 0; setTimeout(function loop() { seq[i++ % seq.length](); setTimeout(loop, 6500); }, 900);
+    }
+  })();
+  </script>
+</body>
+</html>

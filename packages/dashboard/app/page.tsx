@@ -12,18 +12,18 @@ import { getToken } from '@/lib/api';
 import { LangSwitch, useT } from '@/lib/i18n';
 
 const FEATURES = [
-  { icon: Gift, title: 'โหลของขวัญ & ตู้ปลา', text: 'ของขวัญจริงตกลงโหล ตู้ปลา ลูกแก้ว โดมอวกาศ ของแพงชิ้นใหญ่ตามราคา' },
-  { icon: Trees, title: 'ต้นไม้ & กระถาง', text: 'ของขวัญบานเป็นดอกไม้บนต้น เต็มแล้วร่วงกองพื้นแบบล้น ๆ' },
-  { icon: Car, title: 'รถลากของขวัญ', text: 'ผูกของขวัญลากท้ายรถแบบรถงานแต่ง กระเด้งตามถนน' },
-  { icon: WandSparkles, title: 'ไพ่ทาโร่', text: 'ได้กิฟต์ → สุ่มไพ่ 1 / 3 / 7 ใบพร้อมคำทำนายให้ผู้ชม' },
-  { icon: Coins, title: 'Coin Jar', text: 'เครื่องจักรของขวัญ สายพานเลื่อนจริง กองเป็นภูเขา' },
+  { icon: Gift, title: 'โหลของขวัญ & ตู้ปลา', img: '/overlay/themes/thumbs/gj-heart.webp', text: 'ของขวัญจริงตกลงโหล ตู้ปลา ลูกแก้ว โดมอวกาศ ของแพงชิ้นใหญ่ตามราคา' },
+  { icon: Trees, title: 'ต้นไม้ & กระถาง', img: '/overlay/themes/thumbs/gd-sakura.webp', text: 'ของขวัญบานเป็นดอกไม้บนต้น เต็มแล้วร่วงกองพื้นแบบล้น ๆ' },
+  { icon: Car, title: 'รถลากของขวัญ', img: '/overlay/themes/thumbs/car-convertible.webp', text: 'ผูกของขวัญลากท้ายรถแบบรถงานแต่ง กระเด้งตามถนน' },
+  { icon: WandSparkles, title: 'ไพ่ทาโร่', img: '/overlay/tarot/m10.webp', text: 'ได้กิฟต์ → สุ่มไพ่ 1 / 3 / 7 ใบพร้อมคำทำนายให้ผู้ชม' },
+  { icon: Coins, title: 'Coin Jar', img: '/overlay/themes/thumbs/cj-bear.webp', text: 'เครื่องจักรของขวัญ สายพานเลื่อนจริง กองเป็นภูเขา' },
   { icon: Bell, title: 'แจ้งเตือน', text: 'กิฟต์ ติดตาม แชร์ เด้งสวย พร้อมพลุ' },
-  { icon: Target, title: 'แถบเป้าหมาย', text: 'ไลค์ ผู้ติดตาม เพชร กิฟต์ อัปเดตสด' },
+  { icon: Target, title: 'แถบเป้าหมาย', img: '/overlay/hearts/thumb-melody.webp', text: 'ไลค์ ผู้ติดตาม เพชร กิฟต์ อัปเดตสด' },
   { icon: MessageCircle, title: 'แชทสด', text: 'แชทลอยบนจอ อ่านง่าย' },
   { icon: UserPlus, title: 'ผู้ติดตามล่าสุด', text: 'โชว์คนที่กดติดตามล่าสุด' },
-  { icon: Trophy, title: 'Top Gifters & ลีก', text: 'จัดอันดับคนส่งเพชร · โดมปลดล็อกลีก TikTok' },
-  { icon: Volume2, title: 'อ่านแชทออกเสียง', text: 'TTS ภาษาไทย อ่านแชทและกิฟต์' },
-  { icon: Sparkles, title: 'Actions & Events', text: 'ได้กิฟต์ X → เล่นเสียง/รูป/วิดีโอ Y อัตโนมัติ' },
+  { icon: Trophy, title: 'Top Gifters & ลีก', img: '/overlay/thumbs/topgifters-a.webp', text: 'จัดอันดับคนส่งเพชร · โดมปลดล็อกลีก TikTok' },
+  { icon: Volume2, title: 'อ่านแชทออกเสียง', img: '/menu/tts.webp', text: 'TTS ภาษาไทย อ่านแชทและกิฟต์' },
+  { icon: Sparkles, title: 'Actions & Events', img: '/menu/actions.webp', text: 'ได้กิฟต์ X → เล่นเสียง/รูป/วิดีโอ Y อัตโนมัติ' },
 ];
 
 const FAQ: [string, string][] = [
@@ -92,9 +92,14 @@ export default function Home() {
       </section>
 
       <section className="mx-auto grid max-w-6xl gap-4 px-4 pb-20 sm:grid-cols-2 lg:grid-cols-4">
-        {FEATURES.map(({ icon: Icon, title, text }) => (
-          <Card key={title}>
-            <div className="mb-3 grid size-10 place-items-center rounded-xl brand-gradient text-white"><Icon className="size-5" /></div>
+        {FEATURES.map(({ icon: Icon, title, text, ...f }) => (
+          <Card key={title} className="overflow-hidden">
+            {/* ภาพตัวอย่างจริงของวิดเจ็ต (ถ้ามี) — ไม่มีใช้ไอคอน */}
+            <div className="-mx-5 -mt-5 mb-4 grid aspect-video place-items-center" style={{ background: 'radial-gradient(circle at 30% 20%, #3a2d52, #17121f 70%)' }}>
+              {'img' in f && f.img
+                ? <img src={(f.img.startsWith('/overlay') ? (process.env.NEXT_PUBLIC_API_BASE ?? '') : '') + f.img} alt={t(title)} loading="lazy" className="max-h-[85%] max-w-[90%] object-contain drop-shadow-lg" />
+                : <div className="grid size-16 place-items-center rounded-2xl brand-gradient text-white shadow-lg"><Icon className="size-8" /></div>}
+            </div>
             <h3 className="font-medium">{t(title)}</h3>
             <p className="mt-1 text-sm text-muted">{t(text)}</p>
           </Card>

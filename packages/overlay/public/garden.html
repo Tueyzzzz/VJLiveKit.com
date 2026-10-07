@@ -129,7 +129,16 @@
       drum:    { stem: '#7a1f38', twig: '#9e2f4f', leaf: '#F3D9A4', leaf2: '#ffc8dd', shape: 'heart' },
       classic: { stem: '#b5486b', twig: '#c45a7c', leaf: '#4fbf86', leaf2: '#4fbf86', shape: 'oval' },
     };
-    const STEM = STEM_STYLES[SKIN_NAME] || STEM_STYLES.image;
+    const STEM = { ...(STEM_STYLES[SKIN_NAME] || STEM_STYLES.image) };
+    // สีใบ: pastel (ค่าเริ่มต้น) = ผสมขาวให้อ่อนลง ไม่เขียวเข้ม · original = สีเดิม · หรือเลือกโทนสี
+    (function () {
+      const TONE = Overlay.param('leafTone', 'pastel');
+      const mix = (hex, k) => { const n = parseInt(hex.slice(1), 16), c = [n >> 16, (n >> 8) & 255, n & 255].map((v) => Math.round(v + (255 - v) * k)); return '#' + c.map((v) => v.toString(16).padStart(2, '0')).join(''); };
+      const SET = { mint: ['#9fe6c4', '#c9f2df'], pink: ['#ffb3d1', '#ffd6e6'], lavender: ['#c9b8ff', '#e3d9ff'], sakura: ['#ffc4d8', '#fff0f5'], gold: ['#ffe08a', '#fff3c4'] };
+      if (STEM.shape === 'neon' || TONE === 'original') return;
+      if (SET[TONE]) { [STEM.leaf, STEM.leaf2] = SET[TONE]; STEM.twig = mix(STEM.twig, .35); STEM.stem = mix(STEM.stem, .25); return; }
+      STEM.leaf = mix(STEM.leaf, .38); STEM.leaf2 = mix(STEM.leaf2, .25); STEM.twig = mix(STEM.twig, .3); STEM.stem = mix(STEM.stem, .2);
+    })();
     const stems = [];
     for (let i = 0; i < 11; i++) {
       const a = -Math.PI / 2 + (i / 10 - .5) * 2.3 + (rnd() - .5) * .12; // พัดกว้าง ~130°

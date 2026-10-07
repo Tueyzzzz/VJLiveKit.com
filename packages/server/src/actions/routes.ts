@@ -14,7 +14,8 @@ const triggerSchema = z.object({
   keyword: z.string().optional(),
 });
 const actionSchema = z.object({
-  type: z.enum(['sound', 'image', 'video', 'text', 'tarot', 'effect', 'sign', 'glove']),
+  type: z.enum(['sound', 'image', 'video', 'text', 'tarot', 'effect', 'sign', 'glove', 'mascot']),
+  move: z.enum(['dance', 'kiss', 'joy', 'heart']).optional(), // มาสคอต
   // ป้ายไฟ (type=sign)
   signStyle: z.enum(['led', 'neon', 'bulb', 'cute', 'pixel', 'y2k', 'glass', 'surreal', 'boho', 'victorian', 'graffiti', 'future', 'mwhite', 'mblack', 'mline', 'mpill']).optional(),
   signMode: z.enum(['scroll', 'static', 'blink', 'pulse']).optional(),

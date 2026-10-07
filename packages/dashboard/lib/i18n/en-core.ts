@@ -359,4 +359,6 @@ export const EN_CORE: Record<string, string> = {
   'โดเนทขั้นต่ำ {n} บาท': "Minimum donation is {n} THB",
   'สลิปนี้ถูกใช้โดเนทไปแล้ว': "This slip has already been used",
   'สลิปนี้ไม่ได้โอนเข้าบัญชีของวีเจคนนี้': "This slip wasn't paid to this streamer's account",
+  'การแจ้งเตือน': 'Notifications',
+  'ยังไม่มีการแจ้งเตือน': 'No notifications yet',
 };

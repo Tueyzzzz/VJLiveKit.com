@@ -1,8 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { Activity, BarChart3, CreditCard, Download, Gift, History, KeyRound, Radio, RefreshCw, Search, Settings2, Users } from 'lucide-react';
+import { Activity, BarChart3, Bell, CreditCard, Download, Gift, History, KeyRound, Radio, RefreshCw, Search, Settings2, Users } from 'lucide-react';
 import { AdminUserDetail } from '@/components/AdminUserDetail';
+import { AdminNotifications } from '@/components/AdminNotifications';
 import { WIDGET_LABELS } from '@/components/Pricing';
 import { Alert, Badge, Button, Card, Input, PageHeader, Spinner } from '@/components/ui';
 import { api, getToken } from '@/lib/api';
@@ -58,7 +59,7 @@ const PLAN: Record<string, [string, 'pink' | 'mint' | 'gray']> = { pro: ['Pro', 
 /** หลังบ้านแอดมิน: ภาพรวม · ผู้ใช้ (แจก Pro / รีเซ็ตรหัส) · ไลฟ์ที่ออนไลน์ */
 export default function AdminPage() {
   const { isAdmin } = useAuth();
-  const [tab, setTab] = useState<'overview' | 'reports' | 'users' | 'live' | 'lives' | 'settings' | 'payments' | 'audit'>('overview');
+  const [tab, setTab] = useState<'overview' | 'reports' | 'users' | 'live' | 'lives' | 'settings' | 'payments' | 'audit' | 'notify'>('overview');
   const [detail, setDetail] = useState<string | null>(null); // ลูกค้าที่เปิดดูรายละเอียด
   const [payments, setPayments] = useState<{ id: string; provider: string; providerRef: string; amountCents: number; status: string; createdAt: string; user: { id: string; email: string; tiktokUsername: string | null } }[] | null>(null);
   const [auditLog, setAuditLog] = useState<{ at: string; admin: string; action: string; target?: string; detail?: string }[] | null>(null);
@@ -121,7 +122,7 @@ export default function AdminPage() {
     <div>
       <PageHeader title="หลังบ้าน (แอดมิน)" description="ภาพรวมระบบ · จัดการผู้ใช้ · ไลฟ์ที่ออนไลน์อยู่" />
       <div className="mb-5 flex flex-wrap gap-2">
-        {([['overview', 'ภาพรวม', Activity], ['reports', 'รายงาน', BarChart3], ['users', 'ลูกค้า', Users], ['live', 'ไลฟ์ตอนนี้', RefreshCw], ['lives', 'จำนวนไลฟ์', Radio], ['payments', 'การชำระเงิน', CreditCard], ['settings', 'ตั้งค่าระบบ', Settings2], ['audit', 'บันทึกแอดมิน', History]] as const).map(([k, l, Icon]) => (
+        {([['overview', 'ภาพรวม', Activity], ['reports', 'รายงาน', BarChart3], ['users', 'ลูกค้า', Users], ['live', 'ไลฟ์ตอนนี้', RefreshCw], ['lives', 'จำนวนไลฟ์', Radio], ['payments', 'การชำระเงิน', CreditCard], ['notify', 'แจ้งเตือน', Bell], ['settings', 'ตั้งค่าระบบ', Settings2], ['audit', 'บันทึกแอดมิน', History]] as const).map(([k, l, Icon]) => (
           <Button key={k} variant={tab === k ? 'primary' : 'secondary'} onClick={() => setTab(k)}><Icon className="size-4" /> {l}</Button>
         ))}
       </div>
@@ -280,6 +281,8 @@ export default function AdminPage() {
       )}
 
       {detail && <AdminUserDetail id={detail} onClose={() => { setDetail(null); void loadUsers(q); }} />}
+
+      {tab === 'notify' && <AdminNotifications />}
 
       {tab === 'payments' && (!payments ? <Spinner /> : payments.length === 0 ? <Card className="py-8 text-center text-sm text-muted">ยังไม่มีการชำระเงิน</Card> : (
         <Card className="overflow-x-auto p-0">

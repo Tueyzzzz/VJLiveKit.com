@@ -7,6 +7,7 @@ import { LayoutDashboard, LayoutTemplate, Zap, CreditCard, LogOut, Gift, Shield,
 import { Logo } from '@/components/Logo';
 import { Speaker } from '@/components/Speaker';
 import { TikTokAvatar } from '@/components/TikTokAvatar';
+import { NotificationBell } from '@/components/NotificationBell';
 import { Badge, Spinner, cx } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { api, planLabel } from '@/lib/api';
@@ -45,10 +46,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="flex items-center justify-between px-5 py-3 md:py-4">
           <Logo href="/dashboard/" />
           {/* มือถือ: ปุ่มเมนู (เดิมเป็นแถบเลื่อนข้าง มองไม่เห็นเมนูครบ) */}
-          <button onClick={() => setMenu((m) => !m)} aria-label={t('เมนู')} aria-expanded={menu}
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+            <button onClick={() => setMenu((m) => !m)} aria-label={t('เมนู')} aria-expanded={menu}
             className="flex items-center gap-1.5 rounded-xl border border-line px-3 py-2 text-sm md:hidden">
             {menu ? <X className="size-4" /> : <Menu className="size-4" />} {t('เมนู')}
           </button>
+          </div>
         </div>
         <nav className={cx('grid-cols-2 gap-1 px-3 pb-3 md:flex md:flex-col md:pb-0', menu ? 'grid' : 'hidden')}>
           {[...NAV, ...(isAdmin ? [{ href: '/dashboard/admin/', label: 'หลังบ้าน (แอดมิน)', icon: Shield }] : [])].map(({ href, label, icon: Icon, ...rest }) => {

@@ -92,6 +92,15 @@ set_env STRIPE_PRICE_PRO_MONTHLY "${STRIPE_PRICE_PRO_MONTHLY:-}"
 set_env ADMIN_EMAILS "${ADMIN_EMAILS:-}"
 set_env EASYSLIP_API_KEY "${EASYSLIP_API_KEY:-}"
 
+# ---------- 4.5) พื้นที่ดิสก์: ล้าง image เก่า (deploy บ่อย → image แท็กเก่าค้างจนดิสก์เต็ม → Postgres ล่ม) ----------
+log "พื้นที่ดิสก์ก่อนล้าง"; df -h / || true
+docker image prune -af >/dev/null 2>&1 || true      # ลบเฉพาะ image ที่ไม่มีคอนเทนเนอร์ใช้ (ตัวที่รันอยู่ไม่โดน)
+docker builder prune -af >/dev/null 2>&1 || true
+journalctl --vacuum-size=100M >/dev/null 2>&1 || true
+apt-get clean >/dev/null 2>&1 || true
+log "พื้นที่ดิสก์หลังล้าง"; df -h / || true
+docker system df || true
+
 # ---------- 5) ดึง image ใหม่แล้วรัน ----------
 if [ -n "${GHCR_TOKEN:-}" ]; then
   echo "$GHCR_TOKEN" | docker login ghcr.io -u "${GHCR_USER:-github}" --password-stdin >/dev/null
@@ -123,6 +132,15 @@ if [ -n "$OLD" ]; then
   fi
 else
   $DC up -d --remove-orphans
+fi
+# ฐานข้อมูลต้องรับการเชื่อมต่อได้ (หลังเครื่องรีสตาร์ท/ดิสก์เต็ม Postgres อาจค้างในโหมดกู้ข้อมูล)
+db_ok() { $DC exec -T postgres psql -U "${POSTGRES_USER:-postgres}" -d "${POSTGRES_DB:-postgres}" -tAc 'select 1' >/dev/null 2>&1; }
+set -a; . ./.env 2>/dev/null || true; set +a
+if ! db_ok; then
+  log "⚠️ ฐานข้อมูลยังไม่พร้อม — log ล่าสุด:"; $DC logs --tail 40 postgres || true
+  for _ in $(seq 1 30); do db_ok && break; sleep 4; done
+  if ! db_ok; then log "รีสตาร์ท Postgres"; $DC restart postgres; for _ in $(seq 1 45); do db_ok && break; sleep 4; done; fi
+  db_ok && log "✅ ฐานข้อมูลพร้อม" || { log "❌ ฐานข้อมูลยังไม่พร้อม"; $DC logs --tail 60 postgres || true; }
 fi
 $DC exec -T caddy caddy reload --config /etc/caddy/Caddyfile >/dev/null 2>&1 || true
 docker logout ghcr.io >/dev/null 2>&1 || true

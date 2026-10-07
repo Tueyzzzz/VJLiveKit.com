@@ -15,12 +15,15 @@
   #shadow { position:absolute; left:50%; bottom:6px; width:230px; height:30px; margin-left:-115px; border-radius:50%;
     background:radial-gradient(closest-side, rgba(70,30,90,.32), rgba(70,30,90,0)); animation:shadowBreath 3s ease-in-out infinite; }
   #char { position:absolute; left:50%; bottom:10px; width:420px; height:420px; margin-left:-210px; transform-origin:50% 100%;
-    animation:breath 3s ease-in-out infinite; filter:drop-shadow(0 6px 10px rgba(80,40,110,.25)); }
+    animation:breath 2.6s ease-in-out infinite, sway 5.2s ease-in-out infinite; filter:drop-shadow(0 6px 10px rgba(80,40,110,.25)); }
   #char img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; opacity:0; }
   #char img.on { opacity:1; }
-  #char.hop { animation:hop .5s cubic-bezier(.3,1.6,.5,1), breath 3s ease-in-out .5s infinite; }
+  #char.hop { animation:hop .5s cubic-bezier(.3,1.6,.5,1), breath 2.6s ease-in-out .5s infinite, sway 5.2s ease-in-out infinite; }
   #char.dance { animation:dance .45s ease-in-out infinite; }
-  @keyframes breath { 0%,100% { transform:scale(1,1) } 50% { transform:scale(1.012,.988) translateY(1px) } }
+  #char.wiggle { animation:wiggle .6s ease-in-out 2, breath 2.6s ease-in-out infinite; }
+  @keyframes wiggle { 25% { rotate:-5deg } 75% { rotate:5deg } }
+  @keyframes breath { 0%,100% { scale:1 1 } 50% { scale:1.03 .975 } }
+  @keyframes sway { 0%,100% { rotate:-1.6deg; translate:-3px 0 } 50% { rotate:1.6deg; translate:3px 0 } }
   @keyframes shadowBreath { 50% { transform:scaleX(1.05); opacity:.85 } }
   @keyframes hop { 0% { transform:translateY(0) scale(1.06,.94) } 45% { transform:translateY(-26px) scale(.97,1.04) } 100% { transform:translateY(0) } }
   @keyframes dance { 0%,100% { transform:translateY(0) rotate(-2deg) } 50% { transform:translateY(-10px) rotate(2deg) } }
@@ -114,16 +117,20 @@
       }
     }
 
-    // ---- ท่าทางเวลาว่าง: กะพริบตา · ผมปลิว ----
+    // ---- ท่าทางเวลาว่าง: กะพริบตา · ผมปลิว · ทำท่าเล่นเองเป็นระยะ (ไม่ยืนนิ่ง) ----
     let busy = false;
-    (function idle() {
-      setTimeout(async () => {
-        if (!busy) {
-          if (Math.random() < .25) { for (let i = 0; i < 4 && !busy; i++) { pose(i % 2 ? 5 : 4); await wait(260); } if (!busy) pose(1); }
-          else { pose(2); await wait(140); if (!busy) pose(1); }
-        }
-        idle();
-      }, 2600 + Math.random() * 2600);
+    (function blink() {
+      setTimeout(async () => { if (!busy) { pose(2); await wait(130); if (!busy) pose(1); } blink(); }, 2200 + Math.random() * 2400);
+    })();
+    const IDLE = [
+      async () => { for (let i = 0; i < 6; i++) { pose(i % 2 ? 5 : 4); await wait(230); } },                   // สะบัดผม
+      async () => { pose(8); hop(); particles(['💗', '💕'], 4, 1.6); await wait(1100); },                      // ส่งหัวใจเล่น ๆ
+      async () => { $char.classList.add('wiggle'); pose(3); await wait(500); pose(1); await wait(700); $char.classList.remove('wiggle'); }, // โยกตัวยิ้ม
+      async () => { $char.classList.add('dance'); for (const n of [9, 10, 9, 10]) { pose(n); await wait(330); } $char.classList.remove('dance'); }, // เต้นสั้น ๆ
+      async () => { pose(7); hop(); particles(['✨', '⭐'], 4, 1.4); await wait(900); },                        // ดีใจเบา ๆ
+    ];
+    (function idleAct() {
+      setTimeout(async () => { if (!busy && !running) { busy = true; try { await IDLE[Math.floor(Math.random() * IDLE.length)](); } catch (e) { /* ignore */ } pose(1); busy = false; } idleAct(); }, 6000 + Math.random() * 6000);
     })();
 
     // ---- คิวท่าทาง (ทีละอย่าง ไม่ทับกัน) ----
@@ -167,7 +174,14 @@
       for (let i = 0; i < 6; i++) { pose(i % 2 ? 17 : 16); await wait(270); }
     }
 
+    let lastPing = 0;
+    const ping = async (n, parts) => { // ท่าสั้น ๆ ตอบแชท/ไลก์ (เว้นอย่างน้อย 2.5 วิ)
+      if (busy || running || Date.now() - lastPing < 2500) return; lastPing = Date.now(); busy = true;
+      pose(n); hop(); if (parts) particles(parts, 3, 1.4); await wait(650); pose(1); busy = false;
+    };
     Overlay.on('event', (e) => {
+      if (e.type === 'chat') void ping(3);
+      else if (e.type === 'like') void ping(8, ['💗', '💖']);
       if (e.type === 'gift' && !e.streaking) {
         const value = e.totalValue || (e.diamondCount || 0) * (e.repeatCount || 1);
         if (value >= BIG) enqueue(async () => { await receive(e); await joy(null); await dance(2); });

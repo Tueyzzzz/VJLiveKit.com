@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Check, Copy, RotateCcw, Save } from 'lucide-react';
 import { WIDGET_LABELS } from '@/components/Pricing';
 import { Alert, Button, Card, Field, Input, PageHeader, Select, Spinner } from '@/components/ui';
@@ -254,6 +254,16 @@ function WidgetSettings() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
   const [previewSrc, setPreviewSrc] = useState('');
+  const [zoom, setZoom] = useState(2); // ซูมพรีวิว (จำไว้ในเครื่อง)
+  useEffect(() => { try { const z = Number(localStorage.getItem('vjl-prev-zoom')); if (z) setZoom(z); } catch { /* ignore */ } }, []);
+  const [boxW, setBoxW] = useState(0);
+  const roRef = useRef<ResizeObserver | null>(null);
+  const boxRef = useCallback((el: HTMLDivElement | null) => {
+    roRef.current?.disconnect();
+    if (!el) return;
+    setBoxW(el.clientWidth);
+    roRef.current = new ResizeObserver(() => setBoxW(el.clientWidth)); roRef.current.observe(el);
+  }, []);
 
   // โหลดค่าที่บันทึกไว้ (รวมกับค่าเริ่มต้น)
   useEffect(() => {
@@ -342,17 +352,24 @@ function WidgetSettings() {
 
           <div className="space-y-4 lg:sticky lg:top-4 lg:self-start">
             <Card className="p-3">
-              <div className="mb-2 flex items-center justify-between text-xs text-muted">
-                <span>{t('พรีวิว (ข้อมูลจำลอง)')}</span><span>16:9</span>
+              <div className="mb-2 flex items-center justify-between gap-2 text-xs text-muted">
+                <span>{t('พรีวิว (ข้อมูลจำลอง)')}</span>
+                {/* ซูม: วิดเจ็ตส่วนใหญ่อยู่กลางจอ → ขยายให้เต็มกรอบ */}
+                <span className="flex items-center gap-1">
+                  {[1, 1.5, 2, 2.5].map((z) => (
+                    <button key={z} onClick={() => { setZoom(z); try { localStorage.setItem('vjl-prev-zoom', String(z)); } catch { /* ignore */ } }}
+                      className={`rounded-md px-1.5 py-0.5 ${zoom === z ? 'bg-pink text-white' : 'hover:bg-canvas'}`}>{z === 1 ? t('เต็มจอ') : `${z}×`}</button>
+                  ))}
+                </span>
               </div>
-              <div className="relative aspect-video overflow-hidden rounded-xl"
+              <div ref={boxRef} className="relative aspect-video overflow-hidden rounded-xl"
                 style={{ background: 'repeating-conic-gradient(#ece6f5 0% 25%, #f8f5fc 0% 50%) 50% / 24px 24px' }}>
-                {previewSrc && (
-                  <iframe key={previewSrc} src={previewSrc} title={t('พรีวิววิดเจ็ต')}
+                {previewSrc && boxW > 0 && (() => {
+                  const S = (boxW / 1920) * zoom, tx = (boxW - 1920 * S) / 2, ty = ((boxW * 9) / 16 - 1080 * S) / 2;
+                  return <iframe key={previewSrc} src={previewSrc} title={t('พรีวิววิดเจ็ต')}
                     className="absolute left-0 top-0 h-[1080px] w-[1920px] origin-top-left border-0"
-                    style={{ transform: 'scale(var(--s))' }}
-                    ref={(el) => { if (el?.parentElement) el.style.setProperty('--s', String(el.parentElement.clientWidth / 1920)); }} />
-                )}
+                    style={{ transform: `translate(${tx}px, ${ty}px) scale(${S})` }} />;
+                })()}
               </div>
             </Card>
             {msg && <Alert tone={msg.tone}>{msg.text}</Alert>}

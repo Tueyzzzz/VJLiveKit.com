@@ -79,6 +79,7 @@ export function setupRealtime(httpServer: HttpServer): RoomHub {
         const user = claims ? await prisma.user.findUnique({ where: { id: claims.userId }, select: { tiktokUsername: true } }).catch(() => null) : null;
         if (!claims || !user?.tiktokUsername || socket.disconnected) { socket.disconnect(true); return; }
         socket.join(RoomHub.speakerChannel(claims.userId));
+        if (claims.role === 'ADMIN' || config.adminEmails.includes(claims.email.toLowerCase())) socket.join('admins'); // แจ้งแชทใหม่
         hub.presenceUp(claims.userId); // เปิดเว็บอยู่ → วิดเจ็ตของวีเจทำงาน
         const snd = RoomHub.soundChannel(claims.userId);
         if (socket.handshake.query.play !== '0') socket.join(snd);

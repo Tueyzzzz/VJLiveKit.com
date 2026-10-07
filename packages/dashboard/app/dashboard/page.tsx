@@ -12,6 +12,14 @@ import { useAuth } from '@/lib/auth';
 import { useT } from '@/lib/i18n';
 import { NAV } from '@/lib/nav';
 
+/** รูปการ์ดเมนู — ยังไม่มีรูป (เมนูใหม่) ใช้ไอคอนในวงกลมแทน */
+function MenuArt({ img, Icon, dim }: { img: string; Icon: React.ComponentType<{ className?: string }>; dim: boolean }) {
+  const [bad, setBad] = useState(false);
+  if (bad) return <div className="mx-auto grid size-20 place-items-center rounded-full bg-pink-soft text-pink sm:size-22"><Icon className="size-9" /></div>;
+  return <img src={`/menu/${img}.webp`} alt="" width={88} height={88} loading="lazy" onError={() => setBad(true)}
+    className={`mx-auto size-20 object-contain transition-transform group-hover:scale-110 sm:size-22 ${dim ? 'opacity-40 grayscale' : ''}`} />;
+}
+
 export default function OverviewPage() {
   const { user, entitlements, refresh } = useAuth();
   const t = useT();
@@ -63,7 +71,7 @@ export default function OverviewPage() {
           const soon = 'soon' in n && n.soon;
           const body = (
             <>
-              <img src={`/menu/${n.img}.webp`} alt="" width={88} height={88} loading="lazy" className={`mx-auto size-20 object-contain transition-transform group-hover:scale-110 sm:size-22 ${soon ? 'opacity-40 grayscale' : ''}`} />
+              <MenuArt img={n.img} Icon={n.icon} dim={!!soon} />
               <div className="mt-2 text-center text-sm font-semibold text-ink">{t(n.label)}</div>
               <div className="mt-0.5 line-clamp-2 text-center text-xs text-muted">{soon ? t('กำลังพัฒนา') : t(n.desc)}</div>
             </>

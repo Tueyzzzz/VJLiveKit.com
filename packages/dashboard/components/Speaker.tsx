@@ -99,6 +99,7 @@ export function LiveLink() {
       sock.on('ready', () => { store.live = true; emit(); if (ttsWant) sock?.emit?.('tts', { on: true }); });
       sock.on('tts', (e: TTS.TtsEvent) => { if (!ttsWant || !TTS.claimLead()) return; const line = TTS.lineFor(e, TTS.getCfg()); if (line) TTS.say(line); });
       sock.on('disconnect', () => { store.live = false; emit(); });
+      sock.on('support', () => window.dispatchEvent(new Event('vjl-support'))); // แชทแจ้งปัญหา: อีกฝั่งตอบ
       sock.on('action', (f: Fire) => {
         const who = f.event?.user?.nickname || f.event?.user?.uniqueId || '';
         if (f.tab && f.tab === TAB_ID) return; // ปุ่ม Beat Pad ที่กดจากแท็บนี้เอง — แท็บนี้เล่นเองแล้ว/ไม่ต้องเล่นซ้ำ

@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { LogOut, Shield, Menu, X } from 'lucide-react';
 import { NAV } from '@/lib/nav';
+import { useSupportUnread } from '@/components/SupportChat';
 import { Logo } from '@/components/Logo';
 import { Speaker } from '@/components/Speaker';
 import { TikTokAvatar } from '@/components/TikTokAvatar';
@@ -28,6 +29,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter();
   const pathname = usePathname();
   const t = useT();
+  const sup = useSupportUnread();
 
   const [notice, setNotice] = useState('');
   const [menu, setMenu] = useState(false); // มือถือ: เมนูพับ
@@ -66,6 +68,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 className={cx('flex min-h-11 shrink-0 items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition',
                   active ? 'bg-pink-soft font-medium text-pink' : 'text-muted hover:bg-violet-soft hover:text-ink')}>
                 <NavImg img={img} Icon={Icon} active={active} /> {t(label)}
+                {(href === '/dashboard/support/' ? sup.unread : href === '/dashboard/admin/' ? sup.admin : 0) > 0 && (
+                  <span className="ml-auto rounded-full bg-red-500 px-1.5 text-[11px] font-bold text-white">{href === '/dashboard/support/' ? sup.unread : sup.admin}</span>
+                )}
               </Link>
             );
           })}

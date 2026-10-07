@@ -120,6 +120,11 @@ export class RoomHub {
     return () => { set!.delete(w); if (!set!.size) this.waiting.delete(ownerId); };
   }
 
+  /** ส่งถึงหน้าเว็บ (แดชบอร์ด) ของผู้ใช้ที่เปิดอยู่ — เช่น แอดมินตอบแชท */
+  emitUser(userId: string, event: string, payload: unknown): void { this.io.to(RoomHub.speakerChannel(userId)).emit(event, payload); }
+  /** ส่งถึงหน้าเว็บของแอดมินทุกคนที่เปิดอยู่ */
+  emitAdmins(event: string, payload: unknown): void { this.io.to('admins').emit(event, payload); }
+
   /** ส่งอีเวนต์ให้ overlay ของเจ้าของ (เช่น โดเนทที่ยืนยันแล้ว) */
   emitOwner(userId: string, username: string, event: string, payload: unknown): void {
     this.io.to(RoomHub.ownerChannel(userId, username)).emit(event, payload);

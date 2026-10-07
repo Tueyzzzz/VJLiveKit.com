@@ -100,7 +100,7 @@ function posterOf(type: string, config?: Record<string, unknown>): string | null
   }
   if (type === 'goal') {
     const st = v('style', 'bar');
-    return `${API_BASE}/overlay/hearts/${st.startsWith('h-') ? st.slice(2) : 'potion'}.webp`;
+    return `${API_BASE}/overlay/hearts/thumb-${st.startsWith('h-') ? st.slice(2) : 'melody'}.webp`; // หัวใจมีน้ำ 50%
   }
   if (type === 'fx') return `${API_BASE}/overlay/tarot/m10.webp`;
   if (type === 'pile') return `${API_BASE}/overlay/thumbs/pile.webp`;

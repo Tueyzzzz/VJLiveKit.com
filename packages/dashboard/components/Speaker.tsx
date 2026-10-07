@@ -117,12 +117,12 @@ export function LiveLink() {
   }, [username]);
 
   if (needTap) return (
-    <button onClick={() => { setNeedTap(false); TTS.say(' '); }} className="fixed bottom-4 right-4 z-50 max-w-xs animate-pulse rounded-2xl bg-pink px-4 py-3 text-sm font-medium text-white shadow-lg">
+    <button onClick={() => { setNeedTap(false); TTS.say(' '); }} className="fixed bottom-24 right-4 z-50 max-w-xs animate-pulse rounded-2xl bg-pink px-4 py-3 text-sm font-medium text-white shadow-lg">
       🔊 {t('แตะหน้าเว็บ 1 ครั้งเพื่อเปิดเสียงอ่านแชท')}
     </button>
   );
   if (!toast) return null;
-  return <div className="fixed bottom-4 right-4 z-50 max-w-xs rounded-2xl bg-white px-4 py-3 text-sm shadow-lg ring-1 ring-line">🔊 {toast}</div>;
+  return <div className="fixed bottom-24 right-4 z-50 max-w-xs rounded-2xl bg-white px-4 py-3 text-sm shadow-lg ring-1 ring-line">🔊 {toast}</div>;
 }
 
 /** สถานะการเชื่อมต่อ + สวิตช์เสียง (ในเมนูแดชบอร์ด) */

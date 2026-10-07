@@ -492,4 +492,7 @@ export const EN_CORE: Record<string, string> = {
   "ส่ง": "Send",
   "เต็มจอ": "Fit",
   "อัตโนมัติ": "Auto",
+  "แจ้งปัญหา ถามวิธีใช้ — ตอบกลับที่นี่": "Report issues or ask — we reply here",
+  "แชทกับทีมงาน": "Chat with our team",
+  "ปิด": "Close",
 };

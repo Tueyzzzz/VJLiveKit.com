@@ -13,6 +13,5 @@ export const NAV = [
   { href: '/dashboard/donate/', label: 'โดเนทขึ้นจอ', img: 'donate', desc: 'รับโดเนทผ่านพร้อมเพย์ ขึ้นจอทันที', icon: Wallet, soon: true }, // กำลังพัฒนา — เทาไว้ก่อน
   { href: '/dashboard/billing/', label: 'แพลน & การชำระเงิน', img: 'billing', desc: 'ดูแพลน สมัคร Pro', icon: CreditCard },
   { href: '/dashboard/referral/', label: 'แนะนำเพื่อน รับฟรี', img: 'referral', desc: 'ชวนเพื่อนมาใช้ รับใช้ฟรี', icon: Gift },
-  { href: '/dashboard/support/', label: 'แจ้งปัญหา / แชททีมงาน', img: 'support', desc: 'เจอบัก ถามวิธีใช้ แชทกับทีมงานได้เลย', icon: MessageCircle },
   { href: '/dashboard/guide/', label: 'คู่มือการใช้งาน', img: 'guide', desc: 'วิธีใช้งานทีละขั้น', icon: BookOpen },
 ];

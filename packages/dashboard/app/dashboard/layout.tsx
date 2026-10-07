@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { LayoutDashboard, LayoutTemplate, Zap, CreditCard, LogOut, Gift, Shield, BookOpen, Wallet, Menu, X } from 'lucide-react';
+import { LayoutDashboard, LayoutTemplate, Zap, CreditCard, LogOut, Gift, Shield, BookOpen, Wallet, Menu, X, ScrollText } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { Speaker } from '@/components/Speaker';
 import { Badge, Spinner, cx } from '@/components/ui';
@@ -14,6 +14,7 @@ const NAV = [
   { href: '/dashboard/', label: 'ภาพรวม', icon: LayoutDashboard },
   { href: '/dashboard/widgets/', label: 'วิดเจ็ต & ลิงก์ OBS', icon: LayoutTemplate },
   { href: '/dashboard/actions/', label: 'Actions & Events', icon: Zap },
+  { href: '/dashboard/widgets/settings/?type=fxmenu', label: 'เมนูของขวัญ', icon: ScrollText },
   { href: '/dashboard/donate/', label: 'โดเนทขึ้นจอ', icon: Wallet, soon: true }, // กำลังพัฒนา — เทาไว้ก่อน
   { href: '/dashboard/billing/', label: 'แพลน & การชำระเงิน', icon: CreditCard },
   { href: '/dashboard/referral/', label: 'แนะนำเพื่อน รับฟรี', icon: Gift },
@@ -51,7 +52,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <Icon className="size-4" /> {label} <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-400">กำลังพัฒนา</span>
               </span>
             );
-            const active = pathname === href || pathname === href.replace(/\/$/, '');
+            // ลิงก์ที่มี ?type= (เช่น เมนูของขวัญ) → ไฮไลต์เมื่ออยู่หน้าตั้งค่าของวิดเจ็ตนั้น
+            const [hp, hq] = href.split('?');
+            const active = hq ? pathname.replace(/\/$/, '') === hp.replace(/\/$/, '') && typeof window !== 'undefined' && window.location.search.includes(hq) : pathname === href || pathname === href.replace(/\/$/, '');
             return (
               <Link key={href} href={href}
                 className={cx('flex min-h-11 shrink-0 items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition',

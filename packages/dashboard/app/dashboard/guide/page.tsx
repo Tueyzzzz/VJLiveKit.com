@@ -29,7 +29,7 @@ export default function GuidePage() {
         <h2 className="mb-3 font-medium">🚀 เริ่มใช้งานใน 3 ขั้นตอน</h2>
         <div className="space-y-3 text-sm">
           <Step n={1}>ไปที่ <L href="/dashboard/">ภาพรวม</L> ใส่ <b>ชื่อ TikTok</b> ของคุณ (ไม่ต้องใส่ @) แล้วกดบันทึก</Step>
-          <Step n={2}>ไปที่ <L href="/dashboard/widgets/">วิดเจ็ต & ลิงก์ OBS</L> กด <b>“สร้างลิงก์ชุดใหม่”</b> ครั้งเดียว</Step>
+          <Step n={2}>ไปที่ <L href="/dashboard/widgets/">โอเวอร์เลย์</L> กด <b>“สร้างลิงก์ชุดใหม่”</b> ครั้งเดียว</Step>
           <Step n={3}>เลือกวิดเจ็ตที่ชอบ กด <b>คัดลอก</b> แล้วนำลิงก์ไปใส่ใน OBS หรือ TikTok LIVE Studio — ขึ้นไลฟ์ได้เลย วิดเจ็ตจะเชื่อมกับไลฟ์ให้เอง</Step>
         </div>
       </Card>

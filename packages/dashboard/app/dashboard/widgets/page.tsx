@@ -219,7 +219,7 @@ export default function WidgetsPage() {
 
   return (
     <div>
-      <PageHeader title="วิดเจ็ต & ลิงก์ OBS"
+      <PageHeader title="โอเวอร์เลย์"
         description="คัดลอกลิงก์ไปวางใน OBS → Sources → Browser (แนะนำขนาด 1920×1080) ลิงก์เป็นความลับ อย่าแชร์ให้ใคร" />
 
       {!user.tiktokUsername && (

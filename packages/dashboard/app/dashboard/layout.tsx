@@ -12,7 +12,7 @@ import { api, planLabel } from '@/lib/api';
 
 const NAV = [
   { href: '/dashboard/', label: 'ภาพรวม', icon: LayoutDashboard },
-  { href: '/dashboard/widgets/', label: 'วิดเจ็ต & ลิงก์ OBS', icon: LayoutTemplate },
+  { href: '/dashboard/widgets/', label: 'โอเวอร์เลย์', icon: LayoutTemplate },
   { href: '/dashboard/actions/', label: 'Actions & Events', icon: Zap },
   { href: '/dashboard/sounds/', label: 'เสียงแจ้งเตือน', icon: Volume2 },
   { href: '/dashboard/widgets/settings/?type=fxmenu', label: 'เมนูของขวัญ', icon: ScrollText },

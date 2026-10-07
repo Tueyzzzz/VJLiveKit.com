@@ -276,6 +276,7 @@ export default function ActionsPage() {
           <div className="min-w-0 flex-1">
             <div className="font-medium">{t('✨ ลิงก์วิดเจ็ตเอฟเฟกต์ (FX)')}</div>
             <p className="text-sm text-muted">{t('Actions ทุกกฎจะแสดงผ่านวิดเจ็ตนี้ — วางในโปรแกรมไลฟ์')} <b>{t('ให้เต็มจอ')}</b> {t('และไว้')} <b>{t('ชั้นบนสุด')}</b> {t('ครั้งเดียวพอ')}</p>
+            {fxUrl && <code className="mt-1.5 block truncate rounded-lg bg-canvas px-3 py-1.5 text-xs text-muted">{fxUrl}</code>}
           </div>
           {fxUrl ? (
             <Button variant="secondary" onClick={copyFx}>{copied ? <><Check className="size-4 text-mint" /> {t('คัดลอกแล้ว')}</> : <><Copy className="size-4" /> {t('คัดลอกลิงก์ FX')}</>}</Button>
@@ -288,6 +289,7 @@ export default function ActionsPage() {
             <div className="min-w-0 flex-1">
               <div className="font-medium">{t('📜 เมนูของขวัญ (ให้ผู้ชมรู้ว่าต้องส่งอะไร)')}</div>
               <p className="text-sm text-muted">{t('โชว์รูปกิฟต์ + สิ่งที่จะเกิดบนจอ จากกฎด้านล่างอัตโนมัติ แก้กฎแล้วเมนูบนจอเปลี่ยนทันที · ปรับหน้าตาได้ที่')} <Link href="/dashboard/widgets/settings/?type=fxmenu" className="text-pink underline">{t('ตั้งค่าเมนู')}</Link></p>
+              <code className="mt-1.5 block truncate rounded-lg bg-canvas px-3 py-1.5 text-xs text-muted">{menuUrl}</code>
             </div>
             <Button variant="secondary" onClick={copyMenu}>{menuCopied ? <><Check className="size-4 text-mint" /> {t('คัดลอกแล้ว')}</> : <><Copy className="size-4" /> {t('คัดลอกลิงก์เมนู')}</>}</Button>
           </div>

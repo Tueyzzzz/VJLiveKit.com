@@ -424,7 +424,7 @@ function WidgetSettings() {
             </Card>
             {msg && <Alert tone={msg.tone}>{msg.text}</Alert>}
             <div className="flex flex-wrap gap-2">
-              <Button onClick={() => save()} loading={busy} disabled={!dirty}><Save className="size-4" /> {t('บันทึก')}</Button>
+              <Button onClick={() => save()} loading={busy} className={dirty ? '' : 'opacity-80'}><Save className="size-4" /> {t('บันทึก')}</Button>
               <Button variant="secondary" onClick={() => setValues(defaultsOf(def))}><RotateCcw className="size-4" /> {t('คืนค่าเริ่มต้น')}</Button>
               {def.resettable && (
                 <Button variant="danger" onClick={() => { if (confirm(t('{action}? (ทำย้อนกลับไม่ได้)', { action: t(def.resettable!) }))) void save({ resetAt: Date.now() }); }} loading={busy}>

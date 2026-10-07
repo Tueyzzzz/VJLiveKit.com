@@ -66,6 +66,7 @@ export async function buildApp(): Promise<FastifyInstance> {
     try { html = await fs.promises.readFile(path.join(OVERLAY_DIR, alias ? alias.file : page), 'utf8'); }
     catch { return reply.code(404).send({ error: 'ไม่พบ' }); }
     html = html.replace(/src="(js\/[\w.-]+\.js)"/g, `src="$1?v=${OVERLAY_VERSION}"`)
+      .replace(/href="(css\/[\w.-]+\.css)"/g, `href="$1?v=${OVERLAY_VERSION}"`) // css ใหม่ไม่ค้างแคช (ธีมป้ายไฟ)
       .replace('<script', `<script>window.VJL_VERSION=${JSON.stringify(OVERLAY_VERSION)}${alias ? `;window.VJL_DEFAULTS=${JSON.stringify(alias.defaults)}` : ''}</script>
   <script`);
     return reply.type('text/html; charset=utf-8').send(html);

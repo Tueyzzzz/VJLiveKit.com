@@ -109,7 +109,7 @@ export interface Rule {
   name: string;
   enabled: boolean;
   trigger: { event: TriggerEvent; giftName?: string; minDiamonds?: number; keyword?: string };
-  action: { type: ActionType; move?: 'dance' | 'kiss' | 'joy' | 'heart'; url?: string; sound?: string; text?: string; durationMs?: number; cards?: number; deck?: TarotDeck; topic?: TarotTopic; effect?: 'butterflies'; tint?: 'pink' | 'blue' | 'purple' | 'mint' | 'gold' | 'rainbow'; count?: number; repeat?: number; volume?: number; key?: string; signStyle?: 'led' | 'neon' | 'bulb' | 'cute' | 'pixel' | 'y2k' | 'glass' | 'surreal' | 'boho' | 'victorian' | 'graffiti' | 'future' | 'mwhite' | 'mblack' | 'mline' | 'mpill'; signMode?: 'scroll' | 'static' | 'blink' | 'pulse'; signPos?: 'top' | 'center' | 'bottom'; color?: string };
+  action: { type: ActionType; move?: 'dance' | 'kiss' | 'joy' | 'heart' | 'walk'; url?: string; sound?: string; text?: string; durationMs?: number; cards?: number; deck?: TarotDeck; topic?: TarotTopic; effect?: 'butterflies'; tint?: 'pink' | 'blue' | 'purple' | 'mint' | 'gold' | 'rainbow'; count?: number; repeat?: number; volume?: number; key?: string; signStyle?: 'led' | 'neon' | 'bulb' | 'cute' | 'pixel' | 'y2k' | 'glass' | 'surreal' | 'boho' | 'victorian' | 'graffiti' | 'future' | 'mwhite' | 'mblack' | 'mline' | 'mpill'; signMode?: 'scroll' | 'static' | 'blink' | 'pulse'; signPos?: 'top' | 'center' | 'bottom'; color?: string };
   createdAt: string;
 }
 export interface PaymentRow { id: string; amountCents: number; currency: string; status: string; createdAt: string; rawPayload: { hosted_invoice_url?: string; number?: string } | null }

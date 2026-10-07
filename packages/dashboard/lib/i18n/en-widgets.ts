@@ -566,4 +566,10 @@ export const EN_WIDGETS: Record<string, string> = {
   "💜 ลาเวนเดอร์": "💜 Lavender",
   "🌸 ซากุระ": "🌸 Sakura",
   "สีเดิมของแบบ": "Original colors",
+  "สีชุดและผม": "Outfit & hair color",
+  "🎨 สีเดิม": "🎨 Original",
+  "🧡 พีช/ส้ม": "🧡 Peach/orange",
+  "🍀 เขียว": "🍀 Green",
+  "🩷 ชมพูบานเย็น": "🩷 Magenta",
+  "เปลี่ยนเฉพาะชุด ผม ของประดับ — สีผิวคงเดิม": "Recolors outfit, hair and accessories — skin tone stays",
 };

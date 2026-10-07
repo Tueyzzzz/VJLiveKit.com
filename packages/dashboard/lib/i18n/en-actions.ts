@@ -297,4 +297,5 @@ export const EN_ACTIONS: Record<string, string> = {
   "ได้ Finger Heart → ตัวแทนวีเจเต้นบนจอ": "Finger Heart → mascot dances",
   "มาสคอตเดินมาส่งจุ๊บ": "Mascot blows a kiss",
   "ได้ Rosa → เดินเข้ามาส่งจุ๊บ แล้วเดินกลับ": "Rosa → walks up, blows a kiss, walks back",
+  "🚶 เดินไปมา": "🚶 Walk around",
 };

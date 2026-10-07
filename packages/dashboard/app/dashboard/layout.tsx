@@ -15,19 +15,27 @@ import { api, planLabel } from '@/lib/api';
 import { LangSwitch, useT } from '@/lib/i18n';
 
 const NAV = [
-  { href: '/dashboard/', label: 'ภาพรวม', icon: LayoutDashboard },
-  { href: '/dashboard/widgets/', label: 'โอเวอร์เลย์', icon: LayoutTemplate },
-  { href: '/dashboard/actions/', label: 'Actions & Events', icon: Zap },
-  { href: '/dashboard/sounds/', label: 'เสียงแจ้งเตือน', icon: Volume2 },
-  { href: '/dashboard/beatpad/', label: 'Beat Pad (กดเสียง)', icon: Grid3x3 },
-  { href: '/dashboard/tts/', label: 'อ่านแชทออกเสียง (TTS)', icon: Speech },
-  { href: '/dashboard/widgets/settings/?type=fxmenu', label: 'เมนูของขวัญ', icon: ScrollText },
-  { href: '/dashboard/widgets/settings/?type=sign', label: 'ป้ายไฟ LED', icon: Lightbulb },
-  { href: '/dashboard/donate/', label: 'โดเนทขึ้นจอ', icon: Wallet, soon: true }, // กำลังพัฒนา — เทาไว้ก่อน
-  { href: '/dashboard/billing/', label: 'แพลน & การชำระเงิน', icon: CreditCard },
-  { href: '/dashboard/referral/', label: 'แนะนำเพื่อน รับฟรี', icon: Gift },
-  { href: '/dashboard/guide/', label: 'คู่มือการใช้งาน', icon: BookOpen },
+  { href: '/dashboard/', label: 'ภาพรวม', img: 'overview', icon: LayoutDashboard },
+  { href: '/dashboard/widgets/', label: 'โอเวอร์เลย์', img: 'overlay', icon: LayoutTemplate },
+  { href: '/dashboard/actions/', label: 'Actions & Events', img: 'actions', icon: Zap },
+  { href: '/dashboard/sounds/', label: 'เสียงแจ้งเตือน', img: 'sounds', icon: Volume2 },
+  { href: '/dashboard/beatpad/', label: 'Beat Pad (กดเสียง)', img: 'beatpad', icon: Grid3x3 },
+  { href: '/dashboard/tts/', label: 'อ่านแชทออกเสียง (TTS)', img: 'tts', icon: Speech },
+  { href: '/dashboard/widgets/settings/?type=fxmenu', label: 'เมนูของขวัญ', img: 'fxmenu', icon: ScrollText },
+  { href: '/dashboard/widgets/settings/?type=sign', label: 'ป้ายไฟ LED', img: 'sign', icon: Lightbulb },
+  { href: '/dashboard/donate/', label: 'โดเนทขึ้นจอ', img: 'donate', icon: Wallet, soon: true }, // กำลังพัฒนา — เทาไว้ก่อน
+  { href: '/dashboard/billing/', label: 'แพลน & การชำระเงิน', img: 'billing', icon: CreditCard },
+  { href: '/dashboard/referral/', label: 'แนะนำเพื่อน รับฟรี', img: 'referral', icon: Gift },
+  { href: '/dashboard/guide/', label: 'คู่มือการใช้งาน', img: 'guide', icon: BookOpen },
 ];
+
+/** รูปประจำเมนู (VJ ทำกิจกรรมตามเมนู) — โหลดไม่ได้ถอยไปใช้ไอคอนเส้น */
+function NavImg({ img, Icon, active, dim }: { img?: string; Icon: React.ComponentType<{ className?: string }>; active?: boolean; dim?: boolean }) {
+  const [bad, setBad] = useState(false);
+  if (!img || bad) return <Icon className="size-4" />;
+  return <img src={`/menu/${img}.webp`} alt="" width={36} height={36} loading="lazy" onError={() => setBad(true)}
+    className={cx('-my-1.5 size-9 shrink-0 object-contain transition-transform', active ? 'scale-110 drop-shadow' : '', dim ? 'opacity-40 grayscale' : '')} />;
+}
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, entitlements, isAdmin, loading, logout } = useAuth();
@@ -58,10 +66,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </div>
         <nav className={cx('grid-cols-2 gap-1 px-3 pb-3 md:flex md:flex-col md:pb-0', menu ? 'grid' : 'hidden')}>
-          {[...NAV, ...(isAdmin ? [{ href: '/dashboard/admin/', label: 'หลังบ้าน (แอดมิน)', icon: Shield }] : [])].map(({ href, label, icon: Icon, ...rest }) => {
+          {[...NAV, ...(isAdmin ? [{ href: '/dashboard/admin/', label: 'หลังบ้าน (แอดมิน)', img: 'admin', icon: Shield }] : [])].map(({ href, label, icon: Icon, img, ...rest }) => {
             if ('soon' in rest && rest.soon && !isAdmin) return (
               <span key={href} title={t('กำลังพัฒนา เร็ว ๆ นี้')} className="flex min-h-11 shrink-0 cursor-not-allowed flex-wrap items-center gap-x-2.5 rounded-xl px-3 py-2 text-sm text-gray-300">
-                <Icon className="size-4" /> {t(label)} <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-400">{t('กำลังพัฒนา')}</span>
+                <NavImg img={img} Icon={Icon} dim /> {t(label)} <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-400">{t('กำลังพัฒนา')}</span>
               </span>
             );
             // ลิงก์ที่มี ?type= (เช่น เมนูของขวัญ) → ไฮไลต์เมื่ออยู่หน้าตั้งค่าของวิดเจ็ตนั้น
@@ -71,7 +79,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Link key={href} href={href}
                 className={cx('flex min-h-11 shrink-0 items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition',
                   active ? 'bg-pink-soft font-medium text-pink' : 'text-muted hover:bg-violet-soft hover:text-ink')}>
-                <Icon className="size-4" /> {t(label)}
+                <NavImg img={img} Icon={Icon} active={active} /> {t(label)}
               </Link>
             );
           })}

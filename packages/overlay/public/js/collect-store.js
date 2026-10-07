@@ -11,6 +11,18 @@
   const write = (list) => { try { localStorage.setItem(KEY, JSON.stringify(list.slice(-CAP))); } catch { /* storage ปิด/เต็ม */ } };
   if (q.get('reset') === '1' && q.get('demo') !== '1') write([]);
 
+  // คลังรูปของขวัญ (ชื่อ → รูปจริง) — ชิ้นที่ไม่มีรูปติดมา (ข้อมูลเก่า/TikTok ไม่ส่งรูป) จะได้ไม่เป็นเหรียญเหลือง
+  // จำไว้ในเครื่อง: เปิดครั้งถัดไปใช้ได้ทันทีตั้งแต่ตอนกู้กอง
+  let CAT = {};
+  try { CAT = JSON.parse(localStorage.getItem('vjl-gift-cat') || '{}') || {}; } catch { /* ignore */ }
+  fetch('/api/gifts').then((r) => r.json()).then(({ gifts }) => {
+    const m = { n: {}, d: {} };
+    for (const g of gifts || []) if (g.image) { m.n[g.name] = g.image; if (!m.d[g.diamonds]) m.d[g.diamonds] = g.image; }
+    if (m.n.Rose) m.d[1] = m.n.Rose;
+    CAT = m; try { localStorage.setItem('vjl-gift-cat', JSON.stringify(m)); } catch { /* ignore */ }
+  }).catch(() => {});
+  const imgFor = (name, d) => (name && CAT.n && CAT.n[name]) || (!name && d && CAT.d && CAT.d[d]) || '';
+
   window.VJLCollect = {
     /** บันทึกการส่งของขวัญ 1 ครั้ง (n = จำนวนชิ้นที่วิดเจ็ตนี้แสดง) */
     record(e, n) {
@@ -25,7 +37,7 @@
     /** ของขวัญทั้งกอง (คลี่จำนวนชิ้นออก) ล่าสุด max ชิ้น — รูปแบบกลาง {u: รูป, name, d: เพชร} */
     gifts(max = 400) {
       const out = [];
-      for (const x of read()) for (let i = 0; i < x.n; i++) out.push({ u: x.u, name: x.e, em: x.em, d: x.d });
+      for (const x of read()) for (let i = 0; i < x.n; i++) out.push({ u: x.u || imgFor(x.e, x.d), name: x.e, em: x.em, d: x.d });
       return out.slice(-max);
     },
     has: () => read().length > 0,
@@ -44,6 +56,8 @@
     },
     /** ?fill=N (ถ่ายภาพตัวอย่าง): ใส่ของขวัญ N ชิ้นรวดเดียวตอนเริ่ม */
     demoBurst(onGift) { const n = Math.min(150, parseInt(q.get('fill') || '0', 10) || 0); for (let i = 0; i < n; i++) setTimeout(() => onGift(this.demoGift()), i * 60); },
+    /** รูปของขวัญจากชื่อ (สำรองตอนอีเวนต์ไม่มีรูป) */
+    imgFor,
     clear: () => write([]),
     /** อีโมจิสำรองตอนรูปของขวัญโหลดไม่ได้ */
     emoji: (name, def) => ({ Rose: '🌹', 'Finger Heart': '🫰', Perfume: '🧴', Galaxy: '🌌', Lion: '🦁', Universe: '🪐', Heart: '❤️', TikTok: '🎵' })[name] || def,

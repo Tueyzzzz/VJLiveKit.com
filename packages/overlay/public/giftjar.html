@@ -911,7 +911,7 @@
     function onGift(e) {
       const count = e.repeatCount || 1, unit = e.diamondCount || 0, value = e.totalValue || unit * count;
       if (unit < MIN_COINS) return;
-      const g = { img: e.giftImage || '', e: EMOJI[e.giftName] || '🎁', d: unit };
+      const g = { img: (e.giftImage || (window.VJLCollect ? VJLCollect.imgFor(e.giftName) : '')), e: EMOJI[e.giftName] || '🎁', d: unit };
       const n = Math.min(count, 150); // ส่ง 100 ดอก = ลง 100 ชิ้น (เดิมตัดที่ 30)
       if (window.VJLCollect) VJLCollect.record(e, n);
       for (let i = 0; i < n; i++) setTimeout(() => { addBody(g); save(); }, i * (n > 30 ? 55 : 110));

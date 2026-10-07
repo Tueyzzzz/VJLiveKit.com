@@ -450,7 +450,7 @@
     function onGift(e) {
       const count = e.repeatCount || 1, unit = e.diamondCount || 0, value = e.totalValue || unit * count;
       if (unit < MIN_COINS) return;
-      const g = { u: e.giftImage || '', e: EMOJI[e.giftName] || '🌹', d: unit, big: unit >= BIG ? 1 : 0 };
+      const g = { u: (e.giftImage || (window.VJLCollect ? VJLCollect.imgFor(e.giftName) : '')), e: EMOJI[e.giftName] || '🌹', d: unit, big: unit >= BIG ? 1 : 0 };
       const n = g.big ? 1 : Math.min(count, 150); // ส่ง 100 ดอก = บาน 100 ดอก (เดิมตัดที่ 40)
       if (window.VJLCollect) VJLCollect.record(e, n);
       for (let i = 0; i < n; i++) setTimeout(() => { addFlower(g, performance.now()); save(); }, i * (n > 40 ? 50 : 120));

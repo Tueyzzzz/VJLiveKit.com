@@ -7,7 +7,7 @@ import { api, type Rule } from '@/lib/api';
 import { GiftCell } from './GiftPicker';
 import { Badge, Button, Card, Spinner, cx } from './ui';
 
-const ACTION: Record<string, string> = { sound: '🔊 เล่นเสียง', image: '🖼️ แสดงรูป', video: '🎬 เล่นวิดีโอ', text: '✏️ ข้อความ', tarot: '🔮 เปิดไพ่ทาโร่', effect: '🦋 ผีเสื้อ' };
+const ACTION: Record<string, string> = { sound: '🔊 เล่นเสียง', image: '🖼️ แสดงรูป', video: '🎬 เล่นวิดีโอ', text: '✏️ ข้อความ', tarot: '🔮 เปิดไพ่ทาโร่', effect: '🦋 ผีเสื้อ', sign: '💡 ป้ายไฟ' };
 
 function when(r: Rule): string {
   const t = r.trigger;

@@ -10,7 +10,7 @@ import { api, ApiError, type OverlayTokenRow, type ActionType, type Rule, type T
 import { useAuth } from '@/lib/auth';
 
 const EVENT_LABELS: Record<TriggerEvent, string> = { gift: '🎁 ได้รับกิฟต์', follow: '➕ มีคนติดตาม', share: '🔁 มีคนแชร์', like: '❤️ มีคนกดไลค์', chat: '💬 แชทมีคำว่า' };
-const ACTION_LABELS: Record<ActionType, string> = { sound: '🔊 เล่นเสียง', image: '🖼️ แสดงรูป/GIF', video: '🎬 เล่นวิดีโอ', text: '✏️ แสดงข้อความ', tarot: '🔮 สุ่มไพ่ทาโร่', effect: '🦋 ผีเสื้อเทพนิยาย' };
+const ACTION_LABELS: Record<ActionType, string> = { sound: '🔊 เล่นเสียง', image: '🖼️ แสดงรูป/GIF', video: '🎬 เล่นวิดีโอ', text: '✏️ แสดงข้อความ', tarot: '🔮 สุ่มไพ่ทาโร่', effect: '🦋 ผีเสื้อเทพนิยาย', sign: '💡 ป้ายไฟ' };
 
 interface Draft {
   id?: string;
@@ -32,9 +32,14 @@ interface Draft {
   count: string;
   /** คอมโบเล่นซ้ำสูงสุดกี่ครั้ง */
   repeat: string;
+  /** ป้ายไฟ */
+  signStyle: 'led' | 'neon' | 'bulb' | 'cute';
+  signMode: 'scroll' | 'static' | 'blink' | 'pulse';
+  signPos: 'top' | 'center' | 'bottom';
+  color: string;
 }
 
-const EMPTY: Draft = { name: '', enabled: true, event: 'gift', giftName: '', minDiamonds: '', keyword: '', type: 'sound', url: '', sound: 'chime', text: '', durationSec: '5', cards: '1', deck: 'full', topic: 'general', count: '12', repeat: '1' };
+const EMPTY: Draft = { name: '', enabled: true, event: 'gift', giftName: '', minDiamonds: '', keyword: '', type: 'sound', url: '', sound: 'chime', text: '', durationSec: '5', cards: '1', deck: 'full', topic: 'general', count: '12', repeat: '1', signStyle: 'led', signMode: 'scroll', signPos: 'top', color: '#ff4fa3' };
 
 /** เทมเพลตยอดนิยม — กดครั้งเดียวสร้างกฎได้เลย (ไม่ต้องหาไฟล์เสียง/รูปเอง) */
 interface Template { icon: string; title: string; desc: string; rule: { name: string; trigger: Rule['trigger']; action: Rule['action'] } }
@@ -65,6 +70,10 @@ const TEMPLATES: Template[] = [
     rule: { name: 'ขอบคุณที่แชร์', trigger: { event: 'share' }, action: { type: 'text', text: '🔁 ขอบคุณ {user} ที่ช่วยแชร์ไลฟ์ 🙏', durationMs: 4000 } } },
   { icon: '🎉', title: 'กิฟต์ 500 เพชรขึ้นไป → ข้อความว้าว', desc: 'ฉลองให้คนส่งกิฟต์ใหญ่',
     rule: { name: 'ว้าว! กิฟต์ใหญ่ (500+)', trigger: { event: 'gift', minDiamonds: 500 }, action: { type: 'text', text: '🎉 ว้าว! {user} ใจดีสุด ๆ ขอบคุณมาก!', durationMs: 5000 } } },
+  { icon: '💡', title: 'กิฟต์ 100 เพชรขึ้นไป → ป้ายไฟขอบคุณ', desc: 'ป้าย LED วิ่ง “ขอบคุณ {user}” กลางจอ',
+    rule: { name: 'ป้ายไฟขอบคุณ (100💎+)', trigger: { event: 'gift', minDiamonds: 100 }, action: { type: 'sign', signStyle: 'led', signMode: 'scroll', signPos: 'center', color: '#ffcf5c', text: '🎉 ขอบคุณ {user} ใจดีสุด ๆ 💖', durationMs: 7000 } } },
+  { icon: '🌈', title: 'มีคนติดตาม → ป้ายนีออน', desc: 'ป้ายนีออนเต้นตุบ ๆ “{user} ติดตามแล้ว”',
+    rule: { name: 'ป้ายนีออนผู้ติดตาม', trigger: { event: 'follow' }, action: { type: 'sign', signStyle: 'neon', signMode: 'pulse', signPos: 'top', color: '#ff4fa3', text: '💗 {user} ติดตามแล้ว ขอบคุณน้า', durationMs: 4000 } } },
   { icon: '🌟', title: 'ได้ Galaxy → ข้อความพิเศษ', desc: 'ขอบคุณแบบเฉพาะกิฟต์',
     rule: { name: 'ขอบคุณ Galaxy', trigger: { event: 'gift', giftName: 'Galaxy' }, action: { type: 'text', text: '🌌 {user} ส่ง Galaxy! รักเลย 💜', durationMs: 5000 } } },
 ];
@@ -93,6 +102,7 @@ function toDraft(r: Rule): Draft {
     topic: r.action.topic ?? 'general',
     count: String(r.action.count ?? 12),
     repeat: String(r.action.repeat ?? 1),
+    signStyle: r.action.signStyle ?? 'led', signMode: r.action.signMode ?? 'scroll', signPos: r.action.signPos ?? 'top', color: r.action.color ?? '#ff4fa3',
   };
 }
 
@@ -110,6 +120,7 @@ function toBody(d: Draft) {
   if (d.type === 'effect') { action.effect = 'butterflies'; action.count = Math.max(1, Math.min(30, Number(d.count) || 12)); }
   if (d.text.trim()) action.text = d.text.trim();
   if (d.type === 'tarot') { action.cards = Number(d.cards) || 1; if (d.deck !== 'full') action.deck = d.deck; if (d.topic !== 'general') action.topic = d.topic; }
+  if (d.type === 'sign') { action.signStyle = d.signStyle; action.signMode = d.signMode; action.signPos = d.signPos; if (/^#[0-9a-fA-F]{3,8}$/.test(d.color)) action.color = d.color; }
   if (d.type !== 'tarot' && d.event === 'gift') { const n = Math.max(1, Math.min(20, Math.floor(Number(d.repeat) || 1))); if (n > 1) action.repeat = n; }
   const sec = Number(d.durationSec);
   if (sec > 0) action.durationMs = Math.min(60_000, Math.round(sec * 1000));
@@ -327,7 +338,7 @@ export default function ActionsPage() {
                   <Input type="url" required value={draft.url} onChange={(e) => set('url', e.target.value)} placeholder="https://..." />
                 </Field>
               )}
-              <Field label={draft.type === 'text' ? 'ข้อความ' : 'ข้อความประกอบ (ไม่บังคับ)'} hint={draft.type === 'tarot' ? 'สุ่มไพ่ครบสำรับ 78 ใบ พร้อมคำทำนาย · {user} = ชื่อคนส่ง · แนะนำแสดงนาน 8 วินาที' : 'ใช้ {user} แทนชื่อคนที่ทำให้เกิดเหตุการณ์'}>
+              <Field label={draft.type === 'text' ? 'ข้อความ' : 'ข้อความประกอบ (ไม่บังคับ)'} hint={draft.type === 'sign' ? 'ข้อความบนป้าย · {user} = ชื่อคนส่ง · แนะนำแสดงนาน 5–8 วินาที' : draft.type === 'tarot' ? 'สุ่มไพ่ครบสำรับ 78 ใบ พร้อมคำทำนาย · {user} = ชื่อคนส่ง · แนะนำแสดงนาน 8 วินาที' : 'ใช้ {user} แทนชื่อคนที่ทำให้เกิดเหตุการณ์'}>
                 <Input maxLength={200} value={draft.text} onChange={(e) => set('text', e.target.value)} placeholder="ขอบคุณ {user} 💕" />
               </Field>
               {draft.type === 'tarot' && (
@@ -365,6 +376,28 @@ export default function ActionsPage() {
                     <option value="pentacles">💰 เฉพาะชุดเหรียญ (การเงิน)</option>
                   </Select>
                 </Field>
+              )}
+              {draft.type === 'sign' && (
+                <>
+                  <Field label="แบบป้าย">
+                    <Select value={draft.signStyle} onChange={(e) => set('signStyle', e.target.value as Draft['signStyle'])}>
+                      <option value="led">🟥 LED จุด</option><option value="neon">🌈 นีออน</option><option value="bulb">💡 ไฟหลอดรอบป้าย</option><option value="cute">🍬 พาสเทลน่ารัก</option>
+                    </Select>
+                  </Field>
+                  <Field label="การเคลื่อนไหว">
+                    <Select value={draft.signMode} onChange={(e) => set('signMode', e.target.value as Draft['signMode'])}>
+                      <option value="scroll">⬅️ วิ่ง</option><option value="static">⏸ อยู่กับที่</option><option value="blink">💡 กะพริบ</option><option value="pulse">💓 เต้นตุบ ๆ</option>
+                    </Select>
+                  </Field>
+                  <Field label="ตำแหน่ง">
+                    <Select value={draft.signPos} onChange={(e) => set('signPos', e.target.value as Draft['signPos'])}>
+                      <option value="top">บน</option><option value="center">กลางจอ</option><option value="bottom">ล่าง</option>
+                    </Select>
+                  </Field>
+                  {draft.signStyle !== 'bulb' && draft.signStyle !== 'cute' && (
+                    <Field label="สีตัวอักษร"><input type="color" value={draft.color} onChange={(e) => set('color', e.target.value)} className="h-10 w-20 cursor-pointer rounded-lg border border-line" /></Field>
+                  )}
+                </>
               )}
               {draft.event === 'gift' && (draft.type === 'tarot'
                 ? <Field label="ส่งคอมโบ (เช่น กุหลาบ 100 ดอก)"><div className="rounded-xl bg-canvas px-3 py-2 text-sm text-muted">🔒 เปิดไพ่ 1 ครั้งต่อคอมโบ (ไพ่ล็อกไว้ ไม่เปิดรัว)</div></Field>

@@ -10,7 +10,12 @@ export interface RuleTrigger {
 }
 
 export interface RuleAction {
-  type: 'sound' | 'image' | 'video' | 'text' | 'tarot' | 'effect';
+  type: 'sound' | 'image' | 'video' | 'text' | 'tarot' | 'effect' | 'sign';
+  /** ป้ายไฟ (type=sign) */
+  signStyle?: 'led' | 'neon' | 'bulb' | 'cute';
+  signMode?: 'scroll' | 'static' | 'blink' | 'pulse';
+  signPos?: 'top' | 'center' | 'bottom';
+  color?: string;
   /** เอฟเฟกต์เต็มจอ (type=effect) */
   effect?: 'butterflies';
   /** จำนวนตัว/ชิ้นของเอฟเฟกต์ */

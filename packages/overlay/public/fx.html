@@ -5,7 +5,7 @@
 <title>FX Overlay</title>
 <link rel="icon" href="favicon.svg" />
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Itim&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Itim&family=Kanit:wght@600&family=Mali:wght@700&display=swap');
   html,body { margin:0; width:100%; height:100%; background:transparent; overflow:hidden; font-family:'Itim',sans-serif; }
   #fx { position:fixed; inset:0; display:grid; place-items:center; pointer-events:none; }
   .media { max-width:70vw; max-height:70vh; border-radius:20px; box-shadow:0 20px 50px rgba(0,0,0,.4);
@@ -65,6 +65,28 @@
   @keyframes dust { from { opacity:1; transform:translate(var(--x),var(--y)) scale(1) } to { opacity:0; transform:translate(var(--x),calc(var(--y) + 40px)) scale(.2) } }
   .ftitle { position:fixed; left:0; right:0; top:12%; text-align:center; font-size:44px; color:#fff; pointer-events:none;
     text-shadow:0 0 12px rgba(255,180,240,.9), 0 2px 6px rgba(80,20,90,.7); animation:tPop .6s both, fade .8s var(--out,5s) forwards; }
+  /* ป้ายไฟ (Action) — แบบเดียวกับวิดเจ็ตป้ายไฟ แต่โผล่ชั่วคราว */
+  .sgn { position:fixed; left:50%; width:min(86vw,1400px); transform:translateX(-50%); pointer-events:none; --c:#ff4fa3;
+    animation:sgnIn .5s cubic-bezier(.2,1.4,.4,1) both, fade .6s var(--out,5s) forwards; }
+  .sgn.top { top:5vh } .sgn.center { top:42vh } .sgn.bottom { bottom:7vh }
+  @keyframes sgnIn { from { opacity:0; transform:translateX(-50%) scale(.7) } to { opacity:1; transform:translateX(-50%) scale(1) } }
+  .sgn .bd { position:relative; overflow:hidden; border-radius:18px; padding:14px 0; background:rgba(8,6,16,.88); box-shadow:0 10px 30px rgba(0,0,0,.35); }
+  .sgn .tr { white-space:nowrap; display:flex; justify-content:center; }
+  .sgn .tx { display:inline-block; font:600 64px/1.15 'Kanit',sans-serif; color:var(--c); padding:0 .3em; }
+  .sgn.scroll .tr { justify-content:flex-start; } .sgn.scroll .tx { padding-left:100%; animation:marq var(--dur,8s) linear infinite; }
+  @keyframes marq { from { transform:translateX(0) } to { transform:translateX(-100%) } }
+  .sgn.blink .tx { animation:sblink 1s steps(1) infinite; } @keyframes sblink { 50% { opacity:.15 } }
+  .sgn.pulse .tx { animation:spulse 1.4s ease-in-out infinite; } @keyframes spulse { 50% { transform:scale(1.06) } }
+  .sgn.led .tx { text-shadow:0 0 6px var(--c), 0 0 18px var(--c); letter-spacing:.06em; }
+  .sgn.led .bd::after { content:''; position:absolute; inset:0; background:radial-gradient(circle, transparent 0 1.4px, rgba(8,6,16,.92) 2.2px) 0 0/5px 5px; }
+  .sgn.neon .bd { background:rgba(10,4,20,.6); border:2px solid var(--c); box-shadow:0 0 18px var(--c), inset 0 0 18px var(--c); }
+  .sgn.neon .tx { color:#fff; text-shadow:0 0 4px #fff, 0 0 10px var(--c), 0 0 22px var(--c), 0 0 42px var(--c); }
+  .sgn.bulb .bd { background:linear-gradient(180deg,rgba(120,20,60,.92),rgba(60,10,40,.92)); border:6px solid #ffcf5c; }
+  .sgn.bulb .tx { color:#fff6d6; text-shadow:0 2px 0 #b8541f, 0 0 14px #ffcf5c; }
+  .sgn .bl { position:absolute; inset:4px; } .sgn .bl i { position:absolute; width:10px; height:10px; margin:-5px; border-radius:50%; background:#fff3b0; box-shadow:0 0 8px #ffd34d, 0 0 16px #ffb400; animation:sbulb 1s steps(1) infinite; }
+  .sgn .bl i:nth-child(odd) { animation-delay:.5s } @keyframes sbulb { 50% { background:#8a6a2a; box-shadow:none } }
+  .sgn.cute .bd { background:linear-gradient(135deg,rgba(255,111,170,.94),rgba(150,110,240,.94)); border:3px solid #fff; border-radius:999px; }
+  .sgn.cute .tx { color:#fff; text-shadow:0 3px 0 rgba(120,40,120,.45); font-family:'Mali','Itim',sans-serif; }
 </style>
 </head>
 <body>
@@ -269,8 +291,26 @@
       }
     }
 
+    // ป้ายไฟชั่วคราว: LED / นีออน / ไฟหลอด / พาสเทล · วิ่ง / อยู่กับที่ / กะพริบ / เต้น
+    function sign(a,ev){
+      const dur=Math.max(2000,a.durationMs||6000), st=['led','neon','bulb','cute'].includes(a.signStyle)?a.signStyle:'led';
+      const md=['scroll','static','blink','pulse'].includes(a.signMode)?a.signMode:'scroll', pos=['top','center','bottom'].includes(a.signPos)?a.signPos:'top';
+      const el=document.createElement('div'); el.className='sgn '+st+' '+md+' '+pos;
+      if(/^#[0-9a-f]{3,8}$/i.test(a.color||'')) el.style.setProperty('--c',a.color);
+      el.style.setProperty('--out',(dur/1000-.6)+'s');
+      el.innerHTML='<div class="bd"><div class="bl"></div><div class="tr"><span class="tx"></span></div></div>';
+      const tx=el.querySelector('.tx'); tx.textContent=fill(a.text||'✨ ขอบคุณ {user} ✨',ev);
+      document.body.appendChild(el);
+      if(md==='scroll') requestAnimationFrame(()=>{ el.style.setProperty('--dur',Math.max(3,Math.min(dur/1000,tx.scrollWidth/260)).toFixed(1)+'s'); });
+      if(st==='bulb') requestAnimationFrame(()=>{ const bl=el.querySelector('.bl'), r=bl.getBoundingClientRect(), nx=Math.max(2,Math.floor(r.width/26)), ny=Math.max(1,Math.floor(r.height/26));
+        const add=(x,y)=>{ const i=document.createElement('i'); i.style.left=x+'px'; i.style.top=y+'px'; bl.appendChild(i); };
+        for(let k=0;k<=nx;k++){ add(k*r.width/nx,0); add(k*r.width/nx,r.height); } for(let k=1;k<ny;k++){ add(0,k*r.height/ny); add(r.width,k*r.height/ny); } });
+      setTimeout(()=>el.remove(),dur+100);
+    }
+
     function play(a,ev){
       if(a.type==='tarot') return tarot(a,ev);
+      if(a.type==='sign') return sign(a,ev);
       if(a.type==='effect') return butterflies(a,ev);
       const dur=a.durationMs||5000;
       const text=fill(a.text,ev);
@@ -298,7 +338,7 @@
 
     // demo fallback — จำลองกฎ "ได้ Galaxy -> โชว์ข้อความ"
     if(!Overlay.connected){
-      const samples=[{type:'text',text:'🎉 ขอบคุณสำหรับ Galaxy!'},{type:'tarot',cards:3},{type:'effect',effect:'butterflies',text:'🦋 {user} เสกผีเสื้อ!'}];
+      const samples=[{type:'text',text:'🎉 ขอบคุณสำหรับ Galaxy!'},{type:'tarot',cards:3},{type:'effect',effect:'butterflies',text:'🦋 {user} เสกผีเสื้อ!'},{type:'sign',signStyle:'neon',signMode:'pulse',text:'💗 ขอบคุณ {user} ที่ติดตาม',durationMs:4000}];
       setInterval(()=>play(samples[Math.floor(Math.random()*samples.length)],{user:{nickname:'mimi'}}), 5000);
     }
   })();

@@ -83,7 +83,7 @@ export interface OverlayTokenRow { id: string; label: string | null; createdAt: 
 export interface Plan { code: string; name: string; priceCents: number; currency: string; features: Omit<Entitlements, 'plan'> }
 
 export type TriggerEvent = 'gift' | 'follow' | 'share' | 'like' | 'chat';
-export type ActionType = 'sound' | 'image' | 'video' | 'text' | 'tarot' | 'effect';
+export type ActionType = 'sound' | 'image' | 'video' | 'text' | 'tarot' | 'effect' | 'sign';
 export type TarotTopic = 'general' | 'love' | 'self' | 'money';
 export type TarotDeck = 'full' | 'major' | 'wands' | 'cups' | 'swords' | 'pentacles';
 export interface Rule {
@@ -91,7 +91,7 @@ export interface Rule {
   name: string;
   enabled: boolean;
   trigger: { event: TriggerEvent; giftName?: string; minDiamonds?: number; keyword?: string };
-  action: { type: ActionType; url?: string; sound?: string; text?: string; durationMs?: number; cards?: number; deck?: TarotDeck; topic?: TarotTopic; effect?: 'butterflies'; count?: number; repeat?: number };
+  action: { type: ActionType; url?: string; sound?: string; text?: string; durationMs?: number; cards?: number; deck?: TarotDeck; topic?: TarotTopic; effect?: 'butterflies'; count?: number; repeat?: number; signStyle?: 'led' | 'neon' | 'bulb' | 'cute'; signMode?: 'scroll' | 'static' | 'blink' | 'pulse'; signPos?: 'top' | 'center' | 'bottom'; color?: string };
   createdAt: string;
 }
 export interface PaymentRow { id: string; amountCents: number; currency: string; status: string; createdAt: string; rawPayload: { hosted_invoice_url?: string; number?: string } | null }

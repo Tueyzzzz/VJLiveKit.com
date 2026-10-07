@@ -14,7 +14,12 @@ const triggerSchema = z.object({
   keyword: z.string().optional(),
 });
 const actionSchema = z.object({
-  type: z.enum(['sound', 'image', 'video', 'text', 'tarot', 'effect']),
+  type: z.enum(['sound', 'image', 'video', 'text', 'tarot', 'effect', 'sign']),
+  // ป้ายไฟ (type=sign)
+  signStyle: z.enum(['led', 'neon', 'bulb', 'cute']).optional(),
+  signMode: z.enum(['scroll', 'static', 'blink', 'pulse']).optional(),
+  signPos: z.enum(['top', 'center', 'bottom']).optional(),
+  color: z.string().regex(/^#[0-9a-fA-F]{3,8}$/).optional(),
   effect: z.enum(['butterflies']).optional(),
   count: z.number().int().min(1).max(30).optional(),
   repeat: z.number().int().min(1).max(20).optional(),

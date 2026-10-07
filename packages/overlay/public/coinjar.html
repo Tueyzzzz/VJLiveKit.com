@@ -472,12 +472,7 @@
 
     // ---- เดโม (เปิดไฟล์ตรง ๆ / ?demo=1) ----
     if (!Overlay.connected) {
-      const names = ['somchai', 'mimi', 'บิ๊ก', 'lisa', 'ต้นน้ำ'];
-      const gifts = [['Rose', 1], ['Finger Heart', 5], ['Perfume', 20], ['TikTok', 1], ['Galaxy', 1000], ['Lion', 2999]];
-      setInterval(() => {
-        const g = gifts[Math.floor(Math.random() * gifts.length)], nm = names[Math.floor(Math.random() * names.length)];
-        onGift({ type: 'gift', user: { uniqueId: nm, nickname: nm, avatar: '' }, giftName: g[0], diamondCount: g[1], repeatCount: g[1] >= 1000 ? 1 : 1 + Math.floor(Math.random() * 3) });
-      }, 1500);
+      setInterval(() => onGift(VJLCollect.demoGift()), 1500); // ของขวัญจริง (รูปจาก TikTok)
     }
   })();
   </script>

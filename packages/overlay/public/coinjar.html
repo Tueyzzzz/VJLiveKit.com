@@ -443,8 +443,9 @@
       if (unit >= 1000) fx.confetti((SCREEN.x0 + SCREEN.x1) / 2, M.y0 - 20, 50);
       screenImg = giftImg(e.giftImage); screenEmoji = EMOJI[e.giftName] || '🎁';
       const g = { u: e.giftImage || '', e: screenEmoji, d: unit };
-      if (window.VJLCollect) VJLCollect.record(e, Math.min(count, 30));
-      for (let i = 0; i < Math.min(count, 30); i++) setTimeout(() => { addBody(g); save(); }, i * 160);
+      const n = Math.min(count, 150); // ส่ง 100 ดอก = ลง 100 ชิ้น (เดิมตัดที่ 30)
+      if (window.VJLCollect) VJLCollect.record(e, n);
+      for (let i = 0; i < n; i++) setTimeout(() => { addBody(g); save(); }, i * (n > 30 ? 70 : 160));
       if (SKIN && SKIN.music && fx.notes) fx.notes((SCREEN.x0 + SCREEN.x1) / 2, SCREEN.y0, unit >= 100 ? 6 : 3); // ตู้คาราโอเกะ: โน้ตลอยจากจอ
     }
 

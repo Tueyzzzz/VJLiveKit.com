@@ -8,6 +8,7 @@ import { prisma } from '../db/prisma.js';
 import { getEntitlements, isWidgetType } from '../plans/index.js';
 import { verifySession } from '../auth/service.js';
 import { settings } from '../settings/index.js';
+import { isSuspended } from '../admin/store.js';
 import type { ActionRule, RuleTrigger, RuleAction } from '../actions/engine.js';
 
 /** โหลดกฎ Actions ที่เปิดใช้ของผู้ใช้ */
@@ -29,6 +30,7 @@ async function resolveViewer(token: string | undefined, username: string | undef
     if (!payload?.tid || !payload.userId) return { error: 'token ไม่ถูกต้องหรือหมดอายุ' };
     const record = await prisma.overlayToken.findUnique({ where: { id: payload.tid }, select: { revoked: true, userId: true } });
     if (!record || record.revoked || record.userId !== payload.userId) return { error: 'token ถูกเพิกถอนแล้ว — สร้างลิงก์ใหม่ใน Dashboard' };
+    if (isSuspended(payload.userId)) return { error: 'บัญชีนี้ถูกระงับการใช้งาน' };
     const user = await prisma.user.findUnique({ where: { id: payload.userId }, select: { tiktokUsername: true, email: true, role: true } });
     if (!user?.tiktokUsername) return { error: 'ยังไม่ได้ตั้งชื่อ TikTok ใน Dashboard' };
     const ent = await getEntitlements(payload.userId);

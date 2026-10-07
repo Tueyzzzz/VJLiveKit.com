@@ -10,6 +10,7 @@ import { grantDays } from '../referrals/routes.js';
 import { getHub } from '../realtime/hub.js';
 import { connStats } from '../realtime/connstats.js';
 import { listLives } from '../realtime/lives.js';
+import { audit, listAudit, isSuspended, setSuspended, suspendedInfo } from './store.js';
 import { settings, updateSettings, DEFAULTS, LIMITS, type SystemSettings } from '../settings/index.js';
 
 /** แอดมิน = role ADMIN ในฐานข้อมูล หรืออีเมลอยู่ใน ADMIN_EMAILS */
@@ -80,6 +81,7 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
     if (!Number.isFinite(days) || days < 1 || days > 3650) return reply.code(400).send({ error: 'จำนวนวันไม่ถูกต้อง' });
     if (!(await prisma.user.findUnique({ where: { id }, select: { id: true } }))) return reply.code(404).send({ error: 'ไม่พบผู้ใช้' });
     await grantDays(id, days);
+    audit(getUser(req)!.email, 'แจก Pro', id, `${days} วัน`);
     return { ok: true, entitlements: await getEntitlements(id) };
   });
 
@@ -89,6 +91,7 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
     if (!(await prisma.user.findUnique({ where: { id }, select: { id: true } }))) return reply.code(404).send({ error: 'ไม่พบผู้ใช้' });
     const temp = crypto.randomBytes(6).toString('base64url'); // 8 ตัวอักษร
     await prisma.user.update({ where: { id }, data: { passwordHash: await hashPassword(temp) } });
+    audit(getUser(req)!.email, 'รีเซ็ตรหัสผ่าน', id);
     return { ok: true, tempPassword: temp };
   });
 
@@ -141,7 +144,85 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
   // ---- ไลฟ์ที่เชื่อมต่ออยู่ ----
   // ตั้งค่าระบบ (แก้แล้วมีผลทันที ไม่ต้อง deploy)
   app.get('/api/admin/settings', { preHandler: requireAdmin }, async () => ({ settings: settings(), defaults: DEFAULTS, limits: LIMITS }));
-  app.put('/api/admin/settings', { preHandler: requireAdmin }, async (req) => ({ settings: updateSettings((req.body ?? {}) as Partial<SystemSettings>) }));
+  app.put('/api/admin/settings', { preHandler: requireAdmin }, async (req) => {
+    const before = settings(), after = updateSettings((req.body ?? {}) as Partial<SystemSettings>);
+    const diff = Object.keys(after).filter((k) => (after as unknown as Record<string, unknown>)[k] !== (before as unknown as Record<string, unknown>)[k])
+      .map((k) => `${k}: ${String((before as unknown as Record<string, unknown>)[k])} → ${String((after as unknown as Record<string, unknown>)[k])}`).join(', ');
+    if (diff) audit(getUser(req)!.email, 'แก้ตั้งค่าระบบ', undefined, diff);
+    return { settings: after };
+  });
+
+  // ---- ลูกค้ารายคน: ดูทุกอย่าง + จัดการ ----
+  app.get('/api/admin/users/:id', { preHandler: requireAdmin }, async (req, reply) => {
+    const { id } = req.params as { id: string };
+    const u = await prisma.user.findUnique({
+      where: { id },
+      select: { id: true, email: true, displayName: true, tiktokUsername: true, role: true, createdAt: true, updatedAt: true,
+        subscription: { select: { status: true, provider: true, currentPeriodEnd: true, cancelAtPeriodEnd: true, plan: { select: { code: true } } } },
+        payments: { orderBy: { createdAt: 'desc' }, take: 20, select: { id: true, provider: true, amountCents: true, currency: true, status: true, createdAt: true } },
+        overlayTokens: { orderBy: { createdAt: 'desc' }, select: { id: true, label: true, revoked: true, createdAt: true } },
+        actionRules: { orderBy: { createdAt: 'desc' }, select: { id: true, name: true, enabled: true, trigger: true, action: true } },
+        widgetConfigs: { select: { type: true, updatedAt: true } } },
+    });
+    if (!u) return reply.code(404).send({ error: 'ไม่พบผู้ใช้' });
+    const ent = await getEntitlements(id);
+    const tk = (u.tiktokUsername ?? '').toLowerCase();
+    const lives = tk ? listLives().filter((l) => l.username.toLowerCase() === tk).slice(-20).reverse() : [];
+    const room = tk ? (getHub()?.listRooms() ?? []).find((r) => r.username.toLowerCase() === tk) : undefined;
+    return {
+      user: { ...u, widgetConfigs: u.widgetConfigs.filter((w) => !w.type.startsWith('_')) },
+      entitlements: ent, trialEnd: trialEndOf(u.createdAt),
+      admin: u.role === 'ADMIN' || config.adminEmails.includes(u.email.toLowerCase()), adminByEnv: config.adminEmails.includes(u.email.toLowerCase()),
+      suspended: suspendedInfo(id),
+      live: room ? { connected: room.connected, viewers: room.viewers, diamonds: room.diamonds, widgets: room.widgets } : null,
+      webOpen: getHub()?.webOpen(id) ?? false,
+      lives,
+    };
+  });
+
+  app.post('/api/admin/users/:id/role', { preHandler: requireAdmin }, async (req, reply) => {
+    const { id } = req.params as { id: string };
+    const admin = !!(req.body as { admin?: boolean } | undefined)?.admin;
+    if (id === getUser(req)!.userId && !admin) return reply.code(400).send({ error: 'ถอดสิทธิ์แอดมินตัวเองไม่ได้' });
+    await prisma.user.update({ where: { id }, data: { role: admin ? 'ADMIN' : 'USER' } }).catch(() => null);
+    audit(getUser(req)!.email, admin ? 'ตั้งเป็นแอดมิน' : 'ถอดแอดมิน', id);
+    return { ok: true };
+  });
+
+  app.post('/api/admin/users/:id/suspend', { preHandler: requireAdmin }, async (req, reply) => {
+    const { id } = req.params as { id: string };
+    const { on, reason } = (req.body ?? {}) as { on?: boolean; reason?: string };
+    if (id === getUser(req)!.userId) return reply.code(400).send({ error: 'ระงับบัญชีตัวเองไม่ได้' });
+    setSuspended(id, !!on, reason ?? '');
+    audit(getUser(req)!.email, on ? 'ระงับบัญชี' : 'ยกเลิกระงับ', id, reason);
+    return { ok: true, suspended: isSuspended(id) };
+  });
+
+  // ยกเลิก Pro ที่แอดมินแจก (ไม่ยุ่งกับรอบบิลบัตรของ Stripe — ให้ยกเลิกที่ Stripe แทน)
+  app.post('/api/admin/users/:id/revoke-pro', { preHandler: requireAdmin }, async (req, reply) => {
+    const { id } = req.params as { id: string };
+    const sub = await prisma.subscription.findUnique({ where: { userId: id } });
+    if (!sub) return reply.code(400).send({ error: 'ผู้ใช้นี้ไม่มี Pro' });
+    if (sub.provider === 'stripe' && sub.status === 'ACTIVE') return reply.code(400).send({ error: 'Pro นี้ตัดบัตรอัตโนมัติผ่าน Stripe — ยกเลิกที่ Stripe แทน' });
+    await prisma.subscription.update({ where: { userId: id }, data: { status: 'CANCELED', currentPeriodEnd: new Date() } });
+    audit(getUser(req)!.email, 'ยกเลิก Pro', id);
+    return { ok: true, entitlements: await getEntitlements(id) };
+  });
+
+  app.post('/api/admin/users/:id/revoke-tokens', { preHandler: requireAdmin }, async (req) => {
+    const { id } = req.params as { id: string };
+    const r = await prisma.overlayToken.updateMany({ where: { userId: id, revoked: false }, data: { revoked: true } });
+    audit(getUser(req)!.email, 'เพิกถอนลิงก์วิดเจ็ตทั้งหมด', id, `${r.count} ชุด`);
+    return { ok: true, count: r.count };
+  });
+
+  // ---- การชำระเงิน + บันทึกการกระทำ ----
+  app.get('/api/admin/payments', { preHandler: requireAdmin }, async () => {
+    const payments = await prisma.payment.findMany({ orderBy: { createdAt: 'desc' }, take: 200,
+      select: { id: true, provider: true, providerRef: true, amountCents: true, currency: true, status: true, createdAt: true, user: { select: { id: true, email: true, tiktokUsername: true } } } });
+    return { payments };
+  });
+  app.get('/api/admin/audit', { preHandler: requireAdmin }, async () => ({ audit: listAudit().slice(0, 300) }));
 
   app.get('/api/admin/live', { preHandler: requireAdmin }, async () => ({ rooms: getHub()?.listRooms() ?? [] }));
 

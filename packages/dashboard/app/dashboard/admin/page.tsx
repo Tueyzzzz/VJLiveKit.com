@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { Activity, BarChart3, Download, Gift, KeyRound, Radio, RefreshCw, Search, Settings2, Users } from 'lucide-react';
+import { Activity, BarChart3, CreditCard, Download, Gift, History, KeyRound, Radio, RefreshCw, Search, Settings2, Users } from 'lucide-react';
+import { AdminUserDetail } from '@/components/AdminUserDetail';
 import { Alert, Badge, Button, Card, Input, PageHeader, Spinner } from '@/components/ui';
 import { api, getToken } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -55,7 +56,10 @@ const PLAN: Record<string, [string, 'pink' | 'mint' | 'gray']> = { pro: ['Pro', 
 /** หลังบ้านแอดมิน: ภาพรวม · ผู้ใช้ (แจก Pro / รีเซ็ตรหัส) · ไลฟ์ที่ออนไลน์ */
 export default function AdminPage() {
   const { isAdmin } = useAuth();
-  const [tab, setTab] = useState<'overview' | 'reports' | 'users' | 'live' | 'lives' | 'settings'>('overview');
+  const [tab, setTab] = useState<'overview' | 'reports' | 'users' | 'live' | 'lives' | 'settings' | 'payments' | 'audit'>('overview');
+  const [detail, setDetail] = useState<string | null>(null); // ลูกค้าที่เปิดดูรายละเอียด
+  const [payments, setPayments] = useState<{ id: string; provider: string; providerRef: string; amountCents: number; status: string; createdAt: string; user: { id: string; email: string; tiktokUsername: string | null } }[] | null>(null);
+  const [auditLog, setAuditLog] = useState<{ at: string; admin: string; action: string; target?: string; detail?: string }[] | null>(null);
   const [sys, setSys] = useState<{ settings: SysSettings; defaults: SysSettings; limits: Record<string, [number, number]> } | null>(null);
   const [sysDraft, setSysDraft] = useState<SysSettings | null>(null);
   const [lives, setLives] = useState<Lives | null>(null);
@@ -76,6 +80,8 @@ export default function AdminPage() {
     if (tab === 'overview') { void loadOv(); const t = setInterval(loadOv, 15_000); return () => clearInterval(t); }
     if (tab === 'users') { if (!users) void loadUsers(q); const t = setInterval(() => void loadUsers(q), 20_000); return () => clearInterval(t); } // สถานะไลฟ์อัปเดตเอง
     if (tab === 'reports') api<Reports>('/api/admin/reports').then(setRep).catch((e) => setMsg({ tone: 'error', text: (e as Error).message }));
+    if (tab === 'payments') api<{ payments: NonNullable<typeof payments> }>('/api/admin/payments').then((r) => setPayments(r.payments)).catch((e) => setMsg({ tone: 'error', text: (e as Error).message }));
+    if (tab === 'audit') api<{ audit: NonNullable<typeof auditLog> }>('/api/admin/audit').then((r) => setAuditLog(r.audit)).catch((e) => setMsg({ tone: 'error', text: (e as Error).message }));
     if (tab === 'settings') api<{ settings: SysSettings; defaults: SysSettings; limits: Record<string, [number, number]> }>('/api/admin/settings').then((r) => { setSys(r); setSysDraft(r.settings); }).catch((e) => setMsg({ tone: 'error', text: (e as Error).message }));
     if (tab === 'lives') { const f = () => api<Lives>('/api/admin/lives').then(setLives).catch((e) => setMsg({ tone: 'error', text: (e as Error).message })); void f(); const t = setInterval(f, 30_000); return () => clearInterval(t); }
     if (tab === 'live') { void loadLive(); const t = setInterval(loadLive, 10_000); return () => clearInterval(t); }
@@ -113,7 +119,7 @@ export default function AdminPage() {
     <div>
       <PageHeader title="หลังบ้าน (แอดมิน)" description="ภาพรวมระบบ · จัดการผู้ใช้ · ไลฟ์ที่ออนไลน์อยู่" />
       <div className="mb-5 flex flex-wrap gap-2">
-        {([['overview', 'ภาพรวม', Activity], ['reports', 'รายงาน', BarChart3], ['users', 'ลูกค้า', Users], ['live', 'ไลฟ์ตอนนี้', RefreshCw], ['lives', 'จำนวนไลฟ์', Radio], ['settings', 'ตั้งค่าระบบ', Settings2]] as const).map(([k, l, Icon]) => (
+        {([['overview', 'ภาพรวม', Activity], ['reports', 'รายงาน', BarChart3], ['users', 'ลูกค้า', Users], ['live', 'ไลฟ์ตอนนี้', RefreshCw], ['lives', 'จำนวนไลฟ์', Radio], ['payments', 'การชำระเงิน', CreditCard], ['settings', 'ตั้งค่าระบบ', Settings2], ['audit', 'บันทึกแอดมิน', History]] as const).map(([k, l, Icon]) => (
           <Button key={k} variant={tab === k ? 'primary' : 'secondary'} onClick={() => setTab(k)}><Icon className="size-4" /> {l}</Button>
         ))}
       </div>
@@ -229,7 +235,7 @@ export default function AdminPage() {
                 <tbody className="divide-y divide-line">
                   {users.map((u) => (
                     <tr key={u.id}>
-                      <td className="px-4 py-3"><div className="font-medium">{u.displayName ?? '-'} {u.admin && <Badge tone="pink">แอดมิน</Badge>}</div><div className="text-xs text-muted">{u.email}</div></td>
+                      <td className="px-4 py-3"><button onClick={() => setDetail(u.id)} className="text-left hover:text-pink"><div className="font-medium underline-offset-2 hover:underline">{u.displayName ?? '-'} {u.admin && <Badge tone="pink">แอดมิน</Badge>}</div><div className="text-xs text-muted">{u.email}</div></button></td>
                       <td className="px-4 py-3">{u.tiktokUsername ? `@${u.tiktokUsername}` : '-'}</td>
                       <td className="px-4 py-3 text-xs">
                         {u.live?.status === 'live' ? <Badge tone="mint">🔴 ไลฟ์อยู่</Badge> : u.live?.status === 'online' ? <Badge tone="violet">เปิดเว็บ รอไลฟ์</Badge> : <Badge tone="gray">ออฟไลน์</Badge>}
@@ -254,6 +260,46 @@ export default function AdminPage() {
           <p className="mt-2 text-xs text-muted">แสดงล่าสุด 100 คน — ใช้ช่องค้นหาเพื่อหาคนอื่น</p>
         </div>
       )}
+
+      {detail && <AdminUserDetail id={detail} onClose={() => { setDetail(null); void loadUsers(q); }} />}
+
+      {tab === 'payments' && (!payments ? <Spinner /> : payments.length === 0 ? <Card className="py-8 text-center text-sm text-muted">ยังไม่มีการชำระเงิน</Card> : (
+        <Card className="overflow-x-auto p-0">
+          <div className="border-b border-line px-4 py-3 text-sm">รับชำระแล้ว (PAID) รวม <b>฿{(payments.filter((x) => x.status === 'PAID').reduce((a, x) => a + x.amountCents, 0) / 100).toLocaleString('th-TH')}</b> จาก {payments.length} รายการล่าสุด</div>
+          <table className="w-full text-sm">
+            <thead className="border-b border-line text-left text-xs text-muted"><tr><th className="px-4 py-3 font-normal">วันที่</th><th className="px-4 py-3 font-normal">ลูกค้า</th><th className="px-4 py-3 font-normal">ยอด</th><th className="px-4 py-3 font-normal">สถานะ</th><th className="px-4 py-3 font-normal">ช่องทาง</th></tr></thead>
+            <tbody className="divide-y divide-line">
+              {payments.map((x) => (
+                <tr key={x.id}>
+                  <td className="px-4 py-3 text-xs">{new Date(x.createdAt).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })}</td>
+                  <td className="px-4 py-3"><button onClick={() => setDetail(x.user.id)} className="text-left hover:text-pink hover:underline">{x.user.email}</button>{x.user.tiktokUsername && <div className="text-xs text-muted">@{x.user.tiktokUsername}</div>}</td>
+                  <td className="px-4 py-3">฿{(x.amountCents / 100).toLocaleString('th-TH')}</td>
+                  <td className="px-4 py-3"><Badge tone={x.status === 'PAID' ? 'mint' : x.status === 'PENDING' ? 'violet' : 'gray'}>{x.status}</Badge></td>
+                  <td className="px-4 py-3 text-xs">{x.provider}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+      ))}
+
+      {tab === 'audit' && (!auditLog ? <Spinner /> : auditLog.length === 0 ? <Card className="py-8 text-center text-sm text-muted">ยังไม่มีบันทึก — ทุกการแจก Pro / รีเซ็ตรหัส / ระงับบัญชี / แก้ตั้งค่า จะถูกบันทึกที่นี่</Card> : (
+        <Card className="overflow-x-auto p-0">
+          <table className="w-full text-sm">
+            <thead className="border-b border-line text-left text-xs text-muted"><tr><th className="px-4 py-3 font-normal">เวลา</th><th className="px-4 py-3 font-normal">แอดมิน</th><th className="px-4 py-3 font-normal">ทำอะไร</th><th className="px-4 py-3 font-normal">รายละเอียด</th></tr></thead>
+            <tbody className="divide-y divide-line">
+              {auditLog.map((a, i) => (
+                <tr key={i}>
+                  <td className="px-4 py-3 text-xs">{new Date(a.at).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })}</td>
+                  <td className="px-4 py-3 text-xs">{a.admin}</td>
+                  <td className="px-4 py-3">{a.action} {a.target && <button onClick={() => setDetail(a.target!)} className="text-xs text-pink hover:underline">ดูลูกค้า</button>}</td>
+                  <td className="max-w-md px-4 py-3 text-xs text-muted">{a.detail ?? '-'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+      ))}
 
       {tab === 'settings' && (!sys || !sysDraft ? <Spinner /> : (
         <Card className="space-y-4">

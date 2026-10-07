@@ -491,4 +491,5 @@ export const EN_CORE: Record<string, string> = {
   "พิมพ์ข้อความ…": "Type a message…",
   "ส่ง": "Send",
   "เต็มจอ": "Fit",
+  "อัตโนมัติ": "Auto",
 };

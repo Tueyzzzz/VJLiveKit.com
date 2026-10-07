@@ -70,7 +70,7 @@ const WIDGET_BLURB: Record<string, string> = {
 
 /** พรีวิวสดของวิดเจ็ต (โหมดเดโม) — ย่อจาก 1920×1080 ให้พอดีการ์ด, โหลดเฉพาะตอนเลื่อนมาเห็น */
 /** ความกว้างจอจำลองของตัวอย่าง (ยิ่งแคบ = วิดเจ็ตดูใหญ่ขึ้น) — วิดเจ็ตเล็ก ๆ ไม่ต้องย่อจากจอ 1920 */
-const PREVIEW_W: Record<string, number> = { goal: 760, chat: 820, follower: 640, alerts: 900, timer: 760, topgifters: 900, toplikers: 900, tts: 900, fx: 1100, fxmenu: 760, sign: 1000, league: 1400, donate: 900 };
+const PREVIEW_W: Record<string, number> = { goal: 1500, chat: 820, follower: 640, alerts: 900, timer: 760, topgifters: 900, toplikers: 900, tts: 900, fx: 1100, fxmenu: 760, sign: 1000, league: 1400, donate: 900 };
 
 /** ตั้งค่าที่บันทึกไว้ → พารามิเตอร์ URL ของตัวอย่าง (พารามิเตอร์ใน URL มาก่อนค่าเริ่มต้นเสมอ) */
 function configQuery(config?: Record<string, unknown>): string {
@@ -83,6 +83,8 @@ function configQuery(config?: Record<string, unknown>): string {
 
 /** รูปนิ่งของแบบที่เลือกไว้ (จากตัวเลือกที่มีรูปย่อในหน้าตั้งค่า) */
 function posterOf(type: string, config?: Record<string, unknown>): string | null {
+  const fr = String(config?.frames ?? 'a');
+  if ((type === 'topgifters' || type === 'toplikers') && fr !== 'off') return `${API_BASE}/overlay/thumbs/${type}-${fr}.webp`; // แท่น Top 3 มีรูปโปรไฟล์ (ก่อนรูปกรอบเปล่า)
   const def = WIDGET_SETTINGS[type];
   if (!def) return null;
   for (const sec of def.sections) for (const f of sec.fields) {
@@ -93,7 +95,6 @@ function posterOf(type: string, config?: Record<string, unknown>): string | null
   }
   // วิดเจ็ตที่ไม่มีธีมรูป → ใช้รูปจริงของแบบที่เลือก (กรอบ Top 3 · หัวใจแก้ว · ไพ่ทาโร่)
   const v = (k: string, d: string) => String(config?.[k] ?? d);
-  if ((type === 'topgifters' || type === 'toplikers') && v('frames', 'a') !== 'off') return `${API_BASE}/overlay/thumbs/${type}-${v('frames', 'a')}.webp`; // แท่น Top 3 มีรูปโปรไฟล์
   if (type === 'topgifters' || type === 'toplikers') {
     const first: Record<string, string> = { a: 'r1', b: 'r1b', gaming: 'g1', singer: 's1', toy: 't1', minimal: type === 'toplikers' ? 't1' : 'r1' };
     const k = first[v('frames', 'a')] ?? (type === 'toplikers' ? 't1' : 'r1');
@@ -138,7 +139,7 @@ function WidgetPreview({ type, config, live, onLive }: { type: string; config?: 
         <button type="button" onClick={() => onLive(true)} aria-label={t('เล่นตัวอย่าง')}
           className="absolute inset-0 grid place-items-center">
           {poster
-            ? <img src={poster} alt="" loading="lazy" className="h-4/5 w-auto object-contain drop-shadow-lg" />
+            ? <img src={poster} alt="" loading="lazy" className="max-h-[85%] max-w-[92%] object-contain drop-shadow-lg" />
             : <span className="text-5xl">{ICON[type] ?? '🎁'}</span>}
           <span className="absolute bottom-2 right-2 rounded-full bg-black/45 px-2.5 py-1 text-[11px] text-white opacity-80 group-hover:opacity-100">{t('▶ ดูตัวอย่าง')}</span>
         </button>

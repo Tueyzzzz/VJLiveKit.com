@@ -260,8 +260,29 @@ function WidgetSettings() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
   const [previewSrc, setPreviewSrc] = useState('');
-  const [zoom, setZoom] = useState(2); // ซูมพรีวิว (จำไว้ในเครื่อง)
-  useEffect(() => { try { const z = Number(localStorage.getItem('vjl-prev-zoom')); if (z) setZoom(z); } catch { /* ignore */ } }, []);
+  const [zoom, setZoom] = useState(0); // ซูมพรีวิว: 0 = อัตโนมัติ (หาตำแหน่งวิดเจ็ตแล้วขยายให้เต็ม) · จำไว้ในเครื่อง
+  useEffect(() => { try { const z = Number(localStorage.getItem('vjl-prev-zoom2')); if (z) setZoom(z); } catch { /* ignore */ } }, []);
+  const [fit, setFit] = useState<{ z: number; cx: number; cy: number } | null>(null);
+  const frameRef = useRef<HTMLIFrameElement | null>(null);
+  // อัตโนมัติ: วัดกรอบรวมของสิ่งที่มองเห็นในหน้าวิดเจ็ต (ไม่นับพื้นหลัง/แคนวาสเต็มจอ) ซ้ำช่วงแรกเพราะวิดเจ็ตค่อย ๆ โผล่
+  const measure = useCallback(() => {
+    const d = frameRef.current?.contentDocument; if (!d?.body) return;
+    let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    for (const el of Array.from(d.body.querySelectorAll<HTMLElement>('*'))) {
+      if (/^(SCRIPT|STYLE|IFRAME)$/.test(el.tagName)) continue;
+      const r = el.getBoundingClientRect();
+      if (r.width < 4 || r.height < 4 || (r.width > 1700 && r.height > 950) || r.right < 0 || r.bottom < 0 || r.left > 1920 || r.top > 1080) continue; // นอกจอ/เต็มจอ ไม่นับ
+      const cs = d.defaultView!.getComputedStyle(el);
+      if (cs.visibility === 'hidden' || cs.display === 'none' || Number(cs.opacity) < 0.05) continue;
+      if (!el.children.length || el.tagName === 'IMG' || el.tagName === 'CANVAS' || cs.backgroundImage !== 'none' || cs.backgroundColor !== 'rgba(0, 0, 0, 0)') {
+        x0 = Math.min(x0, Math.max(0, r.left)); y0 = Math.min(y0, Math.max(0, r.top)); x1 = Math.max(x1, Math.min(1920, r.right)); y1 = Math.max(y1, Math.min(1080, r.bottom));
+      }
+    }
+    if (x1 <= x0) { setFit({ z: 2, cx: 960, cy: 540 }); return; } // หาไม่เจอ (วาดบนแคนวาสเต็มจอ เช่น โหล) → ซูมกลางจอ
+    const w = x1 - x0, h = y1 - y0;
+    setFit({ z: Math.max(1, Math.min(3, 0.85 * Math.min(1920 / w, 1080 / h))), cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 });
+  }, []);
+  useEffect(() => { setFit(null); }, [previewSrc]);
   const [boxW, setBoxW] = useState(0);
   const roRef = useRef<ResizeObserver | null>(null);
   const boxRef = useCallback((el: HTMLDivElement | null) => {
@@ -381,19 +402,23 @@ function WidgetSettings() {
                 <span>{t('พรีวิว (ข้อมูลจำลอง)')}</span>
                 {/* ซูม: วิดเจ็ตส่วนใหญ่อยู่กลางจอ → ขยายให้เต็มกรอบ */}
                 <span className="flex items-center gap-1">
-                  {[1, 1.5, 2, 2.5].map((z) => (
-                    <button key={z} onClick={() => { setZoom(z); try { localStorage.setItem('vjl-prev-zoom', String(z)); } catch { /* ignore */ } }}
-                      className={`rounded-md px-1.5 py-0.5 ${zoom === z ? 'bg-pink text-white' : 'hover:bg-canvas'}`}>{z === 1 ? t('เต็มจอ') : `${z}×`}</button>
+                  {[0, 1, 1.5, 2, 2.5].map((z) => (
+                    <button key={z} onClick={() => { setZoom(z); try { localStorage.setItem('vjl-prev-zoom2', String(z)); } catch { /* ignore */ } }}
+                      className={`rounded-md px-1.5 py-0.5 ${zoom === z ? 'bg-pink text-white' : 'hover:bg-canvas'}`}>{z === 0 ? t('อัตโนมัติ') : z === 1 ? t('เต็มจอ') : `${z}×`}</button>
                   ))}
                 </span>
               </div>
               <div ref={boxRef} className="relative aspect-video overflow-hidden rounded-xl"
                 style={{ background: 'repeating-conic-gradient(#ece6f5 0% 25%, #f8f5fc 0% 50%) 50% / 24px 24px' }}>
                 {previewSrc && boxW > 0 && (() => {
-                  const S = (boxW / 1920) * zoom, tx = (boxW - 1920 * S) / 2, ty = ((boxW * 9) / 16 - 1080 * S) / 2;
-                  return <iframe key={previewSrc} src={previewSrc} title={t('พรีวิววิดเจ็ต')}
+                  const f = zoom === 0 ? (fit ?? { z: 1, cx: 960, cy: 540 }) : { z: zoom, cx: 960, cy: 540 };
+                  const S = (boxW / 1920) * f.z, boxH = (boxW * 9) / 16;
+                  // เลื่อนให้ตรงกลางวิดเจ็ตอยู่กลางกรอบ แต่ไม่เลยขอบจอจำลอง
+                  const tx = Math.min(0, Math.max(boxW - 1920 * S, boxW / 2 - f.cx * S)), ty = Math.min(0, Math.max(boxH - 1080 * S, boxH / 2 - f.cy * S));
+                  return <iframe key={previewSrc} ref={frameRef} src={previewSrc} title={t('พรีวิววิดเจ็ต')}
+                    onLoad={() => { for (const ms of [600, 1500, 3000]) setTimeout(measure, ms); }}
                     className="absolute left-0 top-0 h-[1080px] w-[1920px] origin-top-left border-0"
-                    style={{ transform: `translate(${tx}px, ${ty}px) scale(${S})` }} />;
+                    style={{ transform: `translate(${tx}px, ${ty}px) scale(${S})`, transition: 'transform .4s ease' }} />;
                 })()}
               </div>
             </Card>

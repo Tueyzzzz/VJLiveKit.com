@@ -78,7 +78,8 @@ export default function BeatPadPage() {
       <div className="rounded-3xl border border-white/10 bg-[#17121f] p-3 shadow-xl sm:p-5">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <Select className="!w-auto !border-white/10 !bg-white/5 !text-white" value={board.cols} onChange={(e) => void save({ ...board, cols: Number(e.target.value) })} aria-label={t('จำนวนคอลัมน์')}>
-            {[2, 3, 4, 5].map((c) => <option key={c} value={c}>{t('{n} คอลัมน์', { n: c })}</option>)}
+            {/* ตัวเลือกในรายการต้องเป็นตัวเข้มบนพื้นขาว (ปุ่มเป็นตัวขาวบนพื้นมืด — เดิมรายการเป็นขาวบนขาว มองไม่เห็น) */}
+            {[2, 3, 4, 5].map((c) => <option key={c} value={c} style={{ color: '#3d2f45', background: '#fff' }}>{t('{n} คอลัมน์', { n: c })}</option>)}
           </Select>
           <h2 className="font-display text-2xl font-black tracking-[.3em] sm:text-3xl">
             {'TAP TAP!'.split('').map((ch, i) => <span key={i} style={{ color: ['#ff6aa8', '#ffb03a', '#ffe14a', '', '#4ade80', '#38bdf8', '#818cf8', '#c084fc'][i] || '#fff' }}>{ch}</span>)}

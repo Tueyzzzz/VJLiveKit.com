@@ -218,6 +218,7 @@
     const SELF_LABELS={1:[''],3:['ตัวตนจริง','ที่คนอื่นมองคุณ','จุดเด่นที่ซ่อนอยู่'],7:['ตัวตนจริง','ด้านความรัก','ด้านการงาน','ที่คนอื่นมอง','จุดแข็ง','สิ่งที่ต้องระวัง','พลังซ่อนเร้น']};
     const MONEY_LABELS={1:[''],3:['การเงินตอนนี้','สิ่งที่ต้องระวัง','โชคลาภที่กำลังมา'],7:['เงินที่ผ่านมา','การเงินตอนนี้','รายรับ','รายจ่าย','สิ่งที่ต้องระวัง','คำแนะนำ','ผลลัพธ์การเงิน']};
     const LOVE_LABELS={1:[''],3:['ใจคุณ','ใจเขา','อนาคตความรัก'],7:['รักที่ผ่านมา','ใจคุณตอนนี้','ใจเขาตอนนี้','คำแนะนำ','สิ่งที่ขวางอยู่','สิ่งที่หวัง','บทสรุปความรัก']};
+    const DAILY_LABELS={1:['ไพ่ของวันนี้'],3:['ช่วงเช้า','ช่วงบ่าย','ช่วงค่ำ'],7:['ภาพรวมวันนี้','การงาน','การเงิน','ความรัก','สุขภาพ','สิ่งที่ต้องระวัง','โชคดี']};
     function nextTarot(){
       const job=tarotQ.shift(); if(!job){ tarotBusy=false; return; } tarotBusy=true;
       const [a,ev]=job, n=[1,3,7].includes(a.cards)?a.cards:1;
@@ -226,17 +227,24 @@
       // การจัดวาง: แนวนอน = แถวเดียว (7 ใบโค้งเกือกม้า) · แนวตั้ง = 7 ใบเป็น 2-3-2
       const rows=n===7&&portrait?[2,3,2]:[n], maxRow=Math.max(...rows), arc=n===7&&!portrait;
       const scale=Math.min(n===7?(portrait?0.78:0.62):n===3?(portrait?0.95:0.85):1, (innerWidth*0.94-(maxRow-1)*18)/(maxRow*260), (innerHeight*0.86-rows.length*36-(rows.length-1)*22-(arc?60:0))/(rows.length*470)), step=n===1?0:(n===7?0.9:1.4); // ขนาดไพ่/ระยะเวลาเปิดทีละใบ (วินาที)
-      const deck=deckOf(a.deck||Overlay.param('deck','full')).slice().sort(()=>Math.random()-0.5).slice(0,n); // ไม่ซ้ำกันในชุดเดียว
+      let deck;
+      if(a.topic==='daily'){ // ไพ่ประจำวัน: คนเดิม วันเดิม (เวลาไทย) = ไพ่ชุดเดิม
+        const day=new Date(Date.now()+7*3600e3).toISOString().slice(0,10), who0=ev&&ev.user?(ev.user.uniqueId||ev.user.nickname||''):'';
+        let h=2166136261; for(const ch of who0+'|'+day){ h^=ch.codePointAt(0); h=Math.imul(h,16777619)>>>0; }
+        const rnd=()=>{ h=(Math.imul(h^(h>>>15),2246822507)+0x6D2B79F5)>>>0; return h/4294967296; };
+        const all=deckOf(a.deck||Overlay.param('deck','full')).slice(); for(let i=all.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); [all[i],all[j]]=[all[j],all[i]]; }
+        deck=all.slice(0,n);
+      } else deck=deckOf(a.deck||Overlay.param('deck','full')).slice().sort(()=>Math.random()-0.5).slice(0,n); // ไม่ซ้ำกันในชุดเดียว
       const u=ev&&ev.user?(ev.user.nickname||ev.user.uniqueId):'';
       const el=document.createElement('div'); el.className='tarot'; el.style.setProperty('--s',String(scale));
-      const who=document.createElement('div'); who.className='who'; const head=fill(a.text,ev); who.textContent=head||((a.topic==='love'?(u?`💘 ดวงความรักของ ${u}`:'💘 ดวงความรัก'):a.topic==='self'?(u?`🪞 ตัวตนของ ${u}`:'🪞 ตัวตนของคุณ'):a.topic==='money'?(u?`💰 ดวงการเงินของ ${u}`:'💰 ดวงการเงิน'):(u?`🔮 ไพ่ของ ${u}`:'🔮 ไพ่ของคุณ'))+(n>1?` · ${n} ใบ`:'')); el.appendChild(who); // ข้อความของกฎ = หัวเรื่อง
+      const who=document.createElement('div'); who.className='who'; const head=fill(a.text,ev); who.textContent=head||((a.topic==='daily'?(u?`📅 ไพ่ประจำวันของ ${u}`:'📅 ไพ่ประจำวัน'):a.topic==='love'?(u?`💘 ดวงความรักของ ${u}`:'💘 ดวงความรัก'):a.topic==='self'?(u?`🪞 ตัวตนของ ${u}`:'🪞 ตัวตนของคุณ'):a.topic==='money'?(u?`💰 ดวงการเงินของ ${u}`:'💰 ดวงการเงิน'):(u?`🔮 ไพ่ของ ${u}`:'🔮 ไพ่ของคุณ'))+(n>1?` · ${n} ใบ`:'')); el.appendChild(who); // ข้อความของกฎ = หัวเรื่อง
       const spread=document.createElement('div'); spread.className='tspread'; el.appendChild(spread);
       const rowEls=rows.map(()=>{ const r=document.createElement('div'); r.className='trow'; spread.appendChild(r); return r; });
       const rowOf=(k)=>{ let acc=0; for(let r=0;r<rows.length;r++){ acc+=rows[r]; if(k<acc) return rowEls[r]; } return rowEls[rowEls.length-1]; };
       deck.forEach((c,k)=>{
         const delay=0.7+k*step;
         const slot=document.createElement('div'); slot.className='tslot';
-        const LB=(a.topic==='love'?LOVE_LABELS:a.topic==='self'?SELF_LABELS:a.topic==='money'?MONEY_LABELS:LABELS)[n]; if(LB[k]){ const l=document.createElement('div'); l.className='lbl'; l.textContent=LB[k]; l.style.animationDelay=delay+'s'; slot.appendChild(l); }
+        const LB=(a.topic==='daily'?DAILY_LABELS:a.topic==='love'?LOVE_LABELS:a.topic==='self'?SELF_LABELS:a.topic==='money'?MONEY_LABELS:LABELS)[n]; if(LB[k]){ const l=document.createElement('div'); l.className='lbl'; l.textContent=LB[k]; l.style.animationDelay=delay+'s'; slot.appendChild(l); }
         const box=document.createElement('div'); box.className='tbox';
         box.innerHTML='<div class="tcard"><div class="tin"><div class="tglow"></div><div class="tface tback"></div><div class="tface tfront"><div class="tname"><div class="th"></div><div class="en"></div></div></div></div></div>';
         box.querySelector('.tin').style.animationDelay=delay+'s'; box.querySelector('.tglow').style.animationDelay=(delay+0.6)+'s';

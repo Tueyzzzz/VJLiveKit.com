@@ -283,4 +283,7 @@ export const EN_ACTIONS: Record<string, string> = {
   "💚 มิ้นต์": "💚 Mint",
   "💛 ทอง": "💛 Gold",
   "🌈 หลากสี": "🌈 Rainbow",
+  "📅 ไพ่ประจำวัน — คนเดิมได้ไพ่ใบเดิมทั้งวัน (เช้า · บ่าย · ค่ำ)": "📅 Card of the day — same viewer gets the same card all day",
+  "เปิดไพ่ประจำวัน": "Card of the day",
+  "พิมพ์ \"ไพ่ประจำวัน\" ในแชท → ไพ่ของวันนี้ (คนเดิมได้ใบเดิมทั้งวัน)": "Type \"ไพ่ประจำวัน\" in chat → today's card (same card all day)",
 };

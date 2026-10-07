@@ -65,6 +65,8 @@ const TEMPLATES: Template[] = [
     rule: { name: 'ทำนายการเงิน', trigger: { event: 'gift', minDiamonds: 99 }, action: { type: 'tarot', cards: 3, topic: 'money', text: '💰 ดวงการเงินของ {user}', durationMs: 13000 } } },
   { icon: '🪞', title: 'ทำนายตัวตน 3 ใบ', desc: 'กิฟต์ 30 เพชรขึ้นไป → ตัวตนจริง · ที่คนอื่นมอง · จุดเด่น',
     rule: { name: 'ทำนายตัวตน', trigger: { event: 'gift', minDiamonds: 30 }, action: { type: 'tarot', cards: 3, topic: 'self', text: '🪞 ตัวตนของ {user}', durationMs: 13000 } } },
+  { icon: '📅', title: 'เปิดไพ่ประจำวัน', desc: 'พิมพ์ "ไพ่ประจำวัน" ในแชท → ไพ่ของวันนี้ (คนเดิมได้ใบเดิมทั้งวัน)',
+    rule: { name: 'เปิดไพ่ประจำวัน', trigger: { event: 'chat', keyword: 'ไพ่ประจำวัน' }, action: { type: 'tarot', cards: 1, topic: 'daily', text: '📅 ไพ่ประจำวันของ {user}', durationMs: 9000 } } },
   { icon: '🦋', title: 'ได้ Rose → ผีเสื้อเทพนิยาย', desc: 'ผีเสื้อปีกวาวบินข้ามจอ โปรยผงประกาย',
     rule: { name: 'ผีเสื้อเทพนิยาย', trigger: { event: 'gift', giftName: 'Rose' }, action: { type: 'effect', effect: 'butterflies', count: 12, text: '🦋 {user} เสกผีเสื้อให้ ✨', durationMs: 8000 } } },
   { icon: '⚔️', title: 'ร่างกายต้องการดาบ', desc: 'ได้กิฟต์ → สุ่มไพ่ชุดดาบ 1 ใบ ตามเทรนด์',
@@ -401,6 +403,7 @@ export default function ActionsPage() {
                     <option value="general">{t('🔮 ดวงทั่วไป')}</option>
                     <option value="love">{t('💘 ความรัก — ใจคุณ · ใจเขา · อนาคตความรัก')}</option>
                     <option value="money">{t('💰 การเงิน — การเงินตอนนี้ · สิ่งที่ต้องระวัง · โชคลาภที่กำลังมา')}</option>
+                    <option value="daily">{t('📅 ไพ่ประจำวัน — คนเดิมได้ไพ่ใบเดิมทั้งวัน (เช้า · บ่าย · ค่ำ)')}</option>
                     <option value="self">{t('🪞 ตัวตน — นิสัยจริง · คนอื่นมองคุณ · จุดเด่นที่ซ่อนอยู่')}</option>
                   </Select>
                 </Field>

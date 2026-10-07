@@ -128,8 +128,9 @@
       const show = items.concat(custom).sort((a, b) => (a.event === 'gift' ? (a.diamonds || a.minDiamonds || 0) : 1e9) - (b.event === 'gift' ? (b.diamonds || b.minDiamonds || 0) : 1e9)).filter((m) => (OTHER || m.event === 'gift') && !HIDE.has(m.id)).map((m) => (/^https:\/\//.test(ICONS[m.id] || '') ? { ...m, image: ICONS[m.id] } : m));
       if (!show.length) { list.innerHTML = '<div class="empty">ยังไม่มีกฎ — ตั้งที่เมนู Actions &amp; Events</div>'; return; }
       if (LAYOUT === 'rotate') {
-        const step = () => { list.innerHTML = ''; list.appendChild(rowEl(show[idx++ % show.length])); };
-        step(); if (show.length > 1) timer = setInterval(step, EVERY);
+        const PER = Math.max(1, Math.min(10, parseInt(P('per', '1'), 10) || 1)); // หมุนทีละกี่รายการ
+        const step = () => { list.innerHTML = ''; for (let k = 0; k < Math.min(PER, show.length); k++) list.appendChild(rowEl(show[idx++ % show.length])); };
+        step(); if (show.length > PER) timer = setInterval(step, EVERY);
       } else show.slice(0, MAX).forEach((m, i) => { const r = rowEl(m); r.style.animationDelay = i * 0.08 + 's'; list.appendChild(r); });
     }
     if (Overlay.socket) Overlay.socket.on('menu', (m) => { items = Array.isArray(m) ? m : []; render(); });

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useAuth } from '@/lib/auth';
+import { enqueueSound } from '@/lib/sounds';
 import { Volume2, VolumeX } from 'lucide-react';
 import { api, getToken, type Rule } from '@/lib/api';
 import { cx } from './ui';
@@ -28,6 +29,7 @@ const store = { live: false, on: true, hasSound: false, sock: null as (SocketLik
 const subs = new Set<() => void>();
 let snap = { ...store };
 const emit = () => { snap = { live: store.live, on: store.on, hasSound: store.hasSound, sock: store.sock }; subs.forEach((f) => f()); };
+let keyRules: Rule[] = [];
 const useStore = () => useSyncExternalStore((f) => { subs.add(f); return () => subs.delete(f); }, () => snap, () => snap);
 
 /**
@@ -46,8 +48,17 @@ export function LiveLink() {
   // มีกฎเสียงที่เปิดอยู่ไหม (เช็กซ้ำทุกนาที เผื่อเพิ่งสร้างกฎ)
   useEffect(() => {
     if (!username) return;
-    const check = () => api<{ rules: Rule[] }>('/api/actions').then((r) => { store.hasSound = r.rules.some((x) => x.enabled && x.action.type === 'sound'); emit(); }).catch(() => {});
-    check(); const t = setInterval(check, 60_000); return () => clearInterval(t);
+    const check = () => api<{ rules: Rule[] }>('/api/actions').then((r) => { store.hasSound = r.rules.some((x) => x.enabled && x.action.type === 'sound'); keyRules = r.rules.filter((x) => x.enabled && x.action.type === 'sound' && x.action.key); emit(); }).catch(() => {});
+    window.addEventListener('vjl-rules-changed', check); // หน้าเสียงแจ้งเตือนแก้กฎ → อัปเดตปุ่มลัดทันที
+    check(); const t = setInterval(check, 60_000);
+    // ปุ่มลัดคีย์บอร์ด: กดแล้วเล่นเสียงของกฎนั้นที่เครื่องนี้ (ยกเว้นตอนพิมพ์ในช่องกรอก)
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (e.repeat || e.ctrlKey || e.metaKey || e.altKey || (el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)))) return;
+      for (const r of keyRules) if (r.action.key?.toLowerCase() === e.key.toLowerCase()) enqueueSound(r.action);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => { clearInterval(t); window.removeEventListener('keydown', onKey); window.removeEventListener('vjl-rules-changed', check); };
   }, [username]);
 
   useEffect(() => {
@@ -66,12 +77,8 @@ export function LiveLink() {
       sock.on('action', (f: Fire) => {
         const who = f.event?.user?.nickname || f.event?.user?.uniqueId || '';
         if (f.action.type === 'sound' && store.on) {
-          const sfx = (window as unknown as { VJLSfx?: Sfx }).VJLSfx;
-          const n = Math.max(1, Math.min(20, f.times ?? 1)); // คอมโบ → ดังซ้ำตามจำนวน (ไม่เกินที่ตั้ง)
-          for (let i = 0; i < n; i++) setTimeout(() => {
-            if (f.action.sound && sfx) sfx.play(f.action.sound);
-            else if (f.action.url) void new Audio(f.action.url).play().catch(() => {});
-          }, i * 700);
+          const n = Math.max(1, Math.min(20, f.times ?? 1)); // คอมโบ → ดังซ้ำตามจำนวน (ไม่เกินที่ตั้ง) — เข้าคิว/ซ้อนตามตั้งค่าหน้าเสียงแจ้งเตือน
+          for (let i = 0; i < n; i++) enqueueSound(f.action);
         }
         setToast(`${who ? who + ' → ' : ''}${f.name}${(f.times ?? 1) > 1 ? ` ×${f.times}` : ''}`);
         if (toastT.current) clearTimeout(toastT.current);

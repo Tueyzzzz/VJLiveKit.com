@@ -314,10 +314,11 @@
       if(a.type==='effect') return butterflies(a,ev);
       const dur=a.durationMs||5000;
       const text=fill(a.text,ev);
-      if(a.type==='sound' && a.sound && window.VJLSfx){ if(!VJLSfx.play(a.sound) && !audioArmed) armBtn.style.display='block'; }
+      const vol=Math.max(0,Math.min(1.5,a.volume==null?1:a.volume));
+      if(a.type==='sound' && a.sound && window.VJLSfx){ if(!VJLSfx.play(a.sound,vol) && !audioArmed) armBtn.style.display='block'; }
       else if(a.type==='sound' && a.url){
         // OBS อนุญาต autoplay อยู่แล้ว — ถ้าเบราว์เซอร์บล็อกค่อยให้กดปุ่มเปิดเสียง
-        const au=new Audio(a.url); au.play().catch(()=>{ if(!audioArmed) armBtn.style.display='block'; });
+        const au=new Audio(a.url); au.volume=Math.min(1,vol); au.play().catch(()=>{ if(!audioArmed) armBtn.style.display='block'; });
       }
       else if(a.type==='image' && a.url){ const img=document.createElement('img'); img.src=a.url; img.className='media'; fx.appendChild(img); clearLater(img,dur); }
       else if(a.type==='video' && a.url){ const v=document.createElement('video'); v.src=a.url; v.autoplay=true; v.playsInline=true; v.className='media'; fx.appendChild(v);

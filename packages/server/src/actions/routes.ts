@@ -23,6 +23,9 @@ const actionSchema = z.object({
   effect: z.enum(['butterflies']).optional(),
   count: z.number().int().min(1).max(30).optional(),
   repeat: z.number().int().min(1).max(20).optional(),
+  // เสียงแจ้งเตือน: ความดัง (0–1.5) + ปุ่มลัดคีย์บอร์ดในแดชบอร์ด
+  volume: z.number().min(0).max(1.5).optional(),
+  key: z.string().max(20).optional(),
   url: z.string().url().optional(),
   sound: z.string().regex(/^[a-z]{2,20}$/).optional(), // เสียงสำเร็จรูป (overlay/js/sfx.js) — ไม่ต้องมีลิงก์
   text: z.string().max(200).optional(),

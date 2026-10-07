@@ -22,6 +22,10 @@ export interface RuleAction {
   count?: number;
   /** ส่งคอมโบ (เช่น กุหลาบ 100 ดอก) เล่นซ้ำได้สูงสุดกี่ครั้ง — ค่าเริ่มต้น 1 · ไพ่ทาโร่ล็อก 1 เสมอ */
   repeat?: number;
+  /** ความดังเสียง 0–1.5 (1 = ปกติ) */
+  volume?: number;
+  /** ปุ่มลัดคีย์บอร์ด (เล่นเสียงเองจากแดชบอร์ด) */
+  key?: string;
   url?: string;
   /** เสียงสำเร็จรูป (ไม่ต้องมีไฟล์) เช่น chime · coin · fanfare */
   sound?: string;

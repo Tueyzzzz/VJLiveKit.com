@@ -10,8 +10,10 @@ import { useT } from '@/lib/i18n';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
 const KEY = 'vjl-speaker';
+/** รหัสแท็บนี้ (Beat Pad ส่งไปด้วย จะได้ไม่เล่นเสียงซ้ำในแท็บที่กด) */
+export const TAB_ID = typeof window === 'undefined' ? '' : (((window as unknown as { __vjlTab?: string }).__vjlTab ??= Math.random().toString(36).slice(2, 10)));
 
-interface Fire { name: string; times?: number; action: Rule['action']; event?: { user?: { nickname?: string; uniqueId?: string } } }
+interface Fire { name: string; times?: number; tab?: string; action: Rule['action']; event?: { user?: { nickname?: string; uniqueId?: string } } }
 interface SocketLike { on: (ev: string, fn: (d: never) => void) => void; emit?: (ev: string, d: unknown) => void; disconnect: () => void }
 type IoFn = (url: string, opts: object) => SocketLike;
 type Sfx = { play: (id: string, vol?: number) => boolean };
@@ -77,6 +79,7 @@ export function LiveLink() {
       sock.on('disconnect', () => { store.live = false; emit(); });
       sock.on('action', (f: Fire) => {
         const who = f.event?.user?.nickname || f.event?.user?.uniqueId || '';
+        if (f.tab && f.tab === TAB_ID) return; // ปุ่ม Beat Pad ที่กดจากแท็บนี้เอง — แท็บนี้เล่นเองแล้ว/ไม่ต้องเล่นซ้ำ
         if (f.action.type === 'sound' && store.on) {
           const n = Math.max(1, Math.min(20, f.times ?? 1)); // คอมโบ → ดังซ้ำตามจำนวน (ไม่เกินที่ตั้ง) — เข้าคิว/ซ้อนตามตั้งค่าหน้าเสียงแจ้งเตือน
           for (let i = 0; i < n; i++) enqueueSound(f.action);

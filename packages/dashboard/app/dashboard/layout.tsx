@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { LayoutDashboard, LayoutTemplate, Zap, CreditCard, LogOut, Gift, Shield, BookOpen, Wallet, Menu, X, ScrollText, Lightbulb, Volume2 } from 'lucide-react';
+import { LayoutDashboard, LayoutTemplate, Zap, CreditCard, LogOut, Gift, Shield, BookOpen, Wallet, Menu, X, ScrollText, Lightbulb, Volume2, Grid3x3 } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { Speaker } from '@/components/Speaker';
 import { TikTokAvatar } from '@/components/TikTokAvatar';
@@ -18,6 +18,7 @@ const NAV = [
   { href: '/dashboard/widgets/', label: 'โอเวอร์เลย์', icon: LayoutTemplate },
   { href: '/dashboard/actions/', label: 'Actions & Events', icon: Zap },
   { href: '/dashboard/sounds/', label: 'เสียงแจ้งเตือน', icon: Volume2 },
+  { href: '/dashboard/beatpad/', label: 'Beat Pad (กดเสียง)', icon: Grid3x3 },
   { href: '/dashboard/widgets/settings/?type=fxmenu', label: 'เมนูของขวัญ', icon: ScrollText },
   { href: '/dashboard/widgets/settings/?type=sign', label: 'ป้ายไฟ LED', icon: Lightbulb },
   { href: '/dashboard/donate/', label: 'โดเนทขึ้นจอ', icon: Wallet, soon: true }, // กำลังพัฒนา — เทาไว้ก่อน

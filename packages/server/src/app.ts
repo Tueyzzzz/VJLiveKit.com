@@ -15,6 +15,7 @@ import { donateRoutes } from './donate/routes.js';
 import { mediaRoutes } from './media/routes.js';
 import { avatarRoutes } from './tiktok/avatar.js';
 import { notificationRoutes } from './admin/notifications.js';
+import { beatpadRoutes } from './media/beatpad.js';
 import { settings } from './settings/index.js';
 import { config } from './config/index.js';
 import { OVERLAY_DIR, OVERLAY_VERSION } from './overlay-version.js';
@@ -102,6 +103,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(mediaRoutes);
   await app.register(avatarRoutes);
   await app.register(notificationRoutes);
+  await app.register(beatpadRoutes);
 
   // 404: API ตอบ JSON, หน้าเว็บตอบหน้า 404 ของ Dashboard
   const notFoundPage = path.join(DASHBOARD_DIR, '404.html');

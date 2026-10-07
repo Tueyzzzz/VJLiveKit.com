@@ -434,7 +434,8 @@
       },
     };
     const SH = SHAPES[P('shape', 'heart')] || SHAPES.heart;
-    if (SH.fullMode) FULL_MODE = SH.fullMode;
+    // ทุกแบบ (รวมลูกแก้ว/โดม/ตัวละครท้องใส) ล้นแล้วกองพื้นข้าง ๆ — ไม่ทำให้ชิ้นเก่าหายไปเอง (เว้นวีเจเลือกโหมดอื่นเอง)
+    if (SH.fullMode && SH.fullMode !== 'fade') FULL_MODE = SH.fullMode;
     // เปลี่ยนสีโหล (ภาพ): ?hue=-180..180 ?sat=1 ?bright=1
     const shapeImg = SH.image ? Juice.skin(SH.image.src, num('hue', 0), num('sat', 1), num('bright', 1)) : null;
     const shapeBack = SH.image && SH.image.back ? Juice.skin(SH.image.back, num('hue', 0), num('sat', 1), num('bright', 1)) : null;

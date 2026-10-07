@@ -96,7 +96,17 @@ set_env EASYSLIP_API_KEY "${EASYSLIP_API_KEY:-}"
 log "พื้นที่ดิสก์ก่อนล้าง"; df -h / || true
 docker image prune -af >/dev/null 2>&1 || true      # ลบเฉพาะ image ที่ไม่มีคอนเทนเนอร์ใช้ (ตัวที่รันอยู่ไม่โดน)
 docker builder prune -af >/dev/null 2>&1 || true
-journalctl --vacuum-size=100M >/dev/null 2>&1 || true
+# log ระบบ: จำกัดถาวรไม่เกิน 100MB (ตั้งครั้งเดียว) + ลบ log เก่าที่หมุนแล้ว (.gz / .1)
+if [ ! -f /etc/systemd/journald.conf.d/vjl.conf ]; then
+  mkdir -p /etc/systemd/journald.conf.d
+  printf '[Journal]
+SystemMaxUse=100M
+MaxRetentionSec=14day
+' > /etc/systemd/journald.conf.d/vjl.conf
+  systemctl restart systemd-journald >/dev/null 2>&1 || true
+fi
+journalctl --vacuum-size=100M --vacuum-time=14d >/dev/null 2>&1 || true
+find /var/log -type f \( -name "*.gz" -o -name "*.[0-9]" -o -name "*.old" \) -delete 2>/dev/null || true
 apt-get clean >/dev/null 2>&1 || true
 log "พื้นที่ดิสก์หลังล้าง"; df -h / || true
 docker system df || true

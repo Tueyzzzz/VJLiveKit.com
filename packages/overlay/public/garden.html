@@ -466,6 +466,7 @@
     requestAnimationFrame(frame);
 
     if (!Overlay.connected) {
+      VJLCollect.demoBurst(onGift);
       setInterval(() => onGift(VJLCollect.demoGift()), 1200); // ของขวัญจริง (รูปจาก TikTok)
     }
   })();

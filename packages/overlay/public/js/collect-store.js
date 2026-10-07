@@ -42,6 +42,8 @@
       const names = ['somchai', 'mimi', 'บิ๊ก', 'lisa', 'ต้นน้ำ'], nm = names[Math.floor(Math.random() * names.length)];
       return { type: 'gift', user: { uniqueId: nm, nickname: nm, avatar: '' }, giftName: g[0], giftImage: g[2], diamondCount: g[1], repeatCount: g[1] >= 100 ? 1 : 1 + Math.floor(Math.random() * 3), streaking: false };
     },
+    /** ?fill=N (ถ่ายภาพตัวอย่าง): ใส่ของขวัญ N ชิ้นรวดเดียวตอนเริ่ม */
+    demoBurst(onGift) { const n = Math.min(150, parseInt(q.get('fill') || '0', 10) || 0); for (let i = 0; i < n; i++) setTimeout(() => onGift(this.demoGift()), i * 60); },
     clear: () => write([]),
     /** อีโมจิสำรองตอนรูปของขวัญโหลดไม่ได้ */
     emoji: (name, def) => ({ Rose: '🌹', 'Finger Heart': '🫰', Perfume: '🧴', Galaxy: '🌌', Lion: '🦁', Universe: '🪐', Heart: '❤️', TikTok: '🎵' })[name] || def,

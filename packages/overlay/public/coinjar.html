@@ -472,6 +472,7 @@
 
     // ---- เดโม (เปิดไฟล์ตรง ๆ / ?demo=1) ----
     if (!Overlay.connected) {
+      VJLCollect.demoBurst(onGift);
       setInterval(() => onGift(VJLCollect.demoGift()), 1500); // ของขวัญจริง (รูปจาก TikTok)
     }
   })();

@@ -151,6 +151,7 @@
     requestAnimationFrame(frame);
 
     if (!Overlay.connected) {
+      VJLCollect.demoBurst(onGift);
       const I = 'https://p16-webcast.tiktokcdn.com/img/', list = [['Rose', 1, I + 'maliva/webcast-va/eba3a9bb85c33e017f3648eaf88d7189~tplv-obj.webp'], ['Rose', 1, I + 'maliva/webcast-va/eba3a9bb85c33e017f3648eaf88d7189~tplv-obj.webp'], ['Finger Heart', 5, I + 'maliva/webcast-va/a4c4dc437fd3a6632aba149769491f49.png~tplv-obj.webp'], ['Perfume', 20, I + 'maliva/webcast-va/20b8f61246c7b6032777bb81bf4ee055~tplv-obj.webp'], ['Galaxy', 1000, I + 'alisg/webcast-sg/resource/79a02148079526539f7599150da9fd28.png~tplv-obj.webp']];
       const names = ['mimi', 'บิ๊ก', 'lisa', 'ต้นน้ำ'];
       setInterval(() => { const [n, d, u] = list[(Math.random() * list.length) | 0]; onGift({ type: 'gift', giftName: n, diamondCount: d, giftImage: u, repeatCount: d >= 1000 ? 1 : 1 + ((Math.random() * 8) | 0), user: { nickname: names[(Math.random() * names.length) | 0] } }); }, 1600);

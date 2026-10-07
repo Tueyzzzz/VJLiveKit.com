@@ -949,6 +949,7 @@ FPS ${frames}  แย่สุด ${worst.toFixed(1)} ms
 
     // ---- เดโม (เปิดไฟล์ตรง ๆ / ?demo=1) ----
     if (!Overlay.connected && !STRESS) {
+      VJLCollect.demoBurst(onGift);
       setInterval(() => onGift(VJLCollect.demoGift()), 1300); // ของขวัญจริง (รูปจาก TikTok)
     }
   })();

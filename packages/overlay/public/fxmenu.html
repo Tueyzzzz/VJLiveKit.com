@@ -27,6 +27,22 @@
   #box.rotate .row { margin-top:0; }
   @keyframes in { from { opacity:0; transform:translateX(-14px) } to { opacity:1; transform:none } }
   @keyframes bob { 50% { transform:translateY(-3px) rotate(-4deg) } }
+  /* แนวนอน: การ์ดเรียงเป็นแถว รูปอยู่บน ข้อความอยู่ล่าง */
+  #box.horiz { width:auto; max-width:96vw; } #box.horiz #list { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+  #box.horiz .row { flex-direction:column; width:118px; text-align:center; margin-top:0; padding:8px 6px; }
+  #box.horiz .ico { width:58px; height:58px; } #box.horiz .ico img { width:54px; height:54px; }
+  #box.horiz .what { white-space:normal; font-size:15px; line-height:1.2; } #box.horiz .how { font-size:12px; }
+  /* ของขวัญขยับ */
+  .mv-bounce .ico img { animation:mvBounce 1.1s cubic-bezier(.3,1.6,.5,1) infinite; }
+  .mv-spin .ico img { animation:mvSpin 3.2s linear infinite; }
+  .mv-pulse .ico img { animation:mvPulse 1.3s ease-in-out infinite; }
+  .mv-wiggle .ico img { animation:mvWiggle .9s ease-in-out infinite; }
+  .mv-none .ico img { animation:none; }
+  .row:nth-child(2n) .ico img { animation-delay:-.4s } .row:nth-child(3n) .ico img { animation-delay:-.8s }
+  @keyframes mvBounce { 0%,100% { transform:translateY(0) scale(1) } 30% { transform:translateY(-9px) scale(1.06,.96) } 55% { transform:translateY(0) scale(1.08,.92) } 70% { transform:translateY(-3px) } }
+  @keyframes mvSpin { to { transform:rotateY(360deg) } }
+  @keyframes mvPulse { 50% { transform:scale(1.18); filter:drop-shadow(0 0 8px rgba(255,220,240,.9)) } }
+  @keyframes mvWiggle { 0%,100% { transform:rotate(0) } 25% { transform:rotate(-12deg) } 75% { transform:rotate(12deg) } }
   @keyframes hot { 50% { box-shadow:0 0 0 3px #ffe17a, 0 0 22px #ffcf5c; transform:scale(1.04) } }
 </style>
 </head>
@@ -42,7 +58,9 @@
     const box = document.getElementById('box'), list = document.getElementById('list');
     const POS = ['tl', 'tr', 'bl', 'br'].includes(P('pos', 'tl')) ? P('pos', 'tl') : 'tl';
     const LAYOUT = P('layout', 'list') === 'rotate' ? 'rotate' : 'list';
-    box.className = POS + ' ' + LAYOUT;
+    const DIR = P('dir', 'vertical') === 'horizontal' ? 'horiz' : 'vert';
+    const MOVE = ['bob', 'bounce', 'spin', 'pulse', 'wiggle', 'none'].includes(P('move', 'bounce')) ? P('move', 'bounce') : 'bounce';
+    box.className = POS + ' ' + LAYOUT + ' ' + DIR + ' mv-' + MOVE;
     box.style.setProperty('--s', Math.max(.4, Math.min(2.5, parseFloat(P('scale', '1')) || 1)));
     box.querySelector('.panel').style.setProperty('--bg', Math.max(0, Math.min(100, parseFloat(P('bg', '45')))) / 100);
     document.getElementById('title').textContent = P('title', '🎁 ส่งของขวัญเพื่อ…');
@@ -53,15 +71,15 @@
     const fmt = (n) => Number(n).toLocaleString('en-US');
     // เลือกจากแดชบอร์ด: ซ่อนบางกฎ / เปลี่ยนรูปของขวัญที่แสดง
     let SEL = {}; try { SEL = JSON.parse(P('items', '') || '{}') || {}; } catch (e) { SEL = {}; }
-    const HIDE = new Set(SEL.hide || []), ICONS = SEL.icons || {};
+    const HIDE = new Set(SEL.hide || []), ICONS = SEL.icons || {}, LABELS = SEL.labels || {}; // LABELS = คำในเมนูที่วีเจแก้เอง (แทนชื่อกฎ)
 
     function rowEl(m) {
-      const r = document.createElement('div'); r.className = 'row';
+      const r = document.createElement('div'); r.className = 'row'; if (m.id) r.dataset.rule = m.id;
       const ico = document.createElement('div'); ico.className = 'ico';
       if (m.image) { const im = document.createElement('img'); im.src = m.image; im.alt = ''; ico.appendChild(im); }
       else ico.textContent = m.event === 'gift' ? '🎁' : (EV[m.event] || ['✨'])[0];
       const tx = document.createElement('div'); tx.className = 'txt';
-      const what = document.createElement('div'); what.className = 'what'; what.textContent = m.label;
+      const what = document.createElement('div'); what.className = 'what'; what.textContent = LABELS[m.id] || m.label;
       const how = document.createElement('div'); how.className = 'how';
       if (m.event === 'gift') {
         if (m.gift) how.innerHTML = `ส่ง <b></b>${m.diamonds ? ` · 💎${fmt(m.diamonds)}` : ''}`, how.querySelector('b').textContent = m.th || m.gift;
@@ -88,7 +106,7 @@
     // มีคนส่งกิฟต์ที่อยู่ในเมนู → ไฮไลต์แถวนั้น ให้คนอื่นเห็นว่าใช้ได้จริง
     Overlay.on('action', (f) => {
       if (LAYOUT !== 'list' || !f || !f.name) return;
-      [...list.children].forEach((r) => { if (r.querySelector('.what')?.textContent === f.name) { r.classList.remove('hot'); void r.offsetWidth; r.classList.add('hot'); } });
+      [...list.children].forEach((r) => { if ((r.dataset.rule === f.ruleId || r.querySelector('.what')?.textContent === f.name)) { r.classList.remove('hot'); void r.offsetWidth; r.classList.add('hot'); } });
     });
 
     // ตัวอย่างในแดชบอร์ด (ไม่มีลิงก์จริง): ล็อกอินอยู่ → ใช้กฎจริงของวีเจเป็นค่าเริ่มต้น · ไม่มี/ยังไม่มีกฎ → ตัวอย่างสมมติ

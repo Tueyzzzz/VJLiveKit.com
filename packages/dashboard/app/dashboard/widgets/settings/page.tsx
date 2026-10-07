@@ -96,7 +96,7 @@ function WidgetLinkBox({ type }: { type: string }) {
 interface MenuRow { id: string; event: string; gift?: string; th?: string; image?: string; minDiamonds?: number; keyword?: string; label: string }
 /** รายการที่วีเจเพิ่มเอง (ไม่ต้องมีกฎ Actions) เช่น Rose → ร้องเพลง 1 เพลง */
 interface MenuCustom { id: string; gift: string; image?: string; diamonds?: number; th?: string; label: string }
-interface MenuSel { hide?: string[]; icons?: Record<string, string>; custom?: MenuCustom[] }
+interface MenuSel { hide?: string[]; icons?: Record<string, string>; custom?: MenuCustom[]; labels?: Record<string, string> }
 
 /** เลือกว่าจะโชว์กฎไหนในเมนูของขวัญ + เปลี่ยนรูปของขวัญที่แสดง (เช่น กฎ "ทุกกิฟต์ 99💎" ให้โชว์รูป Galaxy) */
 function MenuItemsEditor({ value, onChange }: { value: string; onChange: (v: string) => void }) {
@@ -107,7 +107,7 @@ function MenuItemsEditor({ value, onChange }: { value: string; onChange: (v: str
   const gifts = useGifts();
   useEffect(() => { api<{ items: MenuRow[] }>('/api/actions/menu').then((r) => setRows(r.items)).catch(() => setRows([])); }, []);
   let sel: MenuSel = {}; try { sel = value ? JSON.parse(value) as MenuSel : {}; } catch { /* ค่าเสีย */ }
-  const hide = new Set(sel.hide ?? []), icons = sel.icons ?? {};
+  const hide = new Set(sel.hide ?? []), icons = sel.icons ?? {}, labels = sel.labels ?? {};
   const put = (next: MenuSel) => onChange(JSON.stringify(next));
   if (!rows) return <Spinner />;
   const custom = sel.custom ?? [];
@@ -132,7 +132,8 @@ function MenuItemsEditor({ value, onChange }: { value: string; onChange: (v: str
                 {img ? <img src={img} alt="" className="size-8 object-contain" /> : <span className="text-xl">🎁</span>}
               </button>
               <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-medium">{r.label}</div>
+                <Input value={labels[r.id] ?? r.label} maxLength={60} className="!py-1.5 text-sm font-medium" aria-label={t('คำในเมนู')}
+                  onChange={(e) => { const next = { ...labels }; if (e.target.value === r.label) delete next[r.id]; else next[r.id] = e.target.value; put({ ...sel, labels: next }); }} />
                 <div className="truncate text-xs text-muted">{how}{icons[r.id] ? ' · ' + t('รูปที่เลือกเอง') : ''}</div>
               </div>
             </div>

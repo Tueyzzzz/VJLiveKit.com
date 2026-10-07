@@ -468,8 +468,10 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
     sections: [
       { title: 'เมนูของขวัญ', fields: [
         { key: 'title', label: 'หัวข้อ', type: 'text', def: '🎁 ส่งของขวัญเพื่อ…' },
-        { key: 'items', label: 'รายการที่แสดง', type: 'menuItems', def: '', hint: 'ดึงจากกฎ Actions อัตโนมัติ · ติ๊กออก = ไม่แสดง · กดรูปเพื่อเลือกรูปของขวัญที่จะโชว์' },
+        { key: 'items', label: 'รายการที่แสดง', type: 'menuItems', def: '', hint: 'ดึงจากกฎ Actions อัตโนมัติ · ติ๊กออก = ไม่แสดง · กดรูปเพื่อเลือกรูปของขวัญ · แก้คำในเมนูได้' },
         { key: 'layout', label: 'รูปแบบ', type: 'select', def: 'list', options: [['list', 'รายการ (โชว์หลายข้อ)'], ['rotate', 'หมุนทีละข้อ (ประหยัดที่)']] },
+        { key: 'dir', label: 'แนวการเรียง', type: 'select', def: 'vertical', options: [['vertical', '↕️ แนวตั้ง (เรียงลงมา)'], ['horizontal', '↔️ แนวนอน (เรียงเป็นแถว)']], when: (v) => v.layout !== 'rotate' },
+        { key: 'move', label: 'ของขวัญขยับ', type: 'select', def: 'bounce', options: [['bounce', '🦘 เด้งดึ๋ง'], ['bob', '🎈 ลอยเบา ๆ'], ['wiggle', '👋 ส่ายไปมา'], ['pulse', '💓 เต้นตุบ ๆ'], ['spin', '🔄 หมุน'], ['none', '⏸ นิ่ง']] },
         { key: 'max', label: 'จำนวนที่แสดง', type: 'number', min: 1, max: 12, def: 6, when: (v) => v.layout !== 'rotate' },
         { key: 'every', label: 'เปลี่ยนทุก (วินาที)', type: 'number', min: 2, max: 30, def: 5, when: (v) => v.layout === 'rotate' },
         { key: 'other', label: 'รวมกฎแชท / ติดตาม / แชร์', type: 'toggle', def: true },

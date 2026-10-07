@@ -341,7 +341,9 @@
       for(let k=0;k<n;k++) setTimeout(()=>{
         const side=k%2?'l':'r', g=document.createElement('div'); g.className='glv '+side;
         // ใช้รูปนวม AI (fx/glove.webp) ถ้ามี · ไม่มี/โหลดไม่ได้ → นวมวาดด้วยโค้ด
-        if(GLOVE_IMG.ok){ const im=new Image(); im.src='fx/glove.webp'; im.style.width='100%'; g.appendChild(im); } else g.innerHTML=GLOVE_SVG;
+        // ใช้รูปของขวัญจริงที่คนส่งมา (เช่น นวมตอน PK) ก่อน → รูปนวม AI → นวมวาดด้วยโค้ด
+        const gi=ev&&/^https:\/\//.test(ev.giftImage||'')?ev.giftImage:'';
+        if(gi||GLOVE_IMG.ok){ const im=new Image(); im.src=gi||'fx/glove.webp'; im.style.width='100%'; g.appendChild(im); } else g.innerHTML=GLOVE_SVG;
         document.body.appendChild(g);
         if(window.VJLSfx && !VJLSfx.play('punch',vol) && !audioArmed) armBtn.style.display='block';
         setTimeout(()=>{ // จังหวะโดน

@@ -106,6 +106,20 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
     return { ok: true, screens };
   });
 
+  // สถานะไลฟ์ของวีเจเอง (แถบสถานะบนแดชบอร์ด): ไลฟ์อยู่ / รอเริ่มไลฟ์ / ยังไม่เชื่อมต่อ + ตัวเลขสด
+  app.get('/api/live/status', { preHandler: requireUser }, async (req) => {
+    const { userId } = getUser(req)!;
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { tiktokUsername: true } });
+    const tk = (user?.tiktokUsername ?? '').toLowerCase();
+    const room = tk ? (getHub()?.listRooms() ?? []).find((r) => r.username.toLowerCase() === tk) : undefined;
+    return {
+      username: user?.tiktokUsername ?? null,
+      state: !tk ? 'no-username' : room?.connected ? 'live' : room ? 'waiting' : 'idle',
+      viewers: room?.viewers ?? 0, diamonds: room?.diamonds ?? 0, likes: room?.likes ?? 0, widgets: room?.widgets ?? 0,
+      since: room?.connectedAt ?? null,
+    };
+  });
+
   // รายการเมนูของขวัญจากกฎจริง (ใช้ในตัวอย่างวิดเจ็ต "เมนูของขวัญ" บนแดชบอร์ด)
   app.get('/api/actions/menu', { preHandler: requireUser }, async (req) => {
     const claims = getUser(req)!;

@@ -8,6 +8,7 @@ import { Logo } from '@/components/Logo';
 import { Speaker } from '@/components/Speaker';
 import { TikTokAvatar } from '@/components/TikTokAvatar';
 import { NotificationBell } from '@/components/NotificationBell';
+import { LiveStatusBar } from '@/components/LiveStatusBar';
 import { Badge, Spinner, cx } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { api, planLabel } from '@/lib/api';
@@ -101,6 +102,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
       <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-8 sm:py-8">
         {notice && <div className="mb-6 rounded-2xl bg-pink-soft px-4 py-3 text-sm text-ink">📢 {notice}</div>}
+        <LiveStatusBar />
         {children}
         <button onClick={() => { logout(); router.replace('/'); }} className="mt-10 flex items-center gap-2 text-sm text-muted hover:text-ink md:hidden">
           <LogOut className="size-4" /> {t('ออกจากระบบ')}

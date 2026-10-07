@@ -174,7 +174,13 @@ export default function WidgetsPage() {
   const [busy, setBusy] = useState(false);
   const [configs, setConfigs] = useState<Record<string, Record<string, unknown>>>({});
   const [livePreview, setLivePreview] = useState<string | null>(null); // เล่นตัวอย่างจริงทีละใบ
-  useEffect(() => { api<{ configs: Record<string, Record<string, unknown>> }>('/api/widgets/configs').then((r) => setConfigs(r.configs)).catch(() => {}); }, []);
+  // โหลดใหม่ทุกครั้งที่กลับมาที่แท็บนี้ (เปลี่ยนแบบจากหน้าตั้งค่า/แท็บอื่น → ป้าย "ใช้อยู่" ไม่ค้างค่าเก่า)
+  useEffect(() => {
+    const f = () => api<{ configs: Record<string, Record<string, unknown>> }>('/api/widgets/configs').then((r) => setConfigs(r.configs)).catch(() => {});
+    void f(); const onVis = () => { if (document.visibilityState === 'visible') void f(); };
+    window.addEventListener('focus', f); document.addEventListener('visibilitychange', onVis);
+    return () => { window.removeEventListener('focus', f); document.removeEventListener('visibilitychange', onVis); };
+  }, []);
   // ลิงก์เดียวของกลุ่มสะสมของขวัญ: เลือกแบบที่นี่ → จอใน OBS เปลี่ยนเองทันที
   const collectStyle = String(configs.collect?.style ?? 'giftjar');
   async function pickCollect(style: string) {
@@ -254,6 +260,7 @@ export default function WidgetsPage() {
             <div className="text-sm font-medium">{t('🔗 ลิงก์เดียวใช้ได้ทุกแบบ — ตอนนี้ใช้:')} <b className="text-pink">{t(WIDGET_LABELS[collectStyle] ?? collectStyle)}</b></div>
             <p className="text-xs text-muted">{t('วางลิงก์นี้ใน OBS / LIVE Studio ครั้งเดียว แล้วกด “ใช้แบบนี้” ที่การ์ดด้านล่าง จอเปลี่ยนแบบเองทันที ไม่ต้องเปลี่ยนลิงก์')}</p>
           </div>
+          {collectUrl && <code className="block truncate rounded-lg bg-canvas px-3 py-2 text-xs text-muted sm:max-w-md">{collectUrl}</code>}
           {collectUrl ? <CopyButton text={collectUrl} /> : <span className="text-xs text-muted">{t('ตั้งชื่อ TikTok ที่หน้าภาพรวมก่อน')}</span>}
         </Card>
       )}

@@ -59,7 +59,10 @@ function WidgetLinkBox({ type }: { type: string }) {
         const c = urls.find((u) => u.type === 'collect'); setCollectUrl(c && !c.locked ? c.url : null);
       })
       .catch(() => setUrl(null));
-    if (isCollect) api<{ config: Record<string, unknown> }>('/api/widgets/collect/config').then((r) => setActive(String(r.config?.style ?? 'giftjar'))).catch(() => {});
+    if (!isCollect) return;
+    const f = () => api<{ config: Record<string, unknown> }>('/api/widgets/collect/config').then((r) => setActive(String(r.config?.style ?? 'giftjar'))).catch(() => {});
+    void f(); window.addEventListener('vjl-collect-active', f);
+    return () => window.removeEventListener('vjl-collect-active', f);
   }, [type, isCollect]);
   async function useThis() {
     try { await api('/api/widgets/collect/config', { method: 'PUT', body: { style: type } }); setActive(type); } catch { /* ignore */ }
@@ -302,6 +305,11 @@ function WidgetSettings() {
     setBusy(true); setMsg(null);
     try {
       await api(`/api/widgets/${type}/config`, { method: 'PUT', body: { ...toOverlayParams(values), ...extra } });
+      // แก้แบบไหน = ใช้แบบนั้นกับลิงก์เดียว (เดิมแก้โหลแล้วจอยังโชว์แบบเก่า งง)
+      if (COLLECT_TYPES.includes(type) && !extra.resetAt) {
+        await api('/api/widgets/collect/config', { method: 'PUT', body: { style: type } });
+        window.dispatchEvent(new Event('vjl-collect-active'));
+      }
       setSaved(JSON.stringify(values));
       setMsg({ tone: 'success', text: extra.resetAt ? t('ล้างข้อมูลแล้ว — วิดเจ็ตบนจอเริ่มใหม่') : t('บันทึกแล้ว — วิดเจ็ตบนจอเปลี่ยนตามทันที (ไม่ต้องเปลี่ยนลิงก์)') });
     } catch (err) {

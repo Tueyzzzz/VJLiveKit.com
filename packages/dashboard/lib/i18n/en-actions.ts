@@ -250,4 +250,10 @@ export const EN_ACTIONS: Record<string, string> = {
   '👑 Victorian (วิกตอเรียน)': '👑 Victorian',
   '🎨 Graffiti (กราฟฟิตี้)': '🎨 Graffiti',
   '🚀 Futuristic (ไซเบอร์)': '🚀 Futuristic (cyber)',
+  '🥊 ส่งนวม': '🥊 Glove punch',
+  'ได้ Rose → ส่งนวม': 'Rose → glove punch',
+  'นวมน่ารักพุ่งมาต่อยกลางจอ ปั้ก! พร้อมเสียงตื่นเต้น': 'A cute boxing glove punches the screen — POW! with an excited sound',
+  'จำนวนหมัด': 'Punches',
+  '1–5 หมัด (สลับซ้ายขวา) · ข้อความประกอบขึ้นกลางจอ · มีเสียงในตัว': '1–5 punches (left/right) · caption shows in the middle · sound included',
+  '🥊 ต่อยน่ารัก': '🥊 Cute punch',
 };

@@ -8,7 +8,7 @@ import { translate, useT } from '@/lib/i18n';
 import { GiftCell } from './GiftPicker';
 import { Badge, Button, Card, Spinner, cx } from './ui';
 
-const ACTION: Record<string, string> = { sound: '🔊 เล่นเสียง', image: '🖼️ แสดงรูป', video: '🎬 เล่นวิดีโอ', text: '✏️ ข้อความ', tarot: '🔮 เปิดไพ่ทาโร่', effect: '🦋 ผีเสื้อ', sign: '💡 ป้ายไฟ' };
+const ACTION: Record<string, string> = { sound: '🔊 เล่นเสียง', image: '🖼️ แสดงรูป', video: '🎬 เล่นวิดีโอ', text: '✏️ ข้อความ', tarot: '🔮 เปิดไพ่ทาโร่', effect: '🦋 ผีเสื้อ', sign: '💡 ป้ายไฟ', glove: '🥊 ส่งนวม' };
 
 function when(r: Rule, t: typeof translate): string {
   const tr = r.trigger;

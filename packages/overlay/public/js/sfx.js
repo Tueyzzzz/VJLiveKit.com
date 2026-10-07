@@ -32,6 +32,13 @@
     boing: ['🌀 ดึ๋ง', (c, o) => tone(c, o, { f: 220, f2: 880, d: 0.45, type: 'triangle', v: 0.25 })],
     heart: ['💗 หัวใจ', (c, o) => { tone(c, o, { f: 784, d: 0.3, type: 'sine', v: 0.2 }); tone(c, o, { f: 1047, t: 0.12, d: 0.5, type: 'sine', v: 0.2 }); tone(c, o, { f: 1568, t: 0.24, d: 0.7, type: 'sine', v: 0.12 }); }],
     applause: ['👏 ปรบมือ', (c, o) => { for (let i = 0; i < 26; i++) noise(c, o, { t: i * 0.06 + Math.random() * 0.04, d: 0.06, v: 0.25, hp: 1200, lp: 6000 }); }],
+    punch: ['🥊 ต่อยน่ารัก', (c, o) => {
+      noise(c, o, { d: 0.22, v: 0.3, hp: 600, lp: 4000 });                              // วู้ช
+      tone(c, o, { f: 180, f2: 55, t: 0.2, d: 0.22, v: 0.55, a: 0.003 });                 // ปั้ก
+      noise(c, o, { t: 0.2, d: 0.08, v: 0.35, hp: 1500 });
+      tone(c, o, { f: 420, f2: 1250, t: 0.34, d: 0.32, type: 'triangle', v: 0.22 });      // ดึ๋ง ~
+      [1568, 2093, 2637].forEach((f, i) => tone(c, o, { f, t: 0.6 + i * 0.07, d: 0.25, type: 'sine', v: 0.12 })); // วิ้ง ๆ
+    }],
     alarm: ['🚨 ไซเรน', (c, o) => { for (let i = 0; i < 3; i++) tone(c, o, { f: 700, f2: 1300, t: i * 0.4, d: 0.38, type: 'sawtooth', v: 0.08 }); }],
   };
 

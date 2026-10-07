@@ -11,7 +11,7 @@ import { useAuth } from '@/lib/auth';
 import { translate, useT } from '@/lib/i18n';
 
 const EVENT_LABELS: Record<TriggerEvent, string> = { gift: '🎁 ได้รับกิฟต์', follow: '➕ มีคนติดตาม', share: '🔁 มีคนแชร์', like: '❤️ มีคนกดไลค์', chat: '💬 แชทมีคำว่า' };
-const ACTION_LABELS: Record<ActionType, string> = { sound: '🔊 เล่นเสียง', image: '🖼️ แสดงรูป/GIF', video: '🎬 เล่นวิดีโอ', text: '✏️ แสดงข้อความ', tarot: '🔮 สุ่มไพ่ทาโร่', effect: '🦋 ผีเสื้อเทพนิยาย', sign: '💡 ป้ายไฟ' };
+const ACTION_LABELS: Record<ActionType, string> = { sound: '🔊 เล่นเสียง', image: '🖼️ แสดงรูป/GIF', video: '🎬 เล่นวิดีโอ', text: '✏️ แสดงข้อความ', tarot: '🔮 สุ่มไพ่ทาโร่', effect: '🦋 ผีเสื้อเทพนิยาย', sign: '💡 ป้ายไฟ', glove: '🥊 ส่งนวม' };
 
 interface Draft {
   id?: string;
@@ -75,6 +75,8 @@ const TEMPLATES: Template[] = [
     rule: { name: 'ป้ายไฟขอบคุณ (100💎+)', trigger: { event: 'gift', minDiamonds: 100 }, action: { type: 'sign', signStyle: 'led', signMode: 'scroll', signPos: 'center', color: '#ffcf5c', text: '🎉 ขอบคุณ {user} ใจดีสุด ๆ 💖', durationMs: 7000 } } },
   { icon: '🌈', title: 'มีคนติดตาม → ป้ายนีออน', desc: 'ป้ายนีออนเต้นตุบ ๆ “{user} ติดตามแล้ว”',
     rule: { name: 'ป้ายนีออนผู้ติดตาม', trigger: { event: 'follow' }, action: { type: 'sign', signStyle: 'neon', signMode: 'pulse', signPos: 'top', color: '#ff4fa3', text: '💗 {user} ติดตามแล้ว ขอบคุณน้า', durationMs: 4000 } } },
+  { icon: '🥊', title: 'ได้ Rose → ส่งนวม', desc: 'นวมน่ารักพุ่งมาต่อยกลางจอ ปั้ก! พร้อมเสียงตื่นเต้น',
+    rule: { name: 'ส่งนวม', trigger: { event: 'gift', giftName: 'Rose' }, action: { type: 'glove', count: 1, text: '🥊 {user} ส่งนวม!', durationMs: 4000 } } },
   { icon: '🌟', title: 'ได้ Galaxy → ข้อความพิเศษ', desc: 'ขอบคุณแบบเฉพาะกิฟต์',
     rule: { name: 'ขอบคุณ Galaxy', trigger: { event: 'gift', giftName: 'Galaxy' }, action: { type: 'text', text: '🌌 {user} ส่ง Galaxy! รักเลย 💜', durationMs: 5000 } } },
 ];
@@ -118,6 +120,7 @@ function toBody(d: Draft) {
   const needsFile = (d.type === 'sound' && !d.sound) || d.type === 'image' || d.type === 'video';
   if (needsFile && d.url.trim()) action.url = d.url.trim();
   if (d.type === 'sound' && d.sound) action.sound = d.sound;
+  if (d.type === 'glove') action.count = Math.max(1, Math.min(5, Number(d.count) || 1));
   if (d.type === 'effect') { action.effect = 'butterflies'; action.count = Math.max(1, Math.min(30, Number(d.count) || 12)); }
   if (d.text.trim()) action.text = d.text.trim();
   if (d.type === 'tarot') { action.cards = Number(d.cards) || 1; if (d.deck !== 'full') action.deck = d.deck; if (d.topic !== 'general') action.topic = d.topic; }
@@ -350,6 +353,11 @@ export default function ActionsPage() {
                     <option value="3">{t('🃏🃏🃏 เปิด 3 ใบ — อดีต · ปัจจุบัน · อนาคต')}</option>
                     <option value="7">{t('เปิด 7 ใบ — ดูดวงเต็มชุด')}</option>
                   </Select>
+                </Field>
+              )}
+              {draft.type === 'glove' && (
+                <Field label={t('จำนวนหมัด')} hint={t('1–5 หมัด (สลับซ้ายขวา) · ข้อความประกอบขึ้นกลางจอ · มีเสียงในตัว')}>
+                  <Input type="text" inputMode="numeric" value={draft.count === '12' ? '1' : draft.count} onChange={(e) => set('count', toDigits(e.target.value))} />
                 </Field>
               )}
               {draft.type === 'effect' && (

@@ -101,7 +101,7 @@ export interface OverlayTokenRow { id: string; label: string | null; createdAt: 
 export interface Plan { code: string; name: string; priceCents: number; currency: string; features: Omit<Entitlements, 'plan'> }
 
 export type TriggerEvent = 'gift' | 'follow' | 'share' | 'like' | 'chat';
-export type ActionType = 'sound' | 'image' | 'video' | 'text' | 'tarot' | 'effect' | 'sign';
+export type ActionType = 'sound' | 'image' | 'video' | 'text' | 'tarot' | 'effect' | 'sign' | 'glove';
 export type TarotTopic = 'general' | 'love' | 'self' | 'money';
 export type TarotDeck = 'full' | 'major' | 'wands' | 'cups' | 'swords' | 'pentacles';
 export interface Rule {

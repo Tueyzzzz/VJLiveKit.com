@@ -13,7 +13,11 @@ export function SupportBubble() {
   const path = usePathname();
   const [open, setOpen] = useState(false);
   const { unread } = useSupportUnread();
-  useEffect(() => { const f = () => setOpen(true); window.addEventListener('vjl-open-support', f); return () => window.removeEventListener('vjl-open-support', f); }, []);
+  const [draft, setDraft] = useState('');
+  useEffect(() => {
+    const f = (e: Event) => { setDraft(String((e as CustomEvent<{ text?: string }>).detail?.text ?? '')); setOpen(true); };
+    window.addEventListener('vjl-open-support', f); return () => window.removeEventListener('vjl-open-support', f);
+  }, []);
 
   const load = useCallback(async () => {
     const r = await api<{ msgs: SupportMsg[] }>('/api/support');
@@ -38,7 +42,7 @@ export function SupportBubble() {
             <button onClick={() => setOpen(false)} className="rounded-full p-1.5 hover:bg-white/20" aria-label={t('ปิด')}><X className="size-5" /></button>
           </div>
           <div className="min-h-0 flex-1 [&>div]:h-full [&>div]:rounded-none [&>div]:border-0">
-            <SupportChat load={load} send={send} me="user" height="min-h-0 flex-1" />
+            <SupportChat load={load} send={send} me="user" height="min-h-0 flex-1" draft={draft} />
           </div>
         </div>
       )}

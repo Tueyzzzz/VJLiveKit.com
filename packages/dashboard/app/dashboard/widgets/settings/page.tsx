@@ -368,6 +368,19 @@ function WidgetSettings() {
         </div>
       )}
 
+      {type === 'mascot' && (
+        <Card className="mb-6 flex flex-col gap-3 border-pink/30 bg-gradient-to-r from-pink-soft/70 to-violet-soft/60 sm:flex-row sm:items-center">
+          <div className="text-4xl">🎨</div>
+          <div className="min-w-0 flex-1">
+            <div className="font-semibold">{t('อยากได้มาสคอตเป็นหน้าตัวเอง?')}</div>
+            <p className="text-sm text-muted">{t('ส่งรูปหน้าตรงชัด ๆ 1–3 รูป บอกสไตล์ที่ชอบ — ทีมงานวาดเป็นตัวละครของคุณ ครบทุกท่า (รับของขวัญ เต้น เดิน ส่งจุ๊บ) แจ้งราคาและระยะเวลาในแชท')}</p>
+          </div>
+          <Button onClick={() => window.dispatchEvent(new CustomEvent('vjl-open-support', { detail: { text: t('สนใจสั่งทำมาสคอตหน้าตัวเองค่ะ/ครับ 🎨 สไตล์ที่อยากได้: ') } }))}>
+            {t('🛒 สั่งทำมาสคอตหน้าตัวเอง')}
+          </Button>
+        </Card>
+      )}
+
       <WidgetLinkBox type={type} />
 
       {!values ? <Spinner /> : (

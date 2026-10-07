@@ -22,12 +22,13 @@ async function shrink(file: File): Promise<string> {
 }
 
 /** กล่องแชท — me = ฝั่งที่กำลังดู (ลูกค้า 'user' / แอดมิน 'admin') */
-export function SupportChat({ load, send, me, height = 'h-[60dvh]' }: {
-  load: () => Promise<SupportMsg[]>; send: (b: { text: string; img?: string }) => Promise<void>; me: 'user' | 'admin'; height?: string;
+export function SupportChat({ load, send, me, height = 'h-[60dvh]', draft = '' }: {
+  load: () => Promise<SupportMsg[]>; send: (b: { text: string; img?: string }) => Promise<void>; me: 'user' | 'admin'; height?: string; draft?: string;
 }) {
   const t = useT();
   const [msgs, setMsgs] = useState<SupportMsg[] | null>(null);
-  const [text, setText] = useState('');
+  const [text, setText] = useState(draft);
+  useEffect(() => { if (draft) setText(draft); }, [draft]); // เปิดจากปุ่ม (เช่น สั่งทำมาสคอต) → พิมพ์ข้อความไว้ให้
   const [img, setImg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);

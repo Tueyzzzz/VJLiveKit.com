@@ -3,6 +3,7 @@ import { AuthProvider } from '@/lib/auth';
 import './globals.css';
 import { Pixels } from '@/components/Pixels';
 import { LiveLink } from '@/components/Speaker';
+import { AutoUpdate } from '@/components/AutoUpdate';
 
 const SITE = 'https://vjlivekit.com';
 const TITLE = 'VJLiveKit — วิดเจ็ตไลฟ์ TikTok สำหรับ OBS & TikTok LIVE Studio';
@@ -37,7 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Itim&display=swap" rel="stylesheet" />
       </head>
       <body className="min-h-dvh">
-        <AuthProvider>{children}<LiveLink /></AuthProvider>
+        <AuthProvider>{children}<LiveLink /><AutoUpdate /></AuthProvider>
         <Pixels />
       </body>
     </html>

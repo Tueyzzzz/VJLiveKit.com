@@ -83,7 +83,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   // เวอร์ชันแดชบอร์ดที่เสิร์ฟอยู่ (ชื่อโฟลเดอร์ _next/static/<buildId>) — หน้าเว็บที่เปิดค้างไว้ใช้เช็กแล้วโหลดใหม่เอง
   let dashBuild = '';
   try { dashBuild = fs.readdirSync(path.join(DASHBOARD_DIR, '_next/static')).find((d) => !['chunks', 'media', 'css'].includes(d)) ?? ''; } catch { /* ยังไม่ได้ build */ }
-  app.get('/api/version', async (_req, reply) => { reply.header('cache-control', 'no-store'); return { dashboard: dashBuild }; });
+  app.get('/api/version', async (_req, reply) => { reply.header('cache-control', 'no-store'); return { dashboard: dashBuild, commit: process.env.APP_COMMIT ?? 'dev' }; });
 
   // ค่าสาธารณะจากหน้าตั้งค่าระบบ (ประกาศบนแดชบอร์ด · วันทดลองฟรี)
   app.get('/api/settings/public', async () => ({ announcement: settings().announcement, trialDays: settings().trialDays }));

@@ -27,6 +27,9 @@ RUN npm ci --omit=dev --workspace @vjlivekit/server --include-workspace-root=fal
 # ---------- runtime stage ----------
 FROM node:20-bookworm-slim AS runtime
 WORKDIR /app
+# รหัส commit ที่ build (ไว้เช็กหลัง deploy ว่าเครื่องจริงรันเวอร์ชันใหม่แล้ว — /api/version)
+ARG GIT_SHA=dev
+ENV APP_COMMIT=$GIT_SHA
 ENV NODE_ENV=production \
     OVERLAY_DIR=/app/packages/overlay/public \
     DASHBOARD_DIR=/app/packages/dashboard/out

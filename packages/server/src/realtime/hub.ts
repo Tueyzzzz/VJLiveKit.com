@@ -53,6 +53,13 @@ export class RoomHub {
 
   constructor(private io: Server, private rulesProvider?: RulesProvider, private demo = false) {
     current = this;
+    // ทุก 3 นาที: ห้องที่ระบบคิดว่ายังไลฟ์ → ถาม TikTok ซ้ำ ถ้าจบแล้วแต่สัญญาณจบไม่มา ให้ปิดเอง (กันสถานะ "ไลฟ์อยู่" ค้าง)
+    if (!demo) setInterval(() => {
+      for (const e of this.rooms.values()) {
+        if (!e.room.getState().connected) continue;
+        void e.room.checkLive().then((live) => { if (live === false) { console.log('[hub] stale live → end', e.room.username); e.room.endStale(); } });
+      }
+    }, 3 * 60_000).unref();
   }
 
   static roomChannel(username: string) { return `room:${normalize(username)}`; }

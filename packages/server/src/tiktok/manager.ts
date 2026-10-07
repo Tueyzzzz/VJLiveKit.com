@@ -141,6 +141,19 @@ export class TikTokRoom extends EventEmitter {
     c.on('streamEnd', () => { this.connected = false; this.emit('status', { type: 'streamEnd', message: 'ไลฟ์จบแล้ว' }); void this.connection?.disconnect?.().catch?.(() => {}); });
   }
 
+  /** ถาม TikTok ว่ายังไลฟ์อยู่จริงไหม (true/false) · ถามไม่ได้ = null (ไม่ตัดสิน) */
+  async checkLive(): Promise<boolean | null> {
+    if (!this.connection || !this.connected) return null;
+    try { return Boolean(await this.connection.fetchIsLive()); } catch { return null; }
+  }
+  /** TikTok ยืนยันว่าไลฟ์จบแล้ว แต่ไม่ได้ส่งสัญญาณจบมา → ปิดเองเหมือนได้ streamEnd */
+  endStale(): void {
+    if (!this.connected) return;
+    this.connected = false;
+    this.emit('status', { type: 'streamEnd', message: 'ไลฟ์จบแล้ว' });
+    void this.connection?.disconnect?.().catch?.(() => {});
+  }
+
   // v2 ส่ง protobuf object (user.displayId / avatarThumb.urlList); เผื่อรูปแบบเก่า (uniqueId / profilePicture.url)
   private user(d: any = {}): NormalizedUser {
     const u = d.user ?? {};

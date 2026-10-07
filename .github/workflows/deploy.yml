@@ -76,3 +76,22 @@ jobs:
             set -e
             if [ "$(id -u)" -eq 0 ]; then SUDO=""; else SUDO="sudo -E"; fi
             $SUDO bash /opt/vjlivekit/deploy/bootstrap.sh
+
+      # ตรวจหลัง deploy: เว็บจริงต้องรัน commit ใหม่ และหน้าหลักต้องเปิดได้ — ไม่ผ่าน = แจ้งล้ม (เคยเจอ deploy "สำเร็จ" แต่เครื่องยังรันตัวเก่า)
+      - name: Verify production
+        env:
+          DOMAIN: ${{ vars.DOMAIN || 'vjlivekit.com' }}
+          EXPECT: ${{ github.event.workflow_run.head_sha || github.sha }}
+        run: |
+          ok=""
+          for i in $(seq 1 30); do
+            got=$(curl -fs "https://$DOMAIN/api/version" | sed -n 's/.*"commit":"\([^"]*\)".*/\1/p' || true)
+            echo "try $i: live commit=${got:-?} expect=$EXPECT"
+            if [ "$got" = "$EXPECT" ]; then ok=1; break; fi
+            sleep 10
+          done
+          [ -n "$ok" ] || { echo "::error::เว็บจริงยังไม่ใช่เวอร์ชันใหม่ ($EXPECT)"; exit 1; }
+          for p in /healthz / /dashboard/ /dashboard/actions/ /dashboard/sounds/ /login/ /overlay/fx.html /overlay/sign.html /overlay/giftjar.html /api/version; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "https://$DOMAIN$p")
+            echo "$p -> $code"; [ "$code" = "200" ] || { echo "::error::$p ตอบ $code"; exit 1; }
+          done

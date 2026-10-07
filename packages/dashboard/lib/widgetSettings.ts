@@ -479,7 +479,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
         { key: 'other', label: 'รวมกฎแชท / ติดตาม / แชร์', type: 'toggle', def: true },
         { key: 'pos', label: 'มุมจอ', type: 'select', def: 'tl', options: [['tl', 'บนซ้าย'], ['tr', 'บนขวา'], ['bl', 'ล่างซ้าย'], ['br', 'ล่างขวา']] },
         bg(45),
-        size(),
+        { ...size(), max: 4, hint: 'จอ 4K: ตั้ง Browser Source ใน OBS เป็น 3840×2160 แล้วตั้งขนาด 2× — ตัวหนังสือและรูปคมชัด' },
       ] },
     ],
   },

@@ -69,6 +69,8 @@ export class RoomHub {
   static speakerChannel(userId: string) { return `spk:${userId}`; }
   /** แดชบอร์ดที่เปิดเสียงอยู่ (เสียงกฎดังที่เว็บ → จอ fx ไม่ต้องเล่นซ้ำ) */
   static soundChannel(userId: string) { return `snd:${userId}`; }
+  /** แดชบอร์ดที่รับอีเวนต์ไปอ่านออกเสียง (TTS แบบ TikFinity — เสียงดังที่หน้าเว็บ) */
+  static ttsChannel(userId: string) { return `tts:${userId}`; }
 
   // ---- ล็อกแบบ TikFinity: วิดเจ็ตทำงานเฉพาะตอนวีเจเปิดหน้าเว็บ (แดชบอร์ด) ค้างไว้ ----
   // ประหยัดเซิร์ฟเวอร์: ไม่ต่อ TikTok ให้ลิงก์ที่ถูกทิ้งไว้ใน OBS ตอนวีเจไม่ได้ใช้งาน
@@ -204,7 +206,11 @@ export class RoomHub {
     room.on('event', (e) => {
       entry.dirty = true;
       this.io.to(ch).emit('tiktok-event', e);
+      // TTS: ส่งเฉพาะที่อ่านได้ (แชท/ของขวัญจบคอมโบ/ติดตาม/แชร์) ขนาดเล็ก ไปที่หน้าเว็บของเจ้าของ
+      const speak = e.type === 'chat' || e.type === 'follow' || e.type === 'share' || (e.type === 'gift' && !e.streaking);
+      const lite = speak ? { type: e.type, user: e.user ? { uniqueId: e.user.uniqueId, nickname: e.user.nickname } : undefined, comment: e.comment, giftName: e.giftName, repeatCount: e.repeatCount, value: e.totalValue ?? (e.diamondCount ?? 0) * (e.repeatCount ?? 1) } : null;
       for (const ownerId of entry.owners.keys()) {
+        if (lite) this.io.to(RoomHub.ttsChannel(ownerId)).emit('tts', lite);
         void this.getRules(ownerId).then((rules) => {
           if (!rules.length) return;
           for (const fire of evaluate(rules, e)) this.fireAction(ownerId, key, fire);

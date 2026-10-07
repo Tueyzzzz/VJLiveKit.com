@@ -7,6 +7,7 @@ import { Volume2, VolumeX } from 'lucide-react';
 import { api, getToken, type Rule } from '@/lib/api';
 import { cx } from './ui';
 import { useT } from '@/lib/i18n';
+import * as TTS from '@/lib/tts';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
 const KEY = 'vjl-speaker';
@@ -33,6 +34,9 @@ const subs = new Set<() => void>();
 let snap = { ...store };
 const emit = () => { snap = { live: store.live, on: store.on, hasSound: store.hasSound, sock: store.sock }; subs.forEach((f) => f()); };
 let keyRules: Rule[] = [];
+// อ่านแชทออกเสียง: เปิดในบัญชี + เปิดที่เครื่องนี้ → ขอรับอีเวนต์จากเซิร์ฟเวอร์
+let ttsWant = false;
+const ttsApply = (want: boolean) => { ttsWant = want; store.sock?.emit?.('tts', { on: want }); if (!want) { TTS.stop(); TTS.releaseLead(); } };
 const useStore = () => useSyncExternalStore((f) => { subs.add(f); return () => subs.delete(f); }, () => snap, () => snap);
 
 /**
@@ -43,9 +47,26 @@ const useStore = () => useSyncExternalStore((f) => { subs.add(f); return () => s
  */
 export function LiveLink() {
   const { user } = useAuth();
+  const t = useT();
   const username = user?.tiktokUsername;
   const [toast, setToast] = useState<string | null>(null);
   const toastT = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [needTap, setNeedTap] = useState(false); // เบราว์เซอร์ยังไม่ให้พูด (ต้องคลิกหน้าเว็บสักครั้งหลังโหลด)
+
+  // ตั้งค่า TTS: โหลดตอนเปิด + เมื่อหน้า TTS บันทึก/สลับเครื่องนี้ (vjl-tts-changed)
+  useEffect(() => {
+    if (!username) return;
+    const load = () => api<{ config: Partial<TTS.TtsCfg> }>('/api/widgets/tts/config').then((r) => {
+      const c = TTS.withDefaults(r.config); TTS.setCfg(c); ttsApply(c.enabled && TTS.getHere());
+    }).catch(() => {});
+    void load(); window.addEventListener('vjl-tts-changed', load);
+    const beat = setInterval(() => {
+      if (ttsWant) TTS.claimLead();
+      const act = (navigator as unknown as { userActivation?: { hasBeenActive: boolean } }).userActivation;
+      setNeedTap(ttsWant && !!act && !act.hasBeenActive);
+    }, 3000);
+    return () => { window.removeEventListener('vjl-tts-changed', load); clearInterval(beat); ttsApply(false); };
+  }, [username]);
 
   useEffect(() => { try { store.on = localStorage.getItem(KEY) !== 'off'; emit(); } catch { /* ignore */ } }, []);
   // มีกฎเสียงที่เปิดอยู่ไหม (เช็กซ้ำทุกนาที เผื่อเพิ่งสร้างกฎ)
@@ -73,9 +94,10 @@ export function LiveLink() {
       try { await Promise.all([loadScript(`${API_BASE}/socket.io/socket.io.js`), loadScript(`${API_BASE}/overlay/js/sfx.js`)]); } catch { return; }
       const io = (window as unknown as { io?: IoFn }).io;
       if (dead || !io) return;
-      sock = io(API_BASE || location.origin, { query: { session: getToken() ?? '', play: store.on ? '1' : '0' }, transports: ['websocket', 'polling'] });
+      sock = io(API_BASE || location.origin, { query: { session: getToken() ?? '', play: store.on ? '1' : '0', tts: ttsWant ? '1' : '0' }, transports: ['websocket', 'polling'] });
       store.sock = sock; emit();
-      sock.on('ready', () => { store.live = true; emit(); });
+      sock.on('ready', () => { store.live = true; emit(); if (ttsWant) sock?.emit?.('tts', { on: true }); });
+      sock.on('tts', (e: TTS.TtsEvent) => { if (!ttsWant || !TTS.claimLead()) return; const line = TTS.lineFor(e, TTS.getCfg()); if (line) TTS.say(line); });
       sock.on('disconnect', () => { store.live = false; emit(); });
       sock.on('action', (f: Fire) => {
         const who = f.event?.user?.nickname || f.event?.user?.uniqueId || '';
@@ -93,6 +115,11 @@ export function LiveLink() {
     return () => { dead = true; sock?.disconnect(); store.sock = null; store.live = false; emit(); document.removeEventListener('visibilitychange', onVis); void lock?.release().catch(() => {}); };
   }, [username]);
 
+  if (needTap) return (
+    <button onClick={() => { setNeedTap(false); TTS.say(' '); }} className="fixed bottom-4 right-4 z-50 max-w-xs animate-pulse rounded-2xl bg-pink px-4 py-3 text-sm font-medium text-white shadow-lg">
+      🔊 {t('แตะหน้าเว็บ 1 ครั้งเพื่อเปิดเสียงอ่านแชท')}
+    </button>
+  );
   if (!toast) return null;
   return <div className="fixed bottom-4 right-4 z-50 max-w-xs rounded-2xl bg-white px-4 py-3 text-sm shadow-lg ring-1 ring-line">🔊 {toast}</div>;
 }

@@ -28,7 +28,7 @@ const PARAM_HINTS: Record<string, string> = {
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
 
 /** วิดเจ็ตที่กำลังพัฒนา — ลูกค้าเห็นเป็นสีเทา ใช้ไม่ได้ (แอดมินยังใช้ทดสอบได้) */
-const SOON = new Set(['league', 'tts']);
+const SOON = new Set(['league']);
 
 const COLLECT_GROUP = '🎁 สะสมของขวัญ — โหล ตู้ ต้นไม้ เครื่องจักร';
 
@@ -36,7 +36,7 @@ const COLLECT_GROUP = '🎁 สะสมของขวัญ — โหล ต�
 const WIDGET_GROUPS: [string, string[]][] = [
   [COLLECT_GROUP, ['pile', 'giftjar', 'aquarium', 'belly', 'snowglobe', 'spacedome', 'vehicle', 'tree', 'garden', 'coinjar']],
   ['🏆 เป้าหมายและลีก', ['league', 'goal', 'timer']],
-  ['🔔 แจ้งเตือนและแชท', ['alerts', 'chat', 'follower', 'tts']],
+  ['🔔 แจ้งเตือนและแชท', ['alerts', 'chat', 'follower']],
   ['🥇 อันดับผู้ชม', ['topgifters', 'toplikers']],
   ['✨ เอฟเฟกต์', ['fx', 'fxmenu', 'sign']],
 ];

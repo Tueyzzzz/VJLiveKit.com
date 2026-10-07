@@ -83,6 +83,12 @@ export function setupRealtime(httpServer: HttpServer): RoomHub {
         const snd = RoomHub.soundChannel(claims.userId);
         if (socket.handshake.query.play !== '0') socket.join(snd);
         socket.on('speaker', (p: { play?: boolean }) => { if (p?.play) socket.join(snd); else socket.leave(snd); });
+        // อ่านแชทออกเสียง (TTS) — แพลนที่มีสิทธิ์ + หน้าเว็บขอรับ (เปิด TTS ไว้)
+        const ttsCh = RoomHub.ttsChannel(claims.userId);
+        const canTts = getEntitlements(claims.userId).then((en) => en.widgets.includes('tts')).catch(() => false);
+        const ttsOn = async (on: boolean) => { if (on && (await canTts)) socket.join(ttsCh); else socket.leave(ttsCh); };
+        void ttsOn(socket.handshake.query.tts === '1');
+        socket.on('tts', (p: { on?: boolean }) => void ttsOn(!!p?.on));
         socket.once('disconnect', () => hub.presenceDown(claims.userId));
         const room = user.tiktokUsername;
         socket.emit('ready', { username: room });

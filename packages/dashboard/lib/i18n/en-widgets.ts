@@ -601,4 +601,5 @@ export const EN_WIDGETS: Record<string, string> = {
   "🌟 จัดเต็ม": "🌟 Lots",
   "ปิด": "Off",
   "⭐ มาสคอตของฉัน": "⭐ My mascot",
+  "🔒 มาสคอตสั่งทำของลูกค้า (แอดมินเห็นคนเดียว)": "🔒 Customer custom mascots (admins only)",
 };

@@ -14,8 +14,9 @@ export async function mascotRoutes(app: FastifyInstance): Promise<void> {
   // มาสคอตสั่งทำของบัญชีนี้ (แอดมินเห็นทุกตัว ไว้ทดสอบ)
   app.get('/api/mascots/custom', { preHandler: requireUser }, async (req) => {
     const { userId } = getUser(req)!;
-    const list = isAdmin(req) ? Object.values(CUSTOM_MASCOTS).flat() : (CUSTOM_MASCOTS[userId] ?? []);
-    return { mascots: list };
+    const mine = (CUSTOM_MASCOTS[userId] ?? []).map((m) => ({ ...m, mine: true }));
+    const others = isAdmin(req) ? Object.entries(CUSTOM_MASCOTS).filter(([id]) => id !== userId).flatMap(([, l]) => l.map((m) => ({ ...m, mine: false }))) : [];
+    return { mascots: [...mine, ...others] };
   });
 
   // หลังบ้าน: ใครซื้อมาสคอตสั่งทำแล้วบ้าง

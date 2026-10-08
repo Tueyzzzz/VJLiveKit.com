@@ -457,6 +457,7 @@
       // ไม่มีกองในความจำแต่ไลฟ์มีเพชรแล้ว → เติมเหรียญตามยอด
       if (!bodies.length && diamonds > 0) for (let i = 0; i < Math.min(120, Math.ceil(Math.sqrt(diamonds) * 2)); i++) addBody({ u: '', e: '🪙', d: 1 }, 'restore');
     }
+    Overlay.on('state', (st) => { if (window.VJLCollect) VJLCollect.backfill(st, onGift); }); // เติมชิ้นที่พลาด (deploy/รีโหลดกลางไลฟ์)
     Overlay.on('event', (e) => { if (e.type === 'gift' && !e.streaking) { prefilled = true; onGift(e); } });
     Overlay.on('state', (s) => {
       if (s && s.roomId && roomId && s.roomId !== roomId) diamonds = 0; // ไลฟ์ใหม่ → นับเพชรใหม่ (กองยังอยู่จนกดล้าง)

@@ -204,8 +204,9 @@
       if (window.VJLCollect) VJLCollect.record(e, n);
       for (let i = 0; i < n; i++) setTimeout(() => { addGift(g, performance.now()); save(); }, i * (n > 25 ? 60 : 140));
       if (CAR.music && fx.notes) fx.notes(0, CAR_Y + CAR.y + 20, unit >= 100 ? 5 : 2);
-      showAlert(e, count);
+      if (!e.__quiet) showAlert(e, count);
     }
+    Overlay.on('state', (st) => { if (window.VJLCollect) VJLCollect.backfill(st, onGift); }); // เติมชิ้นที่พลาด (deploy/รีโหลดกลางไลฟ์)
     Overlay.on('event', (e) => { if (e.type === 'gift' && !e.streaking) onGift(e); });
 
     if (P('debug', '0') === '1') window.__car = { gifts, slots };

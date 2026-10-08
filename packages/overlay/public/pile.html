@@ -145,8 +145,9 @@
       if (window.VJLCollect) VJLCollect.record(e, n);
       for (let i = 0; i < n; i++) setTimeout(() => addBody(g, false), i * (n > 30 ? 45 : 110));
       if (unit >= 1000) fx.confetti(W / 2, H * 0.3, 50);
-      showAlert(e, count);
+      if (!e.__quiet) showAlert(e, count);
     }
+    Overlay.on('state', (st) => { if (window.VJLCollect) VJLCollect.backfill(st, onGift); }); // เติมชิ้นที่พลาด (deploy/รีโหลดกลางไลฟ์)
     Overlay.on('event', (e) => { if (e.type === 'gift' && !e.streaking) onGift(e); });
     requestAnimationFrame(frame);
 

@@ -926,12 +926,13 @@
       const row = ranking[id] || { n: u.nickname || id, a: u.avatar || '', c: 0 };
       row.c += value; row.n = u.nickname || row.n; row.a = u.avatar || row.a; ranking[id] = row;
       totalCoins += value;
-      renderBoard(); showAlert(e, count); save();
+      renderBoard(); if (!e.__quiet) showAlert(e, count); save();
       // ของแพง: พลุ + โหลสะเทือน · ตัวเลข/ป้ายเด้ง
       if (unit >= 1000) { fx.confetti(0, SH.topY - 20, 50); jarWobble.kick(0.06); }
       for (const el of [$total, $board]) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
     }
 
+    Overlay.on('state', (st) => { if (window.VJLCollect) VJLCollect.backfill(st, onGift); }); // เติมชิ้นที่พลาด (deploy/รีโหลดกลางไลฟ์)
     Overlay.on('event', (e) => { if (e.type === 'gift' && !e.streaking) onGift(e); });
 
     if (TOP === 1) $board.classList.add('solo');

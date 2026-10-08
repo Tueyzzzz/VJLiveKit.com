@@ -65,8 +65,11 @@ export class TikTokRoom extends EventEmitter {
     return super.emit(event, ...args);
   }
 
+  /** ของขวัญทั้งหมดของไลฟ์นี้ (ล่าสุด 600 ครั้ง) — วิดเจ็ตที่เพิ่งต่อ/ต่อใหม่ (deploy, รีโหลด) ใช้เติมชิ้นที่พลาดไป */
+  recentGifts: TikTokEvent[] = [];
+
   isConnected(): boolean { return this.connected; }
-  getState() { return { connected: this.connected, username: this.username, roomId: this.roomId, stats: this.stats, topGifters: this.topGifters(), topLikers: this.topLikers() }; }
+  getState() { return { connected: this.connected, username: this.username, roomId: this.roomId, stats: this.stats, topGifters: this.topGifters(), topLikers: this.topLikers(), recentGifts: this.recentGifts }; }
 
   /** รหัสห้องไลฟ์ปัจจุบัน (null = ยังไม่ได้ต่อ / โหมดเดโม) */
   get liveRoomId(): string | null { return this.roomId; }
@@ -74,11 +77,16 @@ export class TikTokRoom extends EventEmitter {
 
   /** สำหรับบันทึกลงฐานข้อมูล */
   snapshot() {
-    return { stats: { ...this.stats }, peakViewers: this.peakViewers, topGifters: this.topGifters(200), topLikers: this.topLikers(200) };
+    return { stats: { ...this.stats }, peakViewers: this.peakViewers, topGifters: this.topGifters(200), topLikers: this.topLikers(200), recentGifts: this.recentGifts };
   }
 
   /** โหลดสถิติที่บันทึกไว้ของไลฟ์เดียวกัน (หลังรีสตาร์ท/deploy) แล้วรวมกับที่นับได้ตั้งแต่เพิ่งต่อ */
-  restore(snap: { stats: Partial<LiveStats>; peakViewers: number; topGifters: TopGifter[]; topLikers: TopGifter[] }): void {
+  restore(snap: { stats: Partial<LiveStats>; peakViewers: number; topGifters: TopGifter[]; topLikers: TopGifter[]; recentGifts?: TikTokEvent[] }): void {
+    if (snap.recentGifts?.length) { // ของขวัญก่อนรีสตาร์ท + ที่ได้หลังต่อใหม่ (ไม่ซ้ำ)
+      const key = (e: TikTokEvent) => `${e.ts}|${e.user?.uniqueId}|${e.giftId ?? e.giftName}`;
+      const have = new Set(this.recentGifts.map(key));
+      this.recentGifts = [...snap.recentGifts.filter((e) => !have.has(key(e))), ...this.recentGifts].slice(-600);
+    }
     const s = snap.stats;
     this.stats.diamondCount += s.diamondCount ?? 0;
     this.stats.giftCount += s.giftCount ?? 0;
@@ -105,6 +113,7 @@ export class TikTokRoom extends EventEmitter {
   async connect(demo = config.demoMode): Promise<void> {
     await this.disconnect();
     this.stats = emptyStats();
+    this.recentGifts = [];
     this.seenMsgIds.clear();
     this.gifters.clear();
     this.likers.clear();
@@ -186,7 +195,13 @@ export class TikTokRoom extends EventEmitter {
 
   private send(type: TikTokEventType, payload: Partial<TikTokEvent>): void {
     this.lastActivityAt = Date.now();
-    this.emit('event', { type, ts: Date.now(), ...payload });
+    const ev = { type, ts: Date.now(), ...payload } as TikTokEvent;
+    if (type === 'gift' && !payload.streaking) {
+      const u = ev.user;
+      this.recentGifts.push({ ...ev, user: u ? { userId: u.userId, uniqueId: u.uniqueId, nickname: u.nickname, avatar: '' } : undefined });
+      if (this.recentGifts.length > 600) this.recentGifts.splice(0, this.recentGifts.length - 600);
+    }
+    this.emit('event', ev);
     this.emit('stats', this.stats);
   }
 

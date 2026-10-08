@@ -23,12 +23,23 @@
   }).catch(() => {});
   const imgFor = (name, d) => (name && CAT.n && CAT.n[name]) || (!name && d && CAT.d && CAT.d[d]) || '';
 
+  const idOf = (e) => { const u = e.user || {}; return [e.ts || '', u.uniqueId || u.nickname || '', e.giftId || e.giftName || '', e.repeatCount || 1].join('|'); };
+
   window.VJLCollect = {
+    /** ของขวัญชิ้นนี้ยังไม่อยู่ในกอง (ใช้ตอนเติมชิ้นที่พลาดหลังต่อใหม่) */
+    isNew: (e) => !read().some((x) => x.id === idOf(e)),
+    /** ต่อใหม่ (deploy/รีโหลด/เพิ่งเปิด): เติมของขวัญของไลฟ์นี้ที่ยังไม่มีในกอง แบบเงียบ (ไม่เด้งแจ้งเตือน) */
+    backfill(state, onGift) {
+      if (q.get('demo') === '1' || !state || !Array.isArray(state.recentGifts)) return;
+      const after = Number(window.Overlay ? Overlay.param('resetAt', '0') : 0) || 0; // กด "ล้าง" แล้ว → ไม่เติมของก่อนหน้านั้น
+      const have = new Set(read().map((x) => x.id));
+      state.recentGifts.filter((e) => e && e.ts > after && !have.has(idOf(e))).forEach((e, i) => setTimeout(() => onGift({ ...e, __quiet: 1 }), i * 40));
+    },
     /** บันทึกการส่งของขวัญ 1 ครั้ง (n = จำนวนชิ้นที่วิดเจ็ตนี้แสดง) */
     record(e, n) {
       if (q.get('demo') === '1' || !e) return;
       const u = e.user || {};
-      const id = [e.ts || '', u.uniqueId || u.nickname || '', e.giftId || e.giftName || '', e.repeatCount || 1].join('|');
+      const id = idOf(e);
       const list = read();
       if (list.some((x) => x.id === id)) return; // อีกแบบบันทึกไปแล้ว
       list.push({ id, u: e.giftImage || '', e: e.giftName || '', d: e.diamondCount || 0, n: Math.max(1, n || 1) });

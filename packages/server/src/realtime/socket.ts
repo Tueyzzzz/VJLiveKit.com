@@ -135,7 +135,9 @@ export function setupRealtime(httpServer: HttpServer): RoomHub {
         void hub.attach(room, ownerId).then((state) => {
           if (!active) return;
           if (socket.disconnected) { active = false; hub.detach(room, ownerId); return; }
-          socket.emit('state', state);
+          // รายการของขวัญย้อนหลัง ส่งเฉพาะวิดเจ็ตสะสมของขวัญ (ที่เหลือไม่ใช้ ประหยัดแบนด์วิดท์)
+          const COLLECT = ['collect', 'giftjar', 'aquarium', 'belly', 'snowglobe', 'spacedome', 'vehicle', 'tree', 'garden', 'coinjar', 'pile'];
+          socket.emit('state', widget && COLLECT.includes(widget) ? state : { ...state, recentGifts: undefined });
         }).catch(() => { active = false; });
       };
       const off = () => {

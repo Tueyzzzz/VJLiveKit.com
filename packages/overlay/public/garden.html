@@ -467,8 +467,9 @@
       const row = ranking[id] || { n: u.nickname || id, a: u.avatar || '', c: 0 };
       row.c += value; row.n = u.nickname || row.n; row.a = u.avatar || row.a; ranking[id] = row;
       if (POT_SKIN && POT_SKIN.music && fx.notes) fx.notes(0, TREE ? -380 : POT_TOP - 120, unit >= 100 ? 5 : 2);
-      renderBoard(); showAlert(e, count); save();
+      renderBoard(); if (!e.__quiet) showAlert(e, count); save();
     }
+    Overlay.on('state', (st) => { if (window.VJLCollect) VJLCollect.backfill(st, onGift); }); // เติมชิ้นที่พลาด (deploy/รีโหลดกลางไลฟ์)
     Overlay.on('event', (e) => { if (e.type === 'gift' && !e.streaking) onGift(e); });
 
     addEventListener('resize', resize); resize(); renderBoard();

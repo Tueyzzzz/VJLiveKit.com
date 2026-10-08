@@ -103,7 +103,9 @@
               if (dl < 0.08) continue; // ขาว/เทา/ดำ
               const s = dl / (1 - Math.abs(2 * l - 1));
               let h = mx === r ? ((g - b) / dl) % 6 : mx === g ? (b - r) / dl + 2 : (r - g) / dl + 4; h /= 6; if (h < 0) h += 1;
-              if (h > 0.02 && h < 0.13 && s < 0.85 && l > 0.45) continue; // โทนผิว
+              const sv = dl / mx; // ความสดแบบ HSV (ผิวสีอ่อนมากจะไม่ถูกนับว่าสีจัด)
+              if ((h <= 0.14 || h >= 0.96) && sv < 0.5 && mx > 0.55) continue; // โทนผิว (รวมแก้มแดง)
+              if (h > 0.02 && h < 0.12 && sv < 0.62 && mx > 0.4) continue; // ผิวส่วนเงา
               h = (h + sh) % 1;
               const q = l < .5 ? l * (1 + s) : l + s - l * s, p2 = 2 * l - q;
               const f = (t) => { t = (t + 1) % 1; return t < 1 / 6 ? p2 + (q - p2) * 6 * t : t < .5 ? q : t < 2 / 3 ? p2 + (q - p2) * (2 / 3 - t) * 6 : p2; };

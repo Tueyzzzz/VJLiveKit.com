@@ -95,9 +95,9 @@ export default function Home() {
         {FEATURES.map(({ icon: Icon, title, text, ...f }) => (
           <Card key={title} className="overflow-hidden">
             {/* ภาพตัวอย่างจริงของวิดเจ็ต (ถ้ามี) — ไม่มีใช้ไอคอน */}
-            <div className="-mx-5 -mt-5 mb-4 grid aspect-video place-items-center" style={{ background: 'radial-gradient(circle at 30% 20%, #3a2d52, #17121f 70%)' }}>
+            <div className="relative -mx-5 -mt-5 mb-4 grid aspect-video place-items-center" style={{ background: 'radial-gradient(circle at 30% 20%, #3a2d52, #17121f 70%)' }}>
               {'img' in f && f.img
-                ? <img src={(f.img.startsWith('/overlay') ? (process.env.NEXT_PUBLIC_API_BASE ?? '') : '') + f.img} alt={t(title)} loading="lazy" className="max-h-[85%] max-w-[90%] object-contain drop-shadow-lg" />
+                ? <img src={(f.img.startsWith('/overlay') ? (process.env.NEXT_PUBLIC_API_BASE ?? '') : '') + f.img} alt={t(title)} loading="lazy" className="absolute inset-0 m-auto h-[86%] w-[90%] object-contain drop-shadow-lg" />
                 : <div className="grid size-16 place-items-center rounded-2xl brand-gradient text-white shadow-lg"><Icon className="size-8" /></div>}
             </div>
             <h3 className="font-medium">{t(title)}</h3>

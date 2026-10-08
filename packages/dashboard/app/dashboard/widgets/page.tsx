@@ -147,7 +147,7 @@ function WidgetPreview({ type, config, live, onLive }: { type: string; config?: 
         <button type="button" onClick={() => onLive(true)} aria-label={t('เล่นตัวอย่าง')}
           className="absolute inset-0 grid place-items-center">
           {poster
-            ? <img src={poster} alt="" loading="lazy" className="max-h-[85%] max-w-[92%] object-contain drop-shadow-lg" />
+            ? <img src={poster} alt="" loading="lazy" className="absolute inset-0 m-auto h-[86%] w-[92%] object-contain drop-shadow-lg" />
             : <span className="text-5xl">{ICON[type] ?? '🎁'}</span>}
           <span className="absolute bottom-2 right-2 rounded-full bg-black/45 px-2.5 py-1 text-[11px] text-white opacity-80 group-hover:opacity-100">{t('▶ ดูตัวอย่าง')}</span>
         </button>

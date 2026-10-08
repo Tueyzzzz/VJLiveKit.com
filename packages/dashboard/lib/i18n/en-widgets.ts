@@ -596,4 +596,8 @@ export const EN_WIDGETS: Record<string, string> = {
   "แจกันแมวขยิบตา": "Winking cat vase",
   "ช่อมงกุฎเจ้าหญิง": "Princess crown bouquet",
   "💐 ช่อดอกไม้ & แจกัน": "💐 Bouquets & vases",
+  "ประกายระยิบระยับรอบตัว": "Twinkling sparkles",
+  "✨ เบา ๆ (ค่าเริ่มต้น)": "✨ Soft (default)",
+  "🌟 จัดเต็ม": "🌟 Lots",
+  "ปิด": "Off",
 };

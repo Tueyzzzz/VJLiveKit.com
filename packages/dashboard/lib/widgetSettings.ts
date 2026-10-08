@@ -451,6 +451,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
       { title: 'ตัวละคร', fields: [
         { key: 'char', label: 'เลือกตัวแทนวีเจ', type: 'select', def: 'G1', options: [['G1', '🐰 กระต่ายหวาน', '👧 ผู้หญิง', '/overlay/mascot/G1/thumb.webp'], ['G2', '⭐ ไอดอลดาว', '👧 ผู้หญิง', '/overlay/mascot/G2/thumb.webp'], ['G4', '🔮 แม่มดไพ่ทาโร่', '👧 ผู้หญิง', '/overlay/mascot/G4/thumb.webp'], ['G6', '🎮 เกมเมอร์สาว', '👧 ผู้หญิง', '/overlay/mascot/G6/thumb.webp'], ['G8', '🌸 ชุดไทยประยุกต์', '👧 ผู้หญิง', '/overlay/mascot/G8/thumb.webp'], ['B4', '👑 เจ้าชาย', '👦 ผู้ชาย', '/overlay/mascot/B4/thumb.webp'], ['B7', '🧙 นักเวทย์', '👦 ผู้ชาย', '/overlay/mascot/B7/thumb.webp'], ['B8', '🎸 ร็อกเกอร์น่ารัก', '👦 ผู้ชาย', '/overlay/mascot/B8/thumb.webp'], ['B10', '🍜 เชฟหนุ่ม', '👦 ผู้ชาย', '/overlay/mascot/B10/thumb.webp']] },
         { key: 'tint', label: 'สีชุดและผม', type: 'select', def: '0', options: [['0', '🎨 สีเดิม'], ['300', '💜 ม่วง'], ['220', '💙 ฟ้า'], ['160', '💚 มิ้นต์'], ['40', '🧡 พีช/ส้ม'], ['70', '💛 ทอง'], ['120', '🍀 เขียว'], ['330', '🩷 ชมพูบานเย็น']], hint: 'เปลี่ยนเฉพาะชุด ผม ของประดับ — สีผิวคงเดิม' },
+        { key: 'sparkle', label: 'ประกายระยิบระยับรอบตัว', type: 'select', def: 'soft', options: [['soft', '✨ เบา ๆ (ค่าเริ่มต้น)'], ['lots', '🌟 จัดเต็ม'], ['off', 'ปิด']] },
         { key: 'name', label: 'ป้ายชื่อใต้ตัวละคร (เว้นว่าง = ไม่มี)', type: 'text', def: '' },
       ] },
       { title: 'ท่าทางอัตโนมัติ', fields: [

@@ -23,7 +23,7 @@ export function AdminMascots() {
       {orders.map((o) => (
         <Card key={o.code} className="space-y-3">
           <div className="flex flex-wrap items-center gap-3">
-            <img src={`${API_BASE}/overlay/mascot/${o.code}/thumb.webp`} alt="" className="size-20 rounded-2xl bg-pink-soft/50 object-contain" />
+            <img src={`${API_BASE}/overlay/mascot/${o.code}/thumb.webp?v=${process.env.NEXT_PUBLIC_BUILD_ID ?? ''}`} alt="" className="size-20 rounded-2xl bg-pink-soft/50 object-contain" />
             <div className="min-w-0 flex-1">
               <div className="font-semibold">{o.name} <span className="text-xs font-normal text-muted">({o.code})</span></div>
               <div className="flex items-center gap-1.5 text-sm text-muted"><TikTokAvatar username={o.tiktok} size={20} /> {o.email}{o.tiktok && <> · @{o.tiktok}</>}</div>
@@ -39,7 +39,7 @@ export function AdminMascots() {
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-6 lg:grid-cols-9">
                 {POSES.map(([n, l]) => (
                   <div key={n} className="rounded-xl bg-canvas p-1 text-center">
-                    <img src={`${API_BASE}/overlay/mascot/${o.code}/${n}.webp`} alt="" loading="lazy" className="aspect-square w-full object-contain" />
+                    <img src={`${API_BASE}/overlay/mascot/${o.code}/${n}.webp?v=${process.env.NEXT_PUBLIC_BUILD_ID ?? ''}`} alt="" loading="lazy" className="aspect-square w-full object-contain" />
                     <div className="text-[10px] text-muted">{n}. {l}</div>
                   </div>
                 ))}

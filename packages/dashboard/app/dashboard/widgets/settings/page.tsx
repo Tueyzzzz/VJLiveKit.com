@@ -260,7 +260,7 @@ function WidgetSettings() {
     const base = WIDGET_SETTINGS[type];
     if (!base || type !== 'mascot' || !customMascots.length) return base;
     return { ...base, sections: base.sections.map((s) => ({ ...s, fields: s.fields.map((f) => f.key === 'char' && f.type === 'select'
-      ? { ...f, options: [...customMascots.map((m) => [m.code, m.name, m.mine ? '⭐ มาสคอตของฉัน' : '🔒 มาสคอตสั่งทำของลูกค้า (แอดมินเห็นคนเดียว)', `/overlay/mascot/${m.code}/thumb.webp`] as [string, string, string, string]), ...f.options] } : f) })) };
+      ? { ...f, options: [...customMascots.map((m) => [m.code, m.name, m.mine ? '⭐ มาสคอตของฉัน' : '🔒 มาสคอตสั่งทำของลูกค้า (แอดมินเห็นคนเดียว)', `/overlay/mascot/${m.code}/thumb.webp?v=${process.env.NEXT_PUBLIC_BUILD_ID ?? ''}`] as [string, string, string, string]), ...f.options] } : f) })) };
   }, [type, customMascots]);
   const t = useT();
   const [values, setValues] = useState<Values | null>(null);

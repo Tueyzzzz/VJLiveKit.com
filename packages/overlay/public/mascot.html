@@ -130,7 +130,7 @@
       });
     }
     for (let n = 1; n <= 17; n++) {
-      const im = new Image(), src = `mascot/${C}/${n}.webp`; im.alt = ''; $char.appendChild(im); imgs[n] = im;
+      const im = new Image(), src = `mascot/${C}/${n}.webp?v=${encodeURIComponent(window.VJL_VERSION || '1')}`; im.alt = ''; $char.appendChild(im); imgs[n] = im;
       if (TINT) recolor(src).then((u) => { im.src = u; }); else im.src = src;
     }
     let cur = 0;

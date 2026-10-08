@@ -88,6 +88,14 @@
     const MOVE = ['bob', 'bounce', 'spin', 'pulse', 'wiggle', 'none'].includes(P('move', 'bounce')) ? P('move', 'bounce') : 'bounce';
     const THEME = ['glass', 'candy', 'white', 'neon', 'gold', 'bubble'].includes(P('theme', 'glass')) ? P('theme', 'glass') : 'glass';
     box.className = POS + ' ' + LAYOUT + ' ' + DIR + ' mv-' + MOVE + ' th-' + THEME + ' it-' + (P('item', 'tile') === 'row' ? 'row' : 'tile');
+    // สีตัวหนังสือ (เว้นว่าง = ตามเทมเพลต)
+    const TS = P('textStyle', 'template'), HEX = /^#[0-9a-fA-F]{3,8}$/;
+    const [TFG, TBG] = TS === 'wb' ? ['#ffffff', '#000000'] : TS === 'bw' ? ['#000000', '#ffffff'] : TS === 'custom' ? [P('textColor', '#ffffff'), P('strokeColor', '#000000')] : [];
+    if (TFG && HEX.test(TFG) && HEX.test(TBG)) { // ตัวหนังสือ + ขอบหนา (วาดขอบใต้ตัวอักษร ไม่กินตัวหนังสือ)
+      const st = document.createElement('style');
+      st.textContent = `#box .what, #box .title, #box .how, #box .how b { color:${TFG} !important; -webkit-text-stroke:4px ${TBG}; paint-order:stroke fill; text-shadow:none !important }`;
+      document.head.appendChild(st);
+    }
     box.style.setProperty('--bgx', Math.max(.3, Math.min(1, parseFloat(P('bg', '45')) / 100 + .45)));
     box.style.setProperty('--s', Math.max(.4, Math.min(4, parseFloat(P('scale', '1')) || 1)));
     box.querySelector('.panel').style.setProperty('--bg', Math.max(0, Math.min(100, parseFloat(P('bg', '45')))) / 100);

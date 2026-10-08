@@ -32,6 +32,7 @@ export function SupportChat({ load, send, me, height = 'h-[60dvh]', draft = '' }
   const [img, setImg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [view, setView] = useState<string | null>(null); // ดูรูปเต็มจอ (มีปุ่มปิด)
   const box = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -54,6 +55,12 @@ export function SupportChat({ load, send, me, height = 'h-[60dvh]', draft = '' }
 
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-line bg-white">
+      {view && (
+        <div className="fixed inset-0 z-[80] grid place-items-center bg-black/80 p-4" onClick={() => setView(null)}>
+          <img src={view} alt="" className="max-h-[90dvh] max-w-full rounded-xl shadow-2xl" onClick={(e) => e.stopPropagation()} />
+          <button type="button" onClick={() => setView(null)} aria-label={t('ปิด')} className="absolute right-4 top-4 grid size-11 place-items-center rounded-full bg-white text-ink shadow-lg"><X className="size-6" /></button>
+        </div>
+      )}
       <div ref={box} className={cx('space-y-3 overflow-y-auto bg-canvas/60 p-3 sm:p-4', height)}>
         {msgs === null ? <p className="text-center text-sm text-muted">…</p>
           : msgs.length === 0 ? <p className="py-10 text-center text-sm text-muted">{me === 'user' ? t('พิมพ์ปัญหาที่เจอ แนบรูปหน้าจอได้ — ทีมงานจะตอบกลับที่นี่') : t('ยังไม่มีข้อความ')}</p>
@@ -63,7 +70,7 @@ export function SupportChat({ load, send, me, height = 'h-[60dvh]', draft = '' }
               <div key={m.id} className={cx('flex', mine ? 'justify-end' : 'justify-start')}>
                 <div className={cx('max-w-[85%] rounded-2xl px-3.5 py-2 text-sm shadow-sm sm:max-w-[70%]', mine ? 'rounded-br-md bg-pink text-white' : 'rounded-bl-md bg-white text-ink ring-1 ring-line')}>
                   {!mine && <div className="mb-0.5 text-[11px] font-medium text-violet">{m.from === 'admin' ? t('ทีมงาน VJLiveKit') : t('ลูกค้า')}</div>}
-                  {m.img && <a href={`${API_BASE}/api/support/img/${m.img}`} target="_blank" rel="noreferrer"><img src={`${API_BASE}/api/support/img/${m.img}`} alt="" className="mb-1 max-h-60 rounded-lg" /></a>}
+                  {m.img && <button type="button" onClick={() => setView(`${API_BASE}/api/support/img/${m.img}`)} className="block"><img src={`${API_BASE}/api/support/img/${m.img}`} alt="" className="mb-1 max-h-60 rounded-lg" /></button>}
                   {m.text && <p className="whitespace-pre-wrap break-words">{m.text}</p>}
                   <div className={cx('mt-0.5 text-right text-[10px]', mine ? 'text-white/70' : 'text-muted')}>{new Date(m.ts).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })}</div>
                 </div>

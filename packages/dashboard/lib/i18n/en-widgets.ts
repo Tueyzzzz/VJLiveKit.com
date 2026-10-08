@@ -577,4 +577,12 @@ export const EN_WIDGETS: Record<string, string> = {
   "สนใจสั่งทำมาสคอตหน้าตัวเองค่ะ/ครับ 🎨 สไตล์ที่อยากได้: ": "I'd like a custom mascot of my own face 🎨 Style I want: ",
   "🛒 สั่งทำมาสคอตหน้าตัวเอง": "🛒 Order my own mascot",
   "ล้นออกมากองพื้นข้างโหล (ค่าเริ่มต้น)": "Overflow piles on the floor (default)",
+  "กำหนดสีตัวหนังสือเอง": "Custom text color",
+  "ปิด = ใช้สีตามเทมเพลตหน้าตา": "Off = use the template colors",
+  "สีตัวหนังสือ": "Text color",
+  "🎨 ตามเทมเพลตหน้าตา": "🎨 Follow template",
+  "⬜ ขาวขอบดำ (อ่านง่ายทุกพื้น)": "⬜ White with black outline (readable anywhere)",
+  "⬛ ดำขอบขาว": "⬛ Black with white outline",
+  "🖌️ เลือกสีเอง": "🖌️ Custom",
+  "สีขอบตัวหนังสือ": "Outline color",
 };

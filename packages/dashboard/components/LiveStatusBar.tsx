@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Eye, Gem, Heart, Pencil } from 'lucide-react';
 import { api } from '@/lib/api';
@@ -23,6 +22,7 @@ export function LiveStatusBar() {
   const [name, setName] = useState('');
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
+  const [editing, setEditing] = useState(false);
   const load = useCallback(() => api<Status>('/api/live/status').then(setS).catch(() => {}), []);
   useEffect(() => { void load(); const tm = setInterval(load, 15_000); return () => clearInterval(tm); }, [load]);
   if (!s) return null;
@@ -32,7 +32,7 @@ export function LiveStatusBar() {
     const v = name.trim().replace(/^@/, '').replace(/^https?:\/\/(www\.)?tiktok\.com\/@/i, '').split(/[/?]/)[0];
     if (!/^[A-Za-z0-9._]{2,24}$/.test(v)) { setErr(t('ชื่อ TikTok ไม่ถูกต้อง')); return; }
     setSaving(true); setErr('');
-    try { await api('/api/auth/me', { method: 'PATCH', body: { tiktokUsername: v } }); await refresh(); await load(); }
+    try { await api('/api/auth/me', { method: 'PATCH', body: { tiktokUsername: v } }); await refresh(); await load(); setEditing(false); }
     catch (er) { setErr((er as Error).message); } finally { setSaving(false); }
   }
 
@@ -69,10 +69,23 @@ export function LiveStatusBar() {
         </div>
         <div className="min-w-0">
           <div className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-bold sm:text-base ${look.badge}`}>{look.text}</div>
-          <div className="mt-1 flex items-center gap-1.5 truncate text-sm text-muted">
-            {s.username ? <>TikTok.com/<b className="text-ink">@{s.username}</b></> : t('ตั้งชื่อ TikTok เพื่อเริ่มใช้งาน')}
-            <Link href="/dashboard/" title={t('แก้ชื่อ TikTok')} className="text-muted hover:text-pink"><Pencil className="size-3.5" /></Link>
-          </div>
+          {editing ? (
+            <form onSubmit={saveName} className="mt-1 flex flex-wrap items-center gap-1.5">
+              <span className="text-sm text-muted">@</span>
+              <input value={name} onChange={(e) => setName(e.target.value)} autoFocus className="w-40 rounded-lg border border-line bg-white px-2 py-1 text-sm focus:border-pink focus:outline-none" />
+              <button type="submit" disabled={saving} className="rounded-lg bg-pink px-3 py-1 text-xs font-medium text-white disabled:opacity-50">{saving ? '…' : t('บันทึก')}</button>
+              <button type="button" onClick={() => { setEditing(false); setErr(''); }} className="rounded-lg px-2 py-1 text-xs text-muted hover:bg-white">{t('ยกเลิก')}</button>
+              {err && <span className="w-full text-xs text-red-600">{err}</span>}
+            </form>
+          ) : (
+            <div className="mt-1 flex items-center gap-1.5 truncate text-sm text-muted">
+              {s.username ? <>TikTok.com/<b className="text-ink">@{s.username}</b></> : t('ตั้งชื่อ TikTok เพื่อเริ่มใช้งาน')}
+              {/* ระหว่างไลฟ์ห้ามเปลี่ยนชื่อ (วิดเจ็ตทุกตัวจะหลุดไปต่อบัญชีอื่น) */}
+              {s.state === 'live'
+                ? <span title={t('เปลี่ยนชื่อ TikTok ได้หลังจบไลฟ์')} className="cursor-not-allowed text-gray-300"><Pencil className="size-3.5" /></span>
+                : <button type="button" onClick={() => { setName(s.username ?? ''); setEditing(true); }} title={t('แก้ชื่อ TikTok')} className="text-muted hover:text-pink"><Pencil className="size-3.5" /></button>}
+            </div>
+          )}
         </div>
       </div>
       {s.state === 'live' && (

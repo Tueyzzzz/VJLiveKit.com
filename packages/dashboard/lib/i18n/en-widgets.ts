@@ -600,4 +600,5 @@ export const EN_WIDGETS: Record<string, string> = {
   "✨ เบา ๆ (ค่าเริ่มต้น)": "✨ Soft (default)",
   "🌟 จัดเต็ม": "🌟 Lots",
   "ปิด": "Off",
+  "⭐ มาสคอตของฉัน": "⭐ My mascot",
 };

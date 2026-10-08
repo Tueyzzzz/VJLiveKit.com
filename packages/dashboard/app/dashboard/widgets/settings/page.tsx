@@ -253,7 +253,15 @@ function FieldInput({ f, value, onChange }: { f: FieldDef; value: Values[string]
 
 function WidgetSettings() {
   const type = useSearchParams().get('type') ?? '';
-  const def = WIDGET_SETTINGS[type];
+  const [customMascots, setCustomMascots] = useState<{ code: string; name: string }[]>([]);
+  useEffect(() => { if (type === 'mascot') api<{ mascots: { code: string; name: string }[] }>('/api/mascots/custom').then((r) => setCustomMascots(r.mascots)).catch(() => {}); }, [type]);
+  // มาสคอตสั่งทำ (หน้าลูกค้าเอง) → เพิ่มเป็นตัวเลือกแรกในกลุ่ม "มาสคอตของฉัน"
+  const def = useMemo(() => {
+    const base = WIDGET_SETTINGS[type];
+    if (!base || type !== 'mascot' || !customMascots.length) return base;
+    return { ...base, sections: base.sections.map((s) => ({ ...s, fields: s.fields.map((f) => f.key === 'char' && f.type === 'select'
+      ? { ...f, options: [...customMascots.map((m) => [m.code, m.name, '⭐ มาสคอตของฉัน', `/overlay/mascot/${m.code}/thumb.webp`] as [string, string, string, string]), ...f.options] } : f) })) };
+  }, [type, customMascots]);
   const t = useT();
   const [values, setValues] = useState<Values | null>(null);
   const [saved, setSaved] = useState<string>('');

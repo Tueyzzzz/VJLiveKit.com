@@ -113,8 +113,8 @@
       bqkorean: { src: 'themes/pot-bqkorean.webp', x: -142.9, y: -300, w: 285.9, h: 300, top: -240.0, spread: 45.7, behind: true },
       bqheart: { src: 'themes/pot-bqheart.webp', x: -149.4, y: -280, w: 298.9, h: 280, top: -224.0, spread: 47.8, behind: true },
       bqbasket: { src: 'themes/pot-bqbasket.webp', x: -133.8, y: -280, w: 267.6, h: 280, top: -140.0, spread: 42.8, behind: true },
-      vaseglass: { src: 'themes/pot-vaseglass.webp', x: -117.9, y: -260, w: 235.8, h: 260, top: -228.8, spread: 18.9, behind: true },
-      vasegold: { src: 'themes/pot-vasegold.webp', x: -116.1, y: -270, w: 232.2, h: 270, top: -237.6, spread: 18.6, behind: true },
+      vaseglass: { src: 'themes/pot-vaseglass.webp', x: -117.9, y: -260, w: 235.8, h: 260, top: -228.8, spread: 18.9, behind: true, narrow: true },
+      vasegold: { src: 'themes/pot-vasegold.webp', x: -116.1, y: -270, w: 232.2, h: 270, top: -237.6, spread: 18.6, behind: true, narrow: true },
       vasecat: { src: 'themes/pot-vasecat.webp', x: -107.5, y: -250, w: 214.9, h: 250, top: -200.0, spread: 30.1, behind: true },
       bqcrown: { src: 'themes/pot-bqcrown.webp', x: -139.8, y: -290, w: 279.5, h: 290, top: -237.8, spread: 44.7, behind: true },
     };
@@ -166,10 +166,25 @@
       else { const tw = st.twigs[(r - 8) % st.twigs.length]; slots.push({ stem: st, twig: tw, t: .45 + (r - 8) * .18 + rnd() * .05, off: (rnd() - .5) * 8 }); }
     }
 
-    const BIG_SPOTS = TREE ? TREE.bigs.map(([x, y]) => ({ tree: true, x, y, t: rnd() }))
+    // ช่อดอกไม้ (ห่อช่อ/แจกัน): ไม่มีกิ่ง — ของขวัญอัดเป็นโดมพอดีปากห่อ เหมือนช่อดอกไม้จริง
+    const BOUQ = POT_SKIN && POT_SKIN.behind ? (() => {
+      const rimY = POT_SKIN.top + POT_SKIN.h * 0.04, rx = POT_SKIN.w * (POT_SKIN.narrow ? 0.30 : 0.38), ry = rx * 0.72, cy = rimY - ry * 0.5;
+      return { rimY, rx, ry, cy };
+    })() : null;
+    const BIG_SPOTS = BOUQ ? [[0, -0.85], [-0.5, -0.6], [0.5, -0.6], [-0.78, -0.25], [0.78, -0.25], [-0.25, -0.35], [0.25, -0.35]].map(([fx2, fy]) => ({ tree: true, x: BOUQ.rx * fx2, y: BOUQ.cy + BOUQ.ry * fy, t: rnd() }))
+      : TREE ? TREE.bigs.map(([x, y]) => ({ tree: true, x, y, t: rnd() }))
       : [5, 4, 6, 3, 7, 2, 8, 1, 9, 0, 10].map((i) => ({ stem: stems[i] }))
       .concat(stems.flatMap((st) => st.twigs.map((tw) => ({ stem: st, twig: tw }))));
     if (TREE) slots.splice(0, slots.length, ...TREE.slots.map(([x, y]) => ({ tree: true, x, y, t: rnd() })));
+    if (BOUQ) {
+      const N = 170, pts = [];
+      for (let i = 0; i < N; i++) {
+        const r = Math.sqrt((i + 0.5) / N), th = i * 2.39996;
+        const sx = Math.cos(th), sy = Math.sin(th);
+        pts.push({ tree: true, x: BOUQ.rx * r * sx, y: Math.min(BOUQ.rimY + 6, BOUQ.cy + BOUQ.ry * r * (sy > 0 ? sy * 0.45 : sy)), t: rnd() });
+      }
+      slots.splice(0, slots.length, ...pts);
+    }
     // ตำแหน่งบนกิ่ง ณ เวลา time (มีลมแกว่ง)
     function stemPoint(st, t, time) {
       const sway = Math.sin(time * 0.9 + st.phase) * 0.06 * SWAY * t;
@@ -351,6 +366,17 @@
       else if (shape === 'star') { for (let k = 0; k < 10; k++) { const r = k % 2 ? s * 0.32 : s * 0.75, a = k * Math.PI / 5 - Math.PI / 2; ctx.lineTo(s * 0.7 + Math.cos(a) * r, Math.sin(a) * r); } ctx.closePath(); }
       else ctx.ellipse(s * 0.65, 0, s * (shape === 'neon' ? 0.75 : 0.95), s * (shape === 'neon' ? 0.26 : 0.42), 0, 0, Math.PI * 2);
     }
+    function drawBouquetLeaves(time) { // ใบเฟิร์น/ยูคาลิปตัสโผล่รอบช่อ (อยู่หลังห่อ)
+      const n = 16;
+      for (let i = 0; i < n; i++) {
+        const a = Math.PI + (i / (n - 1)) * Math.PI, sway = Math.sin(time * 1.1 + i) * 0.05 * SWAY;
+        const x = Math.cos(a) * BOUQ.rx * 1.02, y = BOUQ.cy + Math.sin(a) * BOUQ.ry * 1.05;
+        ctx.save(); ctx.translate(x, y); ctx.rotate(a + Math.PI / 2 + sway);
+        ctx.fillStyle = i % 3 === 0 ? STEM.leaf2 : STEM.leaf;
+        for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.ellipse((k - 1) * 9, -14 - k % 2 * 6, 7, 18, (k - 1) * 0.35, 0, Math.PI * 2); ctx.fill(); }
+        ctx.restore();
+      }
+    }
     function drawStems(time) {
       ctx.lineCap = 'round';
       const wk = STEM.widthK || 1;
@@ -398,14 +424,14 @@
         const p = slotPoint(f.sl, time), s = pop(f.born, now);
         if (!f.sparkled) { f.sparkled = true; if (f.born > 0) fx.sparkle(p.x + f.jx, p.y + f.jy, 4); }
         ctx.save(); ctx.translate(p.x + f.jx, p.y + f.jy); ctx.scale(s, s); ctx.rotate(Math.sin(time * 1.6 + f.sl.t * 9) * .12 * SWAY);
-        drawGift(f.img, f.g.e, Math.min(30 * FLOWER * (Juice.sizeFor ? Juice.sizeFor(f.g.d, 2.5) : 1), 75)); ctx.restore(); // ของแพงดอกใหญ่ขึ้น
+        drawGift(f.img, f.g.e, Math.min(30 * FLOWER * (BOUQ ? 1.35 : 1) * (Juice.sizeFor ? Juice.sizeFor(f.g.d, 2.5) : 1), 75)); ctx.restore(); // ของแพงดอกใหญ่ขึ้น
       }
       bigs.forEach((b, i) => {
         // ตำแหน่งดอกใหญ่: ยอดกิ่งหลัก (กลางก่อน) → ปลายกิ่งย่อย · เกินแล้ววนซ้ำแบบเหลื่อมนิด ๆ (ไม่ซ้อนเป็นเสา)
         const k = i % BIG_SPOTS.length, lap = Math.floor(i / BIG_SPOTS.length), sp = BIG_SPOTS[k];
         const p0 = sp.tree ? slotPoint(sp, time) : sp.twig ? slotPoint({ stem: sp.stem, twig: sp.twig, t: 1 }, time) : stemPoint(sp.stem, 1, time);
         const px = p0.x + (lap ? b.jx : 0), py = p0.y - (sp.tree ? 0 : sp.twig ? 8 : 26) + (lap ? b.jy : 0);
-        const s = pop(b.born, now), R = 46 * FLOWER * (sp.twig ? 0.72 : sp.tree ? 0.85 : 1);
+        const s = pop(b.born, now), R = 46 * FLOWER * (BOUQ ? 0.55 : sp.twig ? 0.72 : sp.tree ? 0.85 : 1); // ช่อ: ดอกใหญ่เล็กลงให้กลืนกับช่อ
         Juice.aura(ctx, px, py, R * 0.9, b.g.d || 1000, time);
         if (!b.sparkled) { b.sparkled = true; if (b.born > 0) { fx.sparkle(px, py, 10, '#ffe08a'); fx.confetti(px, py, 30); } }
         ctx.save(); ctx.translate(px, py); ctx.scale(s, s); ctx.rotate(Math.sin(time * .7 + i) * .1 * SWAY);
@@ -426,7 +452,7 @@
       const br = Juice.breathe(time, 0.012), breathe = () => ctx.scale(1 + (1 - br) * 0.5, br);
       ctx.save(); breathe();
       // ห่อช่อ/แจกัน (behind): กิ่งอยู่หลังห่อ ดูเหมือนงอกจากด้านใน ไม่มีดิน
-      if (TREE) drawPot(); else if (POT_SKIN && POT_SKIN.behind) { drawStems(time); drawPot(); } else if (POT_SKIN) { drawPot(); drawStems(time); drawSoilTufts(time); } else { drawStems(time); drawPot(); }
+      if (TREE) drawPot(); else if (BOUQ) { drawBouquetLeaves(time); drawPot(); } else if (POT_SKIN) { drawPot(); drawStems(time); drawSoilTufts(time); } else { drawStems(time); drawPot(); }
       ctx.restore();
       tickGround();
       drawGround(time, now); // กองบนพื้นอยู่นิ่ง และอยู่หน้าเนิน/กระถาง

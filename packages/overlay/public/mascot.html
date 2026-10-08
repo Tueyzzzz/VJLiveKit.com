@@ -16,7 +16,7 @@
     background:radial-gradient(closest-side, rgba(70,30,90,.32), rgba(70,30,90,0)); animation:shadowBreath 3s ease-in-out infinite; }
   #char { position:absolute; left:50%; bottom:10px; width:420px; height:420px; margin-left:-210px; transform-origin:50% 100%;
     animation:breath 2.6s ease-in-out infinite, sway 5.2s ease-in-out infinite; filter:drop-shadow(0 6px 10px rgba(80,40,110,.25)); }
-  #char img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; opacity:0; }
+  #char img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; opacity:0; transition:opacity .11s linear; }
   #char img.on { opacity:1; }
   #char.hop { animation:hop .5s cubic-bezier(.3,1.6,.5,1), breath 2.6s ease-in-out .5s infinite, sway 5.2s ease-in-out infinite; }
   #char.dance { animation:dance .45s ease-in-out infinite; }
@@ -26,7 +26,13 @@
   @keyframes sway { 0%,100% { rotate:-1.6deg; translate:-3px 0 } 50% { rotate:1.6deg; translate:3px 0 } }
   @keyframes shadowBreath { 50% { transform:scaleX(1.05); opacity:.85 } }
   @keyframes hop { 0% { transform:translateY(0) scale(1.06,.94) } 45% { transform:translateY(-26px) scale(.97,1.04) } 100% { transform:translateY(0) } }
-  @keyframes dance { 0%,100% { transform:translateY(0) rotate(-2deg) } 50% { transform:translateY(-10px) rotate(2deg) } }
+  @keyframes dance { 0%,100% { transform:translateY(0) scale(1.04,.96) rotate(-3deg) } 25% { transform:translateY(-14px) scale(.97,1.04) rotate(0deg) } 50% { transform:translateY(0) scale(1.04,.96) rotate(3deg) } 75% { transform:translateY(-14px) scale(.97,1.04) rotate(0deg) } }
+  #char.walking { animation:walkbob .54s ease-in-out infinite; }
+  @keyframes walkbob { 0%,100% { transform:translateY(0) rotate(-1.5deg) } 25% { transform:translateY(-8px) rotate(0deg) } 50% { transform:translateY(0) rotate(1.5deg) } 75% { transform:translateY(-8px) rotate(0deg) } }
+  #char.spin { animation:spin .9s cubic-bezier(.45,.05,.35,1); }
+  @keyframes spin { 0% { transform:scaleX(1) } 25% { transform:scaleX(.05) translateY(-10px) } 50% { transform:scaleX(-1) translateY(-16px) } 75% { transform:scaleX(.05) translateY(-10px) } 100% { transform:scaleX(1) } }
+  #char.bigjump { animation:bigjump .95s cubic-bezier(.3,.7,.4,1); }
+  @keyframes bigjump { 0% { transform:scale(1.12,.86) } 18% { transform:scale(1.12,.86) } 45% { transform:translateY(-120px) scale(.92,1.1) } 65% { transform:translateY(-120px) scale(1,1) } 88% { transform:translateY(0) scale(1.14,.84) } 100% { transform:translateY(0) scale(1,1) } }
 
   /* ของขวัญในมือ (ท่ารับของขวัญ) */
   #gift { position:absolute; left:50%; top:var(--gy,58%); width:92px; height:92px; margin:-46px 0 0 -46px; object-fit:contain; opacity:0; pointer-events:none;
@@ -158,16 +164,22 @@
     // เดินไปด้านข้างแล้วเดินกลับ (สลับท่าก้าวซ้าย-ขวา)
     async function walk(dist) {
       const dir = POS === 'br' ? -1 : POS === 'bl' ? 1 : (Math.random() < .5 ? -1 : 1), dx = dir * (dist || 150);
-      $walker.style.transition = 'transform 2.2s linear';
+      $walker.style.transition = 'transform 2.2s cubic-bezier(.4,.1,.4,1)';
       $walker.style.transform = `translateX(${dx}px)`;
-      for (let i = 0; i < 8; i++) { pose(i % 2 ? 13 : 12); await wait(275); }
-      pose(1); await wait(600); pose(8); particles(['💗'], 2, 1.2); await wait(700);
+      $char.classList.add('walking');
+      for (let i = 0; i < 8; i++) { pose(i % 2 ? 13 : 12); await wait(270); }
+      $char.classList.remove('walking'); pose(1); await wait(500); pose(8); hop(); particles(['💗'], 3, 1.4); await wait(800);
       $walker.style.transform = '';
-      for (let i = 0; i < 8; i++) { pose(i % 2 ? 13 : 12); await wait(275); }
+      $char.classList.add('walking');
+      for (let i = 0; i < 8; i++) { pose(i % 2 ? 13 : 12); await wait(270); }
+      $char.classList.remove('walking');
       $walker.style.transition = '';
     }
+    async function spin() { pose(7); $char.classList.remove('spin'); void $char.offsetWidth; $char.classList.add('spin'); particles(['✨', '⭐', '💫'], 8, 1.6); await wait(950); $char.classList.remove('spin'); }
+    async function bigJump() { pose(1); $char.classList.remove('bigjump'); void $char.offsetWidth; $char.classList.add('bigjump'); await wait(230); pose(7); particles(['🎉', '✨'], 8, 1.6); await wait(560); pose(1); await wait(200); $char.classList.remove('bigjump'); }
     const IDLE = [
       () => walk(),
+      () => spin(),
       async () => { for (let i = 0; i < 6; i++) { pose(i % 2 ? 5 : 4); await wait(230); } },                   // สะบัดผม
       async () => { pose(8); hop(); particles(['💗', '💕'], 4, 1.6); await wait(1100); },                      // ส่งหัวใจเล่น ๆ
       async () => { $char.classList.add('wiggle'); pose(3); await wait(500); pose(1); await wait(700); $char.classList.remove('wiggle'); }, // โยกตัวยิ้ม
@@ -210,13 +222,17 @@
       // เดินเข้ามาใกล้จอ → ส่งจุ๊บ → หันหลังเดินกลับ
       const toward = POS === 'br' ? 'translateX(-120px)' : POS === 'bl' ? 'translateX(120px)' : 'translateX(0)';
       $walker.style.transform = `${toward} scale(1.35)`;
+      $char.classList.add('walking');
       for (let i = 0; i < 6; i++) { pose(i % 2 ? 13 : 12); await wait(270); }
+      $char.classList.remove('walking');
       pose(14); await wait(650);
       pose(15); particles(['💋', '💗', '💕'], 14, 2.2);
       if (e) say(fillText('จุ๊บ ๆ ให้ {user} 💋', e), 2600);
       await wait(1300);
       $walker.style.transform = '';
+      $char.classList.add('walking');
       for (let i = 0; i < 6; i++) { pose(i % 2 ? 17 : 16); await wait(270); }
+      $char.classList.remove('walking');
     }
 
     let lastPing = 0;
@@ -239,7 +255,7 @@
       const ev = f.event || {}, m = a.move || 'dance';
       enqueue(async () => {
         if (a.text) say(fillText(a.text, ev), 3200);
-        if (m === 'walk') await walk(220); else if (m === 'kiss') await kiss(a.text ? null : ev); else if (m === 'joy') await joy(null); else if (m === 'heart') await heart(a.text ? null : ev); else await dance(3);
+        if (m === 'spin') await spin(); else if (m === 'jump') await bigJump(); else if (m === 'walk') await walk(220); else if (m === 'kiss') await kiss(a.text ? null : ev); else if (m === 'joy') await joy(null); else if (m === 'heart') await heart(a.text ? null : ev); else await dance(3);
       });
     });
 

@@ -34,7 +34,7 @@ interface Draft {
   topic: TarotTopic;
   count: string;
   /** มาสคอต: ท่า */
-  move: 'dance' | 'kiss' | 'joy' | 'heart' | 'walk';
+  move: 'dance' | 'kiss' | 'joy' | 'heart' | 'walk' | 'spin' | 'jump';
   /** คอมโบเล่นซ้ำสูงสุดกี่ครั้ง */
   repeat: string;
   /** สีผีเสื้อ */
@@ -391,7 +391,7 @@ export default function ActionsPage() {
                 <Field label={t('ท่าของมาสคอต')} hint={t('ต้องใส่วิดเจ็ต "ตัวแทนวีเจ (มาสคอต)" บนจอด้วย')}>
                   <Select value={draft.move} onChange={(e) => set('move', e.target.value as Draft['move'])}>
                     <option value="dance">{t('💃 เต้น')}</option><option value="kiss">{t('💋 เดินมาส่งจุ๊บ แล้วเดินกลับ')}</option>
-                    <option value="joy">{t('🎉 ดีใจสุด ๆ')}</option><option value="heart">{t('😘 ส่งหัวใจ')}</option><option value="walk">{t('🚶 เดินไปมา')}</option>
+                    <option value="joy">{t('🎉 ดีใจสุด ๆ')}</option><option value="heart">{t('😘 ส่งหัวใจ')}</option><option value="walk">{t('🚶 เดินไปมา')}</option><option value="spin">{t('🌀 หมุนตัว')}</option><option value="jump">{t('🦘 กระโดดสูง')}</option>
                   </Select>
                 </Field>
               )}

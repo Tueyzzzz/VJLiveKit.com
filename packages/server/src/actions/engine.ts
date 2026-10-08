@@ -12,7 +12,7 @@ export interface RuleTrigger {
 export interface RuleAction {
   type: 'sound' | 'image' | 'video' | 'text' | 'tarot' | 'effect' | 'sign' | 'glove' | 'mascot';
   /** มาสคอต: ท่าที่สั่ง */
-  move?: 'dance' | 'kiss' | 'joy' | 'heart' | 'walk';
+  move?: 'dance' | 'kiss' | 'joy' | 'heart' | 'walk' | 'spin' | 'jump';
   /** ป้ายไฟ (type=sign) */
   signStyle?: 'led' | 'neon' | 'bulb' | 'cute' | 'pixel' | 'y2k' | 'glass' | 'surreal' | 'boho' | 'victorian' | 'graffiti' | 'future' | 'mwhite' | 'mblack' | 'mline' | 'mpill';
   signMode?: 'scroll' | 'static' | 'blink' | 'pulse';

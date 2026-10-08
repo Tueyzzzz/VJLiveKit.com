@@ -40,6 +40,8 @@ window.Overlay = (function () {
       const D = window.VJL_DEFAULTS; if (D && D[k] !== undefined) return String(D[k]); // ค่าเริ่มต้นของวิดเจ็ตแฝง (เช่น tree = garden แบบต้นไม้)
       return def;
     },
+    /** ค่าดิบ (แยก "ตั้งเป็นค่าว่าง" ออกจาก "ไม่ได้ตั้ง" = null) */
+    raw: (k) => (params.get(k) != null ? params.get(k) : Object.prototype.hasOwnProperty.call(cfg, k) ? String(cfg[k] ?? '') : null),
     on(type, fn) { if (handlers[type]) handlers[type].push(fn); return api; },
     esc: (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'),
     fmt: (n) => (Math.round(n) || 0).toLocaleString('en-US'),

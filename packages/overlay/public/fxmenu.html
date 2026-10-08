@@ -100,7 +100,9 @@
     box.style.setProperty('--s', Math.max(.4, Math.min(4, parseFloat(P('scale', '1')) || 1)));
     box.querySelector('.panel').style.setProperty('--bg', Math.max(0, Math.min(100, parseFloat(P('bg', '45')))) / 100);
     // ไม่ใส่หัวข้อได้: ปิด "แสดงหัวข้อ" (หรือพิมพ์ - ) → ซ่อนแถบหัวข้อ
-    const TITLE = P('showTitle', '0') === '0' ? '' : P('title', '🎁 ส่งของขวัญเพื่อ…').trim();
+    // ปิด "แสดงหัวข้อ" หรือลบหัวข้อจนว่าง = ไม่มีหัวข้อ
+    const rawTitle = Overlay.raw ? Overlay.raw('title') : null;
+    const TITLE = P('showTitle', '0') === '0' || (rawTitle !== null && !rawTitle.trim()) ? '' : P('title', '🎁 ส่งของขวัญเพื่อ…').trim();
     const $title = document.getElementById('title');
     if (!TITLE || TITLE === '-') $title.style.display = 'none'; else $title.textContent = TITLE;
     const MAX = Math.max(1, Math.min(12, parseInt(P('max', '6'), 10) || 6));

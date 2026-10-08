@@ -139,12 +139,13 @@
       if (SET[TONE]) { [STEM.leaf, STEM.leaf2] = SET[TONE]; STEM.twig = mix(STEM.twig, .35); STEM.stem = mix(STEM.stem, .25); return; }
       STEM.leaf = mix(STEM.leaf, .38); STEM.leaf2 = mix(STEM.leaf2, .25); STEM.twig = mix(STEM.twig, .3); STEM.stem = mix(STEM.stem, .2);
     })();
+    const STEM_K = Math.max(0.6, Math.min(2.2, num('stemLen', 1.35)));
     const stems = [];
     for (let i = 0; i < 11; i++) {
       const a = -Math.PI / 2 + (i / 10 - .5) * 2.3 + (rnd() - .5) * .12; // พัดกว้าง ~130°
-      const len = (230 + rnd() * 120 - Math.abs(i - 5) * 6) * (STEM.lenK || 1);
+      const len = (230 + rnd() * 120 - Math.abs(i - 5) * 6) * (STEM.lenK || 1) * STEM_K; // ?stemLen=1.35 ความยาวกิ่ง
       const stem = { a, len, bend: (rnd() - .5) * .5, phase: rnd() * 6.28, twigs: [] };
-      for (let k = 0; k < 3; k++) stem.twigs.push({ t: .35 + k * .2 + rnd() * .08, a: (rnd() < .5 ? -1 : 1) * (.45 + rnd() * .35), len: 50 + rnd() * 55 });
+      for (let k = 0; k < 3; k++) stem.twigs.push({ t: .35 + k * .2 + rnd() * .08, a: (rnd() < .5 ? -1 : 1) * (.45 + rnd() * .35), len: (50 + rnd() * 55) * (0.5 + STEM_K / 2) });
       stems.push(stem);
     }
     // จุดติดดอก (เรียงจากโคนขึ้นไปปลาย สลับกิ่ง → ดอกกระจายทั่วต้น)

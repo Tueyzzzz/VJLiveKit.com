@@ -585,4 +585,5 @@ export const EN_WIDGETS: Record<string, string> = {
   "⬛ ดำขอบขาว": "⬛ Black with white outline",
   "🖌️ เลือกสีเอง": "🖌️ Custom",
   "สีขอบตัวหนังสือ": "Outline color",
+  "ความยาวกิ่ง": "Branch length",
 };

@@ -207,16 +207,12 @@
         if (b.born > 0) { const k = Math.min(1, (now - b.born) / 900), e = Juice.easeOutBack ? Juice.easeOutBack(k) : k; x = b.sx + (x - b.sx) * e; y = b.sy + (y - b.sy) * Math.min(1, k * 1.1); if (k >= 1 && !b.landed) { b.landed = true; fx.sparkle(x, y, 6, '#fff6e8'); } }
         const R = Math.max(26, Math.min(58, b.r * 1.35)), col = BAL_COLORS[b.bi % BAL_COLORS.length];
         ctx.save(); ctx.globalAlpha = Math.max(0, b.life);
-        const ex = x, ey = y + R * 1.12, dx = ex - p.ax, dy = ey - ay, wind = Math.sin(t * 0.45) * 26 + Math.sin(t * 1.7 + b.bi) * 9;
+        const ex = x, ey = y + R * 0.8, dx = ex - p.ax, dy = ey - ay, wind = Math.sin(t * 0.45) * 26 + Math.sin(t * 1.7 + b.bi) * 9;
         ctx.beginPath(); ctx.moveTo(p.ax, ay); // เชือกหย่อน ๆ เป็นรูปตัว S เอนตามลม
         ctx.bezierCurveTo(p.ax + dx * 0.15 - wind, ay + dy * 0.35 + 10, p.ax + dx * 0.75 + wind * 0.8, ay + dy * 0.7 + 6, ex, ey);
         ctx.lineWidth = 1.6; ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.stroke();
-        const gr = ctx.createRadialGradient(x - R * .35, y - R * .45, R * .1, x, y, R * 1.1); gr.addColorStop(0, '#ffffff'); gr.addColorStop(.35, col); gr.addColorStop(1, col);
-        ctx.beginPath(); ctx.ellipse(x, y, R * .92, R * 1.05, 0, 0, Math.PI * 2); ctx.fillStyle = gr; ctx.globalAlpha = Math.max(0, b.life) * .92; ctx.fill();
-        ctx.globalAlpha = Math.max(0, b.life); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(x - 5, y + R * 1.12); ctx.lineTo(x + 5, y + R * 1.12); ctx.lineTo(x, y + R * 1.02); ctx.closePath(); ctx.fillStyle = col; ctx.fill(); // ปมลูกโป่ง
-        ctx.beginPath(); ctx.ellipse(x - R * .38, y - R * .45, R * .14, R * .24, -.5, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.fill(); // แสงสะท้อน
-        ctx.translate(x, y); ctx.rotate(Math.sin(t * 1.5 + b.bi) * .1); drawGift(b.img, b.g.e, R * 1.15); ctx.restore();
+        // ของขวัญลอยเองเหมือนลูกโป่ง (ไม่มีลูกโป่งครอบ) ผูกเชือกที่ใต้ของขวัญ
+        ctx.translate(x, y); ctx.rotate(Math.sin(t * 1.5 + b.bi) * .1); drawGift(b.img, b.g.e, R * 1.9); ctx.restore();
       }
       // ปมผูกบนหลังคา
       if (BAL_ON && gifts.some((b) => b.balloon)) { const a = balAnchor(); ctx.beginPath(); ctx.arc(a.x, a.y - bob, 4, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(120,90,160,.6)'; ctx.stroke(); }

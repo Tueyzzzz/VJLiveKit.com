@@ -1,14 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
 import { ArrowRight } from 'lucide-react';
-import { Alert, Badge, Button, Card, Field, Input, PageHeader } from '@/components/ui';
-import { ChangePassword } from '@/components/ChangePassword';
+import { Badge, Card, PageHeader } from '@/components/ui';
+import { ProfileForm } from '@/components/ProfileEdit';
 import { ActiveRules } from '@/components/ActiveRules';
-import { TikTokAvatar } from '@/components/TikTokAvatar';
 import { PromoVideos } from '@/components/PromoVideos';
-import { api, planLabel, type Me } from '@/lib/api';
+import { planLabel } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useT } from '@/lib/i18n';
 import { NAV } from '@/lib/nav';
@@ -29,33 +28,9 @@ function MenuArt({ img, Icon, dim }: { img: string; Icon: React.ComponentType<{ 
 }
 
 export default function OverviewPage() {
-  const { user, entitlements, refresh } = useAuth();
+  const { user, entitlements } = useAuth();
   const t = useT();
-  const [tk, setTk] = useState<string | null>(null); // ชื่อที่กำลังพิมพ์ → ดูรูปโปรไฟล์ก่อนบันทึก
-  const [msg, setMsg] = useState<{ tone: 'error' | 'success'; text: string } | null>(null);
-  const [busy, setBusy] = useState(false);
   if (!user) return null;
-
-  async function onSave(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const form = new FormData(e.currentTarget);
-    const tiktok = String(form.get('tiktokUsername') ?? '').trim();
-    const displayName = String(form.get('displayName') ?? '').trim();
-    setBusy(true);
-    setMsg(null);
-    try {
-      await api<{ user: Me }>('/api/auth/me', {
-        method: 'PATCH',
-        body: { tiktokUsername: tiktok || null, ...(displayName ? { displayName } : {}) },
-      });
-      await refresh();
-      setMsg({ tone: 'success', text: t('บันทึกแล้ว') });
-    } catch (err) {
-      setMsg({ tone: 'error', text: (err as Error).message });
-    } finally {
-      setBusy(false);
-    }
-  }
 
   return (
     <div>
@@ -99,29 +74,13 @@ export default function OverviewPage() {
         <PromoVideos small />
       </Card>
 
-      <Card>
-        <h2 className="mb-4 font-medium">{t('โปรไฟล์')}</h2>
-        <form onSubmit={onSave} className="grid gap-4 md:grid-cols-2">
-          <Field label={t('ชื่อ TikTok (username)')} hint={t('ชื่อหลัง @ ในลิงก์โปรไฟล์ เช่น tiktok.com/@mimi_live → mimi_live')}>
-            <div className="flex items-center gap-3">
-              <TikTokAvatar username={tk ?? user.tiktokUsername} size={44} />
-              <div className="flex min-w-0 flex-1">
-                <span className="grid place-items-center rounded-l-xl border border-r-0 border-line bg-canvas px-3 text-sm text-muted">@</span>
-                <Input name="tiktokUsername" defaultValue={user.tiktokUsername ?? ''} placeholder="your_tiktok" className="min-w-0 rounded-l-none" pattern="@?[A-Za-z0-9._]{2,24}"
-                  onBlur={(e) => setTk(e.target.value)} />
-              </div>
-            </div>
-          </Field>
-          <Field label={t('ชื่อที่แสดง')}>
-            <Input name="displayName" defaultValue={user.displayName ?? ''} maxLength={60} />
-          </Field>
-          {msg && <div className="md:col-span-2"><Alert tone={msg.tone}>{msg.text}</Alert></div>}
-          <div className="flex flex-wrap items-center gap-4 md:col-span-2">
-            <Button type="submit" loading={busy}>{t('บันทึก')}</Button>
-          </div>
-        </form>
-        <div className="mt-4 border-t border-line pt-4"><ChangePassword inline /></div>
-      </Card>
+      {/* ยังไม่ตั้งชื่อ TikTok → ฟอร์มโปรไฟล์บนหน้าแรก · ตั้งแล้วแก้ได้จากไอคอนดินสอข้างการ์ดผู้ใช้ */}
+      {!user.tiktokUsername && (
+        <Card>
+          <h2 className="mb-4 font-medium">{t('โปรไฟล์')}</h2>
+          <ProfileForm />
+        </Card>
+      )}
 
       {/* โปรไฟล์อยู่บนสุด (ต้องตั้งชื่อ TikTok ก่อนใช้งาน) → กฎ Actions ตามมาด้านล่าง */}
       <div className="mt-5"><ActiveRules /></div>

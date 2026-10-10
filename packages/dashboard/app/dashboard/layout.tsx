@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
-import { LogOut, Shield, Menu, X } from 'lucide-react';
+import { LogOut, Shield, Menu, X, Pencil } from 'lucide-react';
+import { ProfileDialog } from '@/components/ProfileEdit';
 import { NAV } from '@/lib/nav';
 import { useSupportUnread } from '@/components/SupportChat';
 import { Logo } from '@/components/Logo';
@@ -43,6 +44,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const [notice, setNotice] = useState('');
   const [menu, setMenu] = useState(false); // มือถือ: เมนูพับ
+  const [prof, setProf] = useState(false); // หน้าต่างแก้ไขโปรไฟล์
   useEffect(() => setMenu(false), [pathname]);
   useEffect(() => { api<{ announcement: string }>('/api/settings/public').then((r) => setNotice(r.announcement)).catch(() => {}); }, []);
   useEffect(() => { if (!loading && !user) router.replace(`/login/?next=${encodeURIComponent(window.location.pathname + window.location.search)}`); }, [loading, user, router]);
@@ -51,12 +53,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-dvh md:flex">
+      <ProfileDialog open={prof} onClose={() => setProf(false)} />
       <aside className="sticky top-0 z-40 border-b border-line bg-white md:flex md:h-dvh md:w-64 md:shrink-0 md:flex-col md:overflow-y-auto md:border-b-0 md:border-r">
         <div className="flex items-center justify-between px-5 py-3 md:py-4">
           <Logo href="/dashboard/" />
           {/* มือถือ: ปุ่มเมนู (เดิมเป็นแถบเลื่อนข้าง มองไม่เห็นเมนูครบ) */}
           <div className="flex items-center gap-2">
             <NotificationBell />
+            {/* มือถือ: รูปโปรไฟล์ → แก้ไขโปรไฟล์ */}
+            <button onClick={() => setProf(true)} aria-label={t('แก้ไขโปรไฟล์')} className="relative rounded-full md:hidden">
+              <TikTokAvatar username={user.tiktokUsername} size={34} />
+              <span className="absolute -bottom-0.5 -right-0.5 grid size-4 place-items-center rounded-full border border-line bg-white"><Pencil className="size-2.5 text-pink" /></span>
+            </button>
             <button onClick={() => setMenu((m) => !m)} aria-label={t('เมนู')} aria-expanded={menu}
             className="flex items-center gap-1.5 rounded-xl border border-line px-3 py-2 text-sm md:hidden">
             {menu ? <X className="size-4" /> : <Menu className="size-4" />} {t('เมนู')}
@@ -100,6 +108,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <div className="truncate text-sm font-medium">{user.displayName ?? user.email}</div>
                 {user.tiktokUsername && <div className="truncate text-xs text-muted">@{user.tiktokUsername}</div>}
               </div>
+              <button onClick={() => setProf(true)} title={t('แก้ไขโปรไฟล์')} aria-label={t('แก้ไขโปรไฟล์')}
+                className="grid size-8 shrink-0 place-items-center rounded-full text-muted transition hover:bg-white hover:text-pink"><Pencil className="size-4" /></button>
             </div>
             <div className="mt-2.5"><Badge tone={entitlements?.plan === 'free' ? 'gray' : 'pink'}>{planLabel(entitlements)}</Badge></div>
             <div className="mt-3 flex items-center justify-between border-t border-line/70 pt-3">

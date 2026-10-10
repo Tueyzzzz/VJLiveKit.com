@@ -539,4 +539,6 @@ export const EN_CORE: Record<string, string> = {
   "แก้ไขโปรไฟล์": "Edit profile",
   "วิดเจ็ตทำงานตอนคุณไลฟ์เท่านั้น": "Widgets only work while you are LIVE",
   "เริ่มไลฟ์ใน TikTok ก่อน แล้วเปิดโปรแกรมไลฟ์ (OBS / TikTok LIVE Studio) — ระบบต่อให้เองในไม่กี่วินาที · ไม่ต้องเปิดค้างไว้ก่อนไลฟ์นาน ๆ": "Start your TikTok LIVE first, then open your streaming app (OBS / TikTok LIVE Studio) — it connects within seconds. No need to keep it open long before going live.",
+  "เปิดเว็บนี้ค้างไว้ระหว่างไลฟ์": "Keep this site open while you are LIVE",
+  "วิดเจ็ตใน OBS / TikTok LIVE Studio ทำงานเฉพาะตอนเปิดเว็บนี้ไว้ — อย่าปิดแท็บนี้จนจบไลฟ์ (ย่อหน้าต่าง / เปิดหน้าอื่นในเว็บนี้ได้)": "Widgets in OBS / TikTok LIVE Studio only work while this site is open — keep this tab open until your LIVE ends (minimizing or browsing other pages here is fine).",
 };

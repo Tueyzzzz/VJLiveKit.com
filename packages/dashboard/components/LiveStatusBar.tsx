@@ -98,13 +98,13 @@ export function LiveStatusBar() {
       )}
       {s.state === 'live' && <div className="text-xs text-muted sm:w-24 sm:text-right">{t('ไลฟ์มา {m} นาที', { m: mins })}</div>}
     </div>
-    {/* ยังไม่ไลฟ์ → ป้ายเด่น ๆ บอกวิธีใช้ให้ถูก (เปิดวิดเจ็ตตอนไลฟ์ — ไม่ต้องเปิดค้างไว้ทั้งวัน) */}
-    {(s.state === 'idle' || s.state === 'waiting') && (
+    {/* ป้ายเด่น ๆ: ต้องเปิดเว็บนี้ค้างไว้ระหว่างไลฟ์ (ล็อกวิดเจ็ตแบบ TikFinity) — ขึ้นตลอด ทั้งก่อนและระหว่างไลฟ์ */}
+    {(
       <div className="mt-2 flex items-start gap-3 rounded-2xl border-2 border-amber-300 bg-gradient-to-r from-amber-50 via-pink-soft/60 to-amber-50 p-3.5 shadow-sm sm:items-center sm:p-4">
         <span className="grid size-10 shrink-0 animate-pulse place-items-center rounded-full bg-amber-400 text-xl shadow">📢</span>
         <div className="min-w-0">
-          <div className="text-base font-bold text-ink sm:text-lg">{t('วิดเจ็ตทำงานตอนคุณไลฟ์เท่านั้น')}</div>
-          <div className="mt-0.5 text-sm text-ink/80">{t('เริ่มไลฟ์ใน TikTok ก่อน แล้วเปิดโปรแกรมไลฟ์ (OBS / TikTok LIVE Studio) — ระบบต่อให้เองในไม่กี่วินาที · ไม่ต้องเปิดค้างไว้ก่อนไลฟ์นาน ๆ')}</div>
+          <div className="text-base font-bold text-ink sm:text-lg">{t('เปิดเว็บนี้ค้างไว้ระหว่างไลฟ์')}</div>
+          <div className="mt-0.5 text-sm text-ink/80">{t('วิดเจ็ตใน OBS / TikTok LIVE Studio ทำงานเฉพาะตอนเปิดเว็บนี้ไว้ — อย่าปิดแท็บนี้จนจบไลฟ์ (ย่อหน้าต่าง / เปิดหน้าอื่นในเว็บนี้ได้)')}</div>
         </div>
       </div>
     )}

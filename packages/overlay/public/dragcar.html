@@ -253,13 +253,15 @@
       if (unit < MIN_COINS) return;
       const g = { u: (e.giftImage || (window.VJLCollect ? VJLCollect.imgFor(e.giftName) : '')), e: EMOJI[e.giftName] || '🎁', d: unit };
       const n = unit >= 1000 ? 1 : Math.min(count, 150); // ส่ง 100 ดอก = ลาก 100 ชิ้น (เดิมตัดที่ 25)
+      const k = e.__add != null ? Math.min(e.__add, n) : n; // คอมโบ: ผูกทันทีทีละชุดระหว่างกด
+      for (let i = 0; i < k; i++) setTimeout(() => { addGift(g, e.__shot ? -1e6 : performance.now()); save(); }, i * (k > 25 ? 60 : 140));
+      if (e.__partial) return; // ยังกดคอมโบอยู่ → แจ้งเตือน/บันทึก ทำตอนจบครั้งเดียว
       if (window.VJLCollect) VJLCollect.record(e, n);
-      for (let i = 0; i < n; i++) setTimeout(() => { addGift(g, e.__shot ? -1e6 : performance.now()); save(); }, i * (n > 25 ? 60 : 140));
       if (CAR.music && fx.notes) fx.notes(0, CAR_Y + CAR.y + 20, unit >= 100 ? 5 : 2);
       if (!e.__quiet) showAlert(e, count);
     }
     Overlay.on('state', (st) => { if (window.VJLCollect) VJLCollect.backfill(st, onGift); }); // เติมชิ้นที่พลาด (deploy/รีโหลดกลางไลฟ์)
-    Overlay.on('event', (e) => { if (e.type === 'gift' && !e.streaking) onGift(e); });
+    if (window.VJLCollect && VJLCollect.live) VJLCollect.live(onGift); else Overlay.on('event', (e) => { if (e.type === 'gift' && !e.streaking) onGift(e); });
 
     if (P('debug', '0') === '1') window.__car = { gifts, slots };
     addEventListener('resize', resize); resize(); requestAnimationFrame(frame);

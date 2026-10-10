@@ -438,14 +438,16 @@
     const EMOJI = { Rose: '🌹', 'Finger Heart': '🫰', Perfume: '🧴', Galaxy: '🌌', Lion: '🦁', Universe: '🪐', Heart: '❤️', TikTok: '🎵' };
     function onGift(e) {
       const count = e.repeatCount || 1, unit = e.diamondCount || 0, value = e.totalValue || unit * count;
-      diamonds += value; updateDia(); save(); shakeT = 24; showGifter(e.user);
+      if (!e.__partial) { diamonds += value; updateDia(); save(); showGifter(e.user); } // ยอดเพชร/คนส่ง นับตอนคอมโบจบครั้งเดียว
+      shakeT = 24;
       machinePunch.kick(-0.9); // ยุบก่อนปล่อย แล้วเด้งเกิน
       if (unit >= 1000) fx.confetti((SCREEN.x0 + SCREEN.x1) / 2, M.y0 - 20, 50);
       screenImg = giftImg(e.giftImage); screenEmoji = EMOJI[e.giftName] || '🎁';
       const g = { u: (e.giftImage || (window.VJLCollect ? VJLCollect.imgFor(e.giftName) : '')), e: screenEmoji, d: unit };
       const n = Math.min(count, 150); // ส่ง 100 ดอก = ลง 100 ชิ้น (เดิมตัดที่ 30)
-      if (window.VJLCollect) VJLCollect.record(e, n);
-      for (let i = 0; i < n; i++) setTimeout(() => { addBody(g); save(); }, i * (n > 30 ? 70 : 160));
+      const k = e.__add != null ? Math.min(e.__add, n) : n; // คอมโบ: ลงเครื่องทันทีทีละชุดระหว่างกด
+      for (let i = 0; i < k; i++) setTimeout(() => { addBody(g); save(); }, i * (k > 30 ? 70 : 160));
+      if (!e.__partial && window.VJLCollect) VJLCollect.record(e, n);
       if (SKIN && SKIN.music && fx.notes) fx.notes((SCREEN.x0 + SCREEN.x1) / 2, SCREEN.y0, unit >= 100 ? 6 : 3); // ตู้คาราโอเกะ: โน้ตลอยจากจอ
     }
 
@@ -458,7 +460,7 @@
       if (!bodies.length && diamonds > 0) for (let i = 0; i < Math.min(120, Math.ceil(Math.sqrt(diamonds) * 2)); i++) addBody({ u: '', e: '🪙', d: 1 }, 'restore');
     }
     Overlay.on('state', (st) => { if (window.VJLCollect) VJLCollect.backfill(st, onGift); }); // เติมชิ้นที่พลาด (deploy/รีโหลดกลางไลฟ์)
-    Overlay.on('event', (e) => { if (e.type === 'gift' && !e.streaking) { prefilled = true; onGift(e); } });
+    if (window.VJLCollect && VJLCollect.live) VJLCollect.live((e) => { prefilled = true; onGift(e); }); else Overlay.on('event', (e) => { if (e.type === 'gift' && !e.streaking) { prefilled = true; onGift(e); } });
     Overlay.on('state', (s) => {
       if (s && s.roomId && roomId && s.roomId !== roomId) diamonds = 0; // ไลฟ์ใหม่ → นับเพชรใหม่ (กองยังอยู่จนกดล้าง)
       if (s && s.roomId) roomId = s.roomId;

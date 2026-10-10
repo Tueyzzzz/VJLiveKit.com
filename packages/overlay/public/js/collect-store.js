@@ -35,6 +35,23 @@
       const have = new Set(read().map((x) => x.id));
       state.recentGifts.filter((e) => e && e.ts > after && !have.has(idOf(e))).forEach((e, i) => setTimeout(() => onGift({ ...e, __quiet: 1 }), i * 40));
     },
+    /**
+     * รับของขวัญแบบสด: คอมโบ (กดรัว ๆ) แสดงทันทีทีละชุดระหว่างกด ไม่ต้องรอ TikTok ส่ง "คอมโบจบ" (ช้าหลายวินาที)
+     * onGift ได้ e.__add = จำนวนชิ้นที่ต้องเพิ่มตอนนี้ · e.__partial = ยังกดอยู่ (ห้ามนับอันดับ/แจ้งเตือน/บันทึก — ทำตอนจบครั้งเดียว)
+     */
+    live(onGift) {
+      const shown = new Map();
+      const key = (e) => { const u = e.user || {}; return (u.uniqueId || u.nickname || '?') + '|' + (e.giftId || e.giftName || ''); };
+      window.Overlay.on('event', (e) => {
+        if (!e || e.type !== 'gift') return;
+        const k = key(e), rc = e.repeatCount || 1;
+        let had = shown.get(k) || 0;
+        if (rc < had) had = 0; // คอมโบใหม่ (รอบก่อนไม่มีสัญญาณจบ)
+        if (e.streaking) { if (rc > had) { shown.set(k, rc); onGift({ ...e, __add: rc - had, __partial: 1 }); } return; }
+        shown.delete(k);
+        onGift({ ...e, __add: Math.max(0, rc - had) });
+      });
+    },
     /** บันทึกการส่งของขวัญ 1 ครั้ง (n = จำนวนชิ้นที่วิดเจ็ตนี้แสดง) */
     record(e, n) {
       if (q.get('demo') === '1' || !e) return;

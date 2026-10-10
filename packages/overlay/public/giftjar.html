@@ -1184,9 +1184,10 @@
       const count = e.repeatCount || 1, unit = e.diamondCount || 0, value = e.totalValue || unit * count;
       if (unit < MIN_COINS) return;
       const g = { img: (e.giftImage || (window.VJLCollect ? VJLCollect.imgFor(e.giftName) : '')), e: EMOJI[e.giftName] || '🎁', d: unit };
-      const n = Math.min(count, 150); // ส่ง 100 ดอก = ลง 100 ชิ้น (เดิมตัดที่ 30)
+      const n = Math.min(count, 150), k = e.__add != null ? Math.min(e.__add, n) : n; // คอมโบ: หล่นทันทีทีละชุดระหว่างกด
+      for (let i = 0; i < k; i++) setTimeout(() => { addBody(g); save(); }, i * (k > 30 ? 55 : 110));
+      if (e.__partial) return; // ยังกดคอมโบอยู่ → อันดับ/แจ้งเตือน/บันทึก ทำตอนจบครั้งเดียว
       if (window.VJLCollect) VJLCollect.record(e, n);
-      for (let i = 0; i < n; i++) setTimeout(() => { addBody(g); save(); }, i * (n > 30 ? 55 : 110));
       const u = e.user || {}, id = u.uniqueId || u.nickname || '?';
       const row = ranking[id] || { n: u.nickname || id, a: u.avatar || '', c: 0 };
       row.c += value; row.n = u.nickname || row.n; row.a = u.avatar || row.a; ranking[id] = row;
@@ -1198,7 +1199,7 @@
     }
 
     Overlay.on('state', (st) => { if (window.VJLCollect) VJLCollect.backfill(st, onGift); }); // เติมชิ้นที่พลาด (deploy/รีโหลดกลางไลฟ์)
-    Overlay.on('event', (e) => { if (e.type === 'gift' && !e.streaking) onGift(e); });
+    if (window.VJLCollect && VJLCollect.live) VJLCollect.live(onGift); else Overlay.on('event', (e) => { if (e.type === 'gift' && !e.streaking) onGift(e); });
 
     if (TOP === 1) $board.classList.add('solo');
     addEventListener('resize', resize); resize();

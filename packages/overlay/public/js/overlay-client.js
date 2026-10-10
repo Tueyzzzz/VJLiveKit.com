@@ -7,6 +7,31 @@
  *   ?username=<ชื่อ>    -> โหมดเดโม (เฉพาะตอนเซิร์ฟเวอร์เปิด DEMO_MODE)
  *   ?demo=1            -> โหมดเดโมในเบราว์เซอร์ล้วน (ไม่ต่อเซิร์ฟเวอร์)
  */
+// ---- ส่ง error ของวิดเจ็ตกลับเซิร์ฟเวอร์ (แอดมินดูได้ในหลังบ้าน) · จำกัด 15 ครั้ง/การโหลด, เรื่องเดียวกันไม่เกิน 2 ครั้ง ----
+(function () {
+  const qs = new URLSearchParams(location.search);
+  if (qs.get('demo') === '1' || /^(localhost|127\.|\[::1\])/.test(location.hostname)) return; // เดโม/เครื่องตัวเอง ไม่ต้องส่ง
+  const seen = new Map(), t = qs.get('t') || '', where = (location.pathname.split('/').pop() || '').replace(/\.html$/, '');
+  let n = 0;
+  function report(msg, stack, at) {
+    msg = String(msg || 'error'); if (msg === 'Script error.' || n >= 15) return;
+    const k = msg.slice(0, 120), c = seen.get(k) || 0; if (c >= 2) return; seen.set(k, c + 1); n++;
+    const body = JSON.stringify({ src: 'overlay', msg: msg.slice(0, 1500), stack: stack ? String(stack).slice(0, 3000) : undefined, where: where + (at ? ' ' + at : ''), ver: String(window.VJL_VERSION || ''), t: t || undefined });
+    try { if (navigator.sendBeacon) navigator.sendBeacon('/api/log/client', new Blob([body], { type: 'application/json' })); else fetch('/api/log/client', { method: 'POST', headers: { 'content-type': 'application/json' }, body, keepalive: true }); } catch { /* ไม่เป็นไร */ }
+  }
+  window.addEventListener('error', (e) => {
+    const el = e.target;
+    if (el && el !== window && el.tagName) { // รูป/วิดีโอ/เสียง/สคริปต์โหลดไม่ขึ้น
+      const src = String(el.currentSrc || el.src || '').split('?')[0];
+      if (!src || /tiktokcdn|ibyteimg|byteimg|muscdn/.test(src)) return; // รูปจาก TikTok หายเป็นปกติ
+      report('load failed: ' + el.tagName.toLowerCase() + ' ' + src); return;
+    }
+    report(e.message, e.error && e.error.stack, e.filename ? e.filename.split('/').pop().split('?')[0] + ':' + e.lineno : '');
+  }, true);
+  window.addEventListener('unhandledrejection', (e) => { const r = e.reason; report('unhandledrejection: ' + ((r && r.message) || r), r && r.stack); });
+  window.VJLReportError = report;
+})();
+
 window.Overlay = (function () {
   const params = new URLSearchParams(location.search);
   const handlers = { event: [], stats: [], status: [], state: [], action: [], donation: [] };

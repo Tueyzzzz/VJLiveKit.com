@@ -4,6 +4,7 @@ import './globals.css';
 import { Pixels } from '@/components/Pixels';
 import { LiveLink } from '@/components/Speaker';
 import { AutoUpdate } from '@/components/AutoUpdate';
+import { ErrorReporter } from '@/components/ErrorReporter';
 import { LangProvider } from '@/lib/i18n';
 
 const SITE = 'https://vjlivekit.com';
@@ -39,7 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Itim&display=swap" rel="stylesheet" />
       </head>
       <body className="min-h-dvh">
-        <LangProvider><AuthProvider>{children}<LiveLink /><AutoUpdate /></AuthProvider></LangProvider>
+        <LangProvider><AuthProvider>{children}<LiveLink /><AutoUpdate /><ErrorReporter /></AuthProvider></LangProvider>
         <Pixels />
       </body>
     </html>

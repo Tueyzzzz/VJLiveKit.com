@@ -7,6 +7,7 @@ import { AdminSupport } from '@/components/AdminSupport';
 import { AdminMascots } from '@/components/AdminMascots';
 import { AdminNotifications } from '@/components/AdminNotifications';
 import { AdminServer } from '@/components/AdminServer';
+import { AdminErrors } from '@/components/AdminErrors';
 import { WIDGET_LABELS } from '@/components/Pricing';
 import { Alert, Badge, Button, Card, Input, PageHeader, Spinner } from '@/components/ui';
 import { api, getToken } from '@/lib/api';
@@ -153,7 +154,7 @@ export default function AdminPage() {
       </div>
       {msg && <div className="mb-4"><Alert tone={msg.tone === 'error' ? undefined : msg.tone}>{msg.text}</Alert></div>}
 
-      {tab === 'overview' && <div className="mb-4"><AdminServer /></div>}{/* สถานะเซิร์ฟเวอร์อยู่บนสุดของภาพรวม */}
+      {tab === 'overview' && <div className="mb-4 grid gap-4"><AdminServer /><AdminErrors /></div>}{/* สถานะเซิร์ฟเวอร์อยู่บนสุดของภาพรวม */}
       {tab === 'overview' && (!ov ? <Spinner /> : (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">

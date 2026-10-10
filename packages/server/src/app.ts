@@ -18,6 +18,8 @@ import { notificationRoutes } from './admin/notifications.js';
 import { supportRoutes } from './support/routes.js';
 import { mascotRoutes } from './mascots/routes.js';
 import { beatpadRoutes } from './media/beatpad.js';
+import { errlogRoutes, installErrorHooks } from './errlog/routes.js';
+import { installErrorCapture } from './errlog/store.js';
 import { settings } from './settings/index.js';
 import { config } from './config/index.js';
 import { OVERLAY_DIR, OVERLAY_VERSION } from './overlay-version.js';
@@ -30,6 +32,8 @@ const DASHBOARD_DIR = config.dashboardDir ?? path.resolve(process.cwd(), '../das
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({ logger: true, trustProxy: true });
 
+  installErrorCapture(); // crash / console.error → data/errors (เก็บ 3 วัน)
+  installErrorHooks(app); // API 500+ → data/errors
   await app.register(cors, { origin: true });
   // เรทลิมิต: ทุก /api/* ต่อ IP 300 ครั้ง/นาที (route สำคัญเช่น login/register ตั้งเข้มกว่านี้เอง)
   // ไฟล์ overlay/หน้าเว็บไม่นับ — OBS โหลดรูป/สคริปต์หลายไฟล์พร้อมกัน
@@ -109,6 +113,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(supportRoutes);
   await app.register(mascotRoutes);
   await app.register(beatpadRoutes);
+  await app.register(errlogRoutes);
 
   // 404: API ตอบ JSON, หน้าเว็บตอบหน้า 404 ของ Dashboard
   const notFoundPage = path.join(DASHBOARD_DIR, '404.html');

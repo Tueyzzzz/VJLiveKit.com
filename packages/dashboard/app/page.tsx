@@ -26,6 +26,12 @@ const FEATURES = [
   { icon: Sparkles, title: 'Actions & Events', img: '/menu/actions.webp', text: 'ได้กิฟต์ X → เล่นเสียง/รูป/วิดีโอ Y อัตโนมัติ' },
 ];
 
+const PROMOS = [
+  { src: '/promo/promo-1.mp4', poster: '/promo/promo-1.jpg', title: '🎡 ชิงช้าสวรรค์สะสมของขวัญ' },
+  { src: '/promo/promo-2.mp4', poster: '/promo/promo-2.jpg', title: '💌 กล่องจดหมายหัวใจ' },
+  { src: '/promo/promo-3.mp4', poster: '/promo/promo-3.jpg', title: '🎮 โหลสายเกมมิ่ง' },
+];
+
 const FAQ: [string, string][] = [
   ['VJLiveKit คืออะไร', 'VJLiveKit คือชุดวิดเจ็ตไลฟ์ TikTok ภาษาไทย ใช้วางบนจอไลฟ์ผ่าน OBS หรือ TikTok LIVE Studio เชื่อมกับไลฟ์จริงแบบเรียลไทม์ เช่น ของขวัญตกลงโหล อันดับคนส่งของขวัญ แจ้งเตือนกิฟต์ และไพ่ทาโร่'],
   ['ใช้กับ TikTok LIVE Studio ได้ไหม', 'ได้ คัดลอกลิงก์วิดเจ็ตไปเพิ่มเป็นแหล่งที่มาแบบลิงก์ใน TikTok LIVE Studio หรือ Browser Source ใน OBS รองรับทั้งไลฟ์แนวนอนและแนวตั้ง'],
@@ -88,6 +94,20 @@ export default function Home() {
         <div className="mt-8 flex justify-center gap-3">
           <Link href={user ? '/dashboard/' : '/register/'}><Button className="px-6 py-3 text-base">{t('ใช้ฟรีเดือนแรก')}</Button></Link>
           <a href="/overlay/coinjar.html?demo=1" target="_blank" rel="noreferrer"><Button variant="secondary" className="px-6 py-3 text-base">{t('ดูเดโม')}</Button></a>
+        </div>
+      </section>
+
+      {/* คลิปตัวอย่างบนจอไลฟ์มือถือ — มือถือเลื่อนซ้าย-ขวา · จอใหญ่ 3 คอลัมน์ */}
+      <section className="mx-auto max-w-6xl px-4 pb-20">
+        <h2 className="mb-2 text-center font-display text-3xl">{t('ตัวอย่างบนไลฟ์จริง')}</h2>
+        <p className="mb-6 text-center text-sm text-muted">{t('ของขวัญตกลงวิดเจ็ตสด ๆ ระหว่างไลฟ์ — เลือกแบบได้กว่า 80 แบบ')}</p>
+        <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0">
+          {PROMOS.map((p) => (
+            <figure key={p.src} className="w-[68vw] max-w-[300px] shrink-0 snap-center sm:w-auto sm:max-w-none">
+              <video src={p.src} poster={p.poster} autoPlay muted loop playsInline preload="none" className="aspect-[9/16] w-full rounded-3xl bg-[#17121f] object-cover shadow-lg" />
+              <figcaption className="mt-2 text-center text-sm text-muted">{t(p.title)}</figcaption>
+            </figure>
+          ))}
         </div>
       </section>
 

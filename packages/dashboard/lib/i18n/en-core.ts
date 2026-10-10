@@ -501,4 +501,9 @@ export const EN_CORE: Record<string, string> = {
   "บันทึกชื่อ TikTok": "Save TikTok name",
   "ชื่อ TikTok ไม่ถูกต้อง": "Invalid TikTok username",
   "เปลี่ยนชื่อ TikTok ได้หลังจบไลฟ์": "You can change the TikTok name after the LIVE ends",
+  "ตัวอย่างบนไลฟ์จริง": "See it on a live stream",
+  "ของขวัญตกลงวิดเจ็ตสด ๆ ระหว่างไลฟ์ — เลือกแบบได้กว่า 80 แบบ": "Gifts drop into the widget live while you stream — 80+ styles to choose from",
+  "🎡 ชิงช้าสวรรค์สะสมของขวัญ": "🎡 Ferris wheel gift collector",
+  "💌 กล่องจดหมายหัวใจ": "💌 Heart mailbox",
+  "🎮 โหลสายเกมมิ่ง": "🎮 Gaming-style jar",
 };

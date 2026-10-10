@@ -28,10 +28,10 @@
   <script src="js/juice.js"></script>
   <script>
   /*
-   * รถลากของขวัญ (แบบรถงานแต่งลากกระป๋อง) — ของขวัญจริงผูกเชือกท้ายรถ ลากไปกับพื้น กระเด้งตามถนน กางเป็นพัด
+   * รถลากของขวัญ — ของขวัญจริงผูกเชือกยาวกับหลังคารถ ลอยเป็นช่อเหนือรถเหมือนลูกโป่ง แกว่งตามลมแบบหน่วง ๆ (สปริง)
    *   car=van                    แบบรถ (ภาพ 3D มุมหลัง)
    *   hue=0 sat=1 bright=1       เปลี่ยนสีรถ
-   *   scale=1 giftScale=1 x=0 y=0 alert=1 minCoins=0 max=140 reset=1
+   *   scale=1 giftScale=1 carScale=0.8 rope=140 x=0 y=0 alert=1 minCoins=0 max=140 reset=1
    */
   (function () {
     const P = (k, d) => Overlay.param(k, d);
@@ -40,7 +40,7 @@
     const SHOW_ALERT = P('alert', '1') !== '0', MIN_COINS = num('minCoins', 0);
     const MAX = Math.round(Math.max(30, Math.min(400, num('max', 140) / (GIFT_SCALE * GIFT_SCALE))));
 
-    // รถ (ภาพมุมหลัง) — พิกัดหน่วยออกแบบ: 0,0 = กลางล่างของรถ · hook = ตะขอกลางกันชนท้าย
+    // รถ (ภาพมุมหลัง) — พิกัดหน่วยออกแบบ: 0,0 = กลางล่างของรถ · hook = ตะขอกลางกันชนท้าย (ไม่ได้ใช้แล้ว เก็บไว้เผื่อ)
     const CARS = {
       pickup2: { src: 'themes/car-pickup2.webp', x: -209.4, y: -360, w: 418.9, h: 360, hook: { x: -0.4, y: -42.5 } },
       camper: { src: 'themes/car-camper.webp', x: -214.8, y: -360, w: 429.5, h: 360, hook: { x: -0.2, y: -47.0 } },
@@ -58,45 +58,20 @@
       pickup: { src: 'themes/car-pickup.webp', x: -209.4, y: -360.0, w: 418.9, h: 360.0, hook: { x: 0.0, y: -49.6 } },
     };
     const CAR = CARS[P('car', 'van')] || CARS.van;
-    // ลูกโป่ง: ของขวัญทุก ๆ BAL_EVERY ชิ้น ไปผูกเป็นลูกโป่งลอยเหนือหลังคา (รถเปิดประทุน = ผูกที่เบาะหลัง) · ?balloons=0 ปิด
-    const BAL_ON = P('balloons', '1') !== '0', BAL_EVERY = 2, BAL_MAX = 45;
-    const BAL_COLORS = ['#ffb5d4', '#c9b8ff', '#a8e6cf', '#ffd3a5', '#a9d8ff', '#fff1a8', '#ff9ec4'];
     const carImg = Juice.skin(CAR.src, num('hue', 0), num('sat', 1), num('bright', 1));
-    const CAR_Y = -250;
-    if (CAR.music) setInterval(() => { if (!document.hidden && fx.notes) fx.notes((Math.random() - .5) * CAR.w * 0.5, CAR_Y + CAR.y + 30, 1); }, 1700); // รถยกขึ้นจากขอบล่าง → ของขวัญลากอยู่ด้านหน้า (ใกล้กล้อง) เชือกยาวแบบรถงานแต่ง
-    const ROPE = Math.max(40, num('rope', 90)); // ระยะเว้นจากท้ายรถถึงแถวแรก (ยิ่งมาก เชือกยิ่งยาว)
+    const CK = Math.max(0.5, Math.min(1.2, num('carScale', 0.8))); // ย่อรถลงนิด → เหลือที่ด้านบนให้เชือกยาว ๆ
+    const CAR_Y = -8; // รถชิดขอบล่าง ของขวัญลอยเป็นช่อด้านบน (ภาพรวมสมดุล: รถล่าง · ช่อบน)
+    const ROPE = Math.max(60, num('rope', 140)); // เชือกสั้นสุด (หน่วยออกแบบ) ยิ่งมาก ช่อยิ่งลอยสูง
+    if (CAR.music) setInterval(() => { if (!document.hidden && fx.notes) fx.notes((Math.random() - .5) * CAR.w * CK * 0.5, CAR_Y + CAR.y * CK + 30, 1); }, 1700);
 
     const canvas = document.getElementById('fx'), ctx = canvas.getContext('2d');
     const DPR = Math.min(2, devicePixelRatio || 1);
     let W = 0, H = 0;
     const S = () => SCALE * Math.min(1.6, Math.max(0.5, H / 720));
     const origin = () => ({ x: W / 2 + OX, y: H - 20 * SCALE + OY });
-    function resize() { W = innerWidth; H = innerHeight; canvas.width = W * DPR; canvas.height = H * DPR; canvas.style.width = W + 'px'; canvas.style.height = H + 'px'; layoutUi(); }
+    function resize() { W = innerWidth; H = innerHeight; canvas.width = W * DPR; canvas.height = H * DPR; canvas.style.width = W + 'px'; canvas.style.height = H + 'px'; buildSlots(); layoutUi(); }
 
-    // ---- ตำแหน่งที่ของขวัญถูกลาก: พัดหลายแถวจากตะขอ (แถวไกล = ใกล้รถ, แถวใกล้กล้อง = ล่างจอ ตัวใหญ่ขึ้น) ----
-    const hook = () => ({ x: CAR.hook.x, y: CAR_Y + CAR.hook.y });
-    const slots = [];
-    // แถวบนพื้นจากท้ายรถลงมาหาขอบล่าง แต่ละแถวกางออกด้านข้างกว้างขึ้นเรื่อย ๆ (จำนวนรอบจำกัด → จบแน่นอน)
-    for (let j = 0; j < 12; j++) {
-      const y = CAR_Y + ROPE + j * 22; if (y > -10) break;
-      for (let m = 0; m < 34; m++) for (const sgn of m ? [-1, 1] : [1]) {
-        const x = sgn * (m * 32 + (j % 2 ? 16 : 0));
-        slots.push({ x, y, k: j, ph: (x * 0.13 + y * 0.07 + 6.28) % 6.28 });
-      }
-    }
-    // ช่องที่ใกล้ท้ายรถก่อน (กองจากตรงกลางออกไป)
-    slots.sort((p, q) => Math.hypot(p.x * 0.6, p.y - CAR_Y) - Math.hypot(q.x * 0.6, q.y - CAR_Y));
-
-    // ---- ของขวัญ ----
-    const gifts = [], fx = new Juice.Particles(), punch = new Juice.Spring(260, 11);
-    const imgCache = {};
-    function giftImg(url) { if (!url || !/^https:\/\//.test(url)) return null; let im = imgCache[url]; if (!im) { im = new Image(); im.src = url; imgCache[url] = im; } return im; }
-    const EMOJI = { Rose: '🌹', 'Finger Heart': '🫰', Perfume: '🧴', Galaxy: '🌌', Lion: '🦁', Universe: '🪐', Heart: '❤️', TikTok: '🎵' };
-    const sizeFor = Juice.sizeFor || (() => 1);
-    let addCount = 0;
-    function nextBalIdx() { const used = new Set(gifts.filter((b) => b.balloon && !b.dying).map((b) => b.bi)); for (let i = 0; ; i++) if (!used.has(i)) return i; }
-    // จุดผูกลูกโป่ง: กลางหลังคา / เบาะหลังของรถเปิดประทุน
-    // จุดผูก = ขอบหลังคาจริงของรูปรถ (วัดจากภาพ: พิกเซลทึบแรกตรงกลางจากด้านบน) · รถเปิดประทุน = เบาะหลัง
+    // ---- จุดผูกเชือก: ขอบหลังคาจริงของรูปรถ (วัดจากภาพ: พิกเซลทึบแรกตรงกลางจากด้านบน) · รถเปิดประทุน = เบาะหลัง ----
     let roofF = 0.12;
     (function () {
       const im = new Image(); im.onload = () => {
@@ -105,37 +80,84 @@
           const d = x.getImageData(46, 0, 8, 100).data;
           for (let y = 0; y < 100; y++) { let n = 0; for (let k = 0; k < 8; k++) if (d[(y * 8 + k) * 4 + 3] > 120) n++; if (n >= 4) { roofF = y / 100; break; } }
         } catch (e) { /* ignore */ }
+        buildSlots();
       }; im.src = CAR.src;
     })();
-    const balAnchor = () => ({ x: 0, y: CAR_Y + CAR.y + CAR.h * (CAR.balAt != null ? CAR.balAt : CAR.open ? 0.42 : roofF + 0.09) });
-    function balloonPos(b, t) {
-      const a = balAnchor(), i = b.bi, ring = Math.floor(Math.sqrt(i)), k = i - ring * ring, n = 2 * ring + 1;
-      const ang = -Math.PI / 2 + (n > 1 ? (k / (n - 1) - 0.5) : 0) * (CAR.balTight ? 0.9 : Math.min(2.2, 0.7 + ring * 0.35));
-      const len = CAR.balTight ? 95 + ring * 18 + (i % 2) * 10 : 85 + ring * 24 + (i % 3) * 8;
-      const gust = Math.sin(t * 0.45) * 0.35 + Math.sin(t * 0.83 + 1.3) * 0.2; // ลมพัดเป็นระลอก (ทุกลูกไปทางเดียวกัน)
-      const sw = gust * 0.16 + Math.sin(t * 1.1 + i * 1.7) * 0.07;
-      // จอเตี้ย: บีบกลุ่มลูกโป่งให้อยู่ในจอ (ไม่ล้นขอบบน)
-      const room = origin().y / S() + a.y - 50, fit = Math.min(1, room / 230);
-      // ที่เหนือรถน้อย → กางกลุ่มลูกโป่งออกด้านข้างแทน (ไม่ทับกันเป็นก้อน)
-      return { x: a.x + Math.cos(ang + sw) * len * (0.95 + (1 - fit) * 1.1), y: a.y + Math.min(-50 - (i % 3) * 30 * Math.max(0.5, fit * 2), Math.sin(ang + sw) * len * fit) + Math.sin(t * 2 + i) * 4, ax: a.x, ay: a.y };
+    const tieY = () => CAR_Y + (CAR.y + CAR.h * (CAR.balAt != null ? CAR.balAt : CAR.open ? 0.42 : roofF + 0.09)) * CK;
+    // ผูกเป็นกำ ๆ 5 จุดเรียงตามหลังคา (ไม่รวมเป็นก้อนเดียว) — ของขวัญฝั่งซ้ายผูกปมซ้าย ฝั่งขวาผูกปมขวา
+    const TIE_N = 5, TIE_STEP = CAR.w * CK * (CAR.balTight ? 0.035 : 0.085);
+    const tieX = (i) => (i - (TIE_N - 1) / 2) * TIE_STEP;
+
+    // ---- ตำแหน่งในช่อ: ตารางรังผึ้งในครึ่งวงรีเหนือหลังคา สมมาตรซ้าย-ขวา ปรับตามขนาดจอ (ไม่ล้นขอบ) ----
+    let slots = [], area = { top: -700, left: -640, right: 640 };
+    function buildSlots() {
+      if (!W || !H) return;
+      const o = origin(), s = S();
+      area = { top: -o.y / s, left: -o.x / s, right: (W - o.x) / s };
+      const ay = tieY(), yT = area.top + 50, y0 = ay - ROPE * 0.75; // บนสุดเว้นขอบจอ · ล่างสุดเหนือหลังคา
+      const AY = Math.max(90, ay - yT);
+      const half = Math.max(140, Math.min(-area.left, area.right) - 50);
+      const AX = Math.min(half, Math.max(340, AY * 1.75)); // ช่อกว้าง ~1.75 เท่าของความสูง ไม่แผ่จนสุดจอกว้าง
+      const need = MAX + 20;
+      let out = [];
+      for (let sp = 46 * GIFT_SCALE; sp >= 14; sp -= 2) {
+        out = [];
+        for (let j = 0; ; j++) {
+          const y = y0 - j * sp * 0.86; if (y < yT) break;
+          for (let i = 0; ; i++) {
+            const ax = (j % 2 ? sp / 2 : 0) + i * sp; // ฝั่งขวา แล้วสะท้อนไปซ้าย → สมดุลเสมอ
+            if ((ax / AX) ** 2 + ((y - ay) / AY) ** 2 > 1) break;
+            if (Math.hypot(ax, y - ay) < ROPE) continue;
+            const h = Math.sin(j * 12.9898 + i * 78.233) * 43758.5453, r = h - Math.floor(h); // สุ่มแบบคงที่ ให้ดูไม่เป็นตาราง
+            const yy = y + (r - 0.5) * sp * 0.4, xx = ax ? ax + (r - 0.5) * sp * 0.25 : 0;
+            out.push({ x: xx, y: yy }); if (xx) out.push({ x: -xx, y: yy });
+          }
+        }
+        if (out.length >= need) break;
+      }
+      // เติมจากกลางช่อออกไปรอบ ๆ (คู่ซ้าย-ขวาติดกัน) → ของขวัญน้อยก็อยู่กลาง ไม่เอียงข้างใดข้างหนึ่ง
+      const yc = y0 - (y0 - yT) * 0.45;
+      out.sort((p, q) => Math.hypot(p.x * 0.6, p.y - yc) - Math.hypot(q.x * 0.6, q.y - yc) || q.x - p.x);
+      out.forEach((p, i) => {
+        p.ti = Math.max(0, Math.min(TIE_N - 1, Math.round(p.x / AX * 2.6) + (TIE_N - 1) / 2));
+        p.L = Math.hypot(p.x - tieX(p.ti), p.y - ay); // ความยาวเชือก
+        p.ph = (p.x * 0.013 + p.y * 0.021 + i * 0.7) % 6.283;
+        p.k = 4.2 + (i * 7 % 5) * 0.55; // ความแข็งสปริงต่างกันนิด ๆ → แกว่งไม่พร้อมกัน
+      });
+      slots = out;
     }
-    function freeSlot() {
-      const used = new Set(gifts.filter((g) => !g.dying && !g.balloon).map((g) => g.slot));
-      for (let i = 0; i < slots.length && i < MAX + 20; i++) if (!used.has(i)) return i;
-      return -1;
+
+    // ---- ของขวัญ ----
+    const gifts = [], fx = new Juice.Particles(), punch = new Juice.Spring(260, 11);
+    const imgCache = {};
+    function giftImg(url) { if (!url || !/^https:\/\//.test(url)) return null; let im = imgCache[url]; if (!im) { im = new Image(); im.src = url; imgCache[url] = im; } return im; }
+    const EMOJI = { Rose: '🌹', 'Finger Heart': '🫰', Perfume: '🧴', Galaxy: '🌌', Lion: '🦁', Universe: '🪐', Heart: '❤️', TikTok: '🎵' };
+    const sizeFor = Juice.sizeFor || (() => 1);
+    function freeSlot(r) {
+      const alive = gifts.filter((g) => !g.dying), used = new Set(alive.map((g) => g.slot));
+      const big = r > 34 && slots.length ? alive.filter((g) => g.r > 34) : [];
+      let best = -1, bestS = Infinity;
+      for (let i = 0; i < MAX + 20; i++) {
+        if (used.has(i)) continue;
+        if (!big.length) return i;
+        // ของชิ้นใหญ่: เลือกช่องที่ไม่ชิดของใหญ่ชิ้นอื่น (กระจายทั่วช่อ ไม่กองกลาง) แต่ยังอยู่ใกล้ ๆ กลาง
+        if (i > alive.length + 60) break;
+        const p = slots[i % slots.length];
+        let sc = i * 0.6;
+        for (const g of big) { const q = slots[g.slot % slots.length], d = Math.hypot(p.x - q.x, p.y - q.y), m = (r + g.r) * 1.25; if (d < m) sc += (m - d) * 2; }
+        if (sc < bestS) { bestS = sc; best = i; }
+      }
+      return best;
     }
     function addGift(g, born) {
-      let slot = freeSlot();
+      const r = Math.min(58, 18 * GIFT_SCALE * sizeFor(g.d, 4.2)); // ของแพงใหญ่ชัด ๆ (Lion/Universe ≈ 3 เท่า) แต่ไม่บังทั้งช่อ
+      let slot = freeSlot(r);
       const alive = gifts.filter((b) => !b.dying);
       if (alive.length >= MAX || slot < 0) { const old = (window.VJLCollect && VJLCollect.victims) ? VJLCollect.victims(gifts.map((x) => ({ ...x, d: x.g.d, ref: x })), 1).map((x) => x.ref)[0] : alive[0]; if (old) { old.dying = true; slot = old.slot; } }
       if (slot < 0) slot = 0;
-      const r = Math.min(78, 18 * GIFT_SCALE * sizeFor(g.d, 4.2)); // ของแพงใหญ่ชัด ๆ (Lion/Universe ≈ 4 เท่า)
-      const nBal = gifts.filter((b) => b.balloon && !b.dying).length;
-      const balloon = BAL_ON && (g.d || 0) < 100 && nBal < (CAR.balMax || BAL_MAX) && /* ของแพงอยู่บนพื้น เด่นกว่า */ (++addCount % BAL_EVERY === 0);
-      gifts.push({ g, img: giftImg(g.u), slot, r, born, life: 1, sx: (Math.random() - .5) * 160, sy: CAR_Y - 420 - Math.random() * 120, balloon, bi: balloon ? nextBalIdx() : -1 });
+      gifts.push({ g, img: giftImg(g.u), slot, r, born, life: 1, landed: born <= 0, x: NaN, y: 0, vx: 0, vy: 0 });
       if (born > 0) punch.kick(g.d >= 1000 ? -6 : -2.5);
     }
-
     // ---- จำไว้ (รีโหลด/deploy ใหม่ไม่หาย) ----
     const KEY = 'vjl-vehicle:' + (P('t', '') || P('username', 'demo')).slice(-24);
     let saveT = null;
@@ -158,77 +180,85 @@
       else if (img && img.complete && img.naturalWidth) ctx.drawImage(img, -size / 2, -size / 2, size, size);
       else { ctx.font = Math.round(size * .85) + 'px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(e || '🎁', 0, 2); }
     }
-    function giftPos(b, t, now) {
-      const sl = slots[b.slot] || slots[0];
-      const sp = 3.2 + (b.slot % 5) * 0.35, ph = sl.ph;
-      const hop = Math.pow(Math.max(0, Math.sin(t * sp + ph)), 6) * (6 + sl.k * 1.2); // กระเด้งตามหลุมถนน
-      let x = sl.x + Math.sin(t * 1.4 + ph) * 3, y = sl.y - hop;
-      if (b.born > 0) { // ลอยเข้ามาผูก
-        const k = Math.min(1, (now - b.born) / 700), e = Juice.easeOutBack ? Juice.easeOutBack(k) : k;
-        x = b.sx + (x - b.sx) * e; y = b.sy + (y - b.sy) * Math.min(1, k * 1.1);
-        if (k >= 1 && !b.landed) { b.landed = true; fx.dust(x, y + b.r * 0.6, 5); fx.sparkle(x, y, 5, b.g.d >= 1000 ? '#ffe08a' : '#fff6e8'); }
+    // ---- ฟิสิกส์ลอย: เป้าหมาย = ช่องในช่อ + ลมพัด · ตัวของขวัญตามเป้าด้วยสปริงหน่วง (มีหน่วง/เลยนิด ๆ แบบลูกโป่งจริง) ----
+    function stepGift(b, t, dt, now, tY, bob, gust) {
+      const sl = slots.length ? slots[b.slot % slots.length] : { x: 0, y: tY - ROPE, ti: 2, L: ROPE, ph: 0, k: 5 };
+      // คลื่นลมไล่จากซ้ายไปขวา + ระลอกใหญ่ทั้งช่อ · เชือกยาวแกว่งกว้างกว่า
+      const wave = gust + Math.sin(t * 1.25 - sl.x * 0.007 + sl.ph) * 0.3 + Math.sin(t * 0.37 + sl.ph * 0.5) * 0.15;
+      const dx = wave * sl.L * 0.13;
+      const rr = b.r * 1.15;
+      let gx = sl.x + dx, gy = sl.y + (dx * dx) / (2 * sl.L) - bob * 0.6 + Math.sin(t * 1.6 + sl.ph) * 3 + punch.x * 1.5; // แกว่งออกข้าง = ต่ำลงนิด (แบบลูกตุ้ม)
+      gx = Math.max(area.left + rr, Math.min(area.right - rr, gx)); gy = Math.max(area.top + rr, gy); // ไม่ล้นขอบจอ
+      if (!(b.x === b.x)) { // ครั้งแรก: ของใหม่ลอยขึ้นจากหลังคา · ของเก่า (รีโหลด) อยู่ที่ช่องเลย
+        if (b.born > 0) { b.x = tieX(sl.ti) + (Math.random() - .5) * 40; b.y = tY - 10; b.vx = (Math.random() - .5) * 160; b.vy = -320; }
+        else { b.x = gx; b.y = gy; }
       }
-      return { x, y, rot: Math.sin(t * 2.1 + ph) * 0.18 + hop * 0.01, depth: 0.88 + Math.max(0, (sl.y - CAR_Y)) / 600 };
+      const k = sl.k * (b.born > 0 && now - b.born < 1200 ? 2.4 : 1), c = 2 * Math.sqrt(k) * 0.38;
+      b.vx += ((gx - b.x) * k - b.vx * c) * dt; b.vy += ((gy - b.y) * k - b.vy * c) * dt;
+      b.x += b.vx * dt; b.y += b.vy * dt;
+      const fl = tY - 60 - b.r * 0.6; // ไม่ให้ตกมานั่งบนหลังคา (เชือกต้องยาวเสมอ)
+      if (b.y > fl && !(b.born > 0 && now - b.born < 1200)) { b.y = fl; if (b.vy > 0) b.vy *= -0.3; }
+      return sl;
     }
+    // ดันของที่ซ้อนกันมากให้แยกออกจากกันนุ่ม ๆ (ของใหญ่ดันของเล็ก) → ช่อกระจายสม่ำเสมอ ไม่เป็นก้อน
+    function spread(dt) {
+      const n = gifts.length;
+      for (let i = 0; i < n; i++) {
+        const a = gifts[i]; if (a.dying || !(a.x === a.x)) continue;
+        for (let j = i + 1; j < n; j++) {
+          const b = gifts[j]; if (b.dying || !(b.x === b.x)) continue;
+          const dx = b.x - a.x, dy = b.y - a.y, min = (a.r + b.r) * 0.85, d2 = dx * dx + dy * dy;
+          if (d2 >= min * min) continue;
+          const d = Math.sqrt(d2) || 0.01, f = (min - d) / min * 900 * dt, wa = b.r / (a.r + b.r), wb = 1 - wa;
+          const ux = d2 ? dx / d : 1, uy = d2 ? dy / d : 0;
+          a.vx -= ux * f * wa; a.vy -= uy * f * wa; b.vx += ux * f * wb; b.vy += uy * f * wb;
+        }
+      }
+    }
+    let last = 0;
     function frame(now) {
-      const t = now / 1000;
+      const t = now / 1000, dt = Math.min(0.05, last ? (now - last) / 1000 : 1 / 60); last = now;
       punch.step(1 / 60); fx.step();
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.imageSmoothingQuality = 'high';
       const o = origin(), s = S(); ctx.translate(o.x, o.y); ctx.scale(s, s);
       // รถสั่นเหมือนกำลังวิ่ง
       const bob = Math.sin(t * 9) * 1.2 + Math.max(0, Math.sin(t * 2.3)) ** 12 * 4, sq = 1 + Math.max(-0.08, Math.min(0.08, punch.x * 0.012));
-      const h = hook(), hy = h.y - bob;
-      // ของแพงวาดทีหลัง = อยู่บนสุดของกอง ไม่โดนของถูกบัง (แพงพอกันค่อยเรียงไกล → ใกล้)
+      const tY = tieY() - bob, gust = Math.sin(t * 0.42) * 0.55 + Math.sin(t * 0.83 + 1.3) * 0.25; // ลมพัดเป็นระลอก (ทั้งช่อไปทางเดียวกัน)
+      // ของแพงวาดทีหลัง = อยู่บนสุดของช่อ ไม่โดนของถูกบัง (แพงพอกันค่อยเรียงบน → ล่าง)
       const tier = (d) => (d >= 1000 ? 3 : d >= 100 ? 2 : d >= 20 ? 1 : 0);
-      const list = gifts.filter((b) => !b.balloon).map((b) => ({ b, p: giftPos(b, t, now) })).sort((a, c) => tier(a.b.g.d) - tier(c.b.g.d) || a.p.y - c.p.y);
+      const list = gifts.map((b) => ({ b, sl: stepGift(b, t, dt, now, tY, bob, gust) }));
+      spread(dt);
+      list.sort((a, c) => tier(a.b.g.d) - tier(c.b.g.d) || a.b.y - c.b.y);
       // เงารถ
-      ctx.beginPath(); ctx.ellipse(0, CAR_Y - 4, CAR.w * 0.42, 14, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(60,40,90,.28)'; ctx.fill();
+      ctx.beginPath(); ctx.ellipse(0, CAR_Y - 4, CAR.w * CK * 0.42, 12, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(60,40,90,.28)'; ctx.fill();
       // รถ
-      ctx.save(); ctx.translate(0, CAR_Y - bob); ctx.scale(2 - sq, sq);
+      ctx.save(); ctx.translate(0, CAR_Y - bob); ctx.scale((2 - sq) * CK, sq * CK);
       if (carImg.ready()) ctx.drawImage(carImg.source, CAR.x, CAR.y, CAR.w, CAR.h);
       ctx.restore();
-      // เชือก (วาดก่อนของขวัญ ทับกันชนเล็กน้อย)
+      // เชือก: เกือบตึง (ลอยขึ้น) โค้งนิด ๆ ตามลม/ความเร็ว — รวมเป็น path เดียว วาดครั้งเดียว (เร็วแม้ของเยอะ)
+      const rope = new Path2D(), used = new Set();
+      for (const { b, sl } of list) {
+        if (b.life < 0.5) continue;
+        const ax = tieX(sl.ti), ex = b.x, ey = b.y + b.r * 0.5, sway = -b.vx * 0.09 - (ex - ax) * 0.04;
+        rope.moveTo(ax, tY); rope.quadraticCurveTo((ax + ex) / 2 + sway, (tY + ey) / 2 + 6, ex, ey);
+        used.add(sl.ti);
+      }
       ctx.lineCap = 'round';
-      for (const { b, p } of list) {
-        if (b.born > 0 && !b.landed) continue;
-        const tx = p.x, ty = p.y - b.r * 0.55 * p.depth, mx = (h.x + tx) / 2, my = Math.max(hy, ty) + 14 + Math.abs(tx - h.x) * 0.05; // เชือกหย่อนตามความยาว
-        ctx.globalAlpha = b.life;
-        ctx.beginPath(); ctx.moveTo(h.x, hy); ctx.quadraticCurveTo(mx, my, tx, ty);
-        ctx.lineWidth = 2.6; ctx.strokeStyle = 'rgba(90,60,120,.35)'; ctx.stroke();
-        ctx.lineWidth = 1.4; ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.stroke();
-      }
-      ctx.globalAlpha = 1;
-      // ลูกโป่งบนหลังคา: เชือก → ลูกโป่งสีพาสเทล มีของขวัญอยู่ตรงกลาง
-      for (const b of gifts) {
-        if (!b.balloon) continue;
-        if (b.dying) b.life -= 0.03;
-        const p = balloonPos(b, t), ay = p.ay - bob;
-        // ลูกโป่งตามรถแบบหน่วง ๆ (รถเด้ง/ได้ของขวัญใหม่ → ลูกโป่งกระตุกตามช้า ๆ แล้วแกว่งกลับ)
-        b.ly = (b.ly || 0) + ((-bob * 1.6 + punch.x * 3) - (b.ly || 0)) * (0.05 + (b.bi % 5) * 0.008);
-        b.lx = (b.lx || 0) + ((punch.x * (b.bi % 2 ? 2 : -2)) - (b.lx || 0)) * 0.04;
-        let x = p.x + b.lx, y = p.y + b.ly;
-        if (b.born > 0) { const k = Math.min(1, (now - b.born) / 900), e = Juice.easeOutBack ? Juice.easeOutBack(k) : k; x = b.sx + (x - b.sx) * e; y = b.sy + (y - b.sy) * Math.min(1, k * 1.1); if (k >= 1 && !b.landed) { b.landed = true; fx.sparkle(x, y, 6, '#fff6e8'); } }
-        const R = Math.max(22, Math.min(34, b.r * 1.2)), col = BAL_COLORS[b.bi % BAL_COLORS.length];
-        ctx.save(); ctx.globalAlpha = Math.max(0, b.life);
-        const ex = x, ey = y + R * 0.8, dx = ex - p.ax, dy = ey - ay, wind = Math.sin(t * 0.45) * 14 + Math.sin(t * 1.7 + b.bi) * 5 + b.lx * 0.8; // แกว่งเบา ๆ
-        ctx.beginPath(); ctx.moveTo(p.ax, ay); // เชือกหย่อน ๆ เป็นรูปตัว S เอนตามลม
-        ctx.bezierCurveTo(p.ax + dx * 0.15 - wind, ay + dy * 0.35 + 10, p.ax + dx * 0.75 + wind * 0.8, ay + dy * 0.7 + 6, ex, ey);
-        ctx.lineWidth = 1.6; ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.stroke();
-        // ของขวัญลอยเองเหมือนลูกโป่ง (ไม่มีลูกโป่งครอบ) ผูกเชือกที่ใต้ของขวัญ
-        ctx.translate(x, y); ctx.rotate(Math.sin(t * 1.5 + b.bi) * .1); drawGift(b.img, b.g.e, R * 1.6); ctx.restore();
-      }
+      ctx.lineWidth = 2.4; ctx.strokeStyle = 'rgba(90,60,120,.3)'; ctx.stroke(rope);
+      ctx.lineWidth = 1.2; ctx.strokeStyle = `rgba(255,255,255,${Math.max(0.5, Math.min(0.88, 1.15 - list.length / 220)).toFixed(2)})`; ctx.stroke(rope); // ของเยอะ → เชือกจางลงนิด ไม่เป็นแผงขาว
       // ปมผูกบนหลังคา
-      if (BAL_ON && gifts.some((b) => b.balloon)) { const a = balAnchor(); ctx.beginPath(); ctx.arc(a.x, a.y - bob, 4, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(120,90,160,.6)'; ctx.stroke(); }
-      // ตะขอ
-      ctx.beginPath(); ctx.arc(h.x, hy, 5, 0, Math.PI * 2); ctx.fillStyle = '#f4f0fb'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(120,90,160,.6)'; ctx.stroke();
-      // ของขวัญ (ไกล → ใกล้)
-      for (const { b, p } of list) {
+      for (const i of used) { ctx.beginPath(); ctx.arc(tieX(i), tY, 3.5, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(120,90,160,.6)'; ctx.stroke(); }
+      // ของขวัญ
+      for (const { b, sl } of list) {
         if (b.dying) b.life -= 0.03;
-        const size = b.r * 2 * p.depth;
-        if (b.g.d >= 20 && b.life > 0.5) Juice.aura(ctx, p.x, p.y, size * 0.5, b.g.d, t);
+        const age = b.born > 0 ? now - b.born : 1e9, grow = age < 500 ? 0.4 + 0.6 * (Juice.easeOutBack ? Juice.easeOutBack(age / 500) : age / 500) : 1;
+        if (age > 650 && !b.landed) { b.landed = true; fx.sparkle(b.x, b.y, 6, b.g.d >= 1000 ? '#ffe08a' : '#fff6e8'); }
+        const size = b.r * 2;
+        if (b.g.d >= 20 && b.life > 0.5) Juice.aura(ctx, b.x, b.y, size * 0.5, b.g.d, t);
         ctx.save(); ctx.globalAlpha = Math.max(0, b.life);
-        ctx.beginPath(); ctx.ellipse(p.x, p.y + size * 0.45, size * 0.38, size * 0.1, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(60,40,90,.22)'; ctx.fill(); // เงาบนพื้น
-        ctx.translate(p.x, p.y); ctx.rotate(p.rot); drawGift(b.img, b.g.e, size); ctx.restore();
+        ctx.translate(b.x, b.y); ctx.rotate(Math.max(-0.3, Math.min(0.3, b.vx * 0.003)) + Math.sin(t * 1.2 + sl.ph) * 0.06); // เอียงตามทิศที่ลอย
+        if (grow !== 1) ctx.scale(grow, grow);
+        drawGift(b.img, b.g.e, size); ctx.restore();
       }
       for (let i = gifts.length - 1; i >= 0; i--) if (gifts[i].life <= 0) gifts.splice(i, 1);
       fx.draw(ctx);
@@ -257,13 +287,13 @@
       for (let i = 0; i < k; i++) setTimeout(() => { addGift(g, e.__shot ? -1e6 : performance.now()); save(); }, i * (k > 25 ? 60 : 140));
       if (e.__partial) return; // ยังกดคอมโบอยู่ → แจ้งเตือน/บันทึก ทำตอนจบครั้งเดียว
       if (window.VJLCollect) VJLCollect.record(e, n);
-      if (CAR.music && fx.notes) fx.notes(0, CAR_Y + CAR.y + 20, unit >= 100 ? 5 : 2);
+      if (CAR.music && fx.notes) fx.notes(0, CAR_Y + CAR.y * CK + 20, unit >= 100 ? 5 : 2);
       if (!e.__quiet) showAlert(e, count);
     }
     Overlay.on('state', (st) => { if (window.VJLCollect) VJLCollect.backfill(st, onGift); }); // เติมชิ้นที่พลาด (deploy/รีโหลดกลางไลฟ์)
     if (window.VJLCollect && VJLCollect.live) VJLCollect.live(onGift); else Overlay.on('event', (e) => { if (e.type === 'gift' && !e.streaking) onGift(e); });
 
-    if (P('debug', '0') === '1') window.__car = { gifts, slots };
+    if (P('debug', '0') === '1') window.__car = { gifts, slots: () => slots, add: addGift };
     addEventListener('resize', resize); resize(); requestAnimationFrame(frame);
 
     if (!Overlay.connected) {

@@ -61,7 +61,8 @@ export function LiveStatusBar() {
   const mins = s.since ? Math.max(1, Math.round((Date.now() - s.since) / 60000)) : 0;
 
   return (
-    <div className={`mb-6 flex flex-col gap-3 rounded-2xl border p-4 shadow-sm sm:flex-row sm:items-center ${look.box}`}>
+    <div className="mb-6">
+    <div className={`flex flex-col gap-3 rounded-2xl border p-4 shadow-sm sm:flex-row sm:items-center ${look.box}`}>
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <div className="relative">
           <TikTokAvatar username={s.username} size={48} />
@@ -96,8 +97,17 @@ export function LiveStatusBar() {
         </div>
       )}
       {s.state === 'live' && <div className="text-xs text-muted sm:w-24 sm:text-right">{t('ไลฟ์มา {m} นาที', { m: mins })}</div>}
-      {s.state === 'waiting' && <p className="text-xs text-muted sm:max-w-56">{t('ระบบต่อเข้าไลฟ์ให้อัตโนมัติเมื่อเริ่มไลฟ์ — เปิดเว็บนี้ค้างไว้ได้เลย')}</p>}
-      {s.state === 'idle' && <p className="text-xs text-muted sm:max-w-56">{t('เริ่มไลฟ์ใน TikTok แล้วเปิดวิดเจ็ตในโปรแกรมไลฟ์ — สถานะจะเปลี่ยนเอง')}</p>}
+    </div>
+    {/* ยังไม่ไลฟ์ → ป้ายเด่น ๆ บอกวิธีใช้ให้ถูก (เปิดวิดเจ็ตตอนไลฟ์ — ไม่ต้องเปิดค้างไว้ทั้งวัน) */}
+    {(s.state === 'idle' || s.state === 'waiting') && (
+      <div className="mt-2 flex items-start gap-3 rounded-2xl border-2 border-amber-300 bg-gradient-to-r from-amber-50 via-pink-soft/60 to-amber-50 p-3.5 shadow-sm sm:items-center sm:p-4">
+        <span className="grid size-10 shrink-0 animate-pulse place-items-center rounded-full bg-amber-400 text-xl shadow">📢</span>
+        <div className="min-w-0">
+          <div className="text-base font-bold text-ink sm:text-lg">{t('วิดเจ็ตทำงานตอนคุณไลฟ์เท่านั้น')}</div>
+          <div className="mt-0.5 text-sm text-ink/80">{t('เริ่มไลฟ์ใน TikTok ก่อน แล้วเปิดโปรแกรมไลฟ์ (OBS / TikTok LIVE Studio) — ระบบต่อให้เองในไม่กี่วินาที · ไม่ต้องเปิดค้างไว้ก่อนไลฟ์นาน ๆ')}</div>
+        </div>
+      </div>
+    )}
     </div>
   );
 }

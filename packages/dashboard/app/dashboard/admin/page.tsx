@@ -15,7 +15,7 @@ import { useAuth } from '@/lib/auth';
 
 interface Overview {
   users: number; signupsToday: number; signups7d: number; paidActive: number; inTrial: number; liveNow: number;
-  tiktok: { day: string; attempts: number; success: number; failed: number; signKey: boolean };
+  tiktok: { day: string; attempts: number; success: number; failed: number; skipped?: number; signKey: boolean };
   server: { uptimeMin: number; rssMB: number; heapMB: number; load1: number; cpus: number; freeMemMB: number; totalMemMB: number };
 }
 interface UserRow {
@@ -168,6 +168,7 @@ export default function AdminPage() {
               <div>สำเร็จ <b className="text-mint">{ov.tiktok.success.toLocaleString('th-TH')}</b></div>
               <div>ไม่สำเร็จ <b className="text-pink">{ov.tiktok.failed.toLocaleString('th-TH')}</b> <span className="text-xs text-muted">(ส่วนใหญ่ = ยังไม่ขึ้นไลฟ์)</span></div>
               <div>Sign key {ov.tiktok.signKey ? <Badge tone="mint">ตั้งแล้ว</Badge> : <Badge tone="pink">ยังไม่ตั้ง</Badge>}</div>
+              <div className="sm:col-span-4 text-xs text-muted">เช็กแล้วยังไม่ไลฟ์ (ไม่ใช้โควตา EulerStream) <b className="text-ink">{(ov.tiktok.skipped ?? 0).toLocaleString('th-TH')}</b> ครั้ง</div>
             </div>
             {(() => { const used = Math.min(1, (ov.tiktok.attempts * 1.5) / EULER_DAILY); return (
               <>

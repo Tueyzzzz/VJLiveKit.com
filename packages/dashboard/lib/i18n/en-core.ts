@@ -537,4 +537,6 @@ export const EN_CORE: Record<string, string> = {
   "🥈 การ์ดท็อป 2 (อันดับ 2 ส่งได้ x2)": "🥈 Top-2 card (rank #2 gifts count x2)",
   "🥉 การ์ดท็อป 3 (อันดับ 3 ส่งได้ x2)": "🥉 Top-3 card (rank #3 gifts count x2)",
   "แก้ไขโปรไฟล์": "Edit profile",
+  "วิดเจ็ตทำงานตอนคุณไลฟ์เท่านั้น": "Widgets only work while you are LIVE",
+  "เริ่มไลฟ์ใน TikTok ก่อน แล้วเปิดโปรแกรมไลฟ์ (OBS / TikTok LIVE Studio) — ระบบต่อให้เองในไม่กี่วินาที · ไม่ต้องเปิดค้างไว้ก่อนไลฟ์นาน ๆ": "Start your TikTok LIVE first, then open your streaming app (OBS / TikTok LIVE Studio) — it connects within seconds. No need to keep it open long before going live.",
 };

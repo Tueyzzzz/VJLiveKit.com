@@ -284,7 +284,7 @@ export class RoomHub {
       .catch((err: unknown) => {
         const message = err instanceof Error ? err.message : String(err);
         entry.lastError = message.slice(0, 300); entry.lastErrorAt = Date.now(); entry.connectedAt = null;
-        if (!this.demo) connStats.bump('failed');
+        if (!this.demo) connStats.bump((err as { precheck?: boolean })?.precheck ? 'skipped' : 'failed'); // เช็กล่วงหน้าแล้วยังไม่ไลฟ์ = ไม่ได้ใช้โควตา
         this.io.to(RoomHub.roomChannel(key)).emit('status', {
           type: 'offline', message: `ยังเชื่อมต่อ @${key} ไม่ได้ (ยังไม่ได้ไลฟ์?) ระบบจะลองต่อใหม่ให้เอง`, detail: message,
         });

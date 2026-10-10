@@ -7,7 +7,10 @@ import { emptyStats, type LiveStats, type NormalizedUser, type TikTokEvent, type
 // tiktok-live-connector v2 เป็น ESM — โหลดแบบ optional (dynamic import) เพื่อให้ DEMO_MODE ทำงานได้แม้ยังไม่ติดตั้ง
 let TikTokLiveConnection: any = null;
 try {
-  ({ TikTokLiveConnection } = await import('tiktok-live-connector'));
+  const lib: any = await import('tiktok-live-connector');
+  TikTokLiveConnection = lib.TikTokLiveConnection;
+  // เช็ก "ไลฟ์อยู่ไหม" ด้วยหน้าเว็บ/API ของ TikTok เท่านั้น — ไม่ใช้โควตา EulerStream (ประหยัดโควตาไว้ใช้ตอนต่อจริง)
+  if (lib.IsLiveRouteConfig) lib.IsLiveRouteConfig.skipFetchRoomIdFromEulerRoute = true;
 } catch {
   console.warn('[tiktok] ยังไม่ได้ติดตั้ง tiktok-live-connector — ใช้ได้เฉพาะ DEMO_MODE');
 }
@@ -47,6 +50,8 @@ export class TikTokRoom extends EventEmitter {
   private connection: any = null;
   private mockTimer: NodeJS.Timeout | null = null;
   private connected = false;
+  /** นับการเช็กไลฟ์ล่วงหน้าที่บอกว่า "ไม่ไลฟ์" ติดกัน (ครบ 10 → ลองต่อจริงกันเช็กพลาด) */
+  private prechecks = 0;
   /** รหัสห้องไลฟ์ของ TikTok — เปลี่ยน = ไลฟ์ใหม่ (overlay ใช้ล้างอันดับที่จำไว้) */
   private roomId: string | null = null;
   stats: LiveStats = emptyStats();
@@ -128,6 +133,14 @@ export class TikTokRoom extends EventEmitter {
     const opts: Record<string, unknown> = {};
     if (config.signApiKey) opts.signApiKey = config.signApiKey;
     this.connection = new TikTokLiveConnection(this.username, opts);
+    // ยังไม่ไลฟ์ → จบตรงนี้ ไม่ต้องขอลายเซ็นจาก EulerStream (เดิมทุกครั้งที่ลองต่อห้องที่ยังไม่ไลฟ์กินโควตา)
+    // กันเช็กพลาด: ทุก ๆ 10 ครั้งที่บอกว่าไม่ไลฟ์ ลองต่อจริง 1 ครั้ง
+    if (++this.prechecks % 10 !== 0) {
+      let live: boolean | null = null;
+      try { live = Boolean(await this.connection.fetchIsLive()); } catch { live = null; } // เช็กไม่ได้ → ต่อจริงตามปกติ
+      if (live === false) { this.connection = null; const e = new Error("The requested user isn't online :( (precheck)") as Error & { precheck?: boolean }; e.precheck = true; throw e; }
+    }
+    this.prechecks = 0;
     this.bindRealEvents();
     const state = await this.connection.connect();
     this.connected = true;

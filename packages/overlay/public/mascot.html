@@ -15,26 +15,23 @@
   #shadow { position:absolute; left:50%; bottom:6px; width:230px; height:30px; margin-left:-115px; border-radius:50%;
     background:radial-gradient(closest-side, rgba(70,30,90,.32), rgba(70,30,90,0)); animation:shadowBreath 3s ease-in-out infinite; }
   #char { position:absolute; left:50%; bottom:10px; width:420px; height:420px; margin-left:-210px; transform-origin:50% 100%;
-    animation:breath 2.6s ease-in-out infinite, sway 5.2s ease-in-out infinite; filter:drop-shadow(0 6px 10px rgba(80,40,110,.25)); }
+    animation:breath 3.4s ease-in-out infinite; filter:drop-shadow(0 6px 10px rgba(80,40,110,.25)); }
   #char img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; opacity:0; transition:opacity .11s linear; }
   #char img.on { opacity:1; }
   #char.video img:not(.vid) { display:none; }
   #char img.vid { opacity:1; transition:none; }
-  #char.hop { animation:hop .5s cubic-bezier(.3,1.6,.5,1), breath 2.6s ease-in-out .5s infinite, sway 5.2s ease-in-out infinite; }
-  #char.dance { animation:dance .45s ease-in-out infinite; }
-  #char.wiggle { animation:wiggle .6s ease-in-out 2, breath 2.6s ease-in-out infinite; }
-  @keyframes wiggle { 25% { rotate:-5deg } 75% { rotate:5deg } }
-  @keyframes breath { 0%,100% { scale:1 1 } 50% { scale:1.03 .975 } }
-  @keyframes sway { 0%,100% { rotate:-1.6deg; translate:-3px 0 } 50% { rotate:1.6deg; translate:3px 0 } }
-  @keyframes shadowBreath { 50% { transform:scaleX(1.05); opacity:.85 } }
-  @keyframes hop { 0% { transform:translateY(0) scale(1.06,.94) } 45% { transform:translateY(-26px) scale(.97,1.04) } 100% { transform:translateY(0) } }
-  @keyframes dance { 0%,100% { transform:translateY(0) scale(1.04,.96) rotate(-3deg) } 25% { transform:translateY(-14px) scale(.97,1.04) rotate(0deg) } 50% { transform:translateY(0) scale(1.04,.96) rotate(3deg) } 75% { transform:translateY(-14px) scale(.97,1.04) rotate(0deg) } }
+  /* ท่าทางทั้งตัวต้องเหมือนคนจริง: ไม่เอียง/โยก/หมุน/บีบยืดทั้งรูป — มีแค่หายใจเบา ๆ กับขยับขึ้นลงตามจังหวะ */
+  #char.video { animation:none; } /* โหมดวิดีโอ: คลิปขยับเองอยู่แล้ว */
+  #char.hop { animation:hop .5s ease-out, breath 3.4s ease-in-out .5s infinite; }
+  #char.dance { animation:dance .76s ease-in-out infinite; }
+  @keyframes breath { 0%,100% { scale:1 1 } 50% { scale:1.004 1.01 } } /* อกขยายนิดเดียว */
+  @keyframes shadowBreath { 50% { transform:scaleX(1.02); opacity:.9 } }
+  @keyframes hop { 0% { transform:translateY(0) } 40% { transform:translateY(-14px) } 100% { transform:translateY(0) } } /* เขย่งดีใจ */
+  @keyframes dance { 0%,100% { transform:translateY(0) } 30% { transform:translateY(5px) } 60% { transform:translateY(-8px) } } /* ย่อเข่า-เด้งตามจังหวะ */
   #char.walking { animation:walkbob .54s ease-in-out infinite; }
-  @keyframes walkbob { 0%,100% { transform:translateY(0) rotate(-1.5deg) } 25% { transform:translateY(-8px) rotate(0deg) } 50% { transform:translateY(0) rotate(1.5deg) } 75% { transform:translateY(-8px) rotate(0deg) } }
-  #char.spin { animation:spin .9s cubic-bezier(.45,.05,.35,1); }
-  @keyframes spin { 0% { transform:scaleX(1) } 25% { transform:scaleX(.05) translateY(-10px) } 50% { transform:scaleX(-1) translateY(-16px) } 75% { transform:scaleX(.05) translateY(-10px) } 100% { transform:scaleX(1) } }
+  @keyframes walkbob { 0%,100% { transform:translateY(0) } 25% { transform:translateY(-5px) } 50% { transform:translateY(0) } 75% { transform:translateY(-5px) } }
   #char.bigjump { animation:bigjump .95s cubic-bezier(.3,.7,.4,1); }
-  @keyframes bigjump { 0% { transform:scale(1.12,.86) } 18% { transform:scale(1.12,.86) } 45% { transform:translateY(-120px) scale(.92,1.1) } 65% { transform:translateY(-120px) scale(1,1) } 88% { transform:translateY(0) scale(1.14,.84) } 100% { transform:translateY(0) scale(1,1) } }
+  @keyframes bigjump { 0%,18% { transform:translateY(8px) } 45%,62% { transform:translateY(-110px) } 88% { transform:translateY(6px) } 100% { transform:translateY(0) } } /* ย่อตัว → กระโดด → ลงย่อเข่า (ไม่บีบยืดรูป) */
 
   /* ของขวัญในมือ (ท่ารับของขวัญ) */
   #gift { position:absolute; left:50%; top:var(--gy,58%); width:92px; height:92px; margin:-46px 0 0 -46px; object-fit:contain; opacity:0; pointer-events:none;
@@ -232,14 +229,14 @@
       $char.classList.remove('walking');
       $walker.style.transition = '';
     }
-    async function spin() { pose(7); $char.classList.remove('spin'); void $char.offsetWidth; $char.classList.add('spin'); particles(['✨', '⭐', '💫'], 8, 1.6); if (SPARK !== 'off') twinkle(12, 1); await wait(950); $char.classList.remove('spin'); }
+    // หมุนตัวแบบคน: หันหลัง (ท่ามองจากด้านหลัง) แล้วหันกลับมาดีใจ — ไม่พลิกรูปแบน ๆ
+    async function spin() { pose(16); await wait(480); pose(7); hop(); particles(['✨', '⭐', '💫'], 8, 1.6); if (SPARK !== 'off') twinkle(12, 1); await wait(700); }
     async function bigJump() { pose(1); $char.classList.remove('bigjump'); void $char.offsetWidth; $char.classList.add('bigjump'); await wait(230); pose(7); particles(['🎉', '✨'], 8, 1.6); await wait(560); pose(1); await wait(200); $char.classList.remove('bigjump'); }
     const IDLE = [
       () => walk(),
-      () => spin(),
       async () => { for (let i = 0; i < 6; i++) { pose(i % 2 ? 5 : 4); await wait(230); } },                   // สะบัดผม
       async () => { pose(8); hop(); particles(['💗', '💕'], 4, 1.6); await wait(1100); },                      // ส่งหัวใจเล่น ๆ
-      async () => { $char.classList.add('wiggle'); pose(3); await wait(500); pose(1); await wait(700); $char.classList.remove('wiggle'); }, // โยกตัวยิ้ม
+      async () => { pose(3); await wait(1200); },                                                              // ยิ้มเฉย ๆ (ไม่โยกตัว)
       async () => { $char.classList.add('dance'); for (const n of [9, 10, 9, 10]) { pose(n); await wait(330); } $char.classList.remove('dance'); }, // เต้นสั้น ๆ
       async () => { pose(7); hop(); particles(['✨', '⭐'], 4, 1.4); await wait(900); },                        // ดีใจเบา ๆ
     ];

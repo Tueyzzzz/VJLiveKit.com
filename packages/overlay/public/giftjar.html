@@ -43,6 +43,7 @@
   <script src="js/overlay-client.js"></script>
   <script src="js/collect-store.js"></script>
   <script src="js/juice.js"></script>
+  <script>/* โหมดทดลอง ?physics=matter → ใช้ Matter.js (MIT) แทนฟิสิกส์เดิม */ if (/[?&]physics=matter\b/.test(location.search)) document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.20.0/matter.min.js"><\/script>');</script>
   <script>
   /*
    * โหลแก้ว (Gift Jar) — ของขวัญจริงจาก TikTok ตกลงโหลแก้วและกองซ้อนกันด้วยฟิสิกส์
@@ -906,7 +907,9 @@
         if (gi >= 0) { const G2 = FER.glass; b.x = (Math.random() - .5) * Math.max(0, G2.hw - r) * 1.6; b.y = G2.top + r + 1; b.px = b.x; b.py = b.y - 1; }
         else { b.x = side * (165 + Math.random() * 150); b.y = -260 - Math.random() * 120; b.px = b.x; b.py = b.y; } // เต็มทุกกระเช้า → ตกลงกองข้างฐาน
       }
+      if (MJ && out && dropFromTop) { const sd = Math.random() < 0.5 ? -1 : 1; b.x = sd * (SH.maxHW + 40 + Math.random() * 140); b.px = b.x; } // โหมดทดลอง: ของล้นตกข้างโหล
       bodies.push(b);
+      if (MJ) MJ.make(b);
       if (dropFromTop && !SHOT) { const w = b.gi >= 0 ? ferPin(b.gi) : { x: 0, y: 0 }; fx.sparkle(b.x + w.x, b.y + w.y, 5, b.d >= 1000 ? '#ffe08a' : '#fff6e8'); }
       if (dropFromTop && SH.music && fx.notes) fx.notes(b.x, SH.topY + 20, b.d >= 100 ? 5 : 2); // ธีมนักร้อง: โน้ตดนตรีลอย
       if (dropFromTop && SH.dome && SWIRL) swirlUntil = Math.max(swirlUntil, performance.now() + (b.d >= 1000 ? 4200 : b.d >= 100 ? 3200 : 2400)); // ลูกแก้ว: เขย่าเบา ๆ
@@ -971,7 +974,70 @@
     const fx = new Juice.Particles(), jarWobble = new Juice.Spring(140, 7), gulp = new Juice.Spring(260, 10);
     const WAVES = P('waves', '1') !== '0'; // ตู้ปลา: ของขวัญโยกตามคลื่น
     const SWIRL = P('swirl', '1') !== '0'; let swirlUntil = 0, swirlK = 0; // ลูกแก้วหิมะ: ของขวัญหมุนวนเมื่อมีของใหม่
+    // ================= โหมดทดลอง: ฟิสิกส์สมจริงด้วย Matter.js (?physics=matter) =================
+    // ผนังโหลสร้างจากโปรไฟล์เดิม (hw) เป็นแท่งบาง ๆ ต่อกัน · ของขวัญ = วงกลมแข็ง หมุนตามแรงกระแทก
+    // ?bounce=normal|high|orbit|float  ?bounceK=0.2..3 (ความแรง)
+    const MJ = P('physics', '') === 'matter' && window.Matter && SH.hw && !SH.solid && !FER && !SH.space && !SH.mouth ? (() => {
+      const M = window.Matter, engine = M.Engine.create({ enableSleeping: false });
+      engine.gravity.y = 1; engine.gravity.scale = G / (16.7 * 16.7); // ให้ตกเร็วเท่าระบบเดิม
+      engine.positionIterations = 8; engine.velocityIterations = 6;
+      const MODE = P('bounce', 'normal'), K = Math.max(0.2, Math.min(3, num('bounceK', 1)));
+      const REST = MODE === 'high' ? Math.min(0.95, 0.55 * K) : MODE === 'float' ? 0.5 : Math.min(0.8, 0.18 * K);
+      const T = 14, statics = [], add = (x, y, w, h, a = 0) => statics.push(M.Bodies.rectangle(x, y, w, h, { isStatic: true, angle: a, friction: 0.4, restitution: 0.2 }));
+      // ผนังซ้าย/ขวาตามความโค้งของโหล (ขอบในตรงกับโปรไฟล์)
+      const floorY = SH.floor ?? -3, top = SH.openY, N = 36;
+      for (const side of [-1, 1]) {
+        for (let i = 0; i < N; i++) {
+          const y0 = top + (floorY - top) * i / N, y1 = top + (floorY - top) * (i + 1) / N;
+          const x0 = side * SH.hw(Math.min(-0.5, y0)), x1 = side * SH.hw(Math.min(-0.5, y1));
+          const dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy) || 1, a = Math.atan2(dy, dx);
+          let nx = dy / L, ny = -dx / L; if (Math.sign(nx || side) !== side) { nx = -nx; ny = -ny; } // ตั้งฉากชี้ออกนอกโหล
+          add((x0 + x1) / 2 + nx * T / 2, (y0 + y1) / 2 + ny * T / 2, L + 3, T, a);
+        }
+      }
+      add(0, floorY + T / 2, SH.hw(Math.min(-0.5, floorY)) * 2 + T * 2, T); // ก้นโหล
+      if (SH.closed) add(0, top - T / 2, SH.openHW * 2 + T * 4, T); // ฝาปิด
+      add(0, T / 2, 6000, T); // พื้นจอ (กองนอกโหล)
+      add(-3000, -1500, T, 6000); add(3000, -1500, T, 6000);
+      M.Composite.add(engine.world, statics);
+      const center = { x: 0, y: (top + floorY) / 2 };
+      return {
+        M, engine, MODE, K,
+        make(b) {
+          const mb = M.Bodies.circle(b.x, b.y, b.r, { restitution: REST, friction: MODE === 'float' ? 0.01 : 0.08, frictionAir: MODE === 'float' ? 0.04 : 0.008, density: 0.001 * (1 + Math.log10(Math.max(1, b.d)) * 0.3) });
+          M.Body.setAngle(mb, b.rot); M.Body.setVelocity(mb, { x: (b.x - b.px), y: (b.y - b.py) });
+          M.Composite.add(engine.world, mb); b.mb = mb;
+        },
+        remove(b) { if (b.mb) { M.Composite.remove(engine.world, b.mb); b.mb = null; } },
+        step() {
+          // แรงพิเศษตามโหมด (เฉพาะของในโหล)
+          for (const b of bodies) {
+            const mb = b.mb; if (!mb || b.out) continue;
+            const dx = mb.position.x - center.x, dy = mb.position.y - center.y, d = Math.hypot(dx, dy) || 1;
+            if (MODE === 'orbit') { const f = 0.00004 * K * mb.mass; M.Body.applyForce(mb, mb.position, { x: (-dy / d) * f, y: (dx / d) * f - mb.mass * engine.gravity.scale * 0.6 }); } // หมุนวนรอบกลางโหล + โน้มถ่วงเบาลง
+            else if (MODE === 'float') { M.Body.applyForce(mb, mb.position, { x: (Math.random() - .5) * 0.00002 * K * mb.mass, y: -mb.mass * engine.gravity.scale * 0.85 }); } // ลอยเอื่อย ๆ
+          }
+          M.Engine.update(engine, 16.7);
+          for (const b of bodies) {
+            const mb = b.mb; if (!mb) continue;
+            b.px = b.x; b.py = b.y; b.x = mb.position.x; b.y = mb.position.y; b.rot = mb.angle; b.age = (b.age || 0) + 1;
+            b.vin = mb.velocity.y;
+            if (b.y > 200 || Math.abs(b.x) > 2900) b.dying = true; // หลุดจอ
+          }
+        },
+      };
+    })() : null;
+
     function step() {
+      if (MJ) { // โหมดทดลอง Matter.js
+        MJ.step(); fx.step(); jarWobble.step(1 / 60);
+        for (let i = bodies.length - 1; i >= 0; i--) {
+          const b = bodies[i];
+          if (b.dying) { b.life -= 0.04; if (b.life <= 0) { MJ.remove(b); bodies.splice(i, 1); save(); } }
+        }
+        checkFull();
+        return;
+      }
       { const left = swirlUntil - performance.now(); swirlK = left > 0 ? Math.min(1, left / 1500) : 0; } // อ่อนลงช่วงท้าย → ค่อย ๆ ตกกลับมากอง
       const VMAX = 14;
       if (FER) ferSwing();
@@ -1116,10 +1182,10 @@
       ctx.restore();
     }
     // ฟิสิกส์เดินตามเวลาจริง (ชดเชยเฟรมที่หาย เช่น OBS ซ่อน source / แท็บถูกพัก)
-    let lastT = performance.now(), acc = 0, nowT = 0;
+    let lastT = performance.now(), acc = 0, nowT = 0; const PERF = window.__perf = { ms: 0, n: 0 };
     function tick() {
       const now = performance.now(); acc += Math.min(4000, now - lastT); lastT = now;
-      let n = 0; while (acc >= 16.7 && n < 240) { step(); acc -= 16.7; n++; }
+      let n = 0; while (acc >= 16.7 && n < 240) { const t0 = performance.now(); step(); PERF.ms += performance.now() - t0; PERF.n++; acc -= 16.7; n++; } // PERF: เวลาคำนวณฟิสิกส์ต่อรอบ (?debug=1)
       if (n === 240) acc = 0;
     }
     setInterval(() => { if (document.hidden) tick(); }, 250);

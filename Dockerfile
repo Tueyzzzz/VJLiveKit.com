@@ -1,5 +1,5 @@
 # ---------- build stage: compile server + build dashboard (static) ----------
-FROM node:20-bookworm-slim AS build
+FROM node:22-bookworm-slim AS build
 WORKDIR /app
 COPY package.json package-lock.json tsconfig.base.json ./
 COPY packages/server/package.json ./packages/server/
@@ -12,7 +12,7 @@ RUN npx prisma generate --schema packages/server/prisma/schema.prisma \
  && npm run build
 
 # ---------- deps stage: production dependencies of the server only ----------
-FROM node:20-bookworm-slim AS deps
+FROM node:22-bookworm-slim AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY packages/server/package.json ./packages/server/
@@ -25,7 +25,7 @@ RUN npm ci --omit=dev --workspace @vjlivekit/server --include-workspace-root=fal
  && npm cache clean --force
 
 # ---------- runtime stage ----------
-FROM node:20-bookworm-slim AS runtime
+FROM node:22-bookworm-slim AS runtime
 WORKDIR /app
 # รหัส commit ที่ build (ไว้เช็กหลัง deploy ว่าเครื่องจริงรันเวอร์ชันใหม่แล้ว — /api/version)
 ARG GIT_SHA=dev

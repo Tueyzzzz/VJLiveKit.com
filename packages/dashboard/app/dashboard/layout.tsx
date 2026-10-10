@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
 import { LogOut, Shield, Menu, X } from 'lucide-react';
 import { NAV } from '@/lib/nav';
 import { useSupportUnread } from '@/components/SupportChat';
@@ -26,7 +26,15 @@ function NavImg({ img, Icon, active, dim }: { img?: string; Icon: React.Componen
     className={cx('-my-1.5 size-10 shrink-0 rounded-xl bg-pink-soft/60 object-cover ring-1 ring-white transition-transform', active ? 'scale-105 shadow-md ring-pink/40' : '', dim ? 'opacity-40 grayscale' : '')} />;
 }
 
+/** ส่ง query string ปัจจุบันขึ้นไปให้เมนู (เปลี่ยนแค่ ?pk=1 แล้วเมนูไฮไลต์ตามทันที) — Suspense จำเป็นใน static export */
+function SearchSync({ onChange }: { onChange: (s: string) => void }) {
+  const sp = useSearchParams(); const q = sp.toString();
+  useEffect(() => { onChange(q); }, [q, onChange]);
+  return null;
+}
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const [search, setSearch] = useState('');
   const { user, entitlements, isAdmin, loading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -55,6 +63,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </button>
           </div>
         </div>
+        <Suspense fallback={null}><SearchSync onChange={setSearch} /></Suspense>
         <nav className={cx('grid-cols-2 gap-1 px-3 pb-3 md:flex md:flex-col md:pb-0', menu ? 'grid' : 'hidden')}>
           {[...NAV, ...(isAdmin ? [{ href: '/dashboard/admin/', label: 'หลังบ้าน (แอดมิน)', img: 'admin', icon: Shield }] : [])].map(({ href, label, icon: Icon, img, ...rest }) => {
             if ('soon' in rest && rest.soon && !isAdmin) return (
@@ -64,7 +73,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             );
             // ลิงก์ที่มี ?type= (เช่น เมนูของขวัญ) → ไฮไลต์เมื่ออยู่หน้าตั้งค่าของวิดเจ็ตนั้น
             const [hp, hq] = href.split('?');
-            const active = hq ? pathname.replace(/\/$/, '') === hp.replace(/\/$/, '') && typeof window !== 'undefined' && window.location.search.includes(hq) : pathname === href || pathname === href.replace(/\/$/, '');
+            const samePath = pathname.replace(/\/$/, '') === hp.replace(/\/$/, '');
+            // เมนูที่มี ?query (เช่น PK Battle) ไฮไลต์เมื่อ query ตรง · เมนูหน้าเดียวกันแบบไม่มี query (Actions) ไม่ไฮไลต์ซ้อน
+            const claimed = NAV.some((n) => { const [np, nq] = n.href.split('?'); return nq && np.replace(/\/$/, '') === hp.replace(/\/$/, '') && search.includes(nq); });
+            const active = hq ? samePath && search.includes(hq) : samePath && !claimed;
             return (
               <Link key={href} href={href}
                 className={cx('flex min-h-11 shrink-0 items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition',

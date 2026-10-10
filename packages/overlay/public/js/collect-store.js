@@ -48,7 +48,11 @@
     /** ของขวัญทั้งกอง (คลี่จำนวนชิ้นออก) ล่าสุด max ชิ้น — รูปแบบกลาง {u: รูป, name, d: เพชร} */
     gifts(max = 400) {
       const out = [];
-      for (const x of read()) for (let i = 0; i < x.n; i++) out.push({ u: x.u || imgFor(x.e, x.d), name: x.e, em: x.em, d: x.d });
+      for (const x of read()) {
+        // ซ่อมของเก่า: กระถางต้นไม้เคยบันทึกคอมโบชิ้นใหญ่เป็น 1 ชิ้น (เช่น ส่ง ×5) → คืนจำนวนจริงจากรหัส (ช่องท้าย = repeatCount)
+        const rc = Number(String(x.id || '').split('|')[3]) || 1, n = x.n === 1 && rc > 1 ? Math.min(rc, 150) : x.n;
+        for (let i = 0; i < n; i++) out.push({ u: x.u || imgFor(x.e, x.d), name: x.e, em: x.em, d: x.d });
+      }
       return out.slice(-max);
     },
     has: () => read().length > 0,

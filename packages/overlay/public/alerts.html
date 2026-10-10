@@ -26,6 +26,8 @@
   .icon img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 8px rgba(0,0,0,.35))}
   @keyframes bounce{50%{transform:translateY(-8px) rotate(-6deg)}}
   .card.follow{border-color:rgba(143,227,207,.8)} .card.share{border-color:rgba(255,207,92,.8)} .card.big{border-color:rgba(255,106,168,.9);box-shadow:0 0 30px rgba(255,106,168,.55)}
+  /* PK: วิดีโอการ์ด (WebP เคลื่อนไหวพื้นใส) กลางจอ */
+  .pkfx{position:fixed;left:50%;top:50%;height:min(92vh,92vw*1.78);transform:translate(-50%,-50%);pointer-events:none;z-index:5}
 </style>
 </head>
 <body>
@@ -66,6 +68,15 @@
 
     // ---- คิวแจ้งเตือน ----
     const queue=[]; let busy=false;
+    // PK: การ์ดที่มีวิดีโอ → เล่นกลางจอ (ไฟล์ pk/<card>.webp) · โหลดล่วงหน้าไว้ เล่นได้ทันที
+    const PK_VIDEO={ glove:4600 };
+    const pkPre={}; for(const k in PK_VIDEO){ const im=new Image(); im.src='pk/'+k+'.webp'+(window.VJL_VERSION?'?v='+window.VJL_VERSION:''); pkPre[k]=im; }
+    function playPk(card){
+      if(!PK_VIDEO[card]) return;
+      const el=document.createElement('img'); el.className='pkfx'; el.alt='';
+      el.src='pk/'+card+'.webp?t='+Date.now(); // URL ใหม่ = เริ่มเล่นจากเฟรมแรกทุกครั้ง
+      document.body.appendChild(el); setTimeout(()=>el.remove(), PK_VIDEO[card]);
+    }
     function push(a){ queue.push(a); if(queue.length>20) queue.shift(); next(); }
     function next(){
       if(busy||!queue.length) return; busy=true;
@@ -93,11 +104,13 @@
       else if(e.type==='share'&&SHOW.share) push({ user:e.user, sub:'<b>แชร์</b>ไลฟ์นี้ ขอบคุณนะ!', emoji:'🔁', cls:'share' });
       else if(e.type==='pk'&&SHOW.pk&&e.pk){ // PK: การ์ด (นวม สายฟ้า ...) + ผลแพ้ชนะ
         const k=e.pk, side=k.side==='us'?' ให้เรา':k.side==='them'?' ฝั่งคู่แข่ง':'';
+        if(k.kind==='card'&&k.side!=='them') playPk(k.card);
         if(k.kind==='card') push({ user:{nickname:k.by||'PK'}, sub:`ใช้การ์ด <b>${Overlay.esc(k.label||'PK')}</b>${side}`, emoji:(k.label||'⚔️').split(' ')[0], big:k.side==='us', cls:'big' });
         else if(k.kind==='end'&&k.result) push({ user:{nickname:'ผล PK'}, sub:k.result==='win'?'<b>ชนะ!</b> 🏆 ขอบคุณทุกคนที่ช่วยกัน':k.result==='lose'?'สู้เต็มที่แล้ว ขอบคุณทุกคนนะ 💪':'<b>เสมอ!</b> 🤝', emoji:k.result==='win'?'🏆':'⚔️', big:k.result==='win', cls:'big' });
       }
     });
 
+    if(P('pktest','')) setInterval(()=>playPk(P('pktest','')), 5500); // ?pktest=glove ทดสอบวิดีโอการ์ด PK
     if(!Overlay.connected){ const names=['mimi','บิ๊ก','lisa','ต้นน้ำ','somchai']; const gifts=[['Rose',1],['Perfume',20],['Galaxy',1000],['Lion',2999]];
       setInterval(()=>{ const r=Math.random(), u={nickname:names[Math.floor(Math.random()*names.length)]};
         if(r<.6){ const g=gifts[Math.floor(Math.random()*gifts.length)], c=g[1]>=1000?1:1+Math.floor(Math.random()*3);

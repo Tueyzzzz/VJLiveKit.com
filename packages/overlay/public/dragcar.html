@@ -98,7 +98,7 @@
     function addGift(g, born) {
       let slot = freeSlot();
       const alive = gifts.filter((b) => !b.dying);
-      if (alive.length >= MAX || slot < 0) { const old = alive[0]; if (old) { old.dying = true; slot = old.slot; } }
+      if (alive.length >= MAX || slot < 0) { const old = (window.VJLCollect && VJLCollect.victims) ? VJLCollect.victims(gifts.map((x) => ({ ...x, d: x.g.d, ref: x })), 1).map((x) => x.ref)[0] : alive[0]; if (old) { old.dying = true; slot = old.slot; } }
       if (slot < 0) slot = 0;
       const r = Math.min(78, 18 * GIFT_SCALE * sizeFor(g.d, 4.2)); // ของแพงใหญ่ชัด ๆ (Lion/Universe ≈ 4 เท่า)
       gifts.push({ g, img: giftImg(g.u), slot, r, born, life: 1, sx: (Math.random() - .5) * 160, sy: CAR_Y - 420 - Math.random() * 120 });

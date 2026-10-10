@@ -71,6 +71,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
         ] },
         ...tint((v) => ['heart', 'orb', 'tank', 'pig', 'sundae', 'jstar', 'jbasket', 'cauldron', 'catbank', 'jsnowman', 'catbelly', 'jdino', 'jbear', 'jfrog', 'castle', 'fishbowl', 'hearttank', 'moon', 'gacha', 'shell', 'sub', 'snow', 'van'].includes(String(v.shape))),
         { key: 'full', label: 'เมื่อโหลเต็ม', type: 'select', when: (v) => !['car', 'van'].includes(String(v.shape)), def: 'spill', options: [['spill', 'ล้นออกมากองพื้นข้างโหล (ค่าเริ่มต้น)'], ['fade', 'ชิ้นเก่าสุดค่อย ๆ หายไป'], ['reset', 'ฉลอง แล้วเทโหลเริ่มใหม่']] },
+        { key: 'pileMax', label: 'กองพื้นนอกโหลสูงได้ไม่เกิน (% ของจอ)', type: 'range', min: 15, max: 90, step: 5, def: 45, unit: '%', hint: 'เกินแล้วของขวัญราคาถูกสุดค่อย ๆ จางออกก่อน (ของแพงอยู่นานสุด)' },
         { key: 'fullText', label: 'ข้อความตอนโหลเต็ม', type: 'text', def: 'โหลเต็มแล้ว! 🎉', when: (v) => v.full === 'reset' },
       ] },
       { title: 'ขนาดและตำแหน่ง', fields: [
@@ -114,6 +115,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
         { key: 'waves', label: 'ของขวัญโยกตามคลื่นใต้น้ำ', type: 'toggle', def: true },
         ...tint(() => true),
         { key: 'full', label: 'เมื่อโหลเต็ม', type: 'select', when: (v) => !['car', 'van'].includes(String(v.shape)), def: 'spill', options: [['spill', 'ล้นออกมากองพื้นข้างโหล (ค่าเริ่มต้น)'], ['fade', 'ชิ้นเก่าสุดค่อย ๆ หายไป'], ['reset', 'ฉลอง แล้วเทโหลเริ่มใหม่']] },
+        { key: 'pileMax', label: 'กองพื้นนอกโหลสูงได้ไม่เกิน (% ของจอ)', type: 'range', min: 15, max: 90, step: 5, def: 45, unit: '%', hint: 'เกินแล้วของขวัญราคาถูกสุดค่อย ๆ จางออกก่อน (ของแพงอยู่นานสุด)' },
         { key: 'fullText', label: 'ข้อความตอนโหลเต็ม', type: 'text', def: 'โหลเต็มแล้ว! 🎉', when: (v) => v.full === 'reset' },
       ] },
       { title: 'ขนาดและตำแหน่ง', fields: [

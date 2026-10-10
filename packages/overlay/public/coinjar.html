@@ -128,7 +128,7 @@
       bodies.push(b);
       if (mode !== 'restore') fx.sparkle(b.x, b.y, 4, b.d >= 1000 ? '#ffe08a' : '#fff6e8');
       const alive = bodies.filter((k) => !k.dying);
-      if (alive.length > MAX) alive[0].dying = true; // ชิ้นเก่าสุด · กันเครื่องช้าเท่านั้น
+      if (alive.length > MAX) ((window.VJLCollect && VJLCollect.victims) ? VJLCollect.victims(bodies, 1) : [alive[0]]).forEach((k) => { k.dying = true; }); // ถูกสุด-เก่าสุด
     }
 
     // ระยะจากจุดถึงเส้นตรง A-B
@@ -181,7 +181,7 @@
       const over = bodies.filter((b) => !b.dying && b.age > 120 && Math.abs(b.y - b.py) < 0.6 && b.y - b.r < limitY).length;
       if (!over) return;
       const alive = bodies.filter((b) => !b.dying).sort((p, q) => q.age - p.age);
-      for (let i = 0; i < Math.min(alive.length, Math.min(6, over)); i++) alive[i].dying = true;
+      ((window.VJLCollect && VJLCollect.victims) ? VJLCollect.victims(bodies, Math.min(6, over)) : alive.slice(0, Math.min(6, over))).forEach((k) => { k.dying = true; }); // ถูกก่อน แล้วเก่าก่อน
     }
     function step() {
       if (++pileCheck % 30 === 0) trimPile();

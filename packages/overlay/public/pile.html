@@ -60,7 +60,7 @@
       b.px = b.x + (Math.random() - .5) * 2; b.py = b.y - (restore ? 0 : 2);
       bodies.push(b);
       const alive = bodies.filter((k) => !k.dying);
-      if (alive.length > MAX) alive[0].dying = true; // เกินจำนวนสูงสุด → ชิ้นเก่าสุดจางออก
+      if (alive.length > MAX) ((window.VJLCollect && VJLCollect.victims) ? VJLCollect.victims(bodies, 1) : [alive[0]]).forEach((k) => { k.dying = true; }); // เกิน → ถูกสุด-เก่าสุดจางออก
     }
 
     // ---- ฟิสิกส์ (verlet + ตารางแบ่งช่อง ให้ลื่นแม้หลายร้อยชิ้น) ----

@@ -69,6 +69,11 @@
     demoBurst(onGift) { const n = Math.min(150, parseInt(q.get('fill') || '0', 10) || 0); for (let i = 0; i < n; i++) setTimeout(() => onGift(this.demoGift()), i * 60); },
     /** รูปของขวัญจากชื่อ (สำรองตอนอีเวนต์ไม่มีรูป) */
     imgFor,
+    /** เลือก n ชิ้นที่จะจางออกเมื่อจอเต็ม: ถูกก่อน แล้วเก่าก่อน (list เรียงเก่า→ใหม่, ราคาอยู่ที่ .d) */
+    victims(list, n = 1, keep) {
+      return list.map((b, i) => [b, i]).filter(([b]) => !b.dying && (!keep || keep(b)))
+        .sort((a, b) => (a[0].d || 0) - (b[0].d || 0) || a[1] - b[1]).slice(0, Math.max(0, n)).map(([b]) => b);
+    },
     clear: () => write([]),
     /** อีโมจิสำรองตอนรูปของขวัญโหลดไม่ได้ */
     emoji: (name, def) => ({ Rose: '🌹', 'Finger Heart': '🫰', Perfume: '🧴', Galaxy: '🌌', Lion: '🦁', Universe: '🪐', Heart: '❤️', TikTok: '🎵' })[name] || def,

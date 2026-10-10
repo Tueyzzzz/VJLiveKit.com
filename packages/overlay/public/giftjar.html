@@ -655,7 +655,7 @@
       if (dropFromTop && SH.music && fx.notes) fx.notes(b.x, SH.topY + 20, b.d >= 100 ? 5 : 2); // ธีมนักร้อง: โน้ตดนตรีลอย
       if (dropFromTop && SH.dome && SWIRL) swirlUntil = Math.max(swirlUntil, performance.now() + (b.d >= 1000 ? 4200 : b.d >= 100 ? 3200 : 2400)); // ลูกแก้ว: เขย่าเบา ๆ
       const alive = bodies.filter((k) => !k.dying);
-      if (alive.length > MAX) alive[0].dying = true;
+      if (alive.length > MAX) ((window.VJLCollect && VJLCollect.victims) ? VJLCollect.victims(bodies, 1) : [alive[0]]).forEach((k) => { k.dying = true; }); // จอเต็ม: ถูกสุด-เก่าสุดจางก่อน
     }
 
     function constrainOutside(b) {
@@ -780,7 +780,17 @@
     // เต็ม = มีชิ้นที่นิ่งแล้วกองสูงถึงไหล่โหล
     let fadeCooldown = 0, resetting = false, spilling = false;
     const conf = [];
+    // เพดานกองพื้นนอกโหล: สูงเกิน pileMax% ของจอ → ชิ้นถูกสุดค่อย ๆ จางออก (กองไม่บังหน้าวีเจ)
+    const OUT_MAX = Math.max(0.15, Math.min(0.9, num('pileMax', 45) / 100));
+    let outCheck = 0;
+    function trimOutside() {
+      if (++outCheck % 30) return;
+      const limitY = -(H / S()) * OUT_MAX;
+      const over = bodies.filter((b) => b.out && !b.dying && b.age > 180 && b.y - b.r < limitY).length;
+      if (over) ((window.VJLCollect && VJLCollect.victims) ? VJLCollect.victims(bodies, Math.min(6, over), (b) => b.out) : bodies.filter((b) => b.out && !b.dying).slice(0, Math.min(6, over))).forEach((b) => { b.dying = true; });
+    }
     function checkFull() {
+      trimOutside();
       if (resetting || SH.solid) return;
       // ชิ้นในโหลที่ไม่ได้กำลังตก (อายุ > 2 วิ) กองสูงถึงไหล่โหล = เต็ม
       // โดมอวกาศ (ลอยหมุน): ดูจากพื้นที่ที่ของขวัญใช้จริงในโดม — ชิ้นที่ลอยผ่านด้านบนไม่นับว่าเต็ม
@@ -802,7 +812,7 @@
       if (FULL_MODE === 'reset') return resetJar();
       if (fadeCooldown-- > 0) return;
       fadeCooldown = 8;
-      const old = bodies.find((b) => !b.dying && b.age > 90); // ชิ้นเก่าสุด (มักอยู่ก้นโหล) → กองยุบลงเอง
+      const old = (window.VJLCollect && VJLCollect.victims) ? VJLCollect.victims(bodies, 1, (b) => b.age > 90)[0] : bodies.find((b) => !b.dying && b.age > 90); // ถูกสุด-เก่าสุด → กองยุบลงเอง
       if (old) old.dying = true;
     }
     function resetJar() {

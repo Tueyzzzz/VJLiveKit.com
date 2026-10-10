@@ -602,4 +602,6 @@ export const EN_WIDGETS: Record<string, string> = {
   "ปิด": "Off",
   "⭐ มาสคอตของฉัน": "⭐ My mascot",
   "🔒 มาสคอตสั่งทำของลูกค้า (แอดมินเห็นคนเดียว)": "🔒 Customer custom mascots (admins only)",
+  "กองพื้นนอกโหลสูงได้ไม่เกิน (% ของจอ)": "Floor pile max height (% of screen)",
+  "เกินแล้วของขวัญราคาถูกสุดค่อย ๆ จางออกก่อน (ของแพงอยู่นานสุด)": "Beyond this, the cheapest gifts fade first (expensive ones stay longest)",
 };

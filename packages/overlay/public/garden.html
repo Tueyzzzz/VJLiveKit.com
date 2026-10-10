@@ -263,7 +263,7 @@
       if (born > 0) { const sl = slots[Math.floor(Math.random() * slots.length)], p = slotPoint(sl, performance.now() / 1000); x = p.x; y = p.y; }
       else { x = (Math.random() - .5) * 520; y = -320 - Math.random() * 260; } // โหลดจากที่จำไว้: โปรยลงมาใหม่
       ground.push({ g, img: giftImg(g.u), x, y, px: x - (Math.random() - .5) * 2, py: y + 1, r, rot: Math.random() * 6.28, born, big, life: 1 });
-      const alive = ground.filter((b) => !b.dying); if (alive.length > GROUND_MAX) alive[0].dying = true;
+      const alive = ground.filter((b) => !b.dying); if (alive.length > GROUND_MAX) ((window.VJLCollect && VJLCollect.victims) ? VJLCollect.victims(ground.map((b) => ({ ...b, d: b.g.d, ref: b })), 1).map((x) => x.ref) : [alive[0]]).forEach((b) => { b.dying = true; });
     }
     function addFlower(g, born) {
       if (g.big) {
@@ -281,7 +281,7 @@
       const limitY = GROUND_Y - (H / S()) * PILE_MAX;
       const over = ground.filter((b) => !b.dying && b.age > 180 && b.y - b.r < limitY).length; // อยู่มาเกิน 3 วิ (ไม่นับชิ้นที่กำลังร่วง)
       if (!over) return;
-      ground.filter((b) => !b.dying).slice(0, Math.min(6, over)).forEach((b) => { b.dying = true; }); // ground เรียงเก่า→ใหม่
+      ((window.VJLCollect && VJLCollect.victims) ? VJLCollect.victims(ground.map((b) => ({ ...b, d: b.g.d, ref: b })), Math.min(6, over)).map((x) => x.ref) : ground.filter((b) => !b.dying).slice(0, Math.min(6, over))).forEach((b) => { b.dying = true; }); // ถูกก่อน แล้วเก่าก่อน
     }
     function stepGround() {
       if (++gCheck % 30 === 0) trimGround();

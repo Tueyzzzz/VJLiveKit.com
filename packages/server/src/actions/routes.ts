@@ -105,7 +105,14 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
     const user = await prisma.user.findUnique({ where: { id: claims.userId }, select: { tiktokUsername: true, displayName: true } });
     if (!user?.tiktokUsername) return reply.code(400).send({ error: 'ยังไม่ได้ผูกชื่อ TikTok' });
     const nick = user.displayName || user.tiktokUsername;
-    const event = { type: 'gift', user: { uniqueId: user.tiktokUsername, nickname: nick }, giftName: 'ทดสอบ', comment: 'ทดสอบ' };
+    // กฎ PK: ทดสอบด้วยอีเวนต์ PK จริง → จอ FX เล่นวิดีโอการ์ดด้วย (เดิมส่งเป็นของขวัญ วิดีโอเลยไม่ขึ้น)
+    const tr = rule.trigger as { event?: string; pk?: string; pkSide?: 'us' | 'them' };
+    const u = { uniqueId: user.tiktokUsername, nickname: nick };
+    const pk = tr.event !== 'pk' ? null
+      : tr.pk === 'start' ? { kind: 'start' }
+      : tr.pk === 'win' || tr.pk === 'lose' || tr.pk === 'draw' ? { kind: 'end', result: tr.pk }
+      : { kind: 'card', card: !tr.pk || tr.pk === 'anycard' ? 'glove' : tr.pk, side: tr.pkSide ?? 'us', by: nick };
+    const event = pk ? { type: 'pk', user: u, pk } : { type: 'gift', user: u, giftName: 'ทดสอบ', comment: 'ทดสอบ' };
     const screens = (await getHub()?.emitOwnerCount(claims.userId, user.tiktokUsername, 'action', { ruleId: rule.id, name: rule.name, action: rule.action, event, ts: Date.now() })) ?? 0;
     return { ok: true, screens };
   });

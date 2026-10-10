@@ -97,17 +97,15 @@ export function LiveStatusBar() {
         </div>
       )}
       {s.state === 'live' && <div className="text-xs text-muted sm:w-24 sm:text-right">{t('ไลฟ์มา {m} นาที', { m: mins })}</div>}
-    </div>
-    {/* ป้ายเด่น ๆ: ต้องเปิดเว็บนี้ค้างไว้ระหว่างไลฟ์ (ล็อกวิดเจ็ตแบบ TikFinity) — ขึ้นตลอด ทั้งก่อนและระหว่างไลฟ์ */}
-    {(
-      <div className="mt-2 flex items-start gap-3 rounded-2xl border-2 border-amber-300 bg-gradient-to-r from-amber-50 via-pink-soft/60 to-amber-50 p-3.5 shadow-sm sm:items-center sm:p-4">
-        <span className="grid size-10 shrink-0 animate-pulse place-items-center rounded-full bg-amber-400 text-xl shadow">📢</span>
+      {/* ป้ายเตือน (เฉพาะบนเว็บ ไม่ขึ้นบนวิดเจ็ตใน OBS): ต้องเปิดเว็บนี้ค้างไว้ระหว่างไลฟ์ — อยู่ฝั่งขวาของแถบสถานะ */}
+      <div className={`flex items-center gap-2.5 rounded-xl border-2 border-amber-300 bg-gradient-to-r from-amber-100/80 to-pink-soft/70 px-3 py-2 sm:ml-auto ${s.state === 'live' ? 'sm:max-w-60' : 'sm:max-w-md'}`}>
+        <span className="grid size-8 shrink-0 animate-pulse place-items-center rounded-full bg-amber-400 text-base shadow">📢</span>
         <div className="min-w-0">
-          <div className="text-base font-bold text-ink sm:text-lg">{t('เปิดเว็บนี้ค้างไว้ระหว่างไลฟ์')}</div>
-          <div className="mt-0.5 text-sm text-ink/80">{t('วิดเจ็ตใน OBS / TikTok LIVE Studio ทำงานเฉพาะตอนเปิดเว็บนี้ไว้ — อย่าปิดแท็บนี้จนจบไลฟ์ (ย่อหน้าต่าง / เปิดหน้าอื่นในเว็บนี้ได้)')}</div>
+          <div className="text-sm font-bold text-ink">{t('เปิดเว็บนี้ค้างไว้ระหว่างไลฟ์')}</div>
+          {s.state !== 'live' && <div className="text-xs text-ink/75">{t('วิดเจ็ตใน OBS / TikTok LIVE Studio ทำงานเฉพาะตอนเปิดเว็บนี้ไว้ — อย่าปิดแท็บนี้จนจบไลฟ์ (ย่อหน้าต่าง / เปิดหน้าอื่นในเว็บนี้ได้)')}</div>}
         </div>
       </div>
-    )}
+    </div>
     </div>
   );
 }

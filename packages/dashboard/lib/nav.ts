@@ -7,7 +7,7 @@ export const NAV = [
   { href: '/dashboard/actions/', label: 'Actions & Events', img: 'actions', desc: 'ได้ของขวัญ → เล่นเสียง เอฟเฟกต์ ป้ายไฟ', icon: Zap },
   { href: '/dashboard/sounds/', label: 'เสียงแจ้งเตือน', img: 'sounds', desc: 'เสียงดังที่เว็บนี้ ไม่ต้องใส่ลิงก์', icon: Volume2 },
   { href: '/dashboard/beatpad/', label: 'Beat Pad (กดเสียง)', img: 'beatpad', desc: 'แผงปุ่มเสียงมีม กดเล่นระหว่างไลฟ์', icon: Grid3x3 },
-  { href: '/dashboard/tts/', label: 'อ่านแชทออกเสียง (TTS)', img: 'tts', desc: 'อ่านแชทและของขวัญให้ฟังอัตโนมัติ', icon: Speech },
+  { href: '/dashboard/tts/', label: 'อ่านแชทออกเสียง (TTS)', img: 'tts', desc: 'อ่านแชทและของขวัญให้ฟังอัตโนมัติ', icon: Speech, soon: true }, // รอเปิดเสียงไทย Google — เทาไว้ก่อน (แอดมินยังเข้าได้)
   { href: '/dashboard/widgets/settings/?type=fxmenu', label: 'เมนูของขวัญ', img: 'fxmenu', desc: 'บอกผู้ชมว่าส่งอะไรได้อะไร', icon: ScrollText },
   { href: '/dashboard/widgets/settings/?type=sign', label: 'ป้ายไฟ LED', img: 'sign', desc: 'ป้ายไฟข้อความวิ่งบนจอ', icon: Lightbulb },
   { href: '/dashboard/donate/', label: 'โดเนทขึ้นจอ', img: 'donate', desc: 'รับโดเนทผ่านพร้อมเพย์ ขึ้นจอทันที', icon: Wallet, soon: true }, // กำลังพัฒนา — เทาไว้ก่อน

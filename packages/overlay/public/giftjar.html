@@ -609,7 +609,7 @@
       const im = (c, side) => cache[c + side] ||= Juice.skin(`themes/ferris-cab${c === 'pink' ? '' : '-' + c}${side}.webp`, 0, 1, 1);
       const cabs = Array.from({ length: f.n }, (_, i) => { const c = ORDER.includes(pick) ? pick : ORDER[i % ORDER.length]; return { back: im(c, ''), front: im(c, '-front'), sw: 0 }; });
       return { ...f, kc, ks, kw, cabs, spin: num('spin', 40), gr: 0.55,
-        wheel: Juice.skin('themes/ferris-wheel.webp', 0, 1, 1), stand: Juice.skin('themes/ferris-stand.webp', 0, 1, 1),
+        wheel: Juice.skin('themes/ferris-wheel.webp', num('hue', 0), 1, 1), stand: Juice.skin('themes/ferris-stand.webp', num('hue', 0), 1, 1), // สีธีม: วงล้อ + ฐาน
         // ช่องกระจกในกระเช้า (หน่วยเทียบจุดหมุน = กลางตัวกระเช้า) · floor = ขอบชามด้านใน → ของขวัญวางบนพื้นกระเช้าจริง
         glass: { hw: (264 - 20) / 2 * kc - 2, top: (96 - 170) * kc, floor: (222 - 170) * kc } };
     })() : null;

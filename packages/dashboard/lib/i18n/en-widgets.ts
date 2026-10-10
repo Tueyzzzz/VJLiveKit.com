@@ -637,4 +637,8 @@ export const EN_WIDGETS: Record<string, string> = {
   "ความเร็ววงล้อ (วินาทีต่อรอบ)": "Wheel speed (seconds per turn)",
   " วิ": " s",
   "0 = หยุดนิ่ง · ของขวัญขึ้นกระเช้าล่างสุดก่อน เต็มทุกกระเช้าแล้วกองพื้นข้างฐาน": "0 = still · gifts board the lowest cabin first; when all cabins are full they pile beside the base",
+  "🧁 ขนม & เครื่องดื่ม": "🧁 Sweets & drinks",
+  "🧸 ตุ๊กตา & ของเล่น": "🧸 Plush & toys",
+  "💎 หรูหรา & โรแมนติก": "💎 Luxe & romantic",
+  "🎡 สวนสนุก & เทศกาล": "🎡 Fun fair & festivals",
 };

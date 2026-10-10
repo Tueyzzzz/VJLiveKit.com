@@ -160,13 +160,13 @@ export function setupRealtime(httpServer: HttpServer): RoomHub {
         socket.leave(RoomHub.roomChannel(room));
         if (ownerId) socket.leave(RoomHub.ownerChannel(ownerId, room));
         hub.detach(room, ownerId);
-        if (!socket.disconnected) socket.emit('status', { type: 'error', fatal: true, message: '⏸ เปิดหน้าเว็บ vjlivekit.com ค้างไว้ระหว่างไลฟ์ วิดเจ็ตถึงจะทำงาน' });
+        if (!socket.disconnected) socket.emit('status', { type: 'error', fatal: true, message: '⏸ เริ่มไลฟ์แล้วเข้าเว็บ vjlivekit.com 1 ครั้ง วิดเจ็ตจะทำงานจนจบไลฟ์ (เข้าแล้วปิดเว็บได้)' });
       };
       if (!ownerId) { on(); socket.once('disconnect', off); return; }
       const unwatch = hub.watchPresence(ownerId, { on, off, room });
       socket.once('disconnect', () => { unwatch(); off(); });
       if (hub.isPresent(ownerId)) on(); else off_notice();
-      function off_notice() { socket.emit('status', { type: 'error', fatal: true, message: '⏸ เปิดหน้าเว็บ vjlivekit.com ค้างไว้ระหว่างไลฟ์ วิดเจ็ตถึงจะทำงาน' }); }
+      function off_notice() { socket.emit('status', { type: 'error', fatal: true, message: '⏸ เริ่มไลฟ์แล้วเข้าเว็บ vjlivekit.com 1 ครั้ง วิดเจ็ตจะทำงานจนจบไลฟ์ (เข้าแล้วปิดเว็บได้)' }); }
     })();
   });
 

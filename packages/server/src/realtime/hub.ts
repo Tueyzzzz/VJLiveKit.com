@@ -6,6 +6,25 @@ import { connStats } from './connstats.js';
 import { trackLive, listLives } from './lives.js';
 import { settings } from '../settings/index.js';
 import { config } from '../config/index.js';
+import fs from 'node:fs';
+import path from 'node:path';
+
+/**
+ * "สิทธิ์ไลฟ์" ของวีเจที่กำลังไลฟ์อยู่ — เก็บลงดิสก์ ให้ deploy/รีสตาร์ทกลางไลฟ์แล้ววิดเจ็ตไม่ถูกพัก (ล็อกวิดเจ็ตเปิดอยู่)
+ * ต่ออายุทุกนาทีระหว่างไลฟ์ · ไลฟ์จบแล้วหมดอายุเองใน 15 นาที
+ */
+const GRANT_FILE = path.join(process.env.SNAPSHOT_DIR ? path.dirname(process.env.SNAPSHOT_DIR) : path.resolve(process.cwd(), '../../data'), 'live-grants.json');
+const GRANT_MS = 15 * 60_000;
+const grants = new Map<string, number>();
+try { for (const [k, v] of Object.entries(JSON.parse(fs.readFileSync(GRANT_FILE, 'utf8')) as Record<string, number>)) if (v > Date.now()) grants.set(k, v); } catch { /* ยังไม่มีไฟล์ */ }
+let grantSave: ReturnType<typeof setTimeout> | null = null;
+function saveGrants(): void {
+  if (grantSave) return;
+  grantSave = setTimeout(() => {
+    grantSave = null;
+    try { fs.mkdirSync(path.dirname(GRANT_FILE), { recursive: true }); fs.writeFileSync(GRANT_FILE, JSON.stringify(Object.fromEntries(grants))); } catch { /* ignore */ }
+  }, 2000);
+}
 
 /** โหลดกฎ Actions ที่เปิดใช้ของผู้ใช้หนึ่งคน */
 export type RulesProvider = (userId: string) => Promise<ActionRule[]>;
@@ -58,6 +77,11 @@ export class RoomHub {
     current = this;
     // ทุก 3 นาที: ห้องที่ระบบคิดว่ายังไลฟ์ → ถาม TikTok ซ้ำ ถ้าจบแล้วแต่สัญญาณจบไม่มา ให้ปิดเอง (กันสถานะ "ไลฟ์อยู่" ค้าง)
     if (!demo) setInterval(() => {
+      for (const e of this.rooms.values()) if (e.room.getState().connected) this.grantLive(e);
+      // สิทธิ์ไลฟ์หมดอายุ (ไลฟ์จบแล้ว) + ไม่ได้เปิดเว็บ → พักวิดเจ็ตที่ไม่ได้ไลฟ์ (เหมือนปิดเว็บ)
+      for (const [id, until] of grants) if (until < Date.now()) { grants.delete(id); saveGrants(); if (!this.presence.get(id) && !this.graceTimers.has(id)) this.pauseIdle(id); }
+    }, 60_000).unref();
+    if (!demo) setInterval(() => {
       for (const e of this.rooms.values()) {
         if (!e.room.getState().connected) continue;
         void e.room.checkLive().then((live) => { if (live === false) { console.log('[hub] stale live → end', e.room.username); e.room.endStale(); } });
@@ -85,7 +109,14 @@ export class RoomHub {
   /** วีเจคนนี้เปิดเว็บอยู่ไหม (หน้าแอดมิน) */
   webOpen(ownerId: string): boolean { return (this.presence.get(ownerId) ?? 0) > 0; }
 
-  isPresent(ownerId: string): boolean { if (!settings().presenceLock) return true; return (this.presence.get(ownerId) ?? 0) > 0 || this.graceTimers.has(ownerId); }
+  isPresent(ownerId: string): boolean { if (!settings().presenceLock) return true; return (this.presence.get(ownerId) ?? 0) > 0 || this.graceTimers.has(ownerId) || (grants.get(ownerId) ?? 0) > Date.now(); }
+  /** ห้องนี้กำลังไลฟ์ → เจ้าของวิดเจ็ตทุกคนในห้องได้ "สิทธิ์ไลฟ์" ต่ออีก 15 นาที */
+  private grantLive(entry: RoomEntry): void {
+    const until = Date.now() + GRANT_MS;
+    for (const id of entry.owners.keys()) grants.set(id, until);
+    for (const [k, v] of grants) if (v < Date.now()) grants.delete(k);
+    saveGrants();
+  }
 
   /** แดชบอร์ดเปิด/ปิด → ปลุก/พักวิดเจ็ตของวีเจคนนั้น */
   presenceUp(ownerId: string): void {
@@ -270,6 +301,7 @@ export class RoomHub {
           throw new Error('ยังไม่ได้เริ่มไลฟ์ (ห้องเก่าที่จบแล้ว)');
         }
         entry.connectedAt = Date.now(); entry.lastError = null; entry.fails = 0;
+        if (!this.demo) this.grantLive(entry);
         if (this.demo) return;
         connStats.bump('success');
         // ไลฟ์เดิม (เซิร์ฟเวอร์เพิ่งรีสตาร์ท/deploy) → โหลดสถิติ/อันดับที่บันทึกไว้กลับมา

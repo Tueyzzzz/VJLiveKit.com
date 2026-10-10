@@ -719,7 +719,7 @@
         }
         if (SH.space && !b.out && !b.eat) { // โดมอวกาศ: ไร้แรงโน้มถ่วง ลอยหมุนวนช้า ๆ รอบกลางโดม
           const dx = b.x, dy = b.y - SH.dome.cy, dd = Math.hypot(dx, dy) || 1;
-          b.px += (dy / dd) * 0.02; b.py -= (dx / dd) * 0.02; g *= 0.12; damp = 0.992;
+          b.px += (dy / dd) * 0.012; b.py -= (dx / dd) * 0.012; g *= 0.38; damp = 0.99; // จมลงพื้นโดมช้า ๆ (ไม่ค้างลอยเหลือที่ว่างด้านล่าง)
         }
         if (swirlK > 0 && !b.out && !b.eat) { // ลูกแก้ว: หมุนวนเบา ๆ รอบกลางโดม
           const dx = b.x, dy = b.y - SH.dome.cy, d = Math.hypot(dx, dy) || 1;
@@ -783,7 +783,10 @@
     function checkFull() {
       if (resetting || SH.solid) return;
       // ชิ้นในโหลที่ไม่ได้กำลังตก (อายุ > 2 วิ) กองสูงถึงไหล่โหล = เต็ม
-      const full = bodies.some((b) => !b.out && !b.dying && b.age > 120 && b.y - b.r < SH.fullY);
+      // โดมอวกาศ (ลอยหมุน): ดูจากพื้นที่ที่ของขวัญใช้จริงในโดม — ชิ้นที่ลอยผ่านด้านบนไม่นับว่าเต็ม
+      const full = SH.space
+        ? bodies.reduce((a, b) => a + (!b.out && !b.dying ? Math.PI * b.r * b.r : 0), 0) > Math.PI * SH.dome.r * SH.dome.r * 0.5
+        : bodies.some((b) => !b.out && !b.dying && b.age > 120 && b.y - b.r < SH.fullY);
       spilling = full && FULL_MODE === 'spill';
       if (FULL_MODE === 'spill') {
         // ชิ้นที่ค้างเหนือปากโหล (เช่น ของเก่าที่โหลดกลับมาตอนรีเฟรช) → ทะลักออกข้าง

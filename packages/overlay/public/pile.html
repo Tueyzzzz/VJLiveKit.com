@@ -30,13 +30,13 @@
   /*
    * กองทับกัน — ไม่มีโหล ของขวัญจริงตกลงมาจากด้านบน แล้วกองซ้อนกันเป็นภูเขาที่ขอบล่างของกรอบ
    * ใช้กองกลางร่วมกับแบบอื่น (เปลี่ยนแบบแล้วของไม่หาย)
-   *   width=60 (% ความกว้างกอง) · max=600 · giftScale=1 · alert=1 · minCoins=0 · glow=1 · reset=1
+   *   width=100 (% ความกว้างกอง) · max=600 · giftScale=1 · alert=1 · minCoins=0 · glow=1 · reset=1
    */
   (function () {
     const P = (k, d) => Overlay.param(k, d);
     const num = (k, d) => { const v = parseFloat(P(k, d)); return Number.isFinite(v) ? v : d; };
     const GIFT_SCALE = Math.max(.4, Math.min(3, num('giftScale', 1))), SHOW_ALERT = P('alert', '1') !== '0', MIN_COINS = num('minCoins', 0);
-    const WIDTH = Math.max(.2, Math.min(1, num('width', 60) / 100)), GLOW = P('glow', '1') !== '0';
+    const WIDTH = Math.max(.2, Math.min(1, num('width', 100) / 100)), GLOW = P('glow', '1') !== '0';
     const MAX = Math.round(Math.max(60, Math.min(1500, num('max', 600))));
     const canvas = document.getElementById('fx'), ctx = canvas.getContext('2d'), $alert = document.getElementById('alert');
     const DPR = Math.min(2, window.devicePixelRatio || 1);

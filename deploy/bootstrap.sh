@@ -171,7 +171,13 @@ if ! db_ok; then
   if ! db_ok; then log "รีสตาร์ท Postgres"; $DC restart postgres; for _ in $(seq 1 45); do db_ok && break; sleep 4; done; fi
   db_ok && log "✅ ฐานข้อมูลพร้อม" || { log "❌ ฐานข้อมูลยังไม่พร้อม"; $DC logs --tail 60 postgres || true; }
 fi
-$DC exec -T caddy caddy reload --config /etc/caddy/Caddyfile >/dev/null 2>&1 || true
+# Caddyfile ถูก mount แบบไฟล์เดี่ยว: อัปโหลดไฟล์ใหม่ = inode ใหม่ → คอนเทนเนอร์ยังเห็นไฟล์เก่า
+# ถ้าไม่ตรงกัน → restart caddy (สะดุด ~1-2 วิ วิดเจ็ตต่อใหม่เอง) · ถ้าตรงแล้ว → reload เฉย ๆ
+if ! $DC exec -T caddy cat /etc/caddy/Caddyfile 2>/dev/null | cmp -s - deploy/Caddyfile; then
+  log "Caddyfile เปลี่ยน → restart caddy"; $DC restart caddy >/dev/null 2>&1 || true
+else
+  $DC exec -T caddy caddy reload --config /etc/caddy/Caddyfile >/dev/null 2>&1 || true
+fi
 docker logout ghcr.io >/dev/null 2>&1 || true
 docker image prune -f >/dev/null
 

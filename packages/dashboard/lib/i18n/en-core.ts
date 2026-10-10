@@ -506,4 +506,5 @@ export const EN_CORE: Record<string, string> = {
   "🎡 ชิงช้าสวรรค์สะสมของขวัญ": "🎡 Ferris wheel gift collector",
   "💌 กล่องจดหมายหัวใจ": "💌 Heart mailbox",
   "🎮 โหลสายเกมมิ่ง": "🎮 Gaming-style jar",
+  "เลือกวิดเจ็ต": "Choose widgets",
 };

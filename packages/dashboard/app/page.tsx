@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { Coins, Bell, Target, MessageCircle, Volume2, Sparkles, Trophy, UserPlus, Gift, Trees, Car, WandSparkles } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { PlanCards, usePlans } from '@/components/Pricing';
+import { PromoVideos } from '@/components/PromoVideos';
 import { Button, Card, Spinner } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { getToken } from '@/lib/api';
@@ -24,12 +25,6 @@ const FEATURES = [
   { icon: Trophy, title: 'Top Gifters & ลีก', img: '/overlay/thumbs/topgifters-a.webp', text: 'จัดอันดับคนส่งเพชร · โดมปลดล็อกลีก TikTok' },
   { icon: Volume2, title: 'อ่านแชทออกเสียง', img: '/menu/tts.webp', text: 'TTS ภาษาไทย อ่านแชทและกิฟต์' },
   { icon: Sparkles, title: 'Actions & Events', img: '/menu/actions.webp', text: 'ได้กิฟต์ X → เล่นเสียง/รูป/วิดีโอ Y อัตโนมัติ' },
-];
-
-const PROMOS = [
-  { src: '/promo/promo-1.mp4', poster: '/promo/promo-1.jpg', title: '🎡 ชิงช้าสวรรค์สะสมของขวัญ' },
-  { src: '/promo/promo-2.mp4', poster: '/promo/promo-2.jpg', title: '💌 กล่องจดหมายหัวใจ' },
-  { src: '/promo/promo-3.mp4', poster: '/promo/promo-3.jpg', title: '🎮 โหลสายเกมมิ่ง' },
 ];
 
 const FAQ: [string, string][] = [
@@ -101,14 +96,7 @@ export default function Home() {
       <section className="mx-auto max-w-6xl px-4 pb-20">
         <h2 className="mb-2 text-center font-display text-3xl">{t('ตัวอย่างบนไลฟ์จริง')}</h2>
         <p className="mb-6 text-center text-sm text-muted">{t('ของขวัญตกลงวิดเจ็ตสด ๆ ระหว่างไลฟ์ — เลือกแบบได้กว่า 80 แบบ')}</p>
-        <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0">
-          {PROMOS.map((p) => (
-            <figure key={p.src} className="w-[68vw] max-w-[300px] shrink-0 snap-center sm:w-auto sm:max-w-none">
-              <video src={p.src} poster={p.poster} autoPlay muted loop playsInline preload="none" className="aspect-[9/16] w-full rounded-3xl bg-[#17121f] object-cover shadow-lg" />
-              <figcaption className="mt-2 text-center text-sm text-muted">{t(p.title)}</figcaption>
-            </figure>
-          ))}
-        </div>
+        <PromoVideos />
       </section>
 
       <section className="mx-auto grid max-w-6xl gap-4 px-4 pb-20 sm:grid-cols-2 lg:grid-cols-4">

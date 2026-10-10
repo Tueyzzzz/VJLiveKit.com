@@ -7,6 +7,7 @@ import { Alert, Badge, Button, Card, Field, Input, PageHeader } from '@/componen
 import { ChangePassword } from '@/components/ChangePassword';
 import { ActiveRules } from '@/components/ActiveRules';
 import { TikTokAvatar } from '@/components/TikTokAvatar';
+import { PromoVideos } from '@/components/PromoVideos';
 import { api, planLabel, type Me } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useT } from '@/lib/i18n';
@@ -81,6 +82,15 @@ export default function OverviewPage() {
             : <Link key={n.href} href={n.href} className="group rounded-2xl border border-line bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:border-pink/40 hover:shadow-md">{body}</Link>;
         })}
       </div>
+
+      {/* คลิปตัวอย่างบนไลฟ์จริง → เห็นภาพว่าวิดเจ็ตหน้าตาแบบไหนก่อนตั้งค่า */}
+      <Card className="mb-6">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-medium">{t('ตัวอย่างบนไลฟ์จริง')}</h2>
+          <Link href="/dashboard/widgets/" className="inline-flex items-center gap-1 text-sm font-medium text-pink hover:underline">{t('เลือกวิดเจ็ต')} <ArrowRight className="size-4" /></Link>
+        </div>
+        <PromoVideos small />
+      </Card>
 
       <Card>
         <h2 className="mb-4 font-medium">{t('โปรไฟล์')}</h2>

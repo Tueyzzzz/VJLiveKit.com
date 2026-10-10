@@ -530,7 +530,10 @@ function ActionsInner() {
               const added = have.has(tp.rule.name);
               return (
                 <div key={tp.rule.name} className="flex flex-col rounded-xl border border-line bg-canvas/50 p-3">
-                  <div className="text-2xl">{tp.icon}</div>
+                  {/* PK: รูปวีเจประจำเทมเพลต (ตามการ์ด/สถานการณ์) · เทมเพลตอื่นใช้อีโมจิ */}
+                  {tp.rule.trigger.event === 'pk' && tp.rule.trigger.pk
+                    ? <img src={`/pk-tpl/${tp.rule.trigger.pk}.webp`} alt="" width={96} height={96} loading="lazy" className="mx-auto -mt-1 size-24 object-contain drop-shadow-md" />
+                    : <div className="text-2xl">{tp.icon}</div>}
                   <div className="mt-1 text-sm font-medium leading-snug">{t(tp.title)}</div>
                   <div className="mt-0.5 flex-1 text-xs text-muted">{t(tp.desc)}</div>
                   <Button variant={added ? 'ghost' : 'secondary'} className="mt-3 w-full" disabled={added} loading={adding === tp.rule.name} onClick={() => applyTemplate(tp)}>

@@ -869,6 +869,7 @@
 
     // ---- ฟิสิกส์ (position-based) ----
     // จำนวนชิ้นสูงสุดตามขนาดของขวัญ (ชิ้นเล็ก = ใส่ได้มากขึ้น) · กันเครื่องช้า
+    const BOUNCE = Math.max(0, Math.min(0.6, num('bounceStd', 0.25))); // ความเด้งตอนกระทบพื้น/ผนัง (ระบบมาตรฐาน)
     const bodies = [], MAX = Math.round(Math.max(250, Math.min(2000, 600 / (GIFT_SCALE * GIFT_SCALE)))), G = 0.6;
     const imgCache = {};
     function giftImg(url) { if (!url || !/^https:\/\//.test(url)) return null; let im = imgCache[url]; if (!im) { im = new Image(); im.src = url; imgCache[url] = im; } return im; }
@@ -918,7 +919,10 @@
     }
 
     function constrainOutside(b) {
-      if (b.y + b.r > -3) { b.y = -3 - b.r; b.px = b.x - (b.x - b.px) * 0.5; } // พื้น (ระดับก้นโหล) + แรงเสียดทาน → กองเป็นภูเขาข้างโหล
+      if (b.y + b.r > -3) { // พื้น (ระดับก้นโหล): ตกแรงเด้งเล็กน้อย · แรงเสียดทาน → กองเป็นภูเขาข้างโหล
+        const v = b.y - b.py; b.y = -3 - b.r; b.gnd = true;
+        if (v > 4) b.py = b.y + v * BOUNCE; else b.px = b.x - (b.x - b.px) * 0.5;
+      }
       const s = S(), o = origin(), left = -o.x / s, right = (W - o.x) / s;
       if (b.x - b.r < left) b.x = left + b.r;
       if (b.x + b.r > right) b.x = right - b.r;
@@ -963,12 +967,15 @@
       }
       if (b.out) return constrainOutside(b);
       const floorIn = SH.floor ?? -3;
-      if (b.y + b.r > floorIn) b.y = floorIn - b.r;
+      if (b.y + b.r > floorIn) {
+        const v = b.y - b.py; b.y = floorIn - b.r; b.gnd = true;
+        if (v > 3) b.py = b.y + v * BOUNCE; else b.px = b.x - (b.x - b.px) * 0.5; // เด้ง / เสียดทาน (เหลือความเร็วแนวนอนครึ่งเดียว)
+      }
       if (SH.closed && b.y - b.r < SH.openY) b.y = SH.openY + b.r; // ฝาผ้าปิดด้านบน
       // เหนือปากโหล = ช่องทางเข้า (กว้างเท่าปาก) · ในโหล = ตามโปรไฟล์ (เช็กส่วนล่างของลูกด้วย สำหรับก้นโค้ง)
       const hw = (b.y < SH.openY ? SH.openHW : Math.min(SH.hw(Math.min(-0.5, b.y)), SH.hw(Math.min(-0.5, b.y + b.r * 0.75)))) - 3;
-      if (b.x - b.r < -hw) b.x = -hw + b.r;
-      if (b.x + b.r > hw) b.x = hw - b.r;
+      if (b.x - b.r < -hw) { const v = b.x - b.px; b.x = -hw + b.r; if (v < -2) b.px = b.x + v * BOUNCE; }
+      if (b.x + b.r > hw) { const v = b.x - b.px; b.x = hw - b.r; if (v > 2) b.px = b.x + v * BOUNCE; }
     }
     // ---- juice: สปริงโหลสั่น + อนุภาค ----
     const fx = new Juice.Particles(), jarWobble = new Juice.Spring(140, 7), gulp = new Juice.Spring(260, 10);
@@ -1069,7 +1076,10 @@
             b.x = (Math.random() - .5) * SH.belly.rx * 0.8; b.y = SH.belly.cy - SH.belly.ry * 0.55; b.px = b.x; b.py = b.y - 1;
           }
         }
-        b.rot += vx / b.r; b.age = (b.age || 0) + 1;
+        if (b.w == null) b.w = (Math.random() - .5) * 0.12; // แรงหมุนติดมาตอนปล่อย
+        if (b.gnd) b.w += (vx / b.r - b.w) * 0.35; // แตะพื้น/วางบนกอง → กลิ้งตามทิศที่ไถล
+        else b.w *= 0.997; // ลอยกลางอากาศ → หมุนต่อเรื่อย ๆ
+        b.rot += b.w; b.gnd = false; b.age = (b.age || 0) + 1;
       }
       for (let it = 0; it < 4; it++) {
         // เรียงตามแกน x แล้วเช็กเฉพาะชิ้นที่ช่วง x ซ้อนกัน (เร็วพอสำหรับหลักพันชิ้น)
@@ -1083,8 +1093,9 @@
             if (Math.abs(dx) > min || Math.abs(dy) > min || a.gi !== c.gi) continue; // ชิงช้า: ชนเฉพาะในกระเช้าเดียวกัน
             const d2 = dx * dx + dy * dy;
             if (d2 >= min * min || d2 === 0) continue;
-            const d = Math.sqrt(d2), push = (min - d) / d * 0.5;
-            a.x -= dx * push; a.y -= dy * push; c.x += dx * push; c.y += dy * push;
+            const d = Math.sqrt(d2), f = (min - d) / d, ma = a.r * a.r, mc = c.r * c.r, ka = mc / (ma + mc), kc = 1 - ka; // มวล ∝ พื้นที่
+            a.x -= dx * f * ka; a.y -= dy * f * ka; c.x += dx * f * kc; c.y += dy * f * kc;
+            if (dy > min * 0.3) a.gnd = true; else if (dy < -min * 0.3) c.gnd = true; // ชิ้นบนวางอยู่บนชิ้นล่าง
             if (a.out && c.out && dy * dy > dx * dx * 0.5) { a.px += (a.x - a.px) * 0.08; c.px += (c.x - c.px) * 0.08; } // ทับกันนอกโหล → กองนิ่ง
           }
         }

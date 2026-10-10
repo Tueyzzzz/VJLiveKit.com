@@ -23,7 +23,7 @@ export function ActiveRules() {
   const t = useT();
   const [rules, setRules] = useState<Rule[] | null>(null);
   const [note, setNote] = useState<string | null>(null);
-  const load = useCallback(() => api<{ rules: Rule[] }>('/api/actions').then((r) => setRules(r.rules)).catch(() => setRules([])), []);
+  const load = useCallback(() => api<{ rules: Rule[] }>('/api/actions').then((r) => setRules(r.rules.filter((x) => x.trigger.event !== 'pk'))).catch(() => setRules([])), []); // กฎ PK อยู่เมนู PK Battle
   useEffect(() => { void load(); }, [load]);
 
   async function toggle(r: Rule) {

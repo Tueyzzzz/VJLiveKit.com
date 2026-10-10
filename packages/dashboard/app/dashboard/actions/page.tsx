@@ -361,7 +361,7 @@ function ActionsInner() {
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label={t('เมื่อ')}>
                 <Select value={draft.event} onChange={(e) => set('event', e.target.value as TriggerEvent)}>
-                  {Object.entries(EVENT_LABELS).map(([k, v]) => <option key={k} value={k}>{t(v)}</option>)}
+                  {Object.entries(EVENT_LABELS).filter(([k]) => pkMode || k !== 'pk' || draft.event === 'pk').map(([k, v]) => <option key={k} value={k}>{t(v)}</option>)}
                 </Select>
               </Field>
               {draft.event === 'gift' && (
@@ -546,7 +546,7 @@ function ActionsInner() {
         </Card>
       )}
 
-      {!rules ? <Spinner /> : rules.length === 0 ? (
+      {!rules ? <Spinner /> : !rules.some((r) => pkMode === (r.trigger.event === 'pk')) ? (
         !draft && <Card className="py-10 text-center text-sm text-muted">{t('ยังไม่มีกฎ — เลือกเทมเพลตด้านบน หรือกด “เพิ่มกฎ” เพื่อตั้งเอง')}</Card>
       ) : (
         <Card className="p-0">
@@ -555,7 +555,7 @@ function ActionsInner() {
             <span>{t('มีผลกับไลฟ์ทันทีหลังบันทึก')}</span>
           </div>
           <ul className="divide-y divide-line">
-            {rules.filter((r) => !pkMode || r.trigger.event === 'pk').map((r) => (
+            {rules.filter((r) => pkMode === (r.trigger.event === 'pk')).map((r) => ( /* กฎ PK อยู่เมนู PK Battle เท่านั้น */
               <li key={r.id} className="flex flex-wrap items-center gap-3 px-5 py-4">
                 <button role="switch" aria-checked={r.enabled} aria-label={t('เปิด/ปิดกฎ')} onClick={() => toggle(r)}
                   className={`relative h-6 w-11 shrink-0 rounded-full transition ${r.enabled ? 'bg-mint' : 'bg-gray-200'}`}>

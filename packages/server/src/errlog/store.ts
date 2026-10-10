@@ -29,7 +29,7 @@ function ensure(): boolean {
 
 /** บันทึก error หนึ่งรายการ (ไม่โยน error ต่อ ไม่ว่าจะเกิดอะไร) */
 /** สถานะปกติ ไม่ใช่ error (คนยังไม่ไลฟ์ / ไลฟ์จบ / ชื่อผิด) — ระบบลองต่อใหม่เองอยู่แล้ว ไม่ต้องเก็บ */
-const NORMAL = /isn't online|not online|user_?not_?found|live has ended|stream ?end|room ?id.*(not found|missing)|failed to retrieve room ?id/i;
+const NORMAL = /isn't online|not online|user_?not_?found|live has ended|stream ?end|room ?id.*(not found|missing)|failed to retrieve room ?id|ChunkLoadError|Failed to load chunk/i;
 
 export function recordError(e: Omit<ErrEntry, 'ts'> & { ts?: number }): void {
   try {

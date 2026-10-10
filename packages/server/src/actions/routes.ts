@@ -35,7 +35,7 @@ const actionSchema = z.object({
   text: z.string().max(200).optional(),
   durationMs: z.number().int().positive().max(60_000).optional(),
   cards: z.union([z.literal(1), z.literal(3), z.literal(7)]).optional(),
-  deck: z.enum(['full', 'major', 'wands', 'cups', 'swords', 'pentacles']).optional(),
+  deck: z.enum(['full', 'major', 'wands', 'cups', 'swords', 'pentacles', 'lakshmi']).optional(),
   topic: z.enum(['general', 'love', 'self', 'money', 'daily']).optional(),
 });
 const ruleSchema = z.object({

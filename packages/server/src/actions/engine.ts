@@ -42,7 +42,7 @@ export interface RuleAction {
   /** สุ่มไพ่ทาโร่: จำนวนใบ 1 | 3 | 7 */
   cards?: number;
   /** สำรับที่สุ่ม: ทั้งสำรับ / ชุดใหญ่ / เฉพาะชุดไม้เท้า·ถ้วย·ดาบ·เหรียญ */
-  deck?: 'full' | 'major' | 'wands' | 'cups' | 'swords' | 'pentacles';
+  deck?: 'full' | 'major' | 'wands' | 'cups' | 'swords' | 'pentacles' | 'lakshmi'; // lakshmi = ไพ่พระแม่ลักษมี (ความรัก) 52 ใบ
   /** หัวข้อคำทำนาย: ทั่วไป | ความรัก | ตัวตน | การเงิน */
   topic?: 'general' | 'love' | 'self' | 'money' | 'daily';
 }

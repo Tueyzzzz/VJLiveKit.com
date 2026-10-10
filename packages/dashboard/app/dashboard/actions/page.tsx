@@ -91,6 +91,8 @@ const TEMPLATES: Template[] = [
     rule: { name: 'ทำนายความรัก', trigger: { event: 'gift', minDiamonds: 30 }, action: { type: 'tarot', cards: 3, topic: 'love', text: '💘 ดวงความรักของ {user}', durationMs: 13000 } } },
   { icon: '💌', title: 'พิมพ์ “ดูดวงความรัก” → ไพ่ 1 ใบ', desc: 'คนดูขอดูดวงความรักในแชท',
     rule: { name: 'แชทดูดวงความรัก', trigger: { event: 'chat', keyword: 'ดูดวงความรัก' }, action: { type: 'tarot', cards: 1, topic: 'love', text: '💌 ความรักของ {user}', durationMs: 8000 } } },
+  { icon: '🪷', title: 'ไพ่พระแม่ลักษมี ดูดวงความรัก', desc: 'กิฟต์ 30 เพชรขึ้นไป → ไพ่ลักษมี 3 ใบ · ใจคุณ · ใจเขา · อนาคตความรัก',
+    rule: { name: 'ไพ่พระแม่ลักษมี', trigger: { event: 'gift', minDiamonds: 30 }, action: { type: 'tarot', cards: 3, deck: 'lakshmi', topic: 'love', text: '🪷 ไพ่พระแม่ลักษมี ทำนายความรักของ {user}', durationMs: 13000 } } },
   { icon: '💰', title: 'ทำนายการเงิน 3 ใบ', desc: 'กิฟต์ 99 เพชรขึ้นไป → การเงินตอนนี้ · สิ่งที่ต้องระวัง · โชคลาภ',
     rule: { name: 'ทำนายการเงิน', trigger: { event: 'gift', minDiamonds: 99 }, action: { type: 'tarot', cards: 3, topic: 'money', text: '💰 ดวงการเงินของ {user}', durationMs: 13000 } } },
   { icon: '🪞', title: 'ทำนายตัวตน 3 ใบ', desc: 'กิฟต์ 30 เพชรขึ้นไป → ตัวตนจริง · ที่คนอื่นมอง · จุดเด่น',
@@ -479,6 +481,7 @@ function ActionsInner() {
                     <option value="cups">{t('🏆 เฉพาะชุดถ้วย (ความรัก)')}</option>
                     <option value="wands">{t('🔥 เฉพาะชุดไม้เท้า (พลัง/งาน)')}</option>
                     <option value="pentacles">{t('💰 เฉพาะชุดเหรียญ (การเงิน)')}</option>
+                    <option value="lakshmi">{t('🪷 พระแม่ลักษมี (ความรัก) 52 ใบ')}</option>
                   </Select>
                 </Field>
               )}

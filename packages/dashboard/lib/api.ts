@@ -103,7 +103,7 @@ export interface Plan { code: string; name: string; priceCents: number; currency
 export type TriggerEvent = 'gift' | 'follow' | 'share' | 'like' | 'chat' | 'pk';
 export type ActionType = 'sound' | 'image' | 'video' | 'text' | 'tarot' | 'effect' | 'sign' | 'glove' | 'mascot';
 export type TarotTopic = 'general' | 'love' | 'self' | 'money' | 'daily';
-export type TarotDeck = 'full' | 'major' | 'wands' | 'cups' | 'swords' | 'pentacles';
+export type TarotDeck = 'full' | 'major' | 'wands' | 'cups' | 'swords' | 'pentacles' | 'lakshmi';
 export interface Rule {
   id: string;
   name: string;

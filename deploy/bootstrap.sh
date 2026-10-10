@@ -132,6 +132,8 @@ if [ -n "$OLD" ]; then
     for _ in $(seq 1 60); do if healthy "$NEW"; then ok=1; break; fi; sleep 2; done
   fi
   if [ -n "$ok" ]; then
+    log "ตัวใหม่พร้อม → รอให้ตัวใหม่ต่อห้องไลฟ์ล่วงหน้า (20 วิ) แล้วค่อยปิดตัวเดิม — ของขวัญไม่หลุดช่วงสลับ"
+    sleep 20
     log "ตัวใหม่พร้อม → ปิดตัวเดิม"
     docker stop -t 25 $OLD >/dev/null; docker rm $OLD >/dev/null
     $DC up -d --no-deps --no-recreate --scale app=1 app

@@ -909,14 +909,10 @@
         let list = (s.g || []).slice(-MAX);
         // กองกลาง (ใช้ร่วมทุกแบบ) มาก่อน — เปลี่ยนแบบแล้วของขวัญไม่หาย
         if (window.VJLCollect) { VJLCollect.seed(s.g || []); if (VJLCollect.has()) list = VJLCollect.gifts(MAX).map((g) => ({ img: g.u, e: g.em || VJLCollect.emoji(g.name, '🎁'), d: g.d })); }
-        restoreUntil = performance.now() + list.length * 8 + 300;
-        // เปลี่ยนแบบกลางคัน (โหลใหม่เล็กกว่า/ฝาปิด): ใส่ในโหลเท่าที่จุได้ ที่เหลือกองพื้นข้างโหล (ไม่ยัดจนแน่น)
-        if (!SH.solid) {
-          const inner = Math.PI / 4 * (2 * SH.maxHW) * Math.max(60, -(SH.fullY - (SH.floor || 0))) * 0.62; // พื้นที่ในโหล × ความแน่นการกอง
-          let used = 0;
-          list = list.map((g) => { const r = radiusFor(g.d), a = Math.PI * r * r; if (g.o === 1 || used + a > inner) return { ...g, o: 1 }; used += a; return g; });
-        }
-        list.forEach((g, i) => setTimeout(() => addBody(g, false), i * 8));
+        // เทของเดิมลงโหลจากด้านบนทีละชิ้น (เหมือนตอนไลฟ์): เต็มโหลก่อน แล้วชิ้นที่เกินค่อยล้นไปกองพื้น — ใช้ได้ทั้งตอนเปิดใหม่และตอนเปลี่ยนแบบโหล
+        const gap = SH.solid ? 8 : Math.max(12, Math.min(35, 9000 / Math.max(1, list.length)));
+        restoreUntil = performance.now() + list.length * gap + 3000;
+        list.forEach((g, i) => setTimeout(() => addBody({ ...g, o: 0 }, !SH.solid), i * gap));
       } catch { /* ignore */ }
     }
 

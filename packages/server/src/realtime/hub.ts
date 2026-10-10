@@ -3,7 +3,7 @@ import { evaluate, menuItems, type ActionRule, type MenuItem } from '../actions/
 import type { Server } from 'socket.io';
 import { loadSession, saveSession } from './sessions.js';
 import { connStats } from './connstats.js';
-import { trackLive } from './lives.js';
+import { trackLive, listLives } from './lives.js';
 import { settings } from '../settings/index.js';
 import { config } from '../config/index.js';
 
@@ -172,6 +172,19 @@ export class RoomHub {
 
   /** รายการเมนูของขวัญของวีเจ (จากกฎ Actions ที่เปิดอยู่) */
   async menuFor(userId: string): Promise<MenuItem[]> { return menuItems(await this.getRules(userId)); }
+
+  /**
+   * เปิดเซิร์ฟเวอร์ใหม่ (deploy): ต่อห้องที่กำลังไลฟ์อยู่ล่วงหน้า ระหว่างที่ตัวเก่ายังรับอยู่ → ไม่มีช่วงที่ของขวัญหลุด
+   * ตัวใหม่จดของขวัญไว้ (recentGifts) วิดเจ็ตย้ายมาแล้วเติมชิ้นที่พลาดได้ครบ · ถ้าไม่มีใครต่อเข้ามาใน 3 นาที ปล่อยห้องตามปกติ
+   */
+  warmUp(): void {
+    const cut = Date.now() - 10 * 60_000;
+    const rooms = [...new Set(listLives().filter((l) => !l.ended && new Date(l.lastSeenAt).getTime() > cut).map((l) => l.username))];
+    for (const u of rooms) {
+      void this.attach(u).then(() => setTimeout(() => this.detach(u), 3 * 60_000)).catch(() => {});
+    }
+    if (rooms.length) console.log('[hub] warm-up rooms', rooms.length);
+  }
 
   /** มี socket เข้ามาดูห้อง — สร้าง/เชื่อมต่อถ้ายังไม่มี แล้วคืน state ปัจจุบัน */
   async attach(username: string, ownerId?: string): Promise<ReturnType<TikTokRoom['getState']>> {

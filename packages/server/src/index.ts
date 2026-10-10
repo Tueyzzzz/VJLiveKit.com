@@ -22,6 +22,7 @@ async function main(): Promise<void> {
   await app.listen({ port: config.port, host: '0.0.0.0' });
 
   app.log.info(`VJLiveKit server :${config.port} (demo=${config.demoMode})`);
+  if (!config.demoMode) hub.warmUp(); // deploy: ต่อห้องที่ไลฟ์อยู่ล่วงหน้า กันของขวัญหายช่วงสลับเซิร์ฟเวอร์
 
   // ปิดอย่างนุ่มนวล
   const shutdown = async (sig: string) => {

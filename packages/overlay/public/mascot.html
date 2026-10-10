@@ -134,7 +134,17 @@
       if (TINT) recolor(src).then((u) => { im.src = u; }); else im.src = src;
     }
     let cur = 0;
-    const pose = (n) => { if (cur === n) return; if (imgs[cur]) imgs[cur].classList.remove('on'); imgs[n].classList.add('on'); cur = n; };
+    // สลับท่าแบบไม่วูบ: ท่าใหม่จางขึ้น "ทับ" ท่าเดิม (ท่าเดิมยังทึบอยู่ข้างใต้) แล้วค่อยซ่อนท่าเดิมทันทีที่ท่าใหม่ขึ้นเต็ม
+    let zTop = 1, hideT = null;
+    const pose = (n) => {
+      if (cur === n) return;
+      const prev = imgs[cur], next = imgs[n];
+      next.style.zIndex = String(++zTop); next.classList.add('on');
+      clearTimeout(hideT);
+      for (const k in imgs) if (+k !== n && imgs[k] !== prev && imgs[k].classList.contains('on')) { const im = imgs[k]; im.style.transition = 'none'; im.classList.remove('on'); requestAnimationFrame(() => { im.style.transition = ''; }); }
+      if (prev) hideT = setTimeout(() => { prev.style.transition = 'none'; prev.classList.remove('on'); requestAnimationFrame(() => { prev.style.transition = ''; }); }, 130);
+      cur = n;
+    };
     pose(1);
 
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));

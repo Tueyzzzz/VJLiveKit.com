@@ -561,7 +561,7 @@ function ActionsInner() {
                   className={`relative h-6 w-11 shrink-0 rounded-full transition ${r.enabled ? 'bg-mint' : 'bg-gray-200'}`}>
                   <span className={`absolute top-0.5 size-5 rounded-full bg-white shadow transition ${r.enabled ? 'left-5.5' : 'left-0.5'}`} />
                 </button>
-                <GiftCell name={r.trigger.giftName} event={r.trigger.event} />
+                <GiftCell name={r.trigger.giftName} event={r.trigger.event} pk={r.trigger.pk} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 font-medium">{r.name} {!r.enabled && <Badge tone="gray">{t('ปิดอยู่')}</Badge>}</div>
                   <div className="truncate text-sm text-muted">{describe(r, t)}</div>

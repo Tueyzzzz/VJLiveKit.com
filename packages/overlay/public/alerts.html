@@ -110,7 +110,7 @@
       else if(e.type==='share'&&SHOW.share) push({ user:e.user, sub:'<b>แชร์</b>ไลฟ์นี้ ขอบคุณนะ!', emoji:'🔁', cls:'share' });
       else if(e.type==='pk'&&SHOW.pk&&e.pk){ // PK: การ์ด (นวม สายฟ้า ...) + ผลแพ้ชนะ
         const k=e.pk, side=k.side==='us'?' ให้เรา':k.side==='them'?' ฝั่งคู่แข่ง':'';
-        if(k.kind==='card'&&(k.side!=='them'||k.card==='smoke')) playPk(k.card); // หมอก: เล่นทั้งสองฝั่ง (มักโดนคู่แข่งใช้ใส่เรา)
+        if(P('pkvideo','0')==='1'&&k.kind==='card'&&(k.side!=='them'||k.card==='smoke')) playPk(k.card); // วิดีโอการ์ดเล่นที่วิดเจ็ต FX (ตามกฎ PK) · เปิดที่นี่ได้ด้วย ?pkvideo=1 // หมอก: เล่นทั้งสองฝั่ง (มักโดนคู่แข่งใช้ใส่เรา)
         if(k.kind==='card') push({ user:{nickname:k.by||'PK'}, sub:`ใช้การ์ด <b>${Overlay.esc(k.label||'PK')}</b>${side}`, emoji:(k.label||'⚔️').split(' ')[0], big:k.side==='us', cls:'big' });
         else if(k.kind==='end'&&k.result) push({ user:{nickname:'ผล PK'}, sub:k.result==='win'?'<b>ชนะ!</b> 🏆 ขอบคุณทุกคนที่ช่วยกัน':k.result==='lose'?'สู้เต็มที่แล้ว ขอบคุณทุกคนนะ 💪':'<b>เสมอ!</b> 🤝', emoji:k.result==='win'?'🏆':'⚔️', big:k.result==='win', cls:'big' });
       }

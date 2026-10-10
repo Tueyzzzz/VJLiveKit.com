@@ -24,7 +24,7 @@ export function useGifts(): Gift[] {
 }
 
 /** ช่องของขวัญในรายการกฎ: รูป + ชื่อ + ราคา · ไม่ระบุ = ทุกกิฟต์ */
-export function GiftCell({ name, event }: { name?: string; event: string }) {
+export function GiftCell({ name, event, pk }: { name?: string; event: string; pk?: string }) {
   const t = useT();
   const [lang] = useLang();
   const gifts = useGifts();
@@ -33,6 +33,13 @@ export function GiftCell({ name, event }: { name?: string; event: string }) {
   const evLabel = ({ follow: 'ติดตาม', share: 'แชร์', like: 'กดไลก์', chat: 'แชท' } as Record<string, string>)[event];
   const label = event === 'gift' ? (name || t('ทุกกิฟต์')) : evLabel ? t(evLabel) : event;
   const th = lang === 'en' ? undefined : g?.th; // ภาษาอังกฤษ → ใช้ชื่อกิฟต์อังกฤษ (g.name / label)
+  // PK: รูปวีเจประจำการ์ด (หลัง hooks ทั้งหมด)
+  if (event === 'pk' && pk) return (
+    <div className="flex w-24 shrink-0 flex-col items-center gap-0.5 text-center">
+      <img src={`/pk-tpl/${pk === 'draw' ? 'win' : ['potion', 'wave', 'effect'].includes(pk) ? 'anycard' : pk}.webp`} alt="" className="size-14 object-contain" loading="lazy" />
+      <div className="text-xs font-medium">PK</div>
+    </div>
+  );
   return (
     <div className="flex w-24 shrink-0 flex-col items-center gap-0.5 text-center">
       <div className="grid size-12 place-items-center rounded-xl bg-pink-soft/60">

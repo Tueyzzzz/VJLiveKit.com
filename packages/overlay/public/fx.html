@@ -386,8 +386,25 @@
       if(text) showText(text,dur);
     }
 
+    // PK: วิดีโอการ์ด (WebP เคลื่อนไหวพื้นใส) เล่นกลางจอ — ใช้กับกฎ PK อัตโนมัติ ไม่ต้องตั้งเพิ่ม
+    const PK_VIDEO={ glove:4600, critical:4800, extra:4800, smoke:5000, effect:5000, wave:5000, top2:4800, top3:4800 };
+    const PK_SQUARE={ top2:1, top3:1 }, PK_CAP={ top2:'🥈 เก้าอี้ที่ 2 X2', top3:'🥉 เก้าอี้ที่ 3 X2' };
+    const pkStyle=document.createElement('style'); pkStyle.textContent=".pkfx{position:fixed;left:50%;top:50%;height:min(92vh,92vw*1.78);transform:translate(-50%,-50%);pointer-events:none;z-index:50}.pkcap{position:fixed;left:50%;top:calc(50% + min(27vh,27vw));transform:translateX(-50%);font:900 min(9vh,9vw)/1 Kanit,sans-serif;color:#fff;-webkit-text-stroke:min(1.2vh,1.2vw) #c0397a;paint-order:stroke fill;white-space:nowrap;z-index:51;pointer-events:none}"; document.head.appendChild(pkStyle);
+    for(const k in PK_VIDEO){ const im=new Image(); im.src='pk/'+k+'.webp'+(window.VJL_VERSION?'?v='+window.VJL_VERSION:''); } // โหลดล่วงหน้า
+    let pkLast=0;
+    function playPk(card){
+      if(!PK_VIDEO[card] || Date.now()-pkLast<1500) return; pkLast=Date.now(); // หลายกฎเรื่องเดียวกัน → เล่นครั้งเดียว
+      const el=document.createElement('img'); el.className='pkfx'; el.alt=''; el.src='pk/'+card+'.webp?t='+Date.now();
+      if(PK_SQUARE[card]) el.style.height='min(58vh,58vw)';
+      document.body.appendChild(el); setTimeout(()=>el.remove(), PK_VIDEO[card]);
+      if(PK_CAP[card]){ const c=document.createElement('div'); c.className='pkcap'; c.textContent=PK_CAP[card]; document.body.appendChild(c); setTimeout(()=>c.remove(), PK_VIDEO[card]-300); }
+    }
+    if(Overlay.param('pktest','')) setInterval(()=>playPk(Overlay.param('pktest','')), 5500); // ?pktest=glove
+
     // รับ action จากเซิร์ฟเวอร์ (Actions & Events engine)
     Overlay.on('action',(fire)=>{
+      const pk=fire.event&&fire.event.type==='pk'&&fire.event.pk;
+      if(pk&&pk.kind==='card'&&pk.card) playPk(pk.card); // กฎ PK → วิดีโอการ์ดกลางจอ + action ของกฎ (ป้ายไฟ/ข้อความ) ต่อ
       // เสียงเล่นที่แดชบอร์ด (ลำโพง) แล้ว → จอนี้โชว์แค่ข้อความ ไม่เล่นเสียงซ้ำ
       if(fire.elsewhere && fire.action.type==='sound'){ const t=fill(fire.action.text,fire.event); if(t) showText(t,fire.action.durationMs||5000); return; }
       // ส่งคอมโบ (เช่น กุหลาบ 10 ดอก) → เล่นซ้ำตามจำนวน ไม่เกินที่วีเจตั้ง (ไพ่ทาโร่ = 1 เสมอ)

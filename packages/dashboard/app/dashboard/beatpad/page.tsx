@@ -15,6 +15,8 @@ interface Pad { label: string; emoji?: string; color: string; sound?: string; ur
 interface Board { cols: number; pads: Pad[] }
 const COLORS = ['#f472b6', '#a78bfa', '#60a5fa', '#38bdf8', '#4ade80', '#84cc16', '#facc15', '#fb923c', '#f87171', '#c084fc', '#2dd4bf', '#94a3b8'];
 const EMOJIS = ['👏', '🥁', '🔔', '🎺', '💗', '✨', '🚨', '🥊', '🌀', '😂', '🤣', '😱', '🎉', '💸', '🐐', '🔥', '💀', '🫶', '🎵', '📢'];
+/** ไอคอน 3D ประจำอีโมจิ (public/beatpad/icons/<ชื่อ>.webp) — ปุ่มและตัวเลือกใช้รูปนี้แทนอีโมจิ */
+const EMOJI_ICON: Record<string, string> = { '👏': 'clap', '🥁': 'drum', '🔔': 'bell', '🎺': 'trumpet', '💗': 'heart', '✨': 'sparkles', '🚨': 'siren', '🥊': 'glove', '🌀': 'cyclone', '😂': 'joy', '🤣': 'rofl', '😱': 'scream', '🎉': 'party', '💸': 'money', '🐐': 'goat', '🔥': 'fire', '💀': 'skull', '🫶': 'hearthands', '🎵': 'music', '📢': 'megaphone' };
 const FREE_PADS = 8, MAX_PADS = 24;
 
 /**
@@ -165,6 +167,8 @@ function PadIcon({ pad }: { pad: Pad }) {
   if (def && !bad && (!pad.emoji || pad.emoji === def)) {
     return <img src={`/beatpad/${pad.sound}.webp`} alt="" draggable={false} onError={() => setBad(true)} className="mx-auto block aspect-square w-[78%] object-contain drop-shadow-[0_3px_4px_rgba(176,64,122,.3)]" />;
   }
+  const ic = EMOJI_ICON[pad.emoji || '🎵'];
+  if (ic && !bad) return <img src={`/beatpad/icons/${ic}.webp`} alt={pad.emoji} draggable={false} onError={() => setBad(true)} className="mx-auto block aspect-square w-[62%] object-contain drop-shadow-[0_3px_4px_rgba(176,64,122,.3)]" />;
   return <span className="block text-2xl sm:text-4xl">{pad.emoji || '🎵'}</span>;
 }
 
@@ -204,7 +208,7 @@ function PadEditor({ pad, uploads, onUploaded, onChange, onClose, onDelete }: {
           <label className="block text-sm font-medium">{t('ชื่อปุ่ม')}<Input className="mt-1" maxLength={24} value={pad.label} onChange={(e) => onChange({ label: e.target.value })} placeholder={t('เช่น ตบมุข')} /></label>
           <div>
             <div className="mb-1 text-sm font-medium">{t('ไอคอน')}</div>
-            <div className="flex flex-wrap gap-1.5">{EMOJIS.map((e) => <button key={e} onClick={() => onChange({ emoji: e })} className={`grid size-10 place-items-center rounded-xl border text-xl ${pad.emoji === e ? 'border-pink bg-pink-soft' : 'border-line'}`}>{e}</button>)}</div>
+            <div className="flex flex-wrap gap-1.5">{EMOJIS.map((e) => <button key={e} onClick={() => onChange({ emoji: e })} aria-label={e} className={`grid size-11 place-items-center rounded-xl border p-0.5 text-xl ${pad.emoji === e ? 'border-pink bg-pink-soft' : 'border-line'}`}>{EMOJI_ICON[e] ? <img src={`/beatpad/icons/${EMOJI_ICON[e]}.webp`} alt={e} className="size-full object-contain" loading="lazy" /> : e}</button>)}</div>
           </div>
           <div>
             <div className="mb-1 text-sm font-medium">{t('สีปุ่ม')}</div>

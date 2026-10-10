@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Check, Copy, Pencil, Play, Plus, Sparkles, Trash2, Upload as UploadIcon } from 'lucide-react';
 import { Alert, Badge, Button, Card, Field, Input, PageHeader, Select, Spinner } from '@/components/ui';
 import { GiftCell, GiftPicker } from '@/components/GiftPicker';
@@ -14,7 +15,7 @@ import { translate, useT } from '@/lib/i18n';
 
 const EVENT_LABELS: Record<TriggerEvent, string> = { gift: '🎁 ได้รับกิฟต์', follow: '➕ มีคนติดตาม', share: '🔁 มีคนแชร์', like: '❤️ มีคนกดไลค์', chat: '💬 แชทมีคำว่า', pk: '⚔️ PK (แข่ง)' };
 /** สถานการณ์ PK ที่ตั้งกฎได้ */
-const PK_LABELS: Record<string, string> = { start: '🔔 เริ่ม PK', win: '🏆 ชนะ PK', lose: '💪 แพ้ PK', draw: '🤝 เสมอ', anycard: '🃏 มีคนใช้การ์ดอะไรก็ได้', glove: '🥊 การ์ดนวม', critical: '⚡ การ์ดสายฟ้า', smoke: '🌫️ การ์ดหมอก', extra: '⏱️ การ์ดต่อเวลา', potion: '🧪 การ์ดยาพลัง', wave: '🌊 การ์ดคลื่น', effect: '✨ การ์ดเอฟเฟกต์พิเศษ', top2: '🥈 การ์ดท็อป 2 (อันดับ 2 ส่งได้ x2)', top3: '🥉 การ์ดท็อป 3 (อันดับ 3 ส่งได้ x2)' };
+const PK_LABELS: Record<string, string> = { start: '🔔 เริ่ม PK', win: '🏆 ชนะ PK', lose: '💪 แพ้ PK', draw: '🤝 เสมอ', anycard: '🃏 มีคนใช้การ์ดอะไรก็ได้', glove: '🥊 การ์ดนวม', critical: '⚡ การ์ดสายฟ้า', smoke: '🌫️ การ์ดหมอก', extra: '⏱️ การ์ดต่อเวลา', potion: '🧪 การ์ดยาพลัง', wave: '🌊 การ์ดคลื่น', effect: '✨ การ์ดเอฟเฟกต์พิเศษ', top2: '🥈 เก้าอี้ที่ 2 X2 (อันดับ 2 ส่งได้คะแนนคูณ 2)', top3: '🥉 เก้าอี้ที่ 3 X2 (อันดับ 3 ส่งได้คะแนนคูณ 2)' };
 const ACTION_LABELS: Record<ActionType, string> = { sound: '🔊 เล่นเสียง', image: '🖼️ แสดงรูป/GIF', video: '🎬 เล่นวิดีโอ', text: '✏️ แสดงข้อความ', tarot: '🔮 สุ่มไพ่ทาโร่', effect: '🦋 ผีเสื้อเทพนิยาย', sign: '💡 ป้ายไฟ', glove: '🥊 ส่งนวม', mascot: '🧸 มาสคอตทำท่า' };
 
 interface Draft {
@@ -56,10 +57,10 @@ const EMPTY: Draft = { name: '', enabled: true, event: 'gift', giftName: '', min
 interface Template { icon: string; title: string; desc: string; rule: { name: string; trigger: Rule['trigger']; action: Rule['action'] } }
 /** เทมเพลต PK — โชว์ในเมนู ⚔️ PK Battle */
 const PK_TEMPLATES: Template[] = [
-  { icon: '🥈', title: 'การ์ดท็อป 2 → ชวนอันดับ 2 ส่ง', desc: 'อันดับ 2 ส่งของขวัญได้คะแนน x2 — ป้ายไฟเรียกให้รีบส่ง',
-    rule: { name: 'ท็อป 2 คะแนน x2', trigger: { event: 'pk', pk: 'top2', pkSide: 'us' }, action: { type: 'sign', signStyle: 'neon', signMode: 'pulse', signPos: 'top', color: '#c9d4e8', text: '🥈 อันดับ 2 ส่งตอนนี้ได้คะแนน x2! รีบเลย 💨', durationMs: 6000 } } },
-  { icon: '🥉', title: 'การ์ดท็อป 3 → ชวนอันดับ 3 ส่ง', desc: 'อันดับ 3 ส่งของขวัญได้คะแนน x2 — ป้ายไฟเรียกให้รีบส่ง',
-    rule: { name: 'ท็อป 3 คะแนน x2', trigger: { event: 'pk', pk: 'top3', pkSide: 'us' }, action: { type: 'sign', signStyle: 'neon', signMode: 'pulse', signPos: 'top', color: '#e8b98a', text: '🥉 อันดับ 3 ส่งตอนนี้ได้คะแนน x2! รีบเลย 💨', durationMs: 6000 } } },
+  { icon: '🥈', title: 'เก้าอี้ที่ 2 X2 → เรียกอันดับ 2', desc: 'อันดับ 2 ส่งของขวัญได้คะแนน x2 — ป้ายไฟเรียกให้รีบส่ง',
+    rule: { name: 'เก้าอี้ที่ 2 X2', trigger: { event: 'pk', pk: 'top2', pkSide: 'us' }, action: { type: 'sign', signStyle: 'neon', signMode: 'pulse', signPos: 'top', color: '#c9d4e8', text: '🥈 เก้าอี้ที่ 2 X2! อันดับ 2 ส่งตอนนี้คะแนนคูณ 2 รีบเลย 💨', durationMs: 6000 } } },
+  { icon: '🥉', title: 'เก้าอี้ที่ 3 X2 → เรียกอันดับ 3', desc: 'อันดับ 3 ส่งของขวัญได้คะแนน x2 — ป้ายไฟเรียกให้รีบส่ง',
+    rule: { name: 'เก้าอี้ที่ 3 X2', trigger: { event: 'pk', pk: 'top3', pkSide: 'us' }, action: { type: 'sign', signStyle: 'neon', signMode: 'pulse', signPos: 'top', color: '#e8b98a', text: '🥉 เก้าอี้ที่ 3 X2! อันดับ 3 ส่งตอนนี้คะแนนคูณ 2 รีบเลย 💨', durationMs: 6000 } } },
   { icon: '🔔', title: 'ประกาศเริ่ม PK', desc: 'ป้ายไฟกลางจอ ชวนผู้ชมช่วยกันส่งของขวัญ',
     rule: { name: 'PK เริ่มแล้ว', trigger: { event: 'pk', pk: 'start' }, action: { type: 'sign', signStyle: 'neon', signMode: 'pulse', signPos: 'center', color: '#ff4fa3', text: '⚔️ PK เริ่มแล้ว! ช่วยกันส่งของขวัญนะ 💖', durationMs: 5000 } } },
   { icon: '🏆', title: 'ชนะ PK → ฉลอง', desc: 'ผีเสื้อสีทองเต็มจอ + ข้อความขอบคุณทุกคน',
@@ -185,6 +186,11 @@ function describe(r: Rule, t: typeof translate): string {
 }
 
 export default function ActionsPage() {
+  // ?pk=1 = เมนู PK Battle · Suspense จำเป็นกับ useSearchParams ใน static export
+  return <Suspense fallback={<Spinner />}><ActionsInner /></Suspense>;
+}
+
+function ActionsInner() {
   const t = useT();
   const { entitlements, isAdmin } = useAuth();
   const [rules, setRules] = useState<Rule[] | null>(null);
@@ -304,8 +310,7 @@ export default function ActionsPage() {
   }
   const have = new Set((rules ?? []).map((r) => r.name));
   // เมนู ⚔️ PK Battle (/dashboard/actions/?pk=1): โชว์เฉพาะกฎ/เทมเพลต PK
-  const [pkMode, setPkMode] = useState(false);
-  useEffect(() => { setPkMode(new URLSearchParams(window.location.search).get('pk') === '1'); }, []);
+  const pkMode = useSearchParams().get('pk') === '1'; // เปลี่ยนเมนู Actions ↔ PK แล้วหน้าเปลี่ยนตามทันที (เดิมอ่านครั้งเดียวตอนเปิด → กดจากหน้า Actions แล้วค้าง)
 
   return (
     <div>

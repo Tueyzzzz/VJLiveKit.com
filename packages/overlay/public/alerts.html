@@ -69,7 +69,7 @@
     // ---- คิวแจ้งเตือน ----
     const queue=[]; let busy=false;
     // PK: การ์ดที่มีวิดีโอ → เล่นกลางจอ (ไฟล์ pk/<card>.webp) · โหลดล่วงหน้าไว้ เล่นได้ทันที
-    const PK_VIDEO={ glove:4600, critical:4800, extra:4800, smoke:5000, effect:5000, top2:5000 };
+    const PK_VIDEO={ glove:4600, critical:4800, extra:4800, smoke:5000, effect:5000, top2:5000, wave:5000 };
     const pkPre={}; for(const k in PK_VIDEO){ const im=new Image(); im.src='pk/'+k+'.webp'+(window.VJL_VERSION?'?v='+window.VJL_VERSION:''); pkPre[k]=im; }
     function playPk(card){
       if(!PK_VIDEO[card]) return;

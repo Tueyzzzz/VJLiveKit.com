@@ -230,7 +230,7 @@ export class TikTokRoom extends EventEmitter {
   private static CARDS: Record<number, [string, string, string]> = {
     2: ['critical', '⚡ สายฟ้า', 'useCriticalStrikeCard'], 3: ['smoke', '🌫️ หมอก', 'useSmokeCard'], 5: ['extra', '⏱️ ต่อเวลา', 'useExtraTimeCard'],
     6: ['effect', '✨ เอฟเฟกต์พิเศษ', 'useSpecialEffectCard'], 7: ['potion', '🧪 ยาพลัง', 'usePotionCard'], 8: ['wave', '🌊 คลื่น', 'useWaveCard'],
-    10: ['top2', '🥈 ท็อป 2 คะแนน x2', 'useTop2Card'], 11: ['top3', '🥉 ท็อป 3 คะแนน x2', 'useTop3Card'], // อันดับ 2/3 ของห้องส่งของขวัญได้คะแนนคูณ 2 12: ['glove', '🥊 นวม', 'useVaultGloveCard'],
+    10: ['top2', '🥈 เก้าอี้ที่ 2 X2', 'useTop2Card'], 11: ['top3', '🥉 เก้าอี้ที่ 3 X2', 'useTop3Card'], // อันดับ 2/3 ของห้องส่งของขวัญได้คะแนนคูณ 2 12: ['glove', '🥊 นวม', 'useVaultGloveCard'],
   };
   private onCard(d: any) {
     if (this.isDuplicate(d)) return;

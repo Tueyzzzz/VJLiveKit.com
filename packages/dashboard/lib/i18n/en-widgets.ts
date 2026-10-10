@@ -729,4 +729,6 @@ export const EN_WIDGETS: Record<string, string> = {
   "ลูกพลุแก้ว": "Glass firework",
   "รถไอศกรีม": "Ice-cream cart",
   "โหลรางวัลงานวัด": "Fair prize jar",
+  "💗 ไอดอลสาว (คนจริง 3D)": "💗 Idol girl (realistic 3D)",
+  "✨ คนจริง 3D": "✨ Realistic 3D",
 };

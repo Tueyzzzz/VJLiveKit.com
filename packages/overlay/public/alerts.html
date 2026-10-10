@@ -27,6 +27,8 @@
   @keyframes bounce{50%{transform:translateY(-8px) rotate(-6deg)}}
   .card.follow{border-color:rgba(143,227,207,.8)} .card.share{border-color:rgba(255,207,92,.8)} .card.big{border-color:rgba(255,106,168,.9);box-shadow:0 0 30px rgba(255,106,168,.55)}
   /* PK: วิดีโอการ์ด (WebP เคลื่อนไหวพื้นใส) กลางจอ */
+  .pkcap{position:fixed;left:50%;top:calc(50% + min(27vh,27vw));transform:translateX(-50%);font:900 min(9vh,9vw)/1 var(--font,Kanit),sans-serif;color:#fff;-webkit-text-stroke:min(1.2vh,1.2vw) #c0397a;paint-order:stroke fill;text-shadow:0 .6vh 2vh rgba(120,30,90,.5);white-space:nowrap;z-index:6;pointer-events:none;animation:pkcap .5s cubic-bezier(.3,1.6,.5,1) both}
+  @keyframes pkcap{from{transform:translateX(-50%) scale(.3);opacity:0}to{transform:translateX(-50%) scale(1);opacity:1}}
   .pkfx{position:fixed;left:50%;top:50%;height:min(92vh,92vw*1.78);transform:translate(-50%,-50%);pointer-events:none;z-index:5}
 </style>
 </head>
@@ -69,13 +71,17 @@
     // ---- คิวแจ้งเตือน ----
     const queue=[]; let busy=false;
     // PK: การ์ดที่มีวิดีโอ → เล่นกลางจอ (ไฟล์ pk/<card>.webp) · โหลดล่วงหน้าไว้ เล่นได้ทันที
-    const PK_VIDEO={ glove:4600, critical:4800, extra:4800, smoke:5000, effect:5000, top2:5000, wave:5000 };
+    const PK_VIDEO={ glove:4600, critical:4800, extra:4800, smoke:5000, effect:5000, top2:4800, top3:4800, wave:5000 };
+    // วิดีโอสี่เหลี่ยมจัตุรัส (เก้าอี้) → ขนาดเล็กกว่า + ตัวหนังสือ "เก้าอี้ที่ X X2" ใต้วิดีโอ (คมชัด สะกดถูก)
+    const PK_SQUARE={ top2:1, top3:1 }, PK_CAP={ top2:'🥈 เก้าอี้ที่ 2 X2', top3:'🥉 เก้าอี้ที่ 3 X2' };
     const pkPre={}; for(const k in PK_VIDEO){ const im=new Image(); im.src='pk/'+k+'.webp'+(window.VJL_VERSION?'?v='+window.VJL_VERSION:''); pkPre[k]=im; }
     function playPk(card){
       if(!PK_VIDEO[card]) return;
       const el=document.createElement('img'); el.className='pkfx'; el.alt='';
       el.src='pk/'+card+'.webp?t='+Date.now(); // URL ใหม่ = เริ่มเล่นจากเฟรมแรกทุกครั้ง
+      if(PK_SQUARE[card]) el.style.height='min(58vh,58vw)';
       document.body.appendChild(el); setTimeout(()=>el.remove(), PK_VIDEO[card]);
+      if(PK_CAP[card]){ const c=document.createElement('div'); c.className='pkcap'; c.textContent=PK_CAP[card]; document.body.appendChild(c); setTimeout(()=>c.remove(), PK_VIDEO[card]-300); }
     }
     function push(a){ queue.push(a); if(queue.length>20) queue.shift(); next(); }
     function next(){

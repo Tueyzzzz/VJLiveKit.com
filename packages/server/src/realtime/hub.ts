@@ -322,6 +322,23 @@ export class RoomHub {
     }).sort((a, b) => Number(b.connected) - Number(a.connected) || b.diamonds - a.diamonds);
   }
 
+  /** แอดมิน: สั่งวิดเจ็ตทุกตัวของห้องนี้รีโหลด (กองของขวัญบันทึกก่อนรีโหลด + เติมชิ้นที่พลาดจากเซิร์ฟเวอร์) · คืนจำนวนจอที่ได้รับ */
+  async reloadRoom(username: string): Promise<number> {
+    const ch = RoomHub.roomChannel(username);
+    const n = (await this.io.in(ch).fetchSockets()).length;
+    this.io.to(ch).emit('reload', { at: Date.now() });
+    return n;
+  }
+  /** แอดมิน: ของขวัญล่าสุดของห้อง (ใหม่สุดก่อน) */
+  recentGifts(username: string, limit = 60) {
+    const e = this.rooms.get(normalize(username));
+    if (!e) return null;
+    return e.room.getState().recentGifts.slice(-limit).reverse().map((g) => {
+      const x = g as unknown as { ts?: number; user?: { nickname?: string; uniqueId?: string }; giftName?: string; giftImage?: string; diamondCount?: number; repeatCount?: number };
+      return { ts: x.ts ?? 0, user: x.user?.nickname || x.user?.uniqueId || '?', gift: x.giftName ?? '', img: x.giftImage ?? '', d: x.diamondCount ?? 0, n: x.repeatCount ?? 1 };
+    });
+  }
+
   /** จำนวนห้องที่เชื่อม TikTok อยู่ (กำลังไลฟ์) */
   liveCount(): number { let n = 0; for (const e of this.rooms.values()) if (e.room.isConnected()) n++; return n; }
 

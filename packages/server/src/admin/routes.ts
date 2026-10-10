@@ -240,6 +240,22 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
   app.get('/api/admin/audit', { preHandler: requireAdmin }, async () => ({ audit: listAudit().slice(0, 300) }));
 
   app.get('/api/admin/live', { preHandler: requireAdmin }, async () => ({ rooms: getHub()?.listRooms() ?? [] }));
+  // แอดมินช่วยลูกค้าโดยไม่ต้องบอก: สั่งวิดเจ็ตบนจอรีโหลด (ของขวัญไม่หาย) + ดูของขวัญล่าสุดของห้อง
+  app.post('/api/admin/live/:username/reload', { preHandler: requireAdmin }, async (req) => {
+    const { username } = req.params as { username: string };
+    return { ok: true, screens: (await getHub()?.reloadRoom(username)) ?? 0 };
+  });
+  app.post('/api/admin/live-reload-all', { preHandler: requireAdmin }, async () => {
+    const hub = getHub(); let screens = 0;
+    for (const r of hub?.listRooms() ?? []) screens += await hub!.reloadRoom(r.username);
+    return { ok: true, screens };
+  });
+  app.get('/api/admin/live/:username/gifts', { preHandler: requireAdmin }, async (req, reply) => {
+    const { username } = req.params as { username: string };
+    const gifts = getHub()?.recentGifts(username);
+    if (!gifts) return reply.code(404).send({ error: 'ไม่พบห้องนี้' });
+    return { gifts };
+  });
 
   // จำนวนไลฟ์ (1 รหัสห้องไลฟ์ TikTok = 1 ไลฟ์) — วันนี้ / 7 วัน / 30 วัน / ทั้งหมด + อันดับวีเจที่ไลฟ์บ่อย + ไลฟ์ล่าสุด
   app.get('/api/admin/lives', { preHandler: requireAdmin }, async () => {

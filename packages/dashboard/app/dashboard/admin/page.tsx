@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { Fragment, useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Activity, BarChart3, Bell, CreditCard, Download, Gift, History, KeyRound, Radio, RefreshCw, Search, Settings2, Users, MessageCircle, Smile } from 'lucide-react';
 import { AdminUserDetail } from '@/components/AdminUserDetail';
 import { AdminSupport } from '@/components/AdminSupport';
@@ -75,6 +75,21 @@ export default function AdminPage() {
   const [q, setQ] = useState('');
   const [msg, setMsg] = useState<{ tone: 'success' | 'error' | 'info'; text: string } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [giftsOf, setGiftsOf] = useState<{ room: string; list: { ts: number; user: string; gift: string; img: string; d: number; n: number }[] | null } | null>(null);
+  // ช่วยลูกค้าเงียบ ๆ: สั่งวิดเจ็ตบนจอรีโหลดเอง (ของขวัญไม่หาย — บันทึกก่อนรีโหลด + เติมชิ้นที่พลาด)
+  async function reloadRoom(room: string | null) {
+    setBusy('reload:' + (room ?? '*'));
+    try {
+      const r = await api<{ screens: number }>(room ? `/api/admin/live/${encodeURIComponent(room)}/reload` : '/api/admin/live-reload-all', { method: 'POST' });
+      setMsg({ tone: 'success', text: `สั่งรีโหลดแล้ว ${r.screens} จอ${room ? ` (@${room})` : ' (ทุกห้อง)'} — ของขวัญบนจอไม่หาย` });
+    } catch (e) { setMsg({ tone: 'error', text: (e as Error).message }); } finally { setBusy(null); }
+  }
+  async function toggleGifts(room: string) {
+    if (giftsOf?.room === room) return setGiftsOf(null);
+    setGiftsOf({ room, list: null });
+    try { const r = await api<{ gifts: NonNullable<NonNullable<typeof giftsOf>['list']> }>(`/api/admin/live/${encodeURIComponent(room)}/gifts`); setGiftsOf({ room, list: r.gifts }); }
+    catch (e) { setGiftsOf(null); setMsg({ tone: 'error', text: (e as Error).message }); }
+  }
 
   const loadOv = useCallback(() => api<Overview>('/api/admin/overview').then(setOv).catch((e) => setMsg({ tone: 'error', text: (e as Error).message })), []);
   const loadUsers = useCallback((query = '') => api<{ users: UserRow[] }>(`/api/admin/users?q=${encodeURIComponent(query)}`).then((r) => setUsers(r.users)).catch((e) => setMsg({ tone: 'error', text: (e as Error).message })), []);
@@ -403,13 +418,17 @@ export default function AdminPage() {
 
       {tab === 'live' && (!rooms ? <Spinner /> : rooms.length === 0 ? <Card className="py-8 text-center text-sm text-muted">ยังไม่มีใครเปิดวิดเจ็ตตอนนี้</Card> : (
         <Card className="overflow-x-auto p-0">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3">
+            <span className="text-xs text-muted">ลูกค้าไม่ต้องกดอะไร — สั่งรีโหลดวิดเจ็ตบนจอจากตรงนี้ได้ ของขวัญไม่หาย</span>
+            <Button variant="secondary" loading={busy === 'reload:*'} onClick={() => { if (confirm('รีโหลดวิดเจ็ตทุกห้องตอนนี้?')) void reloadRoom(null); }}><RefreshCw className="size-4" /> รีโหลดทุกห้อง</Button>
+          </div>
           <table className="w-full text-sm">
             <thead className="border-b border-line text-left text-xs text-muted">
-              <tr><th className="px-4 py-3 font-normal">TikTok</th><th className="px-4 py-3 font-normal">สถานะ</th><th className="px-4 py-3 font-normal">การเชื่อมต่อ</th><th className="px-4 py-3 font-normal">วิดเจ็ตเปิด</th><th className="px-4 py-3 font-normal">คนดู</th><th className="px-4 py-3 font-normal">เพชร</th><th className="px-4 py-3 font-normal">ไลค์</th><th className="px-4 py-3 font-normal">ส่งเยอะสุด</th></tr>
+              <tr><th className="px-4 py-3 font-normal">TikTok</th><th className="px-4 py-3 font-normal">สถานะ</th><th className="px-4 py-3 font-normal">การเชื่อมต่อ</th><th className="px-4 py-3 font-normal">วิดเจ็ตเปิด</th><th className="px-4 py-3 font-normal">คนดู</th><th className="px-4 py-3 font-normal">เพชร</th><th className="px-4 py-3 font-normal">ไลค์</th><th className="px-4 py-3 font-normal">ส่งเยอะสุด</th><th className="px-4 py-3 font-normal">จัดการ</th></tr>
             </thead>
             <tbody className="divide-y divide-line">
-              {rooms.map((r) => (
-                <tr key={r.username}>
+              {rooms.map((r) => (<Fragment key={r.username}>
+                <tr>
                   <td className="px-4 py-3 font-medium">@{r.username}</td>
                   <td className="px-4 py-3"><Badge tone={r.connected ? 'mint' : r.lastError ? 'pink' : 'gray'}>{r.connected ? 'ไลฟ์อยู่' : r.retrying ? 'รอไลฟ์ (ลองใหม่อัตโนมัติ)' : 'กำลังต่อ'}</Badge></td>
                   <td className="max-w-xs px-4 py-3 text-xs">{r.connected ? <>ต่อได้ {ago(r.connectedAt)}</> : r.lastError ? <span className="text-pink" title={r.lastError}>{r.lastError.slice(0, 80)} · {ago(r.lastErrorAt)}</span> : '-'}<div className="text-muted">พยายามต่อ {r.attempts} ครั้ง</div></td>
@@ -418,8 +437,28 @@ export default function AdminPage() {
                   <td className="px-4 py-3">💎 {r.diamonds.toLocaleString('th-TH')}</td>
                   <td className="px-4 py-3">{r.likes.toLocaleString('th-TH')}</td>
                   <td className="px-4 py-3">{r.topGifter ?? '-'}</td>
+                  <td className="px-4 py-3"><div className="flex gap-1.5 whitespace-nowrap">
+                    <Button variant="secondary" className="px-2.5 py-1.5 text-xs" loading={busy === 'reload:' + r.username} onClick={() => void reloadRoom(r.username)} title="สั่งวิดเจ็ตบนจอของห้องนี้รีโหลด"><RefreshCw className="size-3.5" /> รีโหลดจอ</Button>
+                    <Button variant="ghost" className="px-2.5 py-1.5 text-xs" onClick={() => void toggleGifts(r.username)}><Gift className="size-3.5" /> ของขวัญ</Button>
+                  </div></td>
                 </tr>
-              ))}
+                {giftsOf?.room === r.username && (
+                  <tr><td colSpan={9} className="bg-canvas px-4 py-3">
+                    {!giftsOf.list ? <Spinner /> : giftsOf.list.length === 0 ? <span className="text-xs text-muted">ไลฟ์นี้ยังไม่มีของขวัญ</span> : (
+                      <div className="grid max-h-80 gap-1 overflow-y-auto sm:grid-cols-2 lg:grid-cols-3">
+                        {giftsOf.list.map((g, i) => (
+                          <div key={i} className="flex items-center gap-2 rounded-lg bg-white px-2 py-1 text-xs">
+                            {/^https:\/\//.test(g.img) ? <img src={g.img} alt="" className="size-6 object-contain" /> : <span>🎁</span>}
+                            <span className="min-w-0 flex-1 truncate"><b>{g.user}</b> · {g.gift} <b className="text-pink">×{g.n}</b></span>
+                            <span className="text-muted">💎{(g.d * g.n).toLocaleString('th-TH')}</span>
+                            <span className="text-muted">{g.ts ? new Date(g.ts).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) : ''}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </td></tr>
+                )}
+              </Fragment>))}
             </tbody>
           </table>
         </Card>

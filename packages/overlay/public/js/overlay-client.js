@@ -97,6 +97,8 @@ window.Overlay = (function () {
       u.searchParams.set('_v', v);
       setTimeout(() => location.replace(u.toString()), window.VJL_VERSION ? 300 : 1500 + Math.random() * 3000);
     });
+    // แอดมินสั่งรีโหลด (ช่วยลูกค้าโดยไม่ต้องให้กดเอง) — หน่วงสุ่มเล็กน้อย ไม่ให้ทุกจอโหลดพร้อมกัน · กองของขวัญบันทึกตอน pagehide
+    socket.on('reload', () => setTimeout(() => location.reload(), 200 + Math.random() * 1500));
     socket.on('config', (c) => {
       const next = JSON.stringify(c || {});
       if (next === JSON.stringify(cfg)) return;

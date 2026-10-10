@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Suspense, useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { Check, Copy, Pencil, Play, Plus, Sparkles, Trash2, Upload as UploadIcon } from 'lucide-react';
 import { Alert, Badge, Button, Card, Field, Input, PageHeader, Select, Spinner } from '@/components/ui';
 import { GiftCell, GiftPicker } from '@/components/GiftPicker';
@@ -310,7 +310,8 @@ function ActionsInner() {
   }
   const have = new Set((rules ?? []).map((r) => r.name));
   // เมนู ⚔️ PK Battle (/dashboard/actions/?pk=1): โชว์เฉพาะกฎ/เทมเพลต PK
-  const pkMode = useSearchParams().get('pk') === '1'; // เปลี่ยนเมนู Actions ↔ PK แล้วหน้าเปลี่ยนตามทันที (เดิมอ่านครั้งเดียวตอนเปิด → กดจากหน้า Actions แล้วค้าง)
+  const sp = useSearchParams(), path = usePathname();
+  const pkMode = path.includes('/dashboard/pk') || sp.get('pk') === '1'; // เปลี่ยนเมนู Actions ↔ PK แล้วหน้าเปลี่ยนตามทันที (เดิมอ่านครั้งเดียวตอนเปิด → กดจากหน้า Actions แล้วค้าง)
 
   return (
     <div>

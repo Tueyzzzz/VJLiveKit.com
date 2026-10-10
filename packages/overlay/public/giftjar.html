@@ -914,7 +914,7 @@
       if (dropFromTop && SH.music && fx.notes) fx.notes(b.x, SH.topY + 20, b.d >= 100 ? 5 : 2); // ธีมนักร้อง: โน้ตดนตรีลอย
       if (dropFromTop && SH.dome && SWIRL) swirlUntil = Math.max(swirlUntil, performance.now() + (b.d >= 1000 ? 4200 : b.d >= 100 ? 3200 : 2400)); // ลูกแก้ว: เขย่าเบา ๆ
       const alive = bodies.filter((k) => !k.dying);
-      if (alive.length > MAX) ((window.VJLCollect && VJLCollect.victims) ? VJLCollect.victims(bodies, 1) : [alive[0]]).forEach((k) => { k.dying = true; }); // จอเต็ม: ถูกสุด-เก่าสุดจางก่อน
+      if (alive.length > (MJ ? Math.min(MAX, 350) : MAX)) ((window.VJLCollect && VJLCollect.victims) ? VJLCollect.victims(bodies, 1) : [alive[0]]).forEach((k) => { k.dying = true; }); // จอเต็ม: ถูกสุด-เก่าสุดจางก่อน
     }
 
     function constrainOutside(b) {

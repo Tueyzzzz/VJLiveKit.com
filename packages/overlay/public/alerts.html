@@ -69,7 +69,7 @@
     // ---- คิวแจ้งเตือน ----
     const queue=[]; let busy=false;
     // PK: การ์ดที่มีวิดีโอ → เล่นกลางจอ (ไฟล์ pk/<card>.webp) · โหลดล่วงหน้าไว้ เล่นได้ทันที
-    const PK_VIDEO={ glove:4600, critical:4800, extra:4800 };
+    const PK_VIDEO={ glove:4600, critical:4800, extra:4800, smoke:5000 };
     const pkPre={}; for(const k in PK_VIDEO){ const im=new Image(); im.src='pk/'+k+'.webp'+(window.VJL_VERSION?'?v='+window.VJL_VERSION:''); pkPre[k]=im; }
     function playPk(card){
       if(!PK_VIDEO[card]) return;
@@ -104,7 +104,7 @@
       else if(e.type==='share'&&SHOW.share) push({ user:e.user, sub:'<b>แชร์</b>ไลฟ์นี้ ขอบคุณนะ!', emoji:'🔁', cls:'share' });
       else if(e.type==='pk'&&SHOW.pk&&e.pk){ // PK: การ์ด (นวม สายฟ้า ...) + ผลแพ้ชนะ
         const k=e.pk, side=k.side==='us'?' ให้เรา':k.side==='them'?' ฝั่งคู่แข่ง':'';
-        if(k.kind==='card'&&k.side!=='them') playPk(k.card);
+        if(k.kind==='card'&&(k.side!=='them'||k.card==='smoke')) playPk(k.card); // หมอก: เล่นทั้งสองฝั่ง (มักโดนคู่แข่งใช้ใส่เรา)
         if(k.kind==='card') push({ user:{nickname:k.by||'PK'}, sub:`ใช้การ์ด <b>${Overlay.esc(k.label||'PK')}</b>${side}`, emoji:(k.label||'⚔️').split(' ')[0], big:k.side==='us', cls:'big' });
         else if(k.kind==='end'&&k.result) push({ user:{nickname:'ผล PK'}, sub:k.result==='win'?'<b>ชนะ!</b> 🏆 ขอบคุณทุกคนที่ช่วยกัน':k.result==='lose'?'สู้เต็มที่แล้ว ขอบคุณทุกคนนะ 💪':'<b>เสมอ!</b> 🤝', emoji:k.result==='win'?'🏆':'⚔️', big:k.result==='win', cls:'big' });
       }

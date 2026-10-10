@@ -16,13 +16,14 @@ import { NAV } from '@/lib/nav';
 /** รูปการ์ดเมนู — ยังไม่มีรูป (เมนูใหม่) ใช้ไอคอนในวงกลมแทน */
 function MenuArt({ img, Icon, dim }: { img: string; Icon: React.ComponentType<{ className?: string }>; dim: boolean }) {
   const [bad, setBad] = useState(false);
-  if (bad) return <div className="mx-auto grid size-20 place-items-center rounded-full bg-pink-soft text-pink sm:size-22"><Icon className="size-9" /></div>;
+  // พื้นไล่สีชมพูอ่อนหลังรูป → รูปวีเจเด่นออกจากการ์ดขาว
   return (
-    <div className="relative mx-auto w-fit">
-      <img src={`/menu/${img}.webp`} alt="" width={88} height={88} loading="lazy" onError={() => setBad(true)}
-        className={`size-20 object-contain transition-transform group-hover:scale-110 sm:size-22 ${dim ? 'opacity-40 grayscale' : ''}`} />
+    <div className={`relative grid place-items-center rounded-2xl py-2 ${dim ? 'bg-gray-50' : 'bg-[radial-gradient(circle_at_50%_45%,#ffe0f0_0%,#f3eaff_55%,transparent_80%)]'}`}>
+      {bad ? <div className="grid size-28 place-items-center rounded-full bg-pink-soft text-pink sm:size-36"><Icon className="size-12" /></div>
+        : <img src={`/menu/${img}.webp`} alt="" width={144} height={144} loading="lazy" onError={() => setBad(true)}
+          className={`size-32 object-contain drop-shadow-md transition-transform duration-300 group-hover:scale-110 sm:size-36 ${dim ? 'opacity-40 grayscale' : ''}`} />}
       {/* ไอคอนฟังก์ชันมุมขวาล่าง — รูปวีเจเด่น แต่ยังรู้ทันทีว่าเมนูนี้ทำอะไร */}
-      <span className={`absolute -bottom-1 -right-2 grid size-8 place-items-center rounded-full text-white shadow-md ring-2 ring-white ${dim ? 'bg-muted' : 'brand-gradient'}`}><Icon className="size-4" /></span>
+      <span className={`absolute bottom-1 right-[calc(50%-4.6rem)] grid size-10 place-items-center rounded-full text-white shadow-lg ring-[3px] ring-white sm:right-[calc(50%-5.2rem)] ${dim ? 'bg-muted' : 'brand-gradient'}`}><Icon className="size-5" /></span>
     </div>
   );
 }
@@ -79,13 +80,13 @@ export default function OverviewPage() {
           const body = (
             <>
               <MenuArt img={n.img} Icon={n.icon} dim={!!soon} />
-              <div className="mt-2 text-center text-sm font-semibold text-ink">{t(n.label)}</div>
-              <div className="mt-0.5 line-clamp-2 text-center text-xs text-muted">{soon ? t('กำลังพัฒนา') : t(n.desc)}</div>
+              <div className="mt-2.5 text-center text-[15px] font-bold leading-tight text-ink sm:text-base">{t(n.label)}</div>
+              <div className="mt-1 line-clamp-2 text-center text-xs text-muted">{soon ? t('กำลังพัฒนา') : t(n.desc)}</div>
             </>
           );
           return soon
-            ? <div key={n.href} className="cursor-not-allowed rounded-2xl border border-line bg-white/60 p-3">{body}</div>
-            : <Link key={n.href} href={n.href} className="group rounded-2xl border border-line bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:border-pink/40 hover:shadow-md">{body}</Link>;
+            ? <div key={n.href} className="cursor-not-allowed rounded-3xl border border-line bg-white/60 p-3">{body}</div>
+            : <Link key={n.href} href={n.href} className="group rounded-3xl border border-line bg-white p-3 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-pink/50 hover:shadow-[0_10px_30px_-10px_rgba(255,105,170,.45)]">{body}</Link>;
         })}
       </div>
 

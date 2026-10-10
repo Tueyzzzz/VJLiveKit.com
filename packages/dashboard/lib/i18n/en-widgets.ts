@@ -628,4 +628,13 @@ export const EN_WIDGETS: Record<string, string> = {
   "ฟักทองแก้ว": "Glass pumpkin",
   "ขวดซากุระ": "Sakura bottle",
   "ตุ๊กตุ๊กใส": "Glass tuk-tuk",
+  "กล่องจดหมายหัวใจ": "Heart mailbox",
+  "ชิงช้าสวรรค์ (กระเช้าหมุน)": "Ferris wheel (rotating cabins)",
+  "สีกระเช้า": "Cabin colours",
+  "คละสีพาสเทล": "Mixed pastels",
+  "ชมพู": "Pink",
+  "ม่วงลาเวนเดอร์": "Lavender",
+  "ความเร็ววงล้อ (วินาทีต่อรอบ)": "Wheel speed (seconds per turn)",
+  " วิ": " s",
+  "0 = หยุดนิ่ง · ของขวัญขึ้นกระเช้าล่างสุดก่อน เต็มทุกกระเช้าแล้วกองพื้นข้างฐาน": "0 = still · gifts board the lowest cabin first; when all cabins are full they pile beside the base",
 };

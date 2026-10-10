@@ -166,21 +166,21 @@
         image: { src: 'themes/jar-sundae-front.webp', back: 'themes/jar-sundae-back.webp', x: -230.3, y: -440.0, w: 462.8, h: 440.0 },
       },
       vaseglass: { // แจกันแก้วใส (ภาพ AI) — ของขวัญหล่นผ่านคอแจกันลงไปกองในแก้ว · ผนังวัดจากภาพ
-        prof: [[-304, 72], [-280, 78], [-260, 95], [-240, 115], [-210, 130], [-170, 137], [-130, 137], [-90, 132], [-60, 118], [-40, 100], [-22, 75]],
+        prof: [[-304, 72], [-280, 78], [-260, 95], [-240, 115], [-210, 130], [-170, 137], [-130, 137], [-90, 132], [-60, 118], [-40, 100]],
         hw: (y) => profileHW(SHAPES.vaseglass.prof, y),
-        openY: -304, openHW: 72, rimHW: 131, topY: -380.0, fullY: -264, maxHW: 137, floor: -22,
+        openY: -304, openHW: 72, rimHW: 131, topY: -380.0, fullY: -274.0, maxHW: 137, floor: -40,
         image: { src: 'themes/jar-vaseglass.webp', back: 'themes/jar-vaseglass-back.webp', x: -172.3, y: -380.0, w: 344.6, h: 380.0 },
       },
       boba: { // แก้วชานมไข่มุก (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
-        prof: [[-288.8, 60.3], [-268.6, 72.5], [-248.5, 78.4], [-228.3, 88.3], [-208.1, 84.3], [-188.0, 72.1], [-167.8, 69.7], [-147.6, 67.3], [-127.4, 64.7], [-107.3, 62.3], [-87.1, 59.8], [-66.9, 57.3], [-46.8, 54.8], [-26.6, 49.9]],
+        prof: [[-288.8, 60.3], [-268.6, 72.5], [-248.5, 78.4], [-228.3, 88.3], [-208.1, 84.3], [-188.0, 72.1], [-167.8, 69.7], [-147.6, 67.3], [-127.4, 64.7], [-107.3, 62.3], [-87.1, 59.8], [-66.9, 57.3], [-46.8, 54.8], [-40, 54.8]],
         hw: (y) => profileHW(SHAPES.boba.prof, y),
-        openY: -288.8, openHW: 60.3, rimHW: 66.3, topY: -380.0, fullY: -258.8, maxHW: 88.3, floor: -26.6, closed: true,
+        openY: -288.8, openHW: 60.3, rimHW: 66.3, topY: -380.0, fullY: -258.8, maxHW: 88.3, floor: -40, closed: true,
         genGlass: true, image: { src: 'themes/jar-boba.webp', x: -111.5, y: -380.0, w: 223.0, h: 380.0 },
       },
       claw: { // ตู้คีบตุ๊กตา (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
-        prof: [[-266.0, 91.0], [-254.3, 90.8], [-242.6, 20], [-230.9, 20], [-219.2, 57.3], [-207.5, 20], [-195.8, 90.3], [-149.1, 90.3], [-137.4, 90.3], [-125.7, 90.3], [-114.0, 90.3]],
+        prof: [[-262, 88], [-118, 88]],
         hw: (y) => profileHW(SHAPES.claw.prof, y),
-        openY: -266.0, openHW: 91.0, rimHW: 100.1, topY: -380.0, fullY: -236.0, maxHW: 91.0, floor: -114.0, closed: true,
+        openY: -266.0, openHW: 91.0, rimHW: 100.1, topY: -380.0, fullY: -236.0, maxHW: 88, floor: -118, closed: true,
         genGlass: true, image: { src: 'themes/jar-claw.webp', x: -134.5, y: -380.0, w: 269.0, h: 380.0 },
       },
       cakejar: { // เค้กชั้นใส (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
@@ -190,63 +190,63 @@
         genGlass: true, image: { src: 'themes/jar-cakejar.webp', x: -135.6, y: -380.0, w: 271.2, h: 380.0 },
       },
       glassbear: { // ตุ๊กตาหมีใส (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
-        prof: [[-334.4, 127.8], [-311.0, 127.5], [-287.6, 115.9], [-264.2, 101.0], [-240.9, 105.4], [-217.5, 104.8], [-194.1, 97.7], [-170.7, 76.4], [-147.3, 103.2], [-123.9, 119.7], [-100.6, 125.9], [-77.2, 118.7], [-53.8, 122.4], [-30.4, 117.2]],
+        prof: [[-334.4, 127.8], [-311.0, 127.5], [-287.6, 115.9], [-264.2, 101.0], [-240.9, 105.4], [-217.5, 104.8], [-194.1, 97.7], [-170.7, 76.4], [-147.3, 103.2], [-123.9, 119.7], [-100.6, 125.9], [-77.2, 118.7], [-53.8, 122.4], [-40, 122.4]],
         hw: (y) => profileHW(SHAPES.glassbear.prof, y),
-        openY: -334.4, openHW: 127.8, rimHW: 140.6, topY: -380.0, fullY: -304.4, maxHW: 127.8, floor: -30.4, closed: true,
+        openY: -334.4, openHW: 127.8, rimHW: 140.6, topY: -380.0, fullY: -304.4, maxHW: 127.8, floor: -40, closed: true,
         genGlass: true, image: { src: 'themes/jar-glassbear.webp', x: -154.4, y: -380.0, w: 308.8, h: 380.0 },
       },
       planetjar: { // ขวดดาวเคราะห์ (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
-        prof: [[-273.6, 77.8], [-254.6, 94.6], [-235.6, 111.9], [-216.6, 136.2], [-197.6, 118.5], [-178.6, 137.1], [-159.6, 138.6], [-140.6, 136.6], [-121.6, 135.3], [-102.6, 121.8], [-83.6, 99.6], [-64.6, 85.5], [-45.6, 63.9], [-26.6, 68.9]],
+        prof: [[-272.0, 54.1], [-247.1, 85.5], [-222.2, 103.0], [-197.3, 113.3], [-172.4, 118.3], [-147.6, 118.6], [-122.7, 114.4], [-97.8, 105.0], [-72.9, 88.9], [-48.0, 60.9]],
         hw: (y) => profileHW(SHAPES.planetjar.prof, y),
-        openY: -273.6, openHW: 77.8, rimHW: 85.6, topY: -380.0, fullY: -243.6, maxHW: 138.6, floor: -26.6, closed: true,
+        openY: -273.6, openHW: 77.8, rimHW: 85.6, topY: -380.0, fullY: -243.6, maxHW: 118.6, floor: -48, closed: true,
         genGlass: true, image: { src: 'themes/jar-planetjar.webp', x: -190.9, y: -380.0, w: 381.9, h: 380.0 },
       },
       latte: { // แก้วลาเต้ (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
-        prof: [[-296.4, 88.6], [-277.1, 78.0], [-257.8, 115.8], [-238.5, 79.6], [-219.2, 69.0], [-199.9, 67.1], [-180.6, 65.5], [-161.4, 64.4], [-142.1, 65.8], [-122.8, 88.3], [-103.5, 62.8], [-84.2, 52.6], [-64.9, 27.0], [-45.6, 45.7]],
+        prof: [[-292, 95], [-250, 93], [-200, 90], [-150, 86], [-110, 82], [-98, 78]],
         hw: (y) => profileHW(SHAPES.latte.prof, y),
-        openY: -296.4, openHW: 88.6, rimHW: 97.5, topY: -380.0, fullY: -266.4, maxHW: 115.8, floor: -45.6, closed: true,
+        openY: -296.4, openHW: 88.6, rimHW: 97.5, topY: -380.0, fullY: -266.4, maxHW: 95, floor: -98, closed: true,
         genGlass: true, image: { src: 'themes/jar-latte.webp', x: -152.1, y: -380.0, w: 304.1, h: 380.0 },
       },
       milkbox: { // กล่องนมสตรอว์เบอร์รี่ (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
-        prof: [[-266.0, 102.7], [-247.0, 103.1], [-228.0, 102.9], [-209.0, 102.9], [-190.0, 102.9], [-171.0, 102.9], [-152.0, 102.9], [-133.0, 102.9], [-114.0, 102.9], [-95.0, 102.9], [-76.0, 102.9], [-57.0, 102.9], [-38.0, 98.7], [-19.0, 85.3]],
+        prof: [[-266.0, 102.7], [-247.0, 103.1], [-228.0, 102.9], [-209.0, 102.9], [-190.0, 102.9], [-171.0, 102.9], [-152.0, 102.9], [-133.0, 102.9], [-114.0, 102.9], [-95.0, 102.9], [-76.0, 102.9], [-57.0, 102.9], [-40, 102.9]],
         hw: (y) => profileHW(SHAPES.milkbox.prof, y),
-        openY: -266.0, openHW: 102.7, rimHW: 113.0, topY: -380.0, fullY: -236.0, maxHW: 103.1, floor: -19.0, closed: true,
+        openY: -266.0, openHW: 102.7, rimHW: 113.0, topY: -380.0, fullY: -236.0, maxHW: 103.1, floor: -40, closed: true,
         genGlass: true, image: { src: 'themes/jar-milkbox.webp', x: -124.7, y: -380.0, w: 249.3, h: 380.0 },
       },
       cupcake1: { // คัพเค้กใส (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
-        prof: [[-296.4, 62.2], [-280.6, 77.3], [-264.8, 86.9], [-249.0, 100.5], [-233.3, 110.5], [-217.5, 114.5], [-201.7, 110.2], [-185.9, 108.4], [-170.1, 111.2], [-154.3, 111.7], [-138.6, 109.7], [-122.8, 119.3], [-107.0, 116.4], [-91.2, 102.1]],
+        prof: [[-296.4, 62.2], [-280.6, 77.3], [-264.8, 86.9], [-249.0, 100.5], [-233.3, 110.5], [-217.5, 114.5], [-201.7, 110.2], [-185.9, 108.4], [-170.1, 111.2], [-154.3, 111.7], [-138.6, 109.7], [-122.8, 119.3], [-107.0, 116.4], [-106, 116.4]],
         hw: (y) => profileHW(SHAPES.cupcake1.prof, y),
-        openY: -296.4, openHW: 62.2, rimHW: 68.4, topY: -380.0, fullY: -266.4, maxHW: 119.3, floor: -91.2, closed: true,
+        openY: -296.4, openHW: 62.2, rimHW: 68.4, topY: -380.0, fullY: -266.4, maxHW: 119.3, floor: -106, closed: true,
         genGlass: true, image: { src: 'themes/jar-cupcake1.webp', x: -146.9, y: -380.0, w: 293.8, h: 380.0 },
       },
       strawberry: { // โหลสตรอว์เบอร์รี่ (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
-        prof: [[-258.4, 127.9], [-240.6, 101.7], [-222.7, 122.5], [-204.9, 131.4], [-187.1, 134.4], [-169.2, 133.9], [-151.4, 130.1], [-133.6, 124.4], [-115.8, 117.7], [-97.9, 112.0], [-80.1, 99.6], [-62.3, 88.9], [-44.4, 76.9], [-26.6, 61.6]],
+        prof: [[-258.4, 127.9], [-240.6, 101.7], [-222.7, 122.5], [-204.9, 131.4], [-187.1, 134.4], [-169.2, 133.9], [-151.4, 130.1], [-133.6, 124.4], [-115.8, 117.7], [-97.9, 112.0], [-80.1, 99.6], [-62.3, 88.9], [-55, 88.9]],
         hw: (y) => profileHW(SHAPES.strawberry.prof, y),
-        openY: -258.4, openHW: 127.9, rimHW: 140.7, topY: -380.0, fullY: -228.4, maxHW: 134.4, floor: -26.6, closed: true,
+        openY: -258.4, openHW: 127.9, rimHW: 140.7, topY: -380.0, fullY: -228.4, maxHW: 134.4, floor: -55, closed: true,
         genGlass: true, image: { src: 'themes/jar-strawberry.webp', x: -161.4, y: -380.0, w: 322.8, h: 380.0 },
       },
       glasspig: { // กระปุกหมูแก้ว (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
-        prof: [[-304.0, 152.6], [-285.0, 148.4], [-266.0, 139.2], [-247.0, 147.4], [-228.0, 152.9], [-209.0, 156.0], [-190.0, 166.1], [-171.0, 156.3], [-152.0, 165.0], [-133.0, 149.6], [-114.0, 143.2], [-95.0, 133.8], [-76.0, 119.7], [-57.0, 124.4]],
+        prof: [[-304.0, 152.6], [-285.0, 148.4], [-266.0, 139.2], [-247.0, 147.4], [-228.0, 152.9], [-209.0, 156.0], [-190.0, 166.1], [-171.0, 156.3], [-152.0, 165.0], [-133.0, 149.6], [-114.0, 143.2], [-95.0, 133.8], [-76.0, 119.7], [-72, 119.7]],
         hw: (y) => profileHW(SHAPES.glasspig.prof, y),
-        openY: -304.0, openHW: 152.6, rimHW: 167.9, topY: -380.0, fullY: -274.0, maxHW: 166.1, floor: -57.0, closed: true,
+        openY: -304.0, openHW: 152.6, rimHW: 167.9, topY: -380.0, fullY: -274.0, maxHW: 166.1, floor: -72, closed: true,
         genGlass: true, image: { src: 'themes/jar-glasspig.webp', x: -201.9, y: -380.0, w: 403.8, h: 380.0 },
       },
       cupcake2: { // คัพเค้กเชอร์รี่ (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
-        prof: [[-247.0, 111.0], [-236.2, 113.0], [-225.4, 117.7], [-214.6, 124.6], [-203.7, 126.0], [-192.9, 109.8], [-182.1, 111.2], [-171.3, 112.3], [-160.5, 112.3], [-149.7, 111.4], [-138.8, 109.4], [-128.0, 106.7], [-117.2, 111.2], [-106.4, 109.2]],
+        prof: [[-247.0, 111.0], [-236.2, 113.0], [-225.4, 117.7], [-214.6, 124.6], [-203.7, 126.0], [-192.9, 109.8], [-182.1, 111.2], [-171.3, 112.3], [-160.5, 112.3], [-149.7, 111.4], [-138.8, 109.4], [-128.0, 106.7], [-117.2, 111.2], [-106.4, 109.2], [-106, 109.2]],
         hw: (y) => profileHW(SHAPES.cupcake2.prof, y),
-        openY: -247.0, openHW: 111.0, rimHW: 122.1, topY: -380.0, fullY: -217.0, maxHW: 126.0, floor: -106.4, closed: true,
+        openY: -247.0, openHW: 111.0, rimHW: 122.1, topY: -380.0, fullY: -217.0, maxHW: 126.0, floor: -106, closed: true,
         genGlass: true, image: { src: 'themes/jar-cupcake2.webp', x: -152.2, y: -380.0, w: 304.4, h: 380.0 },
       },
       perfume: { // ขวดน้ำหอมหัวใจ (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
-        prof: [[-258.4, 98.8], [-243.8, 102.5], [-229.2, 116.2], [-214.6, 134.9], [-199.9, 112.6], [-185.3, 112.9], [-170.7, 110.8], [-156.1, 107.1], [-141.5, 101.1], [-126.9, 93.9], [-112.2, 84.2], [-97.6, 72.4], [-83.0, 59.1], [-68.4, 57.3]],
+        prof: [[-258.4, 98.8], [-243.8, 102.5], [-229.2, 116.2], [-214.6, 134.9], [-199.9, 112.6], [-185.3, 112.9], [-170.7, 110.8], [-156.1, 107.1], [-141.5, 101.1], [-126.9, 93.9], [-112.2, 84.2], [-97.6, 72.4], [-83.0, 59.1], [-80, 59.1]],
         hw: (y) => profileHW(SHAPES.perfume.prof, y),
-        openY: -258.4, openHW: 98.8, rimHW: 108.7, topY: -380.0, fullY: -228.4, maxHW: 134.9, floor: -68.4, closed: true,
+        openY: -258.4, openHW: 98.8, rimHW: 108.7, topY: -380.0, fullY: -228.4, maxHW: 134.9, floor: -80, closed: true,
         genGlass: true, image: { src: 'themes/jar-perfume.webp', x: -185.7, y: -380.0, w: 371.3, h: 380.0 },
       },
       cloud: { // ก้อนเมฆสายรุ้ง (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
-        prof: [[-228.0, 127.7], [-212.8, 101.6], [-197.6, 106.5], [-182.4, 115.8], [-167.2, 134.9], [-152.0, 151.0], [-136.8, 159.1], [-121.6, 163.8], [-106.4, 165.6], [-91.2, 165.2], [-76.0, 162.2], [-60.8, 155.5], [-45.6, 142.9], [-30.4, 114.2]],
+        prof: [[-228.0, 127.7], [-212.8, 101.6], [-197.6, 106.5], [-182.4, 115.8], [-167.2, 134.9], [-152.0, 151.0], [-136.8, 159.1], [-121.6, 163.8], [-106.4, 165.6], [-91.2, 165.2], [-76.0, 162.2], [-60.8, 155.5], [-55, 155.5]],
         hw: (y) => profileHW(SHAPES.cloud.prof, y),
-        openY: -228.0, openHW: 127.7, rimHW: 140.5, topY: -380.0, fullY: -198.0, maxHW: 165.6, floor: -30.4, closed: true,
+        openY: -228.0, openHW: 127.7, rimHW: 140.5, topY: -380.0, fullY: -198.0, maxHW: 165.6, floor: -55, closed: true,
         genGlass: true, image: { src: 'themes/jar-cloud.webp', x: -197.6, y: -380.0, w: 395.1, h: 380.0 },
       },
       diamond: { // เพชรเจ้าหญิง (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
@@ -256,27 +256,27 @@
         genGlass: true, image: { src: 'themes/jar-diamond.webp', x: -178.1, y: -380.0, w: 356.2, h: 380.0 },
       },
       crownjar: { // มงกุฎแก้ว (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
-        prof: [[-266.0, 94.8], [-249.9, 133.2], [-233.8, 130.5], [-217.8, 128.0], [-201.7, 125.2], [-185.6, 128.0], [-169.5, 127.6], [-153.5, 124.9], [-137.4, 120.9], [-121.3, 115.3], [-105.2, 108.1], [-89.2, 99.6], [-73.1, 91.9], [-57.0, 92.3]],
+        prof: [[-266.0, 94.8], [-249.9, 133.2], [-233.8, 130.5], [-217.8, 128.0], [-201.7, 125.2], [-185.6, 128.0], [-169.5, 127.6], [-153.5, 124.9], [-137.4, 120.9], [-121.3, 115.3], [-105.2, 108.1], [-89.2, 99.6], [-73.1, 91.9], [-68, 91.9]],
         hw: (y) => profileHW(SHAPES.crownjar.prof, y),
-        openY: -266.0, openHW: 94.8, rimHW: 104.3, topY: -380.0, fullY: -236.0, maxHW: 133.2, floor: -57.0,
+        openY: -266.0, openHW: 94.8, rimHW: 104.3, topY: -380.0, fullY: -236.0, maxHW: 133.2, floor: -68,
         genGlass: true, image: { src: 'themes/jar-crownjar.webp', x: -182.4, y: -380.0, w: 364.8, h: 380.0 },
       },
       capsule: { // แคปซูลนีออน (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
-        prof: [[-304.0, 110.5], [-285.0, 108.6], [-266.0, 99.5], [-247.0, 100.6], [-228.0, 104.4], [-209.0, 104.6], [-190.0, 107.3], [-171.0, 113.4], [-152.0, 112.8], [-133.0, 104.6], [-114.0, 104.6], [-95.0, 104.1], [-76.0, 99.2], [-57.0, 103.7]],
+        prof: [[-304.0, 110.5], [-285.0, 108.6], [-266.0, 99.5], [-247.0, 100.6], [-228.0, 104.4], [-209.0, 104.6], [-190.0, 107.3], [-171.0, 113.4], [-152.0, 112.8], [-133.0, 104.6], [-114.0, 104.6], [-95.0, 104.1], [-85, 104.1]],
         hw: (y) => profileHW(SHAPES.capsule.prof, y),
-        openY: -304.0, openHW: 110.5, rimHW: 121.6, topY: -380.0, fullY: -274.0, maxHW: 113.4, floor: -57.0, closed: true,
+        openY: -304.0, openHW: 110.5, rimHW: 121.6, topY: -380.0, fullY: -274.0, maxHW: 113.4, floor: -85, closed: true,
         genGlass: true, image: { src: 'themes/jar-capsule.webp', x: -137.2, y: -380.0, w: 274.4, h: 380.0 },
       },
       hourglass: { // นาฬิกาทราย (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
-        prof: [[-171.0, 20], [-160.8, 22.7], [-150.5, 38.0], [-140.3, 48.6], [-130.1, 55.4], [-119.8, 59.6], [-109.6, 61.7], [-99.4, 87.1], [-89.2, 82.5], [-78.9, 59.7], [-68.7, 83.0], [-58.5, 91.4], [-48.2, 93.8], [-38.0, 90.9]],
+        prof: [[-171.0, 20], [-160.8, 22.7], [-150.5, 38.0], [-140.3, 48.6], [-130.1, 55.4], [-119.8, 59.6], [-109.6, 61.7], [-99.4, 87.1], [-89.2, 82.5], [-78.9, 59.7], [-68.7, 83.0], [-68, 83.0]],
         hw: (y) => profileHW(SHAPES.hourglass.prof, y),
-        openY: -171.0, openHW: 20, rimHW: 22.0, topY: -380.0, fullY: -141.0, maxHW: 93.8, floor: -38.0, closed: true,
+        openY: -171.0, openHW: 20, rimHW: 22.0, topY: -380.0, fullY: -141.0, maxHW: 87.1, floor: -68, closed: true,
         genGlass: true, image: { src: 'themes/jar-hourglass.webp', x: -113.9, y: -380.0, w: 227.8, h: 380.0 },
       },
       glasssnowman: { // มนุษย์หิมะแก้ว (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
-        prof: [[-258.4, 77.4], [-240.9, 75.6], [-223.3, 71.3], [-205.8, 69.6], [-188.2, 62.3], [-170.7, 64.7], [-153.2, 82.4], [-135.6, 80.8], [-118.1, 89.5], [-100.6, 96.9], [-83.0, 95.3], [-65.5, 90.2], [-47.9, 84.0], [-30.4, 73.0]],
+        prof: [[-258.4, 77.4], [-240.9, 75.6], [-223.3, 71.3], [-205.8, 69.6], [-188.2, 62.3], [-170.7, 64.7], [-153.2, 82.4], [-135.6, 80.8], [-118.1, 89.5], [-100.6, 96.9], [-83.0, 95.3], [-65.5, 90.2], [-47.9, 84.0], [-42, 84.0]],
         hw: (y) => profileHW(SHAPES.glasssnowman.prof, y),
-        openY: -258.4, openHW: 77.4, rimHW: 85.1, topY: -380.0, fullY: -228.4, maxHW: 96.9, floor: -30.4, closed: true,
+        openY: -258.4, openHW: 77.4, rimHW: 85.1, topY: -380.0, fullY: -228.4, maxHW: 96.9, floor: -42, closed: true,
         genGlass: true, image: { src: 'themes/jar-glasssnowman.webp', x: -158.9, y: -380.0, w: 317.9, h: 380.0 },
       },
       idolmic: { // ไมค์ไอดอล (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
@@ -286,21 +286,21 @@
         genGlass: true, image: { src: 'themes/jar-idolmic.webp', x: -92.7, y: -380.0, w: 185.3, h: 380.0 },
       },
       lantern: { // โคมจีนแก้ว (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
-        prof: [[-285.0, 63.0], [-268.9, 79.2], [-252.8, 105.4], [-236.8, 98.7], [-220.7, 114.2], [-204.6, 95.3], [-188.5, 91.6], [-172.5, 84.4], [-156.4, 70.8], [-140.3, 56.6], [-124.2, 53.3], [-108.2, 20], [-92.1, 20], [-76.0, 20]],
+        prof: [[-285.0, 63.0], [-268.9, 79.2], [-252.8, 105.4], [-236.8, 98.7], [-220.7, 114.2], [-204.6, 95.3], [-188.5, 91.6], [-172.5, 84.4], [-156.4, 70.8], [-140.3, 56.6], [-128, 56.6]],
         hw: (y) => profileHW(SHAPES.lantern.prof, y),
-        openY: -285.0, openHW: 63.0, rimHW: 69.3, topY: -380.0, fullY: -255.0, maxHW: 114.2, floor: -76.0, closed: true,
+        openY: -285.0, openHW: 63.0, rimHW: 69.3, topY: -380.0, fullY: -255.0, maxHW: 114.2, floor: -128, closed: true,
         genGlass: true, image: { src: 'themes/jar-lantern.webp', x: -142.8, y: -380.0, w: 285.5, h: 380.0 },
       },
       pumpkinjar: { // ฟักทองแก้ว (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
-        prof: [[-285.0, 75.4], [-265.4, 97.5], [-245.8, 109.7], [-226.2, 131.6], [-206.7, 142.8], [-187.1, 149.9], [-167.5, 153.1], [-147.9, 154.6], [-128.3, 153.5], [-108.7, 150.6], [-89.2, 145.4], [-69.6, 137.7], [-50.0, 126.1], [-30.4, 107.4]],
+        prof: [[-285.0, 75.4], [-265.4, 97.5], [-245.8, 109.7], [-226.2, 131.6], [-206.7, 142.8], [-187.1, 149.9], [-167.5, 153.1], [-147.9, 154.6], [-128.3, 153.5], [-108.7, 150.6], [-89.2, 145.4], [-69.6, 137.7], [-50.0, 126.1], [-45, 126.1]],
         hw: (y) => profileHW(SHAPES.pumpkinjar.prof, y),
-        openY: -285.0, openHW: 75.4, rimHW: 82.9, topY: -380.0, fullY: -255.0, maxHW: 154.6, floor: -30.4, closed: true,
+        openY: -285.0, openHW: 75.4, rimHW: 82.9, topY: -380.0, fullY: -255.0, maxHW: 154.6, floor: -45, closed: true,
         genGlass: true, image: { src: 'themes/jar-pumpkinjar.webp', x: -184.6, y: -380.0, w: 369.1, h: 380.0 },
       },
       sakurabottle: { // ขวดซากุระ (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
-        prof: [[-247.0, 56.4], [-230.0, 68.3], [-213.1, 61.3], [-196.1, 61.3], [-179.2, 60.2], [-162.2, 58.1], [-145.3, 55.8], [-128.3, 52.8], [-111.4, 49.8], [-94.4, 46.4], [-77.5, 43.3], [-60.5, 40.5], [-43.6, 39.4], [-26.6, 50.3]],
+        prof: [[-247.0, 56.4], [-230.0, 68.3], [-213.1, 61.3], [-196.1, 61.3], [-179.2, 60.2], [-162.2, 58.1], [-145.3, 55.8], [-128.3, 52.8], [-111.4, 49.8], [-94.4, 46.4], [-77.5, 43.3], [-60.5, 40.5], [-43.6, 39.4], [-42, 39.4]],
         hw: (y) => profileHW(SHAPES.sakurabottle.prof, y),
-        openY: -247.0, openHW: 56.4, rimHW: 62.0, topY: -380.0, fullY: -217.0, maxHW: 68.3, floor: -26.6, closed: true,
+        openY: -247.0, openHW: 56.4, rimHW: 62.0, topY: -380.0, fullY: -217.0, maxHW: 68.3, floor: -42, closed: true,
         genGlass: true, image: { src: 'themes/jar-sakurabottle.webp', x: -97.5, y: -380.0, w: 194.9, h: 380.0 },
       },
       tuktuk: { // ตุ๊กตุ๊กใส (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
@@ -308,6 +308,17 @@
         hw: (y) => profileHW(SHAPES.tuktuk.prof, y),
         openY: -266.0, openHW: 130.3, rimHW: 143.3, topY: -380.0, fullY: -236.0, maxHW: 149.8, floor: -114.0, closed: true,
         genGlass: true, image: { src: 'themes/jar-tuktuk.webp', x: -181.7, y: -380.0, w: 363.4, h: 380.0 },
+      },
+      mailbox: { // กล่องจดหมายหัวใจ (ภาพ AI) — ของขวัญหย่อนลงช่องจดหมาย กองบนพื้นชมพูในกล่อง
+        prof: [[-268, 92], [-240, 100], [-210, 102], [-195, 97], [-182, 90]],
+        hw: (y) => profileHW(SHAPES.mailbox.prof, y),
+        openY: -268.4, openHW: 97, rimHW: 107, topY: -380.0, fullY: -238.4, maxHW: 102, floor: -182, closed: true,
+        genGlass: true, image: { src: 'themes/jar-mailbox.webp', x: -190.45, y: -380.0, w: 380.9, h: 380.0 },
+      },
+      ferris: { // ชิงช้าสวรรค์ — วงล้อหมุนช้า ๆ กระเช้า 8 อันห้อยตั้งตรงเสมอ ของขวัญนั่งในกระเช้า (ขึ้นที่กระเช้าล่างสุดก่อน) เต็มทุกกระเช้าแล้วกองพื้นข้างฐาน
+        fer: { hubY: -263, rp: 121.5, n: 8, cabW: 90, wheelR: 135 },
+        hw: () => 170, openY: -440, openHW: 120, rimHW: 150, topY: -440, fullY: -300, maxHW: 170,
+        rects: [[-112, 112, -112, -50], [-150, 150, -50, 0]], // ฐาน (ชั้นบน/ชั้นล่าง) — ของที่ล้นกองรอบฐาน
       },
       jstar: { // โหลดาว (ภาพ 3D) — ผนังวัดจากภาพ
         prof: [[-319.4,51.9],[-267.9,66.2],[-250.1,172.9],[-218.1,180.0],[-182.5,119.5],[-154.0,112.4],[-100.7,130.2],[-65.1,151.5],[-26.0,123.1]],
@@ -590,6 +601,51 @@
     const origin = () => ({ x: W / 2 + OX, y: H - 24 * SCALE - BOARD_SPACE + OY });
     const S = () => SCALE * Math.min(1.6, Math.max(0.5, H / 720));
 
+    // ---- ชิงช้าสวรรค์: วงล้อหมุน + กระเช้าห้อยตั้งตรง (ของขวัญในกระเช้าใช้พิกัดของกระเช้า → โยกตามกระเช้าเอง) ----
+    // ?cabs=mix|pink|lilac|mint|sky|peach  สีกระเช้า · ?spin=40 วินาทีต่อรอบ (0 = หยุด)
+    const FER = SH.fer ? (() => {
+      const f = SH.fer, kc = f.cabW / 283, ks = 0.396, kw = f.wheelR / 376.1, cache = {};
+      const ORDER = ['pink', 'lilac', 'mint', 'sky', 'peach'], pick = P('cabs', 'mix');
+      const im = (c, side) => cache[c + side] ||= Juice.skin(`themes/ferris-cab${c === 'pink' ? '' : '-' + c}${side}.webp`, 0, 1, 1);
+      const cabs = Array.from({ length: f.n }, (_, i) => { const c = ORDER.includes(pick) ? pick : ORDER[i % ORDER.length]; return { back: im(c, ''), front: im(c, '-front'), sw: 0 }; });
+      return { ...f, kc, ks, kw, cabs, spin: num('spin', 40), gr: 0.55,
+        wheel: Juice.skin('themes/ferris-wheel.webp', 0, 1, 1), stand: Juice.skin('themes/ferris-stand.webp', 0, 1, 1),
+        // ช่องกระจกในกระเช้า (หน่วยเทียบจุดหมุน = กลางตัวกระเช้า) · floor = ขอบชามด้านใน → ของขวัญวางบนพื้นกระเช้าจริง
+        glass: { hw: (264 - 20) / 2 * kc - 2, top: (96 - 170) * kc, floor: (222 - 170) * kc } };
+    })() : null;
+    const ferAngle = () => (SHOT || !FER.spin ? 0 : (performance.now() / 1000) * Math.PI * 2 / FER.spin);
+    const ferPin = (k, th = ferAngle()) => { const a = th + k * Math.PI * 2 / FER.n; return { x: Math.sin(a) * FER.rp, y: FER.hubY - Math.cos(a) * FER.rp }; };
+    function ferSwing() { // กระเช้าโยกเบา ๆ ตามลม (แต่ละอันไม่พร้อมกัน)
+      const t = performance.now() / 1000;
+      FER.cabs.forEach((c, k) => { c.sw = SHOT ? 0 : 0.055 * Math.sin(t * 0.8 + k * 1.7) + 0.022 * Math.sin(t * 1.9 + k * 0.6); });
+    }
+    function ferPick(r) { // กระเช้าที่ยังว่าง: เลือกอันที่อยู่ล่างสุดตอนนี้ (ขึ้นชิงช้าที่ชานชาลา)
+      const cap = FER.glass.hw * 2 * (FER.glass.floor - FER.glass.top) * 0.68, used = new Array(FER.n).fill(0), th = ferAngle();
+      for (const b of bodies) if (b.gi >= 0 && !b.dying) used[b.gi] += Math.PI * b.r * b.r;
+      let best = -1, by = -Infinity;
+      for (let k = 0; k < FER.n; k++) { if (used[k] + Math.PI * r * r > cap) continue; const y = ferPin(k, th).y; if (y > by) { by = y; best = k; } }
+      return best;
+    }
+    function drawFerris() {
+      const f = FER, th = ferAngle(), kc = f.kc, ks = f.ks;
+      ctx.beginPath(); ctx.ellipse(0, -2, 160, 13, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(90,70,140,.25)'; ctx.fill();
+      const stand = () => ctx.drawImage(f.stand.source, -380 * ks, -150 * ks, 758 * ks, 820 * ks); // จุด 0,0 = กลางหัวใจ (แกนวงล้อ)
+      if (f.stand.ready()) { ctx.save(); ctx.translate(0, f.hubY); stand(); ctx.restore(); }
+      if (f.wheel.ready()) { ctx.save(); ctx.translate(0, f.hubY); ctx.rotate(th); ctx.drawImage(f.wheel.source, -449.6 * f.kw, -436.7 * f.kw, 900 * f.kw, 900 * f.kw); ctx.restore(); }
+      if (f.stand.ready()) { // หัวใจ + ปีก + มงกุฎ อยู่หน้าวงล้อ (ขาตั้งอยู่หลัง)
+        ctx.save(); ctx.translate(0, f.hubY); ctx.scale(1.2, 1.2); ctx.beginPath();
+        ctx.arc(0, 0, 74 * ks, 0, Math.PI * 2); ctx.rect(66 * ks, -85 * ks, 140 * ks, 143 * ks); ctx.rect(-206 * ks, -85 * ks, 140 * ks, 143 * ks); ctx.rect(-75 * ks, -158 * ks, 150 * ks, 100 * ks);
+        ctx.clip(); stand(); ctx.restore();
+      }
+      for (let k = 0; k < f.n; k++) {
+        const c = f.cabs[k], p = ferPin(k, th);
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(c.sw);
+        if (c.back.ready()) for (let i = 0; i < 2; i++) ctx.drawImage(c.back.source, -142 * kc, -170 * kc, 283 * kc, 299 * kc); // วาดซ้ำ = กระจกหลังขุ่นขึ้น ไม่เห็นไฟวงล้อทะลุเข้ามาในกระเช้า
+        for (const b of bodies) if (b.gi === k) drawBody(b);
+        if (c.front.ready()) ctx.drawImage(c.front.source, -142 * kc, -170 * kc, 283 * kc, 299 * kc);
+        ctx.restore();
+      }
+    }
     function jarPath() { // เส้นขอบโหลจากโปรไฟล์ (ปากซ้าย → ก้น → ปากขวา)
       ctx.beginPath();
       const N = 48, yAt = (i) => SH.openY + (-SH.openY) * i / N;
@@ -597,6 +653,7 @@
       for (let i = N; i >= 0; i--) ctx.lineTo(SH.hw(Math.min(-0.5, yAt(i))), yAt(i));
     }
     function drawJarBack() {
+      if (SH.fer) return drawFerris();
       if (SH.image) {
         ctx.beginPath(); ctx.ellipse(0, -2, SH.maxHW * 0.9, 12, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(90,70,140,.25)'; ctx.fill();
         if (SH.solid) { if (shapeImg.ready()) ctx.drawImage(shapeImg.source, SH.image.x, SH.image.y, SH.image.w, SH.image.h); return; } // รถทึบ: วาดเต็มเป็นชั้นหลัง
@@ -629,7 +686,8 @@
             const wx = SH.image.x + x * kx; if (Math.abs(wx) > half) continue;
             const i = (y * w + x) * 4; if (a[i + 3] < 8) continue;
             const r = a[i], gg = a[i + 1], b = a[i + 2], mx = Math.max(r, gg, b), mn = Math.min(r, gg, b);
-            if (SH.genGlass) a[i + 3] = (mx > 240 && (mx - mn) / mx < 0.08) ? Math.round(a[i + 3] * 0.35) : 0; // รูป Gen: ช่องใส่ของโปร่งทั้งหมด (เหลือแค่ประกายแสง) — ของขวัญสีสดเต็ม ๆ
+            if (SH.genGlass && wy > bot - (SH.floorBand ?? 14)) a[i + 3] = 0; // แถบพื้นด้านใน: ไม่ทับของขวัญ → ของวางบนพื้นโหลจริง (เห็นพื้นจากชั้นหลัง)
+            else if (SH.genGlass) a[i + 3] = (mx > 250 && (mx - mn) / mx < 0.05) ? Math.round(a[i + 3] * 0.22) : 0; // รูป Gen: ช่องใส่ของโปร่งทั้งหมด (เหลือแค่ประกายแสง) — ของขวัญสีสดเต็ม ๆ
             else if (mx > 195 && (mx - mn) / mx < 0.16) a[i + 3] = Math.min(Math.round(a[i + 3] * 0.4), 45); // ฝ้าขาวในกระจก → ใส
           }
         }
@@ -638,6 +696,7 @@
       return glassCanvas;
     }
     function drawJarFront() {
+      if (SH.fer) return;
       if (SH.image) {
         if (domeFlakes) { // หิมะโปรยในโดม
           const { cy, r } = SH.dome, t = performance.now() / 1000;
@@ -799,10 +858,20 @@
     // เพดาน: ไม่เกิน 42% ของความกว้างภาชนะ และไม่เกิน 56 หน่วย (≈ 1/6 ความสูงจอ) แม้ตั้งขนาดของขวัญไว้ใหญ่
     const radiusFor = (diamonds) => Math.min(14.4 * GIFT_SCALE * sizeFor(diamonds, 4), Math.max(18, SH.maxHW * 0.45), 60);
 
+    let capArea = 0;
+    function jarCap() { // พื้นที่ช่องในโหล (ปากโหล → พื้น) × 0.6
+      if (!capArea) { const f = SH.floor ?? -3; for (let y = SH.openY; y < f; y += 2) capArea += 2 * Math.max(0, SH.hw(Math.min(-0.5, y))) * 2; capArea = Math.max(4000, capArea * 0.6); }
+      return capArea;
+    }
+    const jarUsed = () => bodies.reduce((a, b) => a + (!b.out && !b.dying && !b.eat ? Math.PI * b.r * b.r : 0), 0);
     function addBody(g, dropFromTop = true) {
-      const r = radiusFor(g.d);
+      const gi = FER && g.o !== 1 ? ferPick(radiusFor(g.d) * FER.gr) : -1; // ชิงช้าสวรรค์: นั่งกระเช้าที่ยังว่าง
+      const r = radiusFor(g.d) * (gi >= 0 ? FER.gr : 1);
       // โหลเต็ม (โหมด spill) → ชิ้นใหม่ทะลักออกปากโหลไปกองข้าง ๆ
-      const out = SH.solid || g.o === 1 || (dropFromTop && spilling);
+      // เช็กที่ว่างก่อนใส่ (พื้นที่ของขวัญรวม ≤ 60% ของช่องในโหล) → โหลเล็ก/ปิดฝาไม่อัดแน่นจนของเด้งเหมือนจะระเบิด
+      const over = dropFromTop && g.o !== 1 && !SH.solid && !FER && !SH.space && jarUsed() + Math.PI * r * r > jarCap();
+      if (over && FULL_MODE !== 'spill') ((window.VJLCollect && VJLCollect.victims) ? VJLCollect.victims(bodies, 1, (k) => !k.out) : bodies.filter((k) => !k.out && !k.dying).slice(0, 1)).forEach((k) => { k.dying = true; });
+      const out = SH.solid || g.o === 1 || (dropFromTop && spilling) || (FER && gi < 0) || (over && FULL_MODE === 'spill');
       const side = Math.random() < .5 ? -1 : 1;
       // โหลปิดฝา (mason) → ของขวัญใหม่โผล่ใต้ฝา · ล้น → ออกเหนือฝาแล้วไหลลงข้าง
       const dropY = out || !SH.closed ? SH.topY - 40 - Math.random() * 60 : SH.openY + r + 4;
@@ -814,8 +883,13 @@
       if (SH.solid && dropFromTop) { b.x = SH.spawnX ? SH.spawnX[0] + 15 + Math.random() * (SH.spawnX[1] - SH.spawnX[0] - 30) : (Math.random() - .5) * 170; b.px = b.x; }
       if (SH.solid && !dropFromTop && !g.o) { b.x = (Math.random() - .5) * 180; b.y = SH.topY - 20 - Math.random() * 200; b.px = b.x; b.py = b.y; }
       if (SH.mouth && dropFromTop && !out) { b.eat = true; b.x = SH.mouth.x + (Math.random() - .5) * 60; b.y = SH.topY - 50 - Math.random() * 70; b.px = b.x; b.py = b.y - 2; } // หมู: ตกลงปากก่อน
+      if (FER) {
+        b.gi = gi;
+        if (gi >= 0) { const G2 = FER.glass; b.x = (Math.random() - .5) * Math.max(0, G2.hw - r) * 1.6; b.y = G2.top + r + 1; b.px = b.x; b.py = b.y - 1; }
+        else { b.x = side * (165 + Math.random() * 150); b.y = -260 - Math.random() * 120; b.px = b.x; b.py = b.y; } // เต็มทุกกระเช้า → ตกลงกองข้างฐาน
+      }
       bodies.push(b);
-      if (dropFromTop && !SHOT) fx.sparkle(b.x, b.y, 5, b.d >= 1000 ? '#ffe08a' : '#fff6e8');
+      if (dropFromTop && !SHOT) { const w = b.gi >= 0 ? ferPin(b.gi) : { x: 0, y: 0 }; fx.sparkle(b.x + w.x, b.y + w.y, 5, b.d >= 1000 ? '#ffe08a' : '#fff6e8'); }
       if (dropFromTop && SH.music && fx.notes) fx.notes(b.x, SH.topY + 20, b.d >= 100 ? 5 : 2); // ธีมนักร้อง: โน้ตดนตรีลอย
       if (dropFromTop && SH.dome && SWIRL) swirlUntil = Math.max(swirlUntil, performance.now() + (b.d >= 1000 ? 4200 : b.d >= 100 ? 3200 : 2400)); // ลูกแก้ว: เขย่าเบา ๆ
       const alive = bodies.filter((k) => !k.dying);
@@ -858,6 +932,14 @@
     }
     function constrain(b) {
       if (b.eat) return; // กำลังตกเข้าปาก (ยังไม่อยู่ในท้อง)
+      if (b.gi >= 0) { // ในกระเช้า: พื้นชาม + ผนังกระจก + หลังคา
+        const G2 = FER.glass, hw = G2.hw - (b.y + b.r > G2.floor - 6 ? 3 : 0);
+        if (b.y + b.r > G2.floor) { b.y = G2.floor - b.r; b.px = b.x - (b.x - b.px) * 0.7; }
+        if (b.y - b.r < G2.top) b.y = G2.top + b.r;
+        if (b.x - b.r < -hw) b.x = -hw + b.r;
+        if (b.x + b.r > hw) b.x = hw - b.r;
+        return;
+      }
       if (b.out) return constrainOutside(b);
       const floorIn = SH.floor ?? -3;
       if (b.y + b.r > floorIn) b.y = floorIn - b.r;
@@ -874,6 +956,7 @@
     function step() {
       { const left = swirlUntil - performance.now(); swirlK = left > 0 ? Math.min(1, left / 1500) : 0; } // อ่อนลงช่วงท้าย → ค่อย ๆ ตกกลับมากอง
       const VMAX = 14;
+      if (FER) ferSwing();
       for (const b of bodies) {
         let wet = SH.water != null && !b.out && b.y > SH.water, damp = wet ? 0.9 : 0.985, g = wet ? G * 0.45 : G; // ในน้ำ: จมช้า
         if (wet && WAVES) { // ตู้ปลา: คลื่นใต้น้ำพาของขวัญโยกซ้าย-ขวา และลอยขึ้นลงเบา ๆ
@@ -894,6 +977,7 @@
         if (SH.water != null && !b.out && b.py <= SH.water && b.y > SH.water && vy > 2) { fx.sparkle(b.x, SH.water, 5, '#d8f1ff'); fx.dust(b.x, SH.water, 4); } // ตูม!
         if (wet && Math.random() < 0.012) fx.push({ kind: 'dust', x: b.x + (Math.random() - .5) * b.r, y: b.y - b.r, vx: 0, vy: -1.2, g: -0.02, life: 1, decay: 0.012, size: 2 + Math.random() * 3, color: 'rgba(235,248,255,.8)' }); // ฟองอากาศ
         b.px = b.x; b.py = b.y; b.x += vx; b.y += vy + g; b.vin = vy + g;
+        if (b.gi >= 0) b.x += Math.sin(FER.cabs[b.gi].sw) * g * 0.8; // กระเช้าเอียง → ของไถลไปด้านต่ำเอง
         if (b.eat) {
           b.x += (SH.mouth.x - b.x) * 0.08; // เล็งเข้าปาก
           if (b.y >= SH.mouth.y - 6) { // งับ! → ไปโผล่บนกองในท้อง
@@ -912,7 +996,7 @@
           for (let j = i + 1; j < ord.length; j++) {
             const c = ord[j], dx = c.x - a.x, dy = c.y - a.y, min = a.r + c.r;
             if (dx > a.r + maxR) break;
-            if (Math.abs(dx) > min || Math.abs(dy) > min) continue;
+            if (Math.abs(dx) > min || Math.abs(dy) > min || a.gi !== c.gi) continue; // ชิงช้า: ชนเฉพาะในกระเช้าเดียวกัน
             const d2 = dx * dx + dy * dy;
             if (d2 >= min * min || d2 === 0) continue;
             const d = Math.sqrt(d2), push = (min - d) / d * 0.5;
@@ -927,7 +1011,7 @@
         const vout = b.y - b.py;
         if (b.vin > 4 && vout < b.vin * 0.35 && b.age > 3) {
           (b.sq ||= new Juice.Spring(260, 13)).kick(-Math.min(b.vin, 14) * 0.9);
-          if (b.vin > 9 && b.age > 30 && Math.random() < 0.35) fx.dust(b.x, b.y + b.r * 0.8, 2); // ฝุ่นเฉพาะตอนตกกระแทกจริง (ไม่ฟุ้งตอนกองขยับ)
+          if (b.vin > 9 && b.age > 30 && !(b.gi >= 0) && Math.random() < 0.35) fx.dust(b.x, b.y + b.r * 0.8, 2); // ฝุ่นเฉพาะตอนตกกระแทกจริง (ไม่ฟุ้งตอนกองขยับ)
           if (b.d >= 1000) jarWobble.kick(Math.min(b.vin, 14) * 0.012 * (Math.random() < 0.5 ? -1 : 1));
         }
         if (b.sq) b.sq.step(1 / 60);
@@ -955,7 +1039,7 @@
     }
     function checkFull() {
       trimOutside();
-      if (resetting || SH.solid) return;
+      if (resetting || SH.solid || SH.fer) return;
       // ชิ้นในโหลที่ไม่ได้กำลังตก (อายุ > 2 วิ) กองสูงถึงไหล่โหล = เต็ม
       // โดมอวกาศ (ลอยหมุน): ดูจากพื้นที่ที่ของขวัญใช้จริงในโดม — ชิ้นที่ลอยผ่านด้านบนไม่นับว่าเต็ม
       const full = SH.space
@@ -1031,7 +1115,7 @@
       ctx.rotate(jarWobble.x); ctx.scale(1, Juice.breathe(nowT, 0.005)); // โหลสั่น + หายใจ (หมุนรอบก้นโหล)
       if (SH.mouth) { const q = Math.max(-0.09, Math.min(0.09, gulp.x * 0.02)); ctx.scale(1 + q, 1 - q); } // หมูกลืน: ตัวยุบ-ยืด
       drawJarBack();
-      for (const b of bodies) if (!b.eat) drawBody(b);
+      for (const b of bodies) if (!b.eat && !(b.gi >= 0)) drawBody(b); // ชิงช้า: ของในกระเช้าวาดพร้อมกระเช้า
       drawJarFront();
       for (const b of bodies) if (b.eat) drawBody(b); // ของที่กำลังตกเข้าปากอยู่หน้าหน้าหมู
       fx.draw(ctx);

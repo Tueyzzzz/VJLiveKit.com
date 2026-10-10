@@ -208,6 +208,8 @@
 
     // ---- ดอกไม้ ----
     const flowers = [], bigs = [], fx = new Juice.Particles();
+    // ขนาดดอก: ของขวัญต่ำกว่า 200 เหรียญ (เช่น 99) = ดอกเล็ก โตขึ้นนิดเดียว · 200+ ค่อยใหญ่ตามราคา
+    const flowerSize = (d, max) => { const s = Juice.sizeFor ? Juice.sizeFor(d, max) : 1; return d < 200 ? 1 + (s - 1) * 0.35 : s; };
     if (POT_SKIN && POT_SKIN.music) setInterval(() => { if (!document.hidden && fx.notes) fx.notes((Math.random() - .5) * 260, TREE ? -340 - Math.random() * 80 : POT_TOP - 100, 1); }, 1800);
     const imgCache = {};
     function giftImg(url) { if (!url || !/^https:\/\//.test(url)) return null; let im = imgCache[url]; if (!im) { im = new Image(); im.src = url; imgCache[url] = im; } return im; }
@@ -258,7 +260,7 @@
     // จำนวนชิ้นบนพื้นสูงสุดตามขนาดดอกไม้ (เล็ก = ใส่ได้มากขึ้น)
     const ground = [], GROUND_MAX = Math.round(Math.max(150, Math.min(1200, 300 / (FLOWER * FLOWER))));
     function dropToGround(g, born) {
-      const big = !!g.big, r = big ? 24 * FLOWER : Math.min(56, 15 * FLOWER * (Juice.sizeFor ? Juice.sizeFor(g.d, 4) : 1));
+      const big = !!g.big, r = big ? 24 * FLOWER : Math.min(56, 15 * FLOWER * flowerSize(g.d, 4));
       let x, y;
       if (born > 0) { const sl = slots[Math.floor(Math.random() * slots.length)], p = slotPoint(sl, performance.now() / 1000); x = p.x; y = p.y; }
       else { x = (Math.random() - .5) * 520; y = -320 - Math.random() * 260; } // โหลดจากที่จำไว้: โปรยลงมาใหม่
@@ -422,7 +424,7 @@
         const p = slotPoint(f.sl, time), s = pop(f.born, now);
         if (!f.sparkled) { f.sparkled = true; if (f.born > 0) fx.sparkle(p.x + f.jx, p.y + f.jy, 4); }
         ctx.save(); ctx.translate(p.x + f.jx, p.y + f.jy); ctx.scale(s, s); ctx.rotate(Math.sin(time * 1.6 + f.sl.t * 9) * .12 * SWAY);
-        drawGift(f.img, f.g.e, Math.min(30 * FLOWER * (BOUQ ? 1.35 : 1) * (Juice.sizeFor ? Juice.sizeFor(f.g.d, 2.5) : 1), 75)); ctx.restore(); // ของแพงดอกใหญ่ขึ้น
+        drawGift(f.img, f.g.e, Math.min(30 * FLOWER * (BOUQ ? 1.35 : 1) * flowerSize(f.g.d, 2.5), 75)); ctx.restore(); // ของแพงดอกใหญ่ขึ้น
       }
       bigs.forEach((b, i) => {
         // ตำแหน่งดอกใหญ่: ยอดกิ่งหลัก (กลางก่อน) → ปลายกิ่งย่อย · เกินแล้ววนซ้ำแบบเหลื่อมนิด ๆ (ไม่ซ้อนเป็นเสา)

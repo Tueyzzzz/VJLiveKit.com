@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: >-
       vars.DEPLOY_ENABLED == 'true' &&
       (github.event_name == 'workflow_dispatch' ||
@@ -28,7 +28,7 @@ jobs:
       name: production
       url: https://${{ vars.DOMAIN || 'vjlivekit.com' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 

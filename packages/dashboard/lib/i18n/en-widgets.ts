@@ -662,4 +662,6 @@ export const EN_WIDGETS: Record<string, string> = {
   "โหลก้อนกรวดฝาจุก": "Pebble jar with cork",
   "กล่องแก้วหกเหลี่ยมขอบทอง": "Hexagon glass box",
   "ขวดนมแก้ว": "Glass milk bottle",
+  "หัวใจขยับ": "Heart animation",
+  "ปิด = หัวใจนิ่งสนิท": "Off = heart stays still",
 };

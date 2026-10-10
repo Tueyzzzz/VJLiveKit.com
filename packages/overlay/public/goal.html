@@ -34,6 +34,9 @@
   @keyframes wave { from { transform:translateX(0) } to { transform:translateX(-200px) } }
   .bub { animation:bub 3s ease-in infinite; opacity:0; }
   @keyframes bub { 0% { transform:translateY(0); opacity:0 } 15% { opacity:.8 } 100% { transform:translateY(-120px); opacity:0 } }
+  /* หัวใจรูปภาพ (กระปุก/ขวด/โหล): ลอยขึ้นลงเบา ๆ แทนเต้นตุบ (เดิมเหมือนโดนบีบ) */
+  @keyframes hSoft { 0%,100% { transform:translateY(0) } 50% { transform:translateY(-4px) } }
+  body.nobeat #heart svg, body.nobeat #iheart .box { animation:none !important; }
   @keyframes hBeat { 0%,100% { transform:scale(1) } 8% { transform:scale(1.04) } 16% { transform:scale(.99) } 24% { transform:scale(1.025) } 34% { transform:scale(1) } }
   #heart.done svg { animation:hBeat 1s ease-in-out infinite; filter:drop-shadow(0 0 22px rgba(255,200,120,.9)); }
   .hspk { position:absolute; pointer-events:none; color:#fff6c2; text-shadow:0 0 8px #ffd76a; animation:hspk 1.6s ease-out forwards; }
@@ -42,13 +45,13 @@
   #iheart { position:fixed; left:50%; top:10px; transform:translateX(-50%); display:none; flex-direction:column; align-items:center; width:calc(280px * var(--hs,1)); }
   #iheart.on { display:flex; }
   #iheart .ht { font-family:'Itim',sans-serif; font-size:calc(22px * var(--hs,1)); color:#fff; text-shadow:0 2px 5px rgba(0,0,0,.7); white-space:nowrap; margin-bottom:-6%; position:relative; z-index:2; }
-  #iheart .box { position:relative; width:calc(280px * var(--hs,1)); height:calc(280px * var(--hs,1)); flex:none; animation:hBeat 2.6s ease-in-out infinite; filter:drop-shadow(0 10px 16px rgba(60,10,50,.3)); }
+  #iheart .box { position:relative; width:calc(280px * var(--hs,1)); height:calc(280px * var(--hs,1)); flex:none; animation:hSoft 4s ease-in-out infinite; filter:drop-shadow(0 10px 16px rgba(60,10,50,.3)); }
   #iheart .liq { position:absolute; inset:0; }
   #iheart .liq svg { width:100%; height:100%; display:block; }
   #iheart .glass { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
   #iheart .ip { position:absolute; left:0; right:0; text-align:center; font-family:'Itim',sans-serif; font-size:calc(30px * var(--hs,1)); color:#fff; text-shadow:0 2px 4px rgba(80,20,60,.8), 0 0 10px rgba(255,255,255,.4); }
   #iheart .hn { margin-top:-8%; font-family:'Itim',sans-serif; font-size:calc(20px * var(--hs,1)); color:#ffe9a8; text-shadow:0 2px 4px rgba(0,0,0,.75); font-variant-numeric:tabular-nums; position:relative; }
-  #iheart.done .box { animation:hBeat 1s ease-in-out infinite; filter:drop-shadow(0 0 22px rgba(255,200,120,.9)); }
+  #iheart.done .box { animation:hSoft 1.6s ease-in-out infinite; filter:drop-shadow(0 0 22px rgba(255,200,120,.9)); }
 </style>
 </head>
 <body>
@@ -118,6 +121,7 @@
 
     // แบบแสดงผล: bar = แถบ (เดิม) · heart = หัวใจแก้วเติมน้ำ
     const STYLE=Overlay.param('style','bar'), H=document.getElementById('heart');
+    if(Overlay.param('beat','1')==='0') document.body.classList.add('nobeat'); // ปิดการขยับของหัวใจ
     let liquid={like:['#ff9cc6','#ff4f93'],follow:['#9ff0dc','#3fbf9d'],share:['#ffe08a','#f5a623'],diamond:['#ffe9a0','#f2a81c'],gift:['#d3c4ff','#8f72e8']}[type]||['#ff9cc6','#ff4f93'];
     // สีน้ำ: auto = ตามสิ่งที่นับ · เลือกเองได้ · rainbow = ไล่สีรุ้งวนไปเรื่อย ๆ
     const LIQ={pink:['#ffb3d4','#ff4f93'],red:['#ff9a9a','#e8243c'],purple:['#d9c8ff','#8a5cf0'],blue:['#a8dcff','#2f8cf0'],mint:['#b6f5e4','#2fbf98'],gold:['#ffeaa0','#f0a01c'],peach:['#ffd3b6','#ff8a5c'],rainbow:['#ffb3d4','#ff4f93']};

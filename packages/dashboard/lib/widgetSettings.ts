@@ -429,6 +429,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
         { key: 'label', label: 'หัวข้อ', type: 'text', def: '', placeholder: 'เว้นว่าง = ตามชนิด' },
         { key: 'liq', label: 'สีน้ำในหัวใจ', type: 'select', def: 'auto', options: [['auto', '✨ ตามสิ่งที่นับ'], ['pink', '💗 ชมพู'], ['red', '❤️ แดง'], ['purple', '💜 ม่วง'], ['blue', '💙 ฟ้า'], ['mint', '💚 มิ้นต์'], ['gold', '💛 ทอง'], ['peach', '🧡 พีช'], ['rainbow', '🌈 สีรุ้งเปลี่ยนไปเรื่อย ๆ']] },
         { key: 'size', label: 'ขนาดหัวใจ', type: 'range', min: 0.5, max: 2.5, step: 0.1, def: 1, unit: '×', hint: 'ใช้กับแบบหัวใจแก้ว' },
+        { key: 'beat', label: 'หัวใจขยับ', type: 'toggle', def: true, when: (v) => v.style !== 'bar', hint: 'ปิด = หัวใจนิ่งสนิท' },
         bg(),
       ] },
     ],

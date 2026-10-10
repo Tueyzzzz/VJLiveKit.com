@@ -5,6 +5,8 @@ import { prisma } from '../db/prisma.js';
 import { verifyOverlayToken } from '../widgets/tokens.js';
 import { requireUser, getUser } from '../auth/middleware.js';
 import { getEntitlements } from '../plans/index.js';
+import { isAdmin } from '../admin/routes.js';
+import { pickVoice, record, hasQuota, usage } from './quota.js';
 
 /**
  * อ่านออกเสียง (TTS) ฝั่งเซิร์ฟเวอร์ด้วย Google Cloud Text-to-Speech -> ไฟล์ mp3
@@ -53,10 +55,16 @@ async function synthesize(text: string, voice: string, rate: number, pitch: numb
   return Buffer.from(json.audioContent, 'base64');
 }
 
+class QuotaFull extends Error {}
+/** แคชก่อน (ไม่นับโควตา) → ไม่มีค่อยเรียก Google ด้วยเสียงที่ยังอยู่ในโควตาฟรี */
 async function cached(text: string, voice: string, rate: number, pitch: number): Promise<Buffer> {
-  const key = `${voice}|${rate}|${pitch}|${text}`;
+  const hit = cacheGet(`${voice}|${rate}|${pitch}|${text}`);
+  if (hit) return hit;
+  const v = pickVoice(voice, text.length);
+  if (!v) throw new QuotaFull('ใช้โควตาฟรีเดือนนี้ครบแล้ว');
+  const key = `${v}|${rate}|${pitch}|${text}`;
   let audio = cacheGet(key);
-  if (!audio) { audio = await synthesize(text, voice, rate, pitch); cacheSet(key, audio); }
+  if (!audio) { audio = await synthesize(text, v, rate, pitch); record(v, text.length); cacheSet(key, audio); }
   return audio;
 }
 
@@ -80,10 +88,18 @@ export async function ttsRoutes(app: FastifyInstance): Promise<void> {
     if (!en.widgets.includes('tts')) return reply.code(403).send({ error: 'อ่านแชทออกเสียงใช้ได้ในแพลน Pro' });
     const { voice, rate, pitch } = parsed.data;
     try { return reply.type('audio/mpeg').send(await cached(parsed.data.text.slice(0, MAX_TEXT), voice, rate, pitch)); }
-    catch (err) { req.log.error(err, 'tts failed'); return reply.code(502).send({ error: 'สร้างเสียงไม่สำเร็จ' }); }
+    catch (err) {
+      if (err instanceof QuotaFull) return reply.code(429).send({ error: err.message }); // หน้าเว็บถอยไปใช้เสียงในเครื่องเอง
+      req.log.error(err, 'tts failed'); return reply.code(502).send({ error: 'สร้างเสียงไม่สำเร็จ' });
+    }
   });
 
-  app.get('/api/tts/status', async () => ({ enabled: !!config.googleTtsKey }));
+  app.get('/api/tts/status', async () => ({ enabled: !!config.googleTtsKey && hasQuota() }));
+  // แอดมิน: ดูการใช้โควตาเสียง Google เดือนนี้
+  app.get('/api/admin/tts-usage', { preHandler: requireUser }, async (req, reply) => {
+    if (!isAdmin(req)) return reply.code(403).send({ error: 'สำหรับแอดมินเท่านั้น' });
+    return { enabled: !!config.googleTtsKey, tiers: usage() };
+  });
 
   app.get('/api/tts', {
     // จำกัดต่อ overlay token กันถูกใช้เป็นบริการ TTS ฟรีจนเกินโควตา
@@ -100,12 +116,11 @@ export async function ttsRoutes(app: FastifyInstance): Promise<void> {
     const token = await prisma.overlayToken.findUnique({ where: { id: payload.tid }, select: { revoked: true, userId: true } });
     if (!token || token.revoked || token.userId !== payload.userId) return reply.code(401).send({ error: 'token ถูกเพิกถอนแล้ว' });
 
-    const key = `${voice}|${rate}|${pitch}|${text}`;
-    let audio = cacheGet(key);
-    if (!audio) {
-      try { audio = await synthesize(text, voice, rate, pitch); }
-      catch (err) { req.log.error(err, 'tts failed'); return reply.code(502).send({ error: 'สร้างเสียงไม่สำเร็จ' }); }
-      cacheSet(key, audio);
+    let audio: Buffer;
+    try { audio = await cached(text, voice, rate, pitch); }
+    catch (err) {
+      if (err instanceof QuotaFull) return reply.code(429).send({ error: err.message }); // overlay ถอยไปใช้เสียงเบราว์เซอร์เอง
+      req.log.error(err, 'tts failed'); return reply.code(502).send({ error: 'สร้างเสียงไม่สำเร็จ' });
     }
     return reply.header('cache-control', 'private, max-age=3600').type('audio/mpeg').send(audio);
   });

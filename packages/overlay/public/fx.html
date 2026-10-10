@@ -404,7 +404,11 @@
     // รับ action จากเซิร์ฟเวอร์ (Actions & Events engine)
     Overlay.on('action',(fire)=>{
       const pk=fire.event&&fire.event.type==='pk'&&fire.event.pk;
-      if(pk&&pk.kind==='card'&&pk.card) playPk(pk.card); // กฎ PK → วิดีโอการ์ดกลางจอ + action ของกฎ (ป้ายไฟ/ข้อความ) ต่อ
+      if(pk&&pk.kind==='card'&&pk.card&&PK_VIDEO[pk.card]){ // กฎ PK → วิดีโอการ์ดกลางจอ + action ของกฎ (ป้ายไฟ/ข้อความ) ต่อ
+        playPk(pk.card);
+        // วิดีโอนวมเล่นอยู่แล้ว → ไม่ต้องปล่อยนวมพุ่งซ้อนอีกชุด (เดิมขึ้น 2 อย่างพร้อมกัน) · เหลือแค่ข้อความขอบคุณ
+        if(fire.action.type==='glove'){ const t=fill(fire.action.text,fire.event); if(t) showText(t,fire.action.durationMs||4000); return; }
+      }
       // เสียงเล่นที่แดชบอร์ด (ลำโพง) แล้ว → จอนี้โชว์แค่ข้อความ ไม่เล่นเสียงซ้ำ
       if(fire.elsewhere && fire.action.type==='sound'){ const t=fill(fire.action.text,fire.event); if(t) showText(t,fire.action.durationMs||5000); return; }
       // ส่งคอมโบ (เช่น กุหลาบ 10 ดอก) → เล่นซ้ำตามจำนวน ไม่เกินที่วีเจตั้ง (ไพ่ทาโร่ = 1 เสมอ)

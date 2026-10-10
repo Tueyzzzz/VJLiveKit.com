@@ -1,11 +1,12 @@
 'use client';
 
 import { Fragment, useCallback, useEffect, useState, type FormEvent } from 'react';
-import { Activity, BarChart3, Bell, CreditCard, Download, Gift, History, KeyRound, Radio, RefreshCw, Search, Settings2, Users, MessageCircle, Smile } from 'lucide-react';
+import { Activity, BarChart3, Bell, CreditCard, Download, Gift, History, KeyRound, Radio, RefreshCw, Search, Server, Settings2, Users, MessageCircle, Smile } from 'lucide-react';
 import { AdminUserDetail } from '@/components/AdminUserDetail';
 import { AdminSupport } from '@/components/AdminSupport';
 import { AdminMascots } from '@/components/AdminMascots';
 import { AdminNotifications } from '@/components/AdminNotifications';
+import { AdminServer } from '@/components/AdminServer';
 import { WIDGET_LABELS } from '@/components/Pricing';
 import { Alert, Badge, Button, Card, Input, PageHeader, Spinner } from '@/components/ui';
 import { api, getToken } from '@/lib/api';
@@ -61,7 +62,7 @@ const PLAN: Record<string, [string, 'pink' | 'mint' | 'gray']> = { pro: ['Pro', 
 /** หลังบ้านแอดมิน: ภาพรวม · ผู้ใช้ (แจก Pro / รีเซ็ตรหัส) · ไลฟ์ที่ออนไลน์ */
 export default function AdminPage() {
   const { isAdmin } = useAuth();
-  const [tab, setTab] = useState<'overview' | 'reports' | 'users' | 'live' | 'lives' | 'settings' | 'payments' | 'audit' | 'notify' | 'support' | 'mascots'>('overview');
+  const [tab, setTab] = useState<'overview' | 'reports' | 'users' | 'live' | 'lives' | 'settings' | 'payments' | 'audit' | 'notify' | 'support' | 'mascots' | 'server'>('overview');
   const [detail, setDetail] = useState<string | null>(null); // ลูกค้าที่เปิดดูรายละเอียด
   const [payments, setPayments] = useState<{ id: string; provider: string; providerRef: string; amountCents: number; status: string; createdAt: string; user: { id: string; email: string; tiktokUsername: string | null } }[] | null>(null);
   const [auditLog, setAuditLog] = useState<{ at: string; admin: string; action: string; target?: string; detail?: string }[] | null>(null);
@@ -139,7 +140,7 @@ export default function AdminPage() {
     <div>
       <PageHeader title="หลังบ้าน (แอดมิน)" description="ภาพรวมระบบ · จัดการผู้ใช้ · ไลฟ์ที่ออนไลน์อยู่" />
       <div className="mb-5 flex flex-wrap gap-2">
-        {([['overview', 'ภาพรวม', Activity], ['reports', 'รายงาน', BarChart3], ['users', 'ลูกค้า', Users], ['live', 'ไลฟ์ตอนนี้', RefreshCw], ['lives', 'จำนวนไลฟ์', Radio], ['payments', 'การชำระเงิน', CreditCard], ['support', 'แชทลูกค้า', MessageCircle], ['mascots', 'มาสคอตสั่งทำ', Smile], ['notify', 'แจ้งเตือน', Bell], ['settings', 'ตั้งค่าระบบ', Settings2], ['audit', 'บันทึกแอดมิน', History]] as const).map(([k, l, Icon]) => (
+        {([['overview', 'ภาพรวม', Activity], ['reports', 'รายงาน', BarChart3], ['users', 'ลูกค้า', Users], ['live', 'ไลฟ์ตอนนี้', RefreshCw], ['server', 'เซิร์ฟเวอร์', Server], ['lives', 'จำนวนไลฟ์', Radio], ['payments', 'การชำระเงิน', CreditCard], ['support', 'แชทลูกค้า', MessageCircle], ['mascots', 'มาสคอตสั่งทำ', Smile], ['notify', 'แจ้งเตือน', Bell], ['settings', 'ตั้งค่าระบบ', Settings2], ['audit', 'บันทึกแอดมิน', History]] as const).map(([k, l, Icon]) => (
           <Button key={k} variant={tab === k ? 'primary' : 'secondary'} onClick={() => setTab(k)}><Icon className="size-4" /> {l}</Button>
         ))}
       </div>
@@ -299,6 +300,7 @@ export default function AdminPage() {
 
       {detail && <AdminUserDetail id={detail} onClose={() => { setDetail(null); void loadUsers(q); }} />}
 
+      {tab === 'server' && <AdminServer />}
       {tab === 'notify' && <AdminNotifications />}
       {tab === 'support' && <AdminSupport />}
       {tab === 'mascots' && <AdminMascots />}

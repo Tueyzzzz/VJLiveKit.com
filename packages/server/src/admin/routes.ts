@@ -13,6 +13,7 @@ import { listLives } from '../realtime/lives.js';
 import { listSounds } from '../media/routes.js';
 import { audit, listAudit, isSuspended, setSuspended, suspendedInfo } from './store.js';
 import { settings, updateSettings, DEFAULTS, LIMITS, type SystemSettings } from '../settings/index.js';
+import { serverStats } from './server-stats.js';
 
 /** แอดมิน = role ADMIN ในฐานข้อมูล หรืออีเมลอยู่ใน ADMIN_EMAILS */
 export function isAdmin(req: FastifyRequest): boolean {
@@ -240,6 +241,11 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
   app.get('/api/admin/audit', { preHandler: requireAdmin }, async () => ({ audit: listAudit().slice(0, 300) }));
 
   app.get('/api/admin/live', { preHandler: requireAdmin }, async () => ({ rooms: getHub()?.listRooms() ?? [] }));
+  // สุขภาพเซิร์ฟเวอร์ (แท็บ "เซิร์ฟเวอร์")
+  app.get('/api/admin/server', { preHandler: requireAdmin }, async () => {
+    const rooms = getHub()?.listRooms() ?? [];
+    return serverStats({ rooms: rooms.length, liveRooms: rooms.filter((r) => r.connected).length });
+  });
   // แอดมินช่วยลูกค้าโดยไม่ต้องบอก: สั่งวิดเจ็ตบนจอรีโหลด (ของขวัญไม่หาย) + ดูของขวัญล่าสุดของห้อง
   app.post('/api/admin/live/:username/reload', { preHandler: requireAdmin }, async (req) => {
     const { username } = req.params as { username: string };

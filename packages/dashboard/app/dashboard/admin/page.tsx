@@ -154,7 +154,6 @@ export default function AdminPage() {
       </div>
       {msg && <div className="mb-4"><Alert tone={msg.tone === 'error' ? undefined : msg.tone}>{msg.text}</Alert></div>}
 
-      {tab === 'overview' && <div className="mb-4 grid gap-4"><AdminServer /><AdminErrors /></div>}{/* สถานะเซิร์ฟเวอร์อยู่บนสุดของภาพรวม */}
       {tab === 'overview' && (!ov ? <Spinner /> : (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
@@ -177,19 +176,9 @@ export default function AdminPage() {
               </>
             ); })()}
           </Card>
-          <Card>
-            <h2 className="mb-2 font-medium">เซิร์ฟเวอร์</h2>
-            <div className="grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-4">
-              <div>แอปใช้ RAM <b>{ov.server.rssMB} MB</b> (heap {ov.server.heapMB} MB)</div>
-              <div>RAM เครื่องว่าง <b>{ov.server.freeMemMB}</b> / {ov.server.totalMemMB} MB</div>
-              <div>โหลด CPU (1 นาที) <b>{ov.server.load1}</b> / {ov.server.cpus} คอร์</div>
-              <div>เปิดมาแล้ว <b>{Math.floor(ov.server.uptimeMin / 60)} ชม. {ov.server.uptimeMin % 60} นาที</b></div>
-            </div>
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-canvas">
-              <div className={`h-full ${ov.server.freeMemMB / ov.server.totalMemMB < 0.15 ? 'bg-pink' : 'bg-mint'}`} style={{ width: `${(1 - ov.server.freeMemMB / ov.server.totalMemMB) * 100}%` }} />
-            </div>
-            <p className="mt-1 text-xs text-muted">RAM เครื่องที่ใช้ไป — ถ้าเกิน 85% บ่อย ๆ ควรอัปเกรดเครื่องที่ Vultr (รีเฟรชทุก 15 วินาที)</p>
-          </Card>
+          {/* ตัวเลขผู้ใช้ + การเชื่อมต่อ TikTok อยู่บนสุด → สถานะเซิร์ฟเวอร์ (ละเอียด) → Error log */}
+          <AdminServer />
+          <AdminErrors />
         </div>
       ))}
 

@@ -534,4 +534,6 @@ export const EN_CORE: Record<string, string> = {
   "PK Battle": "PK Battle",
   "เริ่ม PK · ชนะ/แพ้ · การ์ดนวม สายฟ้า → เอฟเฟกต์บนจอ": "PK start · win/lose · glove & lightning cards → on-screen effects",
   "ตั้งเอฟเฟกต์ตอนแข่ง PK: เริ่ม PK · ชนะ/แพ้ · มีคนใช้การ์ด (นวม สายฟ้า หมอก ต่อเวลา ฯลฯ) → ขึ้นจอผ่านวิดเจ็ต FX": "Set effects for PK battles: start · win/lose · cards used (glove, lightning, smoke, extra time…) → shown via the FX widget",
+  "🥈 การ์ดท็อป 2 (อันดับ 2 ส่งได้ x2)": "🥈 Top-2 card (rank #2 gifts count x2)",
+  "🥉 การ์ดท็อป 3 (อันดับ 3 ส่งได้ x2)": "🥉 Top-3 card (rank #3 gifts count x2)",
 };

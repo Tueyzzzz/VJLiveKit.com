@@ -47,7 +47,7 @@
       sports: { src: 'themes/car-sports.webp', x: -333.4, y: -360, w: 666.8, h: 360, hook: { x: -0.2, y: -38.9 } },
       offroad: { src: 'themes/car-offroad.webp', x: -242.6, y: -360, w: 485.2, h: 360, hook: { x: -0.4, y: -60.1 } },
       jdm: { src: 'themes/car-jdm.webp', x: -261.2, y: -360, w: 522.5, h: 360, hook: { x: -0.4, y: -54.7 } },
-      bike: { src: 'themes/car-bike.webp', x: -145.2, y: -360, w: 290.5, h: 360, hook: { x: -0.2, y: -113.1 }, open: true },
+      bike: { src: 'themes/car-bike.webp', x: -145.2, y: -360, w: 290.5, h: 360, hook: { x: -0.2, y: -113.1 }, open: true, balAt: 0.2, balMax: 7, balTight: true },
       tourbus: { src: 'themes/car-tourbus.webp', x: -163.5, y: -360, w: 327.0, h: 360, hook: { x: -0.3, y: -74.6 }, music: true },
       limo: { src: 'themes/car-limo.webp', x: -285.3, y: -360, w: 570.6, h: 360, hook: { x: -0.4, y: -58.5 }, music: true },
       vintage: { src: 'themes/car-vintage.webp', x: -290.5, y: -360, w: 580.9, h: 360, hook: { x: -0.2, y: -89.1 }, open: true, music: true },
@@ -107,11 +107,11 @@
         } catch (e) { /* ignore */ }
       }; im.src = CAR.src;
     })();
-    const balAnchor = () => ({ x: 0, y: CAR_Y + CAR.y + CAR.h * (CAR.open ? 0.42 : roofF + 0.09) });
+    const balAnchor = () => ({ x: 0, y: CAR_Y + CAR.y + CAR.h * (CAR.balAt != null ? CAR.balAt : CAR.open ? 0.42 : roofF + 0.09) });
     function balloonPos(b, t) {
       const a = balAnchor(), i = b.bi, ring = Math.floor(Math.sqrt(i)), k = i - ring * ring, n = 2 * ring + 1;
-      const ang = -Math.PI / 2 + (n > 1 ? (k / (n - 1) - 0.5) : 0) * Math.min(2.2, 0.7 + ring * 0.35);
-      const len = 85 + ring * 32 + (i % 3) * 8;
+      const ang = -Math.PI / 2 + (n > 1 ? (k / (n - 1) - 0.5) : 0) * (CAR.balTight ? 0.9 : Math.min(2.2, 0.7 + ring * 0.35));
+      const len = CAR.balTight ? 95 + ring * 22 + (i % 2) * 10 : 85 + ring * 32 + (i % 3) * 8;
       const gust = Math.sin(t * 0.45) * 0.5 + Math.sin(t * 0.83 + 1.3) * 0.3; // ลมพัดเป็นระลอก (ทุกลูกไปทางเดียวกัน)
       const sw = gust * 0.16 + Math.sin(t * 1.1 + i * 1.7) * 0.07;
       // จอเตี้ย: บีบกลุ่มลูกโป่งให้อยู่ในจอ (ไม่ล้นขอบบน)
@@ -131,7 +131,7 @@
       if (slot < 0) slot = 0;
       const r = Math.min(78, 18 * GIFT_SCALE * sizeFor(g.d, 4.2)); // ของแพงใหญ่ชัด ๆ (Lion/Universe ≈ 4 เท่า)
       const nBal = gifts.filter((b) => b.balloon && !b.dying).length;
-      const balloon = BAL_ON && nBal < BAL_MAX && (++addCount % BAL_EVERY === 0);
+      const balloon = BAL_ON && nBal < (CAR.balMax || BAL_MAX) && (++addCount % BAL_EVERY === 0);
       gifts.push({ g, img: giftImg(g.u), slot, r, born, life: 1, sx: (Math.random() - .5) * 160, sy: CAR_Y - 420 - Math.random() * 120, balloon, bi: balloon ? nextBalIdx() : -1 });
       if (born > 0) punch.kick(g.d >= 1000 ? -6 : -2.5);
     }

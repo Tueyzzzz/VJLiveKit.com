@@ -17,8 +17,14 @@ import { NAV } from '@/lib/nav';
 function MenuArt({ img, Icon, dim }: { img: string; Icon: React.ComponentType<{ className?: string }>; dim: boolean }) {
   const [bad, setBad] = useState(false);
   if (bad) return <div className="mx-auto grid size-20 place-items-center rounded-full bg-pink-soft text-pink sm:size-22"><Icon className="size-9" /></div>;
-  return <img src={`/menu/${img}.webp`} alt="" width={88} height={88} loading="lazy" onError={() => setBad(true)}
-    className={`mx-auto size-20 object-contain transition-transform group-hover:scale-110 sm:size-22 ${dim ? 'opacity-40 grayscale' : ''}`} />;
+  return (
+    <div className="relative mx-auto w-fit">
+      <img src={`/menu/${img}.webp`} alt="" width={88} height={88} loading="lazy" onError={() => setBad(true)}
+        className={`size-20 object-contain transition-transform group-hover:scale-110 sm:size-22 ${dim ? 'opacity-40 grayscale' : ''}`} />
+      {/* ไอคอนฟังก์ชันมุมขวาล่าง — รูปวีเจเด่น แต่ยังรู้ทันทีว่าเมนูนี้ทำอะไร */}
+      <span className={`absolute -bottom-1 -right-2 grid size-8 place-items-center rounded-full text-white shadow-md ring-2 ring-white ${dim ? 'bg-muted' : 'brand-gradient'}`}><Icon className="size-4" /></span>
+    </div>
+  );
 }
 
 export default function OverviewPage() {

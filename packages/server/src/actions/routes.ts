@@ -8,7 +8,9 @@ import { getHub } from '../realtime/hub.js';
 import { isAdmin } from '../admin/routes.js';
 
 const triggerSchema = z.object({
-  event: z.enum(['gift', 'follow', 'share', 'like', 'chat']),
+  event: z.enum(['gift', 'follow', 'share', 'like', 'chat', 'pk']),
+  pk: z.enum(['start', 'win', 'lose', 'draw', 'anycard', 'glove', 'critical', 'smoke', 'extra', 'potion', 'wave', 'effect', 'top2', 'top3']).optional(),
+  pkSide: z.enum(['us', 'them']).optional(),
   giftName: z.string().optional(),
   minDiamonds: z.number().int().nonnegative().optional(),
   keyword: z.string().optional(),

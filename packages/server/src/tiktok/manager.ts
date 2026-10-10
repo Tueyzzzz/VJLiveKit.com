@@ -239,7 +239,7 @@ export class TikTokRoom extends EventEmitter {
     if (!def) return; // แนะนำ/แจกการ์ด — ยังไม่ส่งต่อ
     const use = d?.[def[2]] ?? {}, info = use.cardInfo ?? {}, su = info.sendUser?.user;
     const anchor = String(use.anchorId ?? info.toAnchorId ?? '');
-    this.send('pk', { pk: { kind: 'card', card: def[0], label: def[1], by: su?.nickName || undefined, side: !this.hostId || !anchor ? null : anchor === this.hostId ? 'us' : 'them', text: use.displayContent?.defaultPattern || undefined } });
+    this.send('pk', { user: su?.nickName ? { userId: String(su.userId ?? ''), uniqueId: String(su.displayId ?? su.nickName), nickname: su.nickName, avatar: '' } : undefined, pk: { kind: 'card', card: def[0], label: def[1], by: su?.nickName || undefined, side: !this.hostId || !anchor ? null : anchor === this.hostId ? 'us' : 'them', text: use.displayContent?.defaultPattern || undefined } });
   }
 
   /** เวลาที่ได้รับอีเวนต์ล่าสุดจากไลฟ์ (คนดู/แชท/กิฟต์) — ไว้เช็กว่ายังไลฟ์อยู่จริง */

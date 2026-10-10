@@ -3,7 +3,11 @@ import { giftIdOf, giftInfo } from '../tiktok/giftCatalog.js';
 
 /** กฎทริกเกอร์: ถ้าเหตุการณ์เข้าเงื่อนไข trigger ให้ทำ action */
 export interface RuleTrigger {
-  event: 'gift' | 'follow' | 'share' | 'like' | 'chat';
+  event: 'gift' | 'follow' | 'share' | 'like' | 'chat' | 'pk';
+  /** PK: start / win / lose / draw / anycard / รหัสการ์ด (glove critical smoke ...) (เฉพาะ event=pk) */
+  pk?: string;
+  /** PK การ์ด: ใช้กับฝั่งไหน (us = ให้เรา · them = คู่แข่ง · ไม่ระบุ = ทั้งคู่) */
+  pkSide?: 'us' | 'them';
   giftName?: string;     // เจาะจงชื่อกิฟต์ (เฉพาะ event=gift)
   minDiamonds?: number;  // มูลค่าเพชรขั้นต่ำ (เฉพาะ event=gift)
   keyword?: string;      // คำในแชท (เฉพาะ event=chat)
@@ -79,6 +83,15 @@ export function ruleMatches(rule: ActionRule, e: TikTokEvent): boolean {
     // เลือกกิฟต์เฉพาะแล้ว ไม่ใช้มูลค่าขั้นต่ำ (กฎเก่าที่ตั้งคู่กัน เช่น Heart + 99 จะไม่มีวันขึ้น)
     if (!t.giftName && t.minDiamonds != null && value < t.minDiamonds) return false;
   }
+  if (e.type === 'pk') { // PK: เริ่ม / ผลแพ้ชนะ / การ์ด
+    const k = e.pk; if (!k || !t.pk) return false;
+    if (t.pk === 'start') return k.kind === 'start';
+    if (t.pk === 'win' || t.pk === 'lose' || t.pk === 'draw') return k.kind === 'end' && k.result === t.pk;
+    if (k.kind !== 'card') return false;
+    if (t.pk !== 'anycard' && t.pk !== k.card) return false;
+    if (t.pkSide && k.side && t.pkSide !== k.side) return false;
+    return true;
+  }
   if (e.type === 'chat' && t.keyword) {
     if (!(e.comment ?? '').toLowerCase().includes(t.keyword.toLowerCase())) return false;
   }
@@ -113,7 +126,7 @@ export interface MenuItem {
 }
 
 export function menuItems(rules: ActionRule[]): MenuItem[] {
-  const items = rules.filter((r) => r.enabled).map((r): MenuItem => {
+  const items = rules.filter((r) => r.enabled && r.trigger.event !== 'pk').map((r): MenuItem => { // PK ไม่ขึ้นเมนูของขวัญ
     const t = r.trigger, g = t.giftName ? giftInfo(t.giftName) : undefined;
     return {
       id: r.id, event: t.event, gift: t.giftName, th: g?.th, image: g?.image, diamonds: g?.diamonds,

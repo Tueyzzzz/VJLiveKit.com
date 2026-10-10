@@ -100,7 +100,7 @@ export interface WidgetUrl { type: string; url: string; locked: boolean }
 export interface OverlayTokenRow { id: string; label: string | null; createdAt: string; urls: WidgetUrl[] }
 export interface Plan { code: string; name: string; priceCents: number; currency: string; features: Omit<Entitlements, 'plan'> }
 
-export type TriggerEvent = 'gift' | 'follow' | 'share' | 'like' | 'chat';
+export type TriggerEvent = 'gift' | 'follow' | 'share' | 'like' | 'chat' | 'pk';
 export type ActionType = 'sound' | 'image' | 'video' | 'text' | 'tarot' | 'effect' | 'sign' | 'glove' | 'mascot';
 export type TarotTopic = 'general' | 'love' | 'self' | 'money' | 'daily';
 export type TarotDeck = 'full' | 'major' | 'wands' | 'cups' | 'swords' | 'pentacles';
@@ -108,7 +108,7 @@ export interface Rule {
   id: string;
   name: string;
   enabled: boolean;
-  trigger: { event: TriggerEvent; giftName?: string; minDiamonds?: number; keyword?: string };
+  trigger: { event: TriggerEvent; giftName?: string; minDiamonds?: number; keyword?: string; pk?: string; pkSide?: 'us' | 'them' };
   action: { type: ActionType; move?: 'dance' | 'kiss' | 'joy' | 'heart' | 'walk' | 'spin' | 'jump'; url?: string; sound?: string; text?: string; durationMs?: number; cards?: number; deck?: TarotDeck; topic?: TarotTopic; effect?: 'butterflies'; tint?: 'pink' | 'blue' | 'purple' | 'mint' | 'gold' | 'rainbow'; count?: number; repeat?: number; volume?: number; key?: string; signStyle?: 'led' | 'neon' | 'bulb' | 'cute' | 'pixel' | 'y2k' | 'glass' | 'surreal' | 'boho' | 'victorian' | 'graffiti' | 'future' | 'mwhite' | 'mblack' | 'mline' | 'mpill'; signMode?: 'scroll' | 'static' | 'blink' | 'pulse'; signPos?: 'top' | 'center' | 'bottom'; color?: string };
   createdAt: string;
 }

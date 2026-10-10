@@ -12,7 +12,9 @@ import { api, ApiError, type OverlayTokenRow, type ActionType, type Rule, type T
 import { useAuth } from '@/lib/auth';
 import { translate, useT } from '@/lib/i18n';
 
-const EVENT_LABELS: Record<TriggerEvent, string> = { gift: '🎁 ได้รับกิฟต์', follow: '➕ มีคนติดตาม', share: '🔁 มีคนแชร์', like: '❤️ มีคนกดไลค์', chat: '💬 แชทมีคำว่า' };
+const EVENT_LABELS: Record<TriggerEvent, string> = { gift: '🎁 ได้รับกิฟต์', follow: '➕ มีคนติดตาม', share: '🔁 มีคนแชร์', like: '❤️ มีคนกดไลค์', chat: '💬 แชทมีคำว่า', pk: '⚔️ PK (แข่ง)' };
+/** สถานการณ์ PK ที่ตั้งกฎได้ */
+const PK_LABELS: Record<string, string> = { start: '🔔 เริ่ม PK', win: '🏆 ชนะ PK', lose: '💪 แพ้ PK', draw: '🤝 เสมอ', anycard: '🃏 มีคนใช้การ์ดอะไรก็ได้', glove: '🥊 การ์ดนวม', critical: '⚡ การ์ดสายฟ้า', smoke: '🌫️ การ์ดหมอก', extra: '⏱️ การ์ดต่อเวลา', potion: '🧪 การ์ดยาพลัง', wave: '🌊 การ์ดคลื่น', effect: '✨ การ์ดเอฟเฟกต์พิเศษ', top2: '🥈 การ์ดท็อป 2', top3: '🥉 การ์ดท็อป 3' };
 const ACTION_LABELS: Record<ActionType, string> = { sound: '🔊 เล่นเสียง', image: '🖼️ แสดงรูป/GIF', video: '🎬 เล่นวิดีโอ', text: '✏️ แสดงข้อความ', tarot: '🔮 สุ่มไพ่ทาโร่', effect: '🦋 ผีเสื้อเทพนิยาย', sign: '💡 ป้ายไฟ', glove: '🥊 ส่งนวม', mascot: '🧸 มาสคอตทำท่า' };
 
 interface Draft {
@@ -23,6 +25,8 @@ interface Draft {
   giftName: string;
   minDiamonds: string;
   keyword: string;
+  pk: string;
+  pkSide: '' | 'us' | 'them';
   type: ActionType;
   url: string;
   /** เสียงสำเร็จรูป ('' = ใช้ลิงก์ไฟล์เอง) */
@@ -46,10 +50,29 @@ interface Draft {
   color: string;
 }
 
-const EMPTY: Draft = { name: '', enabled: true, event: 'gift', giftName: '', minDiamonds: '', keyword: '', type: 'sound', url: '', sound: 'chime', text: '', durationSec: '5', cards: '1', deck: 'full', topic: 'general', count: '12', move: 'dance', repeat: '1', tint: 'pink', signStyle: 'led', signMode: 'scroll', signPos: 'top', color: '#ff4fa3' };
+const EMPTY: Draft = { name: '', enabled: true, event: 'gift', giftName: '', minDiamonds: '', keyword: '', pk: 'win', pkSide: '', type: 'sound', url: '', sound: 'chime', text: '', durationSec: '5', cards: '1', deck: 'full', topic: 'general', count: '12', move: 'dance', repeat: '1', tint: 'pink', signStyle: 'led', signMode: 'scroll', signPos: 'top', color: '#ff4fa3' };
 
 /** เทมเพลตยอดนิยม — กดครั้งเดียวสร้างกฎได้เลย (ไม่ต้องหาไฟล์เสียง/รูปเอง) */
 interface Template { icon: string; title: string; desc: string; rule: { name: string; trigger: Rule['trigger']; action: Rule['action'] } }
+/** เทมเพลต PK — โชว์ในเมนู ⚔️ PK Battle */
+const PK_TEMPLATES: Template[] = [
+  { icon: '🔔', title: 'ประกาศเริ่ม PK', desc: 'ป้ายไฟกลางจอ ชวนผู้ชมช่วยกันส่งของขวัญ',
+    rule: { name: 'PK เริ่มแล้ว', trigger: { event: 'pk', pk: 'start' }, action: { type: 'sign', signStyle: 'neon', signMode: 'pulse', signPos: 'center', color: '#ff4fa3', text: '⚔️ PK เริ่มแล้ว! ช่วยกันส่งของขวัญนะ 💖', durationMs: 5000 } } },
+  { icon: '🏆', title: 'ชนะ PK → ฉลอง', desc: 'ผีเสื้อสีทองเต็มจอ + ข้อความขอบคุณทุกคน',
+    rule: { name: 'ชนะ PK ฉลอง', trigger: { event: 'pk', pk: 'win' }, action: { type: 'effect', effect: 'butterflies', tint: 'gold', count: 20, text: '🏆 ชนะแล้ว! ขอบคุณทุกคนที่ช่วยกันนะ 💖', durationMs: 8000 } } },
+  { icon: '💪', title: 'แพ้ PK → ขอบคุณ', desc: 'ข้อความให้กำลังใจ ขอบคุณที่ช่วยกันสู้',
+    rule: { name: 'แพ้ PK ขอบคุณ', trigger: { event: 'pk', pk: 'lose' }, action: { type: 'text', text: '💪 สู้เต็มที่แล้ว ขอบคุณทุกคนมาก ๆ นะ 💖', durationMs: 6000 } } },
+  { icon: '🥊', title: 'มีคนใช้นวมให้เรา', desc: 'นวมพุ่งเต็มจอ + ขอบคุณคนกด',
+    rule: { name: 'นวมช่วยเรา', trigger: { event: 'pk', pk: 'glove', pkSide: 'us' }, action: { type: 'glove', count: 2, text: '🥊 {user} ใช้นวมช่วยเรา! ขอบคุณน้า', durationMs: 4000 } } },
+  { icon: '⚡', title: 'สายฟ้าให้เรา', desc: 'เสียงเลเวลอัป + ป้ายไฟสีทอง',
+    rule: { name: 'สายฟ้าช่วยเรา', trigger: { event: 'pk', pk: 'critical', pkSide: 'us' }, action: { type: 'sign', signStyle: 'led', signMode: 'blink', signPos: 'top', color: '#ffcf5c', text: '⚡ {user} ปล่อยสายฟ้า x2! ขอบคุณ ⚡', durationMs: 5000 } } },
+  { icon: '🌫️', title: 'โดนหมอก (คู่แข่งใช้)', desc: 'เตือนผู้ชมให้ช่วยกันส่งต่อ',
+    rule: { name: 'โดนหมอก', trigger: { event: 'pk', pk: 'smoke', pkSide: 'them' }, action: { type: 'text', text: '🌫️ โดนหมอกแล้ว! ส่งต่อเลยทุกคน อย่าหยุดนะ', durationMs: 5000 } } },
+  { icon: '⏱️', title: 'ต่อเวลา', desc: 'แจ้งว่าได้เวลาเพิ่ม',
+    rule: { name: 'ต่อเวลา PK', trigger: { event: 'pk', pk: 'extra' }, action: { type: 'text', text: '⏱️ ต่อเวลาแล้ว! ยังมีลุ้น ช่วยกันอีกนิด', durationMs: 4000 } } },
+  { icon: '🃏', title: 'ขอบคุณทุกการ์ด', desc: 'ใครใช้การ์ดอะไรช่วยเรา ขึ้นข้อความขอบคุณ',
+    rule: { name: 'ขอบคุณการ์ด PK', trigger: { event: 'pk', pk: 'anycard', pkSide: 'us' }, action: { type: 'text', text: '🃏 ขอบคุณ {user} ที่ใช้การ์ดช่วยเรา 💖', durationMs: 4000 } } },
+];
 const TEMPLATES: Template[] = [
   { icon: '🔮', title: 'ได้ Rose → เปิดไพ่ 1 ใบ', desc: 'ทุกกุหลาบ = คำทำนาย 1 ใบให้คนส่ง',
     rule: { name: 'Rose เปิดไพ่ทาโร่', trigger: { event: 'gift', giftName: 'Rose' }, action: { type: 'tarot', cards: 1, text: '🌹 คำทำนายของ {user}', durationMs: 8000 } } },
@@ -109,7 +132,7 @@ function toDraft(r: Rule): Draft {
   return {
     id: r.id, name: r.name, enabled: r.enabled, event: r.trigger.event,
     giftName: r.trigger.giftName ?? '', minDiamonds: r.trigger.minDiamonds != null ? String(r.trigger.minDiamonds) : '',
-    keyword: r.trigger.keyword ?? '', type: r.action.type, url: r.action.url ?? '',
+    keyword: r.trigger.keyword ?? '', pk: r.trigger.pk ?? 'win', pkSide: r.trigger.pkSide ?? '', type: r.action.type, url: r.action.url ?? '',
     sound: r.action.sound ?? (r.action.url ? '' : 'chime'), text: r.action.text ?? '',
     durationSec: r.action.durationMs ? String(r.action.durationMs / 1000) : '5',
     cards: String(r.action.cards ?? 1),
@@ -130,6 +153,7 @@ function toBody(d: Draft) {
     if (!d.giftName.trim() && d.minDiamonds.trim()) trigger.minDiamonds = Math.max(0, Math.floor(Number(d.minDiamonds)));
   }
   if (d.event === 'chat' && d.keyword.trim()) trigger.keyword = d.keyword.trim();
+  if (d.event === 'pk') { trigger.pk = d.pk || 'win'; if (d.pkSide && !['start', 'win', 'lose', 'draw'].includes(trigger.pk)) trigger.pkSide = d.pkSide; }
   const action: Rule['action'] = { type: d.type };
   const needsFile = (d.type === 'sound' && !d.sound) || d.type === 'image' || d.type === 'video';
   if (needsFile && d.url.trim()) action.url = d.url.trim();
@@ -152,6 +176,7 @@ function describe(r: Rule, t: typeof translate): string {
   if (tr.event === 'gift') s += tr.giftName ? ` “${tr.giftName}”` : '';
   if (tr.event === 'gift' && !tr.giftName && tr.minDiamonds) s += ` ≥ ${tr.minDiamonds} 💎`;
   if (tr.event === 'chat') s += ` “${tr.keyword ?? ''}”`;
+  if (tr.event === 'pk') s += ` ${t(PK_LABELS[tr.pk ?? ''] ?? '')}${tr.pkSide === 'us' ? t(' (ให้เรา)') : tr.pkSide === 'them' ? t(' (ใส่คู่แข่ง)') : ''}`;
   return `${s} → ${t(ACTION_LABELS[r.action.type])}${r.action.type === 'tarot' ? ` ${t('{n} ใบ', { n: r.action.cards ?? 1 })}` : ''}${r.action.text ? ` “${r.action.text}”` : ''}`;
 }
 
@@ -274,12 +299,15 @@ export default function ActionsPage() {
     finally { setAdding(null); }
   }
   const have = new Set((rules ?? []).map((r) => r.name));
+  // เมนู ⚔️ PK Battle (/dashboard/actions/?pk=1): โชว์เฉพาะกฎ/เทมเพลต PK
+  const [pkMode, setPkMode] = useState(false);
+  useEffect(() => { setPkMode(new URLSearchParams(window.location.search).get('pk') === '1'); }, []);
 
   return (
     <div>
-      <PageHeader title="Actions & Events"
-        description={t('ตั้งกฎอัตโนมัติ: เมื่อเกิดเหตุการณ์ในไลฟ์ → overlay FX เล่นเสียง/รูป/วิดีโอ/ข้อความ')}
-        actions={!draft && <Button onClick={() => { setError(null); setDraft({ ...EMPTY }); }}><Plus className="size-4" /> {t('เพิ่มกฎ')}</Button>} />
+      <PageHeader title={pkMode ? '⚔️ PK Battle' : 'Actions & Events'}
+        description={pkMode ? t('ตั้งเอฟเฟกต์ตอนแข่ง PK: เริ่ม PK · ชนะ/แพ้ · มีคนใช้การ์ด (นวม สายฟ้า หมอก ต่อเวลา ฯลฯ) → ขึ้นจอผ่านวิดเจ็ต FX') : t('ตั้งกฎอัตโนมัติ: เมื่อเกิดเหตุการณ์ในไลฟ์ → overlay FX เล่นเสียง/รูป/วิดีโอ/ข้อความ')}
+        actions={!draft && <Button onClick={() => { setError(null); setDraft(pkMode ? { ...EMPTY, event: 'pk', type: 'text', name: '', text: '⚔️ {user} ใช้การ์ดช่วยเรา!' } : { ...EMPTY }); }}><Plus className="size-4" /> {t('เพิ่มกฎ')}</Button>} />
 
       <Card className="mb-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -334,6 +362,14 @@ export default function ActionsPage() {
                     <div className="self-end rounded-xl bg-pink-soft/50 px-3 py-2 text-sm text-muted">{t('ขึ้นทุกครั้งที่มีคนส่ง')} <b className="text-ink">{draft.giftName}</b> {t('(ส่งรัว ๆ นับเป็น 1 ครั้งตอนจบคอมโบ) · อยากใช้มูลค่าขั้นต่ำแทน กด ✕ ที่ช่องกิฟต์')}</div>
                   ) : (
                     <Field label={t('มูลค่าขั้นต่ำ (เพชร)')} hint={t('กิฟต์อะไรก็ได้ที่มูลค่ารวมในคอมโบถึงเท่านี้ · เว้นว่าง = ทุกกิฟต์')}><Input type="text" inputMode="numeric" value={draft.minDiamonds} onChange={(e) => set('minDiamonds', toDigits(e.target.value))} placeholder={t('เช่น 99')} /></Field>
+                  )}
+                </>
+              )}
+              {draft.event === 'pk' && (
+                <>
+                  <Field label={t('สถานการณ์ PK')}><Select value={draft.pk} onChange={(e) => set('pk', e.target.value)}>{Object.entries(PK_LABELS).map(([k, v]) => <option key={k} value={k}>{t(v)}</option>)}</Select></Field>
+                  {!['start', 'win', 'lose', 'draw'].includes(draft.pk) && (
+                    <Field label={t('การ์ดนี้ใช้กับ')}><Select value={draft.pkSide} onChange={(e) => set('pkSide', e.target.value as Draft['pkSide'])}><option value="">{t('ทั้งสองฝั่ง')}</option><option value="us">{t('💖 ฝั่งเรา (มีคนช่วยเรา)')}</option><option value="them">{t('😈 ฝั่งคู่แข่ง')}</option></Select></Field>
                   )}
                 </>
               )}
@@ -480,7 +516,7 @@ export default function ActionsPage() {
           <h2 className="mb-1 flex items-center gap-2 font-medium"><Sparkles className="size-4 text-pink" /> {t('เทมเพลตยอดนิยม')}</h2>
           <p className="mb-4 text-sm text-muted">{t('กด “ใช้เลย” แล้วใช้ได้ทันที — แก้ข้อความหรือเงื่อนไขทีหลังได้ด้วยปุ่มดินสอ')}</p>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {TEMPLATES.filter((tp) => isAdmin || tp.rule.action.type !== 'tarot').map((tp) => {
+            {(pkMode ? PK_TEMPLATES : TEMPLATES).filter((tp) => isAdmin || tp.rule.action.type !== 'tarot').map((tp) => {
               const added = have.has(tp.rule.name);
               return (
                 <div key={tp.rule.name} className="flex flex-col rounded-xl border border-line bg-canvas/50 p-3">
@@ -506,7 +542,7 @@ export default function ActionsPage() {
             <span>{t('มีผลกับไลฟ์ทันทีหลังบันทึก')}</span>
           </div>
           <ul className="divide-y divide-line">
-            {rules.map((r) => (
+            {rules.filter((r) => !pkMode || r.trigger.event === 'pk').map((r) => (
               <li key={r.id} className="flex flex-wrap items-center gap-3 px-5 py-4">
                 <button role="switch" aria-checked={r.enabled} aria-label={t('เปิด/ปิดกฎ')} onClick={() => toggle(r)}
                   className={`relative h-6 w-11 shrink-0 rounded-full transition ${r.enabled ? 'bg-mint' : 'bg-gray-200'}`}>

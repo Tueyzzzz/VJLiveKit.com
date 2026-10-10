@@ -1,10 +1,11 @@
-import { LayoutDashboard, LayoutTemplate, Zap, CreditCard, Gift, BookOpen, Wallet, ScrollText, Lightbulb, Volume2, Grid3x3, Speech, MessageCircle } from 'lucide-react';
+import { Swords, LayoutDashboard, LayoutTemplate, Zap, CreditCard, Gift, BookOpen, Wallet, ScrollText, Lightbulb, Volume2, Grid3x3, Speech, MessageCircle } from 'lucide-react';
 
 /** เมนูหลักของแดชบอร์ด — ใช้ทั้งเมนูข้าง และการ์ดใหญ่หน้าภาพรวม (img = รูป VJ ใน /menu/<img>.webp) */
 export const NAV = [
   { href: '/dashboard/', label: 'ภาพรวม', img: 'overview', desc: 'ภาพรวมบัญชีและกฎที่ตั้งไว้', icon: LayoutDashboard },
   { href: '/dashboard/widgets/', label: 'โอเวอร์เลย์', img: 'overlay', desc: 'วิดเจ็ตบนจอไลฟ์ สร้างลิงก์ใส่ OBS / TikTok Studio', icon: LayoutTemplate },
   { href: '/dashboard/actions/', label: 'Actions & Events', img: 'actions', desc: 'ได้ของขวัญ → เล่นเสียง เอฟเฟกต์ ป้ายไฟ', icon: Zap },
+  { href: '/dashboard/actions/?pk=1', label: 'PK Battle', img: 'pk', desc: 'เริ่ม PK · ชนะ/แพ้ · การ์ดนวม สายฟ้า → เอฟเฟกต์บนจอ', icon: Swords },
   { href: '/dashboard/sounds/', label: 'เสียงแจ้งเตือน', img: 'sounds', desc: 'เสียงดังที่เว็บนี้ ไม่ต้องใส่ลิงก์', icon: Volume2 },
   { href: '/dashboard/beatpad/', label: 'Beat Pad (กดเสียง)', img: 'beatpad', desc: 'แผงปุ่มเสียงมีม กดเล่นระหว่างไลฟ์', icon: Grid3x3 },
   { href: '/dashboard/tts/', label: 'อ่านแชทออกเสียง (TTS)', img: 'tts', desc: 'อ่านแชทและของขวัญให้ฟังอัตโนมัติ', icon: Speech, soon: true }, // รอเปิดเสียงไทย Google — เทาไว้ก่อน (แอดมินยังเข้าได้)

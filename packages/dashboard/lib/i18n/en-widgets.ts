@@ -604,4 +604,11 @@ export const EN_WIDGETS: Record<string, string> = {
   "🔒 มาสคอตสั่งทำของลูกค้า (แอดมินเห็นคนเดียว)": "🔒 Customer custom mascots (admins only)",
   "กองพื้นนอกโหลสูงได้ไม่เกิน (% ของจอ)": "Floor pile max height (% of screen)",
   "เกินแล้วของขวัญราคาถูกสุดค่อย ๆ จางออกก่อน (ของแพงอยู่นานสุด)": "Beyond this, the cheapest gifts fade first (expensive ones stay longest)",
+  "แก้วชานมไข่มุก": "Bubble tea cup",
+  "ตู้คีบตุ๊กตา": "Claw machine",
+  "เค้กชั้นใส": "Glass cake stand",
+  "ตุ๊กตาหมีใส": "Glass teddy bear",
+  "ขวดดาวเคราะห์": "Planet bottle",
+  "แก้วลาเต้": "Latte glass",
+  "✨ แบบใหม่": "✨ New",
 };

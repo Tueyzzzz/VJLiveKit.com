@@ -61,7 +61,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
         { key: 'shape', label: 'ทรงโหล', type: 'select', def: 'heart', options: [
           ['heart', 'โหลหัวใจ', '🌸 พาสเทลน่ารัก', 'gj-heart'], ['orb', 'โหลกลมห่วงชมพู', '🌸 พาสเทลน่ารัก', 'gj-orb'],
           ['sundae', 'ถ้วยไอศกรีม', '🌸 พาสเทลน่ารัก', 'gj-sundae'],
-          ['jstar', 'โหลดาว', '🌸 พาสเทลน่ารัก', 'gj-jstar'], ['vaseglass', 'แจกันแก้วชมพู', '🌸 พาสเทลน่ารัก', 'gj-vaseglass'],
+          ['jstar', 'โหลดาว', '🌸 พาสเทลน่ารัก', 'gj-jstar'], ['vaseglass', 'แจกันแก้วชมพู', '🌸 พาสเทลน่ารัก', 'gj-vaseglass'], ['boba', 'แก้วชานมไข่มุก', '✨ แบบใหม่', 'gj-boba'], ['claw', 'ตู้คีบตุ๊กตา', '✨ แบบใหม่', 'gj-claw'], ['cakejar', 'เค้กชั้นใส', '✨ แบบใหม่', 'gj-cakejar'], ['glassbear', 'ตุ๊กตาหมีใส', '✨ แบบใหม่', 'gj-glassbear'], ['planetjar', 'ขวดดาวเคราะห์', '✨ แบบใหม่', 'gj-planetjar'], ['latte', 'แก้วลาเต้', '✨ แบบใหม่', 'gj-latte'],
           ['jbasket', 'โหลตะกร้า', '🌸 พาสเทลน่ารัก', 'gj-jbasket'],
           ['cauldron', 'โหลหม้อแม่มด', '🌸 พาสเทลน่ารัก', 'gj-cauldron'],
           ['catbank', 'กระปุกแมวใส', '🌸 พาสเทลน่ารัก', 'gj-catbank'],

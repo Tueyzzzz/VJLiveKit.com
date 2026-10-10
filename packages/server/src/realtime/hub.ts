@@ -113,6 +113,8 @@ export class RoomHub {
     }
     if (busy) this.graceTimers.set(ownerId, setTimeout(() => { this.graceTimers.delete(ownerId); this.pauseIdle(ownerId); }, 2 * 60_000));
   }
+  /** ปิดล็อกวิดเจ็ตจากหน้าแอดมิน → ปลุกวิดเจ็ตที่พักอยู่ทุกตัวทันที (ไม่ต้องรอวีเจเปิดเว็บ/รีโหลดจอ) */
+  wakeAll(): number { let n = 0; for (const set of this.waiting.values()) for (const w of set) { w.on(); n++; } return n; }
   /** วิดเจ็ตลงทะเบียนรอ — on() เมื่อแดชบอร์ดเปิด, off() เมื่อปิด · คืนฟังก์ชันยกเลิก */
   watchPresence(ownerId: string, w: { on: () => void; off: () => void; room?: string }): () => void {
     let set = this.waiting.get(ownerId); if (!set) this.waiting.set(ownerId, (set = new Set()));

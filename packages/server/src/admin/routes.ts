@@ -164,6 +164,7 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
     const diff = Object.keys(after).filter((k) => (after as unknown as Record<string, unknown>)[k] !== (before as unknown as Record<string, unknown>)[k])
       .map((k) => `${k}: ${String((before as unknown as Record<string, unknown>)[k])} → ${String((after as unknown as Record<string, unknown>)[k])}`).join(', ');
     if (diff) audit(getUser(req)!.email, 'แก้ตั้งค่าระบบ', undefined, diff);
+    if (before.presenceLock && !after.presenceLock) getHub()?.wakeAll(); // ปลดล็อก → วิดเจ็ตที่พักอยู่ต่อไลฟ์ทันที
     return { settings: after };
   });
 

@@ -40,6 +40,23 @@ if command -v ufw >/dev/null 2>&1 || apt-get install -y ufw >/dev/null 2>&1; the
   ufw --force enable >/dev/null
 fi
 
+# ---------- 3.5) fail2ban: แบน IP ที่เดารหัส SSH ผิดซ้ำ ๆ (5 ครั้งใน 10 นาที → แบน 1 ชม.) ----------
+if ! command -v fail2ban-client >/dev/null 2>&1; then
+  log "ติดตั้ง fail2ban"
+  apt-get install -y fail2ban python3-systemd >/dev/null 2>&1 || true
+fi
+if command -v fail2ban-client >/dev/null 2>&1 && [ ! -f /etc/fail2ban/jail.d/vjl.local ]; then
+  printf '[sshd]
+enabled = true
+backend = systemd
+maxretry = 5
+findtime = 10m
+bantime = 1h
+' > /etc/fail2ban/jail.d/vjl.local
+  systemctl enable fail2ban >/dev/null 2>&1 || true
+  systemctl restart fail2ban >/dev/null 2>&1 || true
+fi
+
 # ---------- 4) .env (สร้างครั้งแรกพร้อมรหัสสุ่ม — ครั้งต่อไปไม่ทับของเดิม) ----------
 mkdir -p "$APP_DIR"
 cd "$APP_DIR"

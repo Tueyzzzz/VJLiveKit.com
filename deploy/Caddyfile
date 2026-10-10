@@ -3,6 +3,17 @@
 
 {$DOMAIN} {
 	encode zstd gzip
+	# security headers: บังคับ HTTPS · ห้ามเดาชนิดไฟล์ · ส่ง referrer เท่าที่จำเป็น · ซ่อนชื่อเซิร์ฟเวอร์
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+	# หน้าเว็บ/แดชบอร์ด: ห้ามเว็บอื่นเอาไปฝัง (กันหลอกกด) · เฉพาะหน้าที่ล็อกอิน/จัดการบัญชี — วิดเจ็ตทุกหน้าต้องเปิดใน OBS / TikTok LIVE Studio ได้เหมือนเดิม
+	@page path / /dashboard /dashboard/* /login /login/* /register /register/* /billing /billing/*
+	header @page X-Frame-Options "SAMEORIGIN"
 	# ระหว่างสลับแอปตอน deploy: ต่อไม่ได้ → ลองซ้ำ/สลับไปตัวที่พร้อมได้สูงสุด 20 วินาที (ไม่ขึ้นหน้า error)
 	reverse_proxy app:8080 {
 		lb_try_duration 20s

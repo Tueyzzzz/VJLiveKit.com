@@ -78,8 +78,9 @@ window.Juice = (function () {
     const c = auraColor(d); if (!c) return;
     const pulse = 0.75 + 0.25 * Math.sin(t * 4 + x * 0.05);
     const g = ctx.createRadialGradient(x, y, r * 0.7, x, y, r * 1.6);
-    g.addColorStop(0, `rgba(${c},${0.38 * pulse})`); g.addColorStop(1, `rgba(${c},0)`);
-    ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = g;
+    g.addColorStop(0, `rgba(${c},${0.3 * pulse})`); g.addColorStop(1, `rgba(${c},0)`);
+    // วาดแบบปกติ (ไม่ใช่ 'lighter') — แสงบวกทับทำให้ของขวัญชิ้นอื่นสีซีด
+    ctx.save(); ctx.fillStyle = g;
     ctx.beginPath(); ctx.arc(x, y, r * 1.6, 0, Math.PI * 2); ctx.fill(); ctx.restore();
   }
 
@@ -124,7 +125,7 @@ window.Juice = (function () {
   const STICKER_PAD = 1.3, stickerCache = new Map();
   function sticker(img, px) {
     if (!img || !img.complete || !img.naturalWidth) return null;
-    const size = Math.max(16, Math.min(512, Math.ceil(px / 8) * 8)), key = img.src + '|' + size;
+    const size = Math.max(16, Math.min(512, Math.ceil(px * 1.25 / 8) * 8)), key = img.src + '|' + size;
     let c = stickerCache.get(key); if (c) return c;
     // ย่อทีละครึ่งจนใกล้ขนาดเป้าหมาย
     let src = img, w = img.naturalWidth, h = img.naturalHeight;
@@ -140,8 +141,8 @@ window.Juice = (function () {
     const sil = document.createElement('canvas'); sil.width = sil.height = size;
     const lg = sil.getContext('2d'); lg.drawImage(shape, 0, 0); lg.globalCompositeOperation = 'source-in'; lg.fillStyle = '#ffffff'; lg.fillRect(0, 0, size, size);
     c = document.createElement('canvas'); c.width = c.height = full;
-    const g = c.getContext('2d'), rim = Math.max(1.5, size * 0.035);
-    g.save(); g.shadowColor = 'rgba(80,50,130,.32)'; g.shadowBlur = size * 0.05; g.shadowOffsetY = size * 0.04;
+    const g = c.getContext('2d'), rim = Math.max(1.2, size * 0.025); // ขอบขาวบางลง สีของขวัญเด่น
+    g.save(); g.shadowColor = 'rgba(60,40,100,.28)'; g.shadowBlur = size * 0.04; g.shadowOffsetY = size * 0.03;
     for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6; g.drawImage(sil, off + Math.cos(a) * rim, off + Math.sin(a) * rim); } // ขอบขาว + เงา
     g.restore();
     g.drawImage(shape, off, off);

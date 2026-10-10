@@ -131,6 +131,7 @@ export class TikTokRoom extends EventEmitter {
     const state = await this.connection.connect();
     this.connected = true;
     this.roomId = state?.roomId ? String(state.roomId) : null;
+    try { const ri: any = this.connection.roomInfo; const oid = ri?.owner?.id_str ?? ri?.owner?.id ?? ri?.owner_user_id; if (oid) this.hostId = String(oid); } catch { /* ไม่มีข้อมูลเจ้าของห้อง — รู้ทีหลังจากข้อมูล PK */ }
     this.emit('status', { type: 'connected', message: `เชื่อมต่อ @${this.username} สำเร็จ`, roomId: this.roomId });
   }
 
@@ -143,6 +144,10 @@ export class TikTokRoom extends EventEmitter {
     for (const [evName, type] of Object.entries(map)) {
       c.on(evName, (d: any) => this.handle(type, d));
     }
+    // ---- PK (แข่ง) ----
+    c.on('linkMicBattle', (d: any) => this.onBattle(d));
+    c.on('linkMicArmies', (d: any) => this.onArmies(d));
+    c.on('linkMicBattleItemCard', (d: any) => this.onCard(d));
     c.on('disconnected', () => { this.connected = false; this.emit('status', { type: 'disconnected', message: 'การเชื่อมต่อถูกตัด' }); });
     // v2 ส่ง error เป็น { info, exception }
     c.on('error', (err: any) => this.emit('status', { type: 'error', message: String(err?.exception?.message ?? err?.info ?? err?.message ?? err) }));
@@ -188,6 +193,53 @@ export class TikTokRoom extends EventEmitter {
     this.likeTimer = null;
     const rows = [...this.likeQueue.values()]; this.likeQueue.clear();
     for (const r of rows) this.send('like', { user: r.user, likeCount: r.inc, total: this.stats.likeCount });
+  }
+
+  // ================= PK =================
+  /** รหัสผู้ใช้ TikTok ของเจ้าของห้อง (รู้จากข้อมูล PK) — ไว้แยกฝั่งเรา/คู่แข่ง */
+  private hostId = '';
+  private lastPkScore = '';
+  /** อีเวนต์ PK ดิบล่าสุด (หน้าแอดมินดูไว้ตรวจว่า TikTok ส่งอะไรมา) */
+  pkLog: { t: number; kind: string; raw: string }[] = [];
+  private logPk(kind: string, d: unknown) {
+    let raw = ''; try { raw = JSON.stringify(d, (k, v) => (k === 'common' || /image|Image|avatar|Thumb/.test(k) ? undefined : v)).slice(0, 1500); } catch { /* ignore */ }
+    this.pkLog.push({ t: Date.now(), kind, raw }); if (this.pkLog.length > 40) this.pkLog.shift();
+  }
+  private learnHost(list: any[] | undefined) {
+    for (const a of list ?? []) { const u = a?.value?.user ?? a?.user; if (u && String(u.displayId ?? '').toLowerCase() === this.username.toLowerCase()) this.hostId = String(u.userId); }
+  }
+  private onBattle(d: any) {
+    if (this.isDuplicate(d)) return;
+    this.logPk('battle', d); this.learnHost(d?.anchorsInfo);
+    const act = Number(d?.action);
+    if (act === 4 || act === 7) { this.lastPkScore = ''; this.send('pk', { pk: { kind: 'start' } }); }
+    else if (act === 5 || act === 6) {
+      const res = d?.battleResult ?? {}, me = res[this.hostId], r = Number(me?.result);
+      this.send('pk', { pk: { kind: 'end', result: r === 0 ? 'win' : r === 1 ? 'lose' : r === 2 ? 'draw' : undefined, us: me ? Number(me.score) : undefined } });
+    }
+  }
+  private onArmies(d: any) {
+    this.logPk('armies', d);
+    const armies: Record<string, any> = d?.armies ?? {};
+    let us: number | undefined, them = 0;
+    for (const [id, a] of Object.entries(armies)) { const sc = Number(a?.hostscore ?? 0); if (id === this.hostId || String(a?.anchorIdStr) === this.hostId) us = sc; else them = Math.max(them, sc); }
+    if (us === undefined) return; // ยังไม่รู้ว่าฝั่งไหนคือเรา
+    const key = us + ':' + them; if (key === this.lastPkScore) return; this.lastPkScore = key;
+    this.send('pk', { pk: { kind: 'score', us, them } });
+  }
+  private static CARDS: Record<number, [string, string, string]> = {
+    2: ['critical', '⚡ สายฟ้า', 'useCriticalStrikeCard'], 3: ['smoke', '🌫️ หมอก', 'useSmokeCard'], 5: ['extra', '⏱️ ต่อเวลา', 'useExtraTimeCard'],
+    6: ['effect', '✨ เอฟเฟกต์พิเศษ', 'useSpecialEffectCard'], 7: ['potion', '🧪 ยาพลัง', 'usePotionCard'], 8: ['wave', '🌊 คลื่น', 'useWaveCard'],
+    10: ['top2', '🥈 การ์ดท็อป 2', 'useTop2Card'], 11: ['top3', '🥉 การ์ดท็อป 3', 'useTop3Card'], 12: ['glove', '🥊 นวม', 'useVaultGloveCard'],
+  };
+  private onCard(d: any) {
+    if (this.isDuplicate(d)) return;
+    this.logPk('card', d);
+    const def = TikTokRoom.CARDS[Number(d?.msgType)];
+    if (!def) return; // แนะนำ/แจกการ์ด — ยังไม่ส่งต่อ
+    const use = d?.[def[2]] ?? {}, info = use.cardInfo ?? {}, su = info.sendUser?.user;
+    const anchor = String(use.anchorId ?? info.toAnchorId ?? '');
+    this.send('pk', { pk: { kind: 'card', card: def[0], label: def[1], by: su?.nickName || undefined, side: !this.hostId || !anchor ? null : anchor === this.hostId ? 'us' : 'them', text: use.displayContent?.defaultPattern || undefined } });
   }
 
   /** เวลาที่ได้รับอีเวนต์ล่าสุดจากไลฟ์ (คนดู/แชท/กิฟต์) — ไว้เช็กว่ายังไลฟ์อยู่จริง */

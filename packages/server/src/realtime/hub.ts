@@ -341,6 +341,9 @@ export class RoomHub {
     });
   }
 
+  /** แอดมิน: อีเวนต์ PK ดิบล่าสุดของห้อง (ตรวจว่า TikTok ส่งอะไรมา) */
+  pkLog(username: string) { return this.rooms.get(normalize(username))?.room.pkLog ?? null; }
+
   /** จำนวนห้องที่เชื่อม TikTok อยู่ (กำลังไลฟ์) */
   liveCount(): number { let n = 0; for (const e of this.rooms.values()) if (e.room.isConnected()) n++; return n; }
 

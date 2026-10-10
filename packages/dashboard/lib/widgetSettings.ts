@@ -399,6 +399,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
         { key: 'big', label: 'ของขวัญใหญ่ (มีพลุ) ตั้งแต่', type: 'number', min: 1, def: 1000, when: (v) => !!v.gift },
         { key: 'follow', label: 'มีคนกดติดตาม', type: 'toggle', def: true },
         { key: 'share', label: 'มีคนแชร์ไลฟ์', type: 'toggle', def: true },
+        { key: 'pk', label: 'PK: การ์ด (นวม ⚡สายฟ้า หมอก ฯลฯ) + ผลแพ้ชนะ', type: 'toggle', def: true },
       ] },
       { title: 'การแสดงผล', fields: [
         { key: 'duration', label: 'แสดงนาน (วินาที)', type: 'number', min: 2, max: 30, def: 5 },

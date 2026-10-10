@@ -257,6 +257,11 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
     for (const r of hub?.listRooms() ?? []) screens += await hub!.reloadRoom(r.username);
     return { ok: true, screens };
   });
+  app.get('/api/admin/live/:username/pk', { preHandler: requireAdmin }, async (req, reply) => {
+    const log = getHub()?.pkLog((req.params as { username: string }).username);
+    if (!log) return reply.code(404).send({ error: 'ไม่พบห้องนี้' });
+    return { pk: log.slice().reverse() };
+  });
   app.get('/api/admin/live/:username/gifts', { preHandler: requireAdmin }, async (req, reply) => {
     const { username } = req.params as { username: string };
     const gifts = getHub()?.recentGifts(username);

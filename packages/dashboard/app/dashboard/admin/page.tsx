@@ -85,6 +85,13 @@ export default function AdminPage() {
       setMsg({ tone: 'success', text: `สั่งรีโหลดแล้ว ${r.screens} จอ${room ? ` (@${room})` : ' (ทุกห้อง)'} — ของขวัญบนจอไม่หาย` });
     } catch (e) { setMsg({ tone: 'error', text: (e as Error).message }); } finally { setBusy(null); }
   }
+  const [pkOf, setPkOf] = useState<{ room: string; list: { t: number; kind: string; raw: string }[] | null } | null>(null);
+  async function togglePk(room: string) { // อีเวนต์ PK ดิบ (นวม/สายฟ้า/คะแนน) — ไว้ตรวจว่า TikTok ส่งอะไรมา
+    if (pkOf?.room === room) return setPkOf(null);
+    setPkOf({ room, list: null });
+    try { const r = await api<{ pk: { t: number; kind: string; raw: string }[] }>(`/api/admin/live/${encodeURIComponent(room)}/pk`); setPkOf({ room, list: r.pk }); }
+    catch (e) { setPkOf(null); setMsg({ tone: 'error', text: (e as Error).message }); }
+  }
   async function toggleGifts(room: string) {
     if (giftsOf?.room === room) return setGiftsOf(null);
     setGiftsOf({ room, list: null });
@@ -442,8 +449,22 @@ export default function AdminPage() {
                   <td className="px-4 py-3"><div className="flex gap-1.5 whitespace-nowrap">
                     <Button variant="secondary" className="px-2.5 py-1.5 text-xs" loading={busy === 'reload:' + r.username} onClick={() => void reloadRoom(r.username)} title="สั่งวิดเจ็ตบนจอของห้องนี้รีโหลด"><RefreshCw className="size-3.5" /> รีโหลดจอ</Button>
                     <Button variant="ghost" className="px-2.5 py-1.5 text-xs" onClick={() => void toggleGifts(r.username)}><Gift className="size-3.5" /> ของขวัญ</Button>
+                    <Button variant="ghost" className="px-2.5 py-1.5 text-xs" onClick={() => void togglePk(r.username)}>⚔️ PK</Button>
                   </div></td>
                 </tr>
+                {pkOf?.room === r.username && (
+                  <tr><td colSpan={9} className="bg-canvas px-4 py-3">
+                    {!pkOf.list ? <Spinner /> : pkOf.list.length === 0 ? <span className="text-xs text-muted">ยังไม่มีอีเวนต์ PK ในไลฟ์นี้ (เริ่ม PK แล้วกดดูใหม่)</span> : (
+                      <div className="grid max-h-80 gap-1 overflow-y-auto">
+                        {pkOf.list.map((p, i) => (
+                          <div key={i} className="rounded-lg bg-white px-2 py-1 font-mono text-[11px]">
+                            <b className="text-pink">{p.kind}</b> · {new Date(p.t).toLocaleTimeString('th-TH')} · <span className="break-all text-muted">{p.raw.slice(0, 400)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </td></tr>
+                )}
                 {giftsOf?.room === r.username && (
                   <tr><td colSpan={9} className="bg-canvas px-4 py-3">
                     {!giftsOf.list ? <Spinner /> : giftsOf.list.length === 0 ? <span className="text-xs text-muted">ไลฟ์นี้ยังไม่มีของขวัญ</span> : (

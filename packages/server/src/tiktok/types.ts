@@ -1,6 +1,18 @@
 /** ชนิดของอีเวนต์ที่ระบบส่งต่อให้ overlay/dashboard (normalized) */
 export type TikTokEventType =
-  | 'chat' | 'gift' | 'like' | 'follow' | 'share' | 'member' | 'roomUser';
+  | 'chat' | 'gift' | 'like' | 'follow' | 'share' | 'member' | 'roomUser' | 'pk';
+
+/** อีเวนต์ PK: เริ่ม/จบ · คะแนน · การ์ด (นวม สายฟ้า หมอก ต่อเวลา ฯลฯ) */
+export interface PkInfo {
+  kind: 'start' | 'end' | 'score' | 'card';
+  card?: string; // รหัสการ์ด เช่น glove / critical / smoke
+  label?: string; // ชื่อไทย + อีโมจิ
+  by?: string; // คนที่ใช้การ์ด (ถ้ารู้)
+  side?: 'us' | 'them' | null; // การ์ดนี้ใช้กับฝั่งเรา/ฝั่งคู่แข่ง
+  text?: string;
+  us?: number; them?: number; // คะแนน PK
+  result?: 'win' | 'lose' | 'draw';
+}
 
 export interface NormalizedUser {
   userId: string;
@@ -28,6 +40,8 @@ export interface TikTokEvent {
   total?: number;
   // roomUser
   viewerCount?: number;
+  // pk
+  pk?: PkInfo;
 }
 
 export interface TopGifter {

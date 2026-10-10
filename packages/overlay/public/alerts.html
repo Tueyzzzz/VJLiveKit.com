@@ -44,7 +44,7 @@
    */
   (function(){
     const P=(k,d)=>Overlay.param(k,d), num=(k,d)=>{ const v=parseFloat(P(k,d)); return Number.isFinite(v)?v:d; };
-    const SHOW={ gift:P('gift','1')!=='0', follow:P('follow','1')!=='0', share:P('share','1')!=='0' };
+    const SHOW={ gift:P('gift','1')!=='0', follow:P('follow','1')!=='0', share:P('share','1')!=='0', pk:P('pk','1')!=='0' };
     const MIN=num('minCoins',1), DUR=Math.max(1.5,num('duration',5))*1000, BIG=num('big',1000);
     const slot=document.getElementById('slot'); slot.className=['top','center','bottom'].includes(P('pos','top'))?P('pos','top'):'top';
     document.documentElement.style.setProperty('--bg', String(Math.max(0,Math.min(100,num('bg',35)))/100));
@@ -91,6 +91,11 @@
       }
       else if(e.type==='follow'&&SHOW.follow) push({ user:e.user, sub:'กด<b>ติดตาม</b>แล้ว! 💕', emoji:'➕', cls:'follow' });
       else if(e.type==='share'&&SHOW.share) push({ user:e.user, sub:'<b>แชร์</b>ไลฟ์นี้ ขอบคุณนะ!', emoji:'🔁', cls:'share' });
+      else if(e.type==='pk'&&SHOW.pk&&e.pk){ // PK: การ์ด (นวม สายฟ้า ...) + ผลแพ้ชนะ
+        const k=e.pk, side=k.side==='us'?' ให้เรา':k.side==='them'?' ฝั่งคู่แข่ง':'';
+        if(k.kind==='card') push({ user:{nickname:k.by||'PK'}, sub:`ใช้การ์ด <b>${Overlay.esc(k.label||'PK')}</b>${side}`, emoji:(k.label||'⚔️').split(' ')[0], big:k.side==='us', cls:'big' });
+        else if(k.kind==='end'&&k.result) push({ user:{nickname:'ผล PK'}, sub:k.result==='win'?'<b>ชนะ!</b> 🏆 ขอบคุณทุกคนที่ช่วยกัน':k.result==='lose'?'สู้เต็มที่แล้ว ขอบคุณทุกคนนะ 💪':'<b>เสมอ!</b> 🤝', emoji:k.result==='win'?'🏆':'⚔️', big:k.result==='win', cls:'big' });
+      }
     });
 
     if(!Overlay.connected){ const names=['mimi','บิ๊ก','lisa','ต้นน้ำ','somchai']; const gifts=[['Rose',1],['Perfume',20],['Galaxy',1000],['Lion',2999]];

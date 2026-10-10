@@ -28,8 +28,12 @@ function ensure(): boolean {
 }
 
 /** บันทึก error หนึ่งรายการ (ไม่โยน error ต่อ ไม่ว่าจะเกิดอะไร) */
+/** สถานะปกติ ไม่ใช่ error (คนยังไม่ไลฟ์ / ไลฟ์จบ / ชื่อผิด) — ระบบลองต่อใหม่เองอยู่แล้ว ไม่ต้องเก็บ */
+const NORMAL = /isn't online|not online|user_?not_?found|live has ended|stream ?end|room ?id.*(not found|missing)|failed to retrieve room ?id/i;
+
 export function recordError(e: Omit<ErrEntry, 'ts'> & { ts?: number }): void {
   try {
+    if (NORMAL.test(e.msg ?? '') || (e.src === 'tiktok' || e.src === 'server') && NORMAL.test(e.stack ?? '')) return;
     if (!ensure()) return;
     const ts = e.ts ?? Date.now(), d = day(ts);
     if (d !== curDay) { curDay = d; try { dayBytes = fs.statSync(path.join(DIR, d + '.jsonl')).size; } catch { dayBytes = 0; } }
@@ -59,7 +63,7 @@ export function readErrors(days: number): ErrEntry[] {
     const f = path.join(DIR, day(Date.now() - i * 86_400_000) + '.jsonl');
     let txt = '';
     try { txt = fs.readFileSync(f, 'utf8'); } catch { continue; }
-    for (const l of txt.split('\n')) { if (!l) continue; try { out.push(JSON.parse(l) as ErrEntry); } catch { /* บรรทัดเสีย */ } }
+    for (const l of txt.split('\n')) { if (!l) continue; try { const r = JSON.parse(l) as ErrEntry; if (!NORMAL.test(r.msg)) out.push(r); } catch { /* บรรทัดเสีย */ } }
   }
   return out.sort((a, b) => b.ts - a.ts);
 }

@@ -507,4 +507,6 @@ export const EN_CORE: Record<string, string> = {
   "💌 กล่องจดหมายหัวใจ": "💌 Heart mailbox",
   "🎮 โหลสายเกมมิ่ง": "🎮 Gaming-style jar",
   "เลือกวิดเจ็ต": "Choose widgets",
+  "✨ ครบ 4 ฟังก์ชันในจอเดียว": "✨ 4 features on one screen",
+  "🌸 โหล · มาสคอต · อันดับ · เป้าหมาย": "🌸 Jar · mascot · ranking · goal",
 };

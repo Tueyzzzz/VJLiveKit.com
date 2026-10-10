@@ -66,7 +66,7 @@
       return { type: 'gift', user: { uniqueId: nm, nickname: nm, avatar: '' }, giftName: g[0], giftImage: g[2], diamondCount: g[1], repeatCount: g[1] >= 100 ? 1 : 1 + Math.floor(Math.random() * 3), streaking: false };
     },
     /** ?fill=N (ถ่ายภาพตัวอย่าง): ใส่ของขวัญ N ชิ้นรวดเดียวตอนเริ่ม */
-    demoBurst(onGift) { const n = Math.min(150, parseInt(q.get('fill') || '0', 10) || 0); for (let i = 0; i < n; i++) setTimeout(() => onGift(this.demoGift()), i * 60); },
+    demoBurst(onGift) { const n = Math.min(150, parseInt(q.get('fill') || '0', 10) || 0); for (let i = 0; i < n; i++) setTimeout(() => onGift({ ...this.demoGift(), __shot: q.get('shot') === '1' ? 1 : 0 }), i * 60); },
     /** รูปของขวัญจากชื่อ (สำรองตอนอีเวนต์ไม่มีรูป) */
     imgFor,
     /** เลือก n ชิ้นที่จะจางออกเมื่อจอเต็ม: ถูกก่อน แล้วเก่าก่อน (list เรียงเก่า→ใหม่, ราคาอยู่ที่ .d) */

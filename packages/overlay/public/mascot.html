@@ -18,6 +18,8 @@
     animation:breath 2.6s ease-in-out infinite, sway 5.2s ease-in-out infinite; filter:drop-shadow(0 6px 10px rgba(80,40,110,.25)); }
   #char img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; opacity:0; transition:opacity .11s linear; }
   #char img.on { opacity:1; }
+  #char.video img:not(.vid) { display:none; }
+  #char img.vid { opacity:1; transition:none; }
   #char.hop { animation:hop .5s cubic-bezier(.3,1.6,.5,1), breath 2.6s ease-in-out .5s infinite, sway 5.2s ease-in-out infinite; }
   #char.dance { animation:dance .45s ease-in-out infinite; }
   #char.wiggle { animation:wiggle .6s ease-in-out 2, breath 2.6s ease-in-out infinite; }
@@ -148,6 +150,31 @@
     pose(1);
 
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+    // ---- โหมดวิดีโอ: ตัวที่มี mascot/<ตัว>/video.json → เล่นคลิปวิดีโอ (WebP เคลื่อนไหวพื้นใส) แทนภาพนิ่ง ----
+    // ไม่มีไฟล์ / เปลี่ยนสี (tint) / ?video=0 → ใช้ภาพนิ่งแบบเดิม · คลิปที่ไม่มี (เช่น heart) → ใช้ท่าภาพนิ่งแทน
+    const VIDEO = { on: false, clips: {}, el: null, t: null };
+    function playClip(k) {
+      const c = VIDEO.clips[k]; if (!c) return 0;
+      const old = VIDEO.el.src; VIDEO.el.src = URL.createObjectURL(c.blob); // URL ใหม่ = เริ่มคลิปจากต้น
+      if (old && old.startsWith('blob:')) setTimeout(() => URL.revokeObjectURL(old), 1500);
+      clearTimeout(VIDEO.t); if (k !== 'idle') VIDEO.t = setTimeout(() => playClip('idle'), c.ms);
+      return c.ms;
+    }
+    async function clip(k, maxMs) { if (!VIDEO.on || !VIDEO.clips[k]) return false; const ms = playClip(k); await wait(Math.min(ms, maxMs || ms)); return true; }
+    (async () => {
+      if (TINT || P('video', '1') === '0') return;
+      try {
+        const v = encodeURIComponent(window.VJL_VERSION || '1');
+        const man = await fetch(`mascot/${C}/video.json?v=${v}`).then((r) => (r.ok ? r.json() : null));
+        if (!man || !man.idle) return;
+        const clips = {};
+        await Promise.all(Object.keys(man).map(async (k) => { const b = await fetch(`mascot/${C}/v-${k}.webp?v=${v}`).then((r) => (r.ok ? r.blob() : null)); if (b) clips[k] = { blob: b, ms: man[k] }; }));
+        if (!clips.idle) return;
+        const el = new Image(); el.alt = ''; el.className = 'vid'; $char.appendChild(el);
+        VIDEO.clips = clips; VIDEO.el = el; VIDEO.on = true; $char.classList.add('video'); playClip('idle');
+      } catch (e) { /* ใช้ภาพนิ่ง */ }
+    })();
     const esc = (s) => Overlay.esc(s);
     const fillText = (t, e) => esc(t).replace(/\{user\}/g, `<b>${esc(e.user ? (e.user.nickname || e.user.uniqueId) : 'ทุกคน')}</b>`).replace(/\{gift\}/g, `<b>${esc(e.giftName || 'ของขวัญ')}</b>`);
     let bubbleT = null;
@@ -217,7 +244,7 @@
       async () => { pose(7); hop(); particles(['✨', '⭐'], 4, 1.4); await wait(900); },                        // ดีใจเบา ๆ
     ];
     (function idleAct() {
-      setTimeout(async () => { if (!busy && !running) { busy = true; try { await IDLE[Math.floor(Math.random() * IDLE.length)](); } catch (e) { /* ignore */ } pose(1); busy = false; } idleAct(); }, 6000 + Math.random() * 6000);
+      setTimeout(async () => { if (!busy && !running) { busy = true; try { if (VIDEO.on) { if (Math.random() < 0.3 && VIDEO.clips.dance) await clip('dance', 3600); } else await IDLE[Math.floor(Math.random() * IDLE.length)](); } catch (e) { /* ignore */ } pose(1); busy = false; } idleAct(); }, 6000 + Math.random() * 6000);
     })();
 
     // ---- คิวท่าทาง (ทีละอย่าง ไม่ทับกัน) ----
@@ -227,7 +254,7 @@
 
     async function receive(e) {
       const img = e.giftImage || (window.VJLCollect ? VJLCollect.imgFor(e.giftName) : '');
-      pose(6); hop();
+      if (VIDEO.on && VIDEO.clips.thanks) playClip('thanks'); else { pose(6); hop(); }
       if (img) { $gift.src = img; $gift.classList.remove('on'); void $gift.offsetWidth; $gift.classList.add('on'); }
       if (THANKS) say(fillText(THANK_TEXT, e), 3000);
       particles(['✨', '💖', '⭐'], 6);
@@ -235,16 +262,20 @@
       await wait(2600); $gift.classList.remove('on');
     }
     async function joy(e) {
+      if (VIDEO.on && VIDEO.clips.joy) { confetti(); particles(['🎉', '✨', '💖'], 10); if (SPARK !== 'off') twinkle(20, 1.1); if (e && THANKS) say(fillText(THANK_TEXT, e), 3800); await clip('joy', 4200); return; }
       pose(7); hop(); confetti(); particles(['🎉', '✨', '💖'], 10); if (SPARK !== 'off') twinkle(20, 1.1);
       if (e && THANKS) say(fillText(THANK_TEXT, e), 3800);
       await wait(1600);
     }
     async function dance(times = 3) {
+      if (await clip('dance', times <= 2 ? 3600 : 5200)) return;
       $char.classList.add('dance');
       for (let i = 0; i < times; i++) for (const n of [9, 10, 11]) { pose(n); await wait(380); }
       $char.classList.remove('dance');
     }
     async function heart(e) {
+      if (VIDEO.on && VIDEO.clips.heart) { particles(['💗', '💕', '💖', '🩷'], 12, 2); if (e) say(fillText(FOLLOW_TEXT, e), 3000); await clip('heart', 4200); return; }
+      if (VIDEO.on) { particles(['💗', '💕', '💖', '🩷'], 12, 2); if (e) say(fillText(FOLLOW_TEXT, e), 3000); playClip('joy'); await wait(2200); return; }
       pose(8); hop(); particles(['💗', '💕', '💖', '🩷'], 12, 2);
       if (e) say(fillText(FOLLOW_TEXT, e), 3000);
       await wait(2200);
@@ -269,6 +300,7 @@
     let lastPing = 0;
     const ping = async (n, parts) => { // ท่าสั้น ๆ ตอบแชท/ไลก์ (เว้นอย่างน้อย 2.5 วิ)
       if (busy || running || Date.now() - lastPing < 2500) return; lastPing = Date.now(); busy = true;
+      if (VIDEO.on) { if (parts) particles(parts, 3, 1.4); await wait(650); busy = false; return; }
       pose(n); hop(); if (parts) particles(parts, 3, 1.4); await wait(650); pose(1); busy = false;
     };
     Overlay.on('event', (e) => {

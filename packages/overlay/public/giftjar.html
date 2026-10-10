@@ -65,6 +65,7 @@
     const SHOW_ALERT = P('alert', '1') !== '0', ALERT_MS = num('alertSec', 5) * 1000;
     const SHOW_BOARD = P('board', '1') !== '0', TOP = Math.max(1, Math.min(10, num('top', 1))), BOARD_FULL = P('boardFormat', 'full') !== 'name';
     const SHOW_TOTAL = P('total', '0') === '1', MIN_COINS = num('minCoins', 0);
+    const SHOT = P('shot', '0') === '1'; // ถ่ายภาพตัวอย่าง: ไม่มีประกาย
     let FULL_MODE = P('full', 'spill'); const FULL_TEXT = P('fullText', 'โหลเต็มแล้ว! 🎉');
     document.documentElement.style.setProperty('--font', `'${P('font', 'Kanit')}'`);
     document.documentElement.style.setProperty('--fs', String(num('fontSize', 50)));
@@ -174,37 +175,139 @@
         prof: [[-288.8, 60.3], [-268.6, 72.5], [-248.5, 78.4], [-228.3, 88.3], [-208.1, 84.3], [-188.0, 72.1], [-167.8, 69.7], [-147.6, 67.3], [-127.4, 64.7], [-107.3, 62.3], [-87.1, 59.8], [-66.9, 57.3], [-46.8, 54.8], [-26.6, 49.9]],
         hw: (y) => profileHW(SHAPES.boba.prof, y),
         openY: -288.8, openHW: 60.3, rimHW: 66.3, topY: -380.0, fullY: -258.8, maxHW: 88.3, floor: -26.6, closed: true,
-        image: { src: 'themes/jar-boba.webp', x: -111.5, y: -380.0, w: 223.0, h: 380.0 },
+        genGlass: true, image: { src: 'themes/jar-boba.webp', x: -111.5, y: -380.0, w: 223.0, h: 380.0 },
       },
       claw: { // ตู้คีบตุ๊กตา (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
         prof: [[-266.0, 91.0], [-254.3, 90.8], [-242.6, 20], [-230.9, 20], [-219.2, 57.3], [-207.5, 20], [-195.8, 90.3], [-149.1, 90.3], [-137.4, 90.3], [-125.7, 90.3], [-114.0, 90.3]],
         hw: (y) => profileHW(SHAPES.claw.prof, y),
         openY: -266.0, openHW: 91.0, rimHW: 100.1, topY: -380.0, fullY: -236.0, maxHW: 91.0, floor: -114.0, closed: true,
-        image: { src: 'themes/jar-claw.webp', x: -134.5, y: -380.0, w: 269.0, h: 380.0 },
+        genGlass: true, image: { src: 'themes/jar-claw.webp', x: -134.5, y: -380.0, w: 269.0, h: 380.0 },
       },
       cakejar: { // เค้กชั้นใส (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
         prof: [[-144.4, 110.2], [-137.4, 112.2], [-130.4, 112.5], [-123.4, 112.5], [-116.3, 109.5], [-109.3, 106.9], [-102.3, 106.9], [-95.3, 106.9], [-88.3, 106.9], [-81.3, 107.1], [-74.2, 108.0], [-67.2, 104.8], [-60.2, 95.6], [-53.2, 79.1]],
         hw: (y) => profileHW(SHAPES.cakejar.prof, y),
         openY: -144.4, openHW: 110.2, rimHW: 121.2, topY: -380.0, fullY: -114.4, maxHW: 112.5, floor: -53.2,
-        image: { src: 'themes/jar-cakejar.webp', x: -135.6, y: -380.0, w: 271.2, h: 380.0 },
+        genGlass: true, image: { src: 'themes/jar-cakejar.webp', x: -135.6, y: -380.0, w: 271.2, h: 380.0 },
       },
       glassbear: { // ตุ๊กตาหมีใส (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
         prof: [[-334.4, 127.8], [-311.0, 127.5], [-287.6, 115.9], [-264.2, 101.0], [-240.9, 105.4], [-217.5, 104.8], [-194.1, 97.7], [-170.7, 76.4], [-147.3, 103.2], [-123.9, 119.7], [-100.6, 125.9], [-77.2, 118.7], [-53.8, 122.4], [-30.4, 117.2]],
         hw: (y) => profileHW(SHAPES.glassbear.prof, y),
         openY: -334.4, openHW: 127.8, rimHW: 140.6, topY: -380.0, fullY: -304.4, maxHW: 127.8, floor: -30.4, closed: true,
-        image: { src: 'themes/jar-glassbear.webp', x: -154.4, y: -380.0, w: 308.8, h: 380.0 },
+        genGlass: true, image: { src: 'themes/jar-glassbear.webp', x: -154.4, y: -380.0, w: 308.8, h: 380.0 },
       },
       planetjar: { // ขวดดาวเคราะห์ (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
         prof: [[-273.6, 77.8], [-254.6, 94.6], [-235.6, 111.9], [-216.6, 136.2], [-197.6, 118.5], [-178.6, 137.1], [-159.6, 138.6], [-140.6, 136.6], [-121.6, 135.3], [-102.6, 121.8], [-83.6, 99.6], [-64.6, 85.5], [-45.6, 63.9], [-26.6, 68.9]],
         hw: (y) => profileHW(SHAPES.planetjar.prof, y),
         openY: -273.6, openHW: 77.8, rimHW: 85.6, topY: -380.0, fullY: -243.6, maxHW: 138.6, floor: -26.6, closed: true,
-        image: { src: 'themes/jar-planetjar.webp', x: -190.9, y: -380.0, w: 381.9, h: 380.0 },
+        genGlass: true, image: { src: 'themes/jar-planetjar.webp', x: -190.9, y: -380.0, w: 381.9, h: 380.0 },
       },
       latte: { // แก้วลาเต้ (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
         prof: [[-296.4, 88.6], [-277.1, 78.0], [-257.8, 115.8], [-238.5, 79.6], [-219.2, 69.0], [-199.9, 67.1], [-180.6, 65.5], [-161.4, 64.4], [-142.1, 65.8], [-122.8, 88.3], [-103.5, 62.8], [-84.2, 52.6], [-64.9, 27.0], [-45.6, 45.7]],
         hw: (y) => profileHW(SHAPES.latte.prof, y),
         openY: -296.4, openHW: 88.6, rimHW: 97.5, topY: -380.0, fullY: -266.4, maxHW: 115.8, floor: -45.6, closed: true,
-        image: { src: 'themes/jar-latte.webp', x: -152.1, y: -380.0, w: 304.1, h: 380.0 },
+        genGlass: true, image: { src: 'themes/jar-latte.webp', x: -152.1, y: -380.0, w: 304.1, h: 380.0 },
+      },
+      milkbox: { // กล่องนมสตรอว์เบอร์รี่ (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
+        prof: [[-266.0, 102.7], [-247.0, 103.1], [-228.0, 102.9], [-209.0, 102.9], [-190.0, 102.9], [-171.0, 102.9], [-152.0, 102.9], [-133.0, 102.9], [-114.0, 102.9], [-95.0, 102.9], [-76.0, 102.9], [-57.0, 102.9], [-38.0, 98.7], [-19.0, 85.3]],
+        hw: (y) => profileHW(SHAPES.milkbox.prof, y),
+        openY: -266.0, openHW: 102.7, rimHW: 113.0, topY: -380.0, fullY: -236.0, maxHW: 103.1, floor: -19.0, closed: true,
+        genGlass: true, image: { src: 'themes/jar-milkbox.webp', x: -124.7, y: -380.0, w: 249.3, h: 380.0 },
+      },
+      cupcake1: { // คัพเค้กใส (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
+        prof: [[-296.4, 62.2], [-280.6, 77.3], [-264.8, 86.9], [-249.0, 100.5], [-233.3, 110.5], [-217.5, 114.5], [-201.7, 110.2], [-185.9, 108.4], [-170.1, 111.2], [-154.3, 111.7], [-138.6, 109.7], [-122.8, 119.3], [-107.0, 116.4], [-91.2, 102.1]],
+        hw: (y) => profileHW(SHAPES.cupcake1.prof, y),
+        openY: -296.4, openHW: 62.2, rimHW: 68.4, topY: -380.0, fullY: -266.4, maxHW: 119.3, floor: -91.2, closed: true,
+        genGlass: true, image: { src: 'themes/jar-cupcake1.webp', x: -146.9, y: -380.0, w: 293.8, h: 380.0 },
+      },
+      strawberry: { // โหลสตรอว์เบอร์รี่ (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
+        prof: [[-258.4, 127.9], [-240.6, 101.7], [-222.7, 122.5], [-204.9, 131.4], [-187.1, 134.4], [-169.2, 133.9], [-151.4, 130.1], [-133.6, 124.4], [-115.8, 117.7], [-97.9, 112.0], [-80.1, 99.6], [-62.3, 88.9], [-44.4, 76.9], [-26.6, 61.6]],
+        hw: (y) => profileHW(SHAPES.strawberry.prof, y),
+        openY: -258.4, openHW: 127.9, rimHW: 140.7, topY: -380.0, fullY: -228.4, maxHW: 134.4, floor: -26.6, closed: true,
+        genGlass: true, image: { src: 'themes/jar-strawberry.webp', x: -161.4, y: -380.0, w: 322.8, h: 380.0 },
+      },
+      glasspig: { // กระปุกหมูแก้ว (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
+        prof: [[-304.0, 152.6], [-285.0, 148.4], [-266.0, 139.2], [-247.0, 147.4], [-228.0, 152.9], [-209.0, 156.0], [-190.0, 166.1], [-171.0, 156.3], [-152.0, 165.0], [-133.0, 149.6], [-114.0, 143.2], [-95.0, 133.8], [-76.0, 119.7], [-57.0, 124.4]],
+        hw: (y) => profileHW(SHAPES.glasspig.prof, y),
+        openY: -304.0, openHW: 152.6, rimHW: 167.9, topY: -380.0, fullY: -274.0, maxHW: 166.1, floor: -57.0, closed: true,
+        genGlass: true, image: { src: 'themes/jar-glasspig.webp', x: -201.9, y: -380.0, w: 403.8, h: 380.0 },
+      },
+      cupcake2: { // คัพเค้กเชอร์รี่ (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
+        prof: [[-247.0, 111.0], [-236.2, 113.0], [-225.4, 117.7], [-214.6, 124.6], [-203.7, 126.0], [-192.9, 109.8], [-182.1, 111.2], [-171.3, 112.3], [-160.5, 112.3], [-149.7, 111.4], [-138.8, 109.4], [-128.0, 106.7], [-117.2, 111.2], [-106.4, 109.2]],
+        hw: (y) => profileHW(SHAPES.cupcake2.prof, y),
+        openY: -247.0, openHW: 111.0, rimHW: 122.1, topY: -380.0, fullY: -217.0, maxHW: 126.0, floor: -106.4, closed: true,
+        genGlass: true, image: { src: 'themes/jar-cupcake2.webp', x: -152.2, y: -380.0, w: 304.4, h: 380.0 },
+      },
+      perfume: { // ขวดน้ำหอมหัวใจ (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
+        prof: [[-258.4, 98.8], [-243.8, 102.5], [-229.2, 116.2], [-214.6, 134.9], [-199.9, 112.6], [-185.3, 112.9], [-170.7, 110.8], [-156.1, 107.1], [-141.5, 101.1], [-126.9, 93.9], [-112.2, 84.2], [-97.6, 72.4], [-83.0, 59.1], [-68.4, 57.3]],
+        hw: (y) => profileHW(SHAPES.perfume.prof, y),
+        openY: -258.4, openHW: 98.8, rimHW: 108.7, topY: -380.0, fullY: -228.4, maxHW: 134.9, floor: -68.4, closed: true,
+        genGlass: true, image: { src: 'themes/jar-perfume.webp', x: -185.7, y: -380.0, w: 371.3, h: 380.0 },
+      },
+      cloud: { // ก้อนเมฆสายรุ้ง (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
+        prof: [[-228.0, 127.7], [-212.8, 101.6], [-197.6, 106.5], [-182.4, 115.8], [-167.2, 134.9], [-152.0, 151.0], [-136.8, 159.1], [-121.6, 163.8], [-106.4, 165.6], [-91.2, 165.2], [-76.0, 162.2], [-60.8, 155.5], [-45.6, 142.9], [-30.4, 114.2]],
+        hw: (y) => profileHW(SHAPES.cloud.prof, y),
+        openY: -228.0, openHW: 127.7, rimHW: 140.5, topY: -380.0, fullY: -198.0, maxHW: 165.6, floor: -30.4, closed: true,
+        genGlass: true, image: { src: 'themes/jar-cloud.webp', x: -197.6, y: -380.0, w: 395.1, h: 380.0 },
+      },
+      diamond: { // เพชรเจ้าหญิง (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
+        prof: [[-334.4, 107.8], [-321.8, 115.2], [-309.3, 126.7], [-296.7, 137.2], [-284.1, 146.5], [-271.6, 145.6], [-259.0, 137.5], [-246.4, 129.0], [-233.8, 119.5], [-221.3, 110.0], [-208.7, 100.4], [-196.1, 90.8], [-183.6, 80.5], [-171.0, 69.2]],
+        hw: (y) => profileHW(SHAPES.diamond.prof, y),
+        openY: -334.4, openHW: 107.8, rimHW: 118.6, topY: -380.0, fullY: -304.4, maxHW: 146.5, floor: -171.0,
+        genGlass: true, image: { src: 'themes/jar-diamond.webp', x: -178.1, y: -380.0, w: 356.2, h: 380.0 },
+      },
+      crownjar: { // มงกุฎแก้ว (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
+        prof: [[-266.0, 94.8], [-249.9, 133.2], [-233.8, 130.5], [-217.8, 128.0], [-201.7, 125.2], [-185.6, 128.0], [-169.5, 127.6], [-153.5, 124.9], [-137.4, 120.9], [-121.3, 115.3], [-105.2, 108.1], [-89.2, 99.6], [-73.1, 91.9], [-57.0, 92.3]],
+        hw: (y) => profileHW(SHAPES.crownjar.prof, y),
+        openY: -266.0, openHW: 94.8, rimHW: 104.3, topY: -380.0, fullY: -236.0, maxHW: 133.2, floor: -57.0,
+        genGlass: true, image: { src: 'themes/jar-crownjar.webp', x: -182.4, y: -380.0, w: 364.8, h: 380.0 },
+      },
+      capsule: { // แคปซูลนีออน (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
+        prof: [[-304.0, 110.5], [-285.0, 108.6], [-266.0, 99.5], [-247.0, 100.6], [-228.0, 104.4], [-209.0, 104.6], [-190.0, 107.3], [-171.0, 113.4], [-152.0, 112.8], [-133.0, 104.6], [-114.0, 104.6], [-95.0, 104.1], [-76.0, 99.2], [-57.0, 103.7]],
+        hw: (y) => profileHW(SHAPES.capsule.prof, y),
+        openY: -304.0, openHW: 110.5, rimHW: 121.6, topY: -380.0, fullY: -274.0, maxHW: 113.4, floor: -57.0, closed: true,
+        genGlass: true, image: { src: 'themes/jar-capsule.webp', x: -137.2, y: -380.0, w: 274.4, h: 380.0 },
+      },
+      hourglass: { // นาฬิกาทราย (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
+        prof: [[-171.0, 20], [-160.8, 22.7], [-150.5, 38.0], [-140.3, 48.6], [-130.1, 55.4], [-119.8, 59.6], [-109.6, 61.7], [-99.4, 87.1], [-89.2, 82.5], [-78.9, 59.7], [-68.7, 83.0], [-58.5, 91.4], [-48.2, 93.8], [-38.0, 90.9]],
+        hw: (y) => profileHW(SHAPES.hourglass.prof, y),
+        openY: -171.0, openHW: 20, rimHW: 22.0, topY: -380.0, fullY: -141.0, maxHW: 93.8, floor: -38.0, closed: true,
+        genGlass: true, image: { src: 'themes/jar-hourglass.webp', x: -113.9, y: -380.0, w: 227.8, h: 380.0 },
+      },
+      glasssnowman: { // มนุษย์หิมะแก้ว (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
+        prof: [[-258.4, 77.4], [-240.9, 75.6], [-223.3, 71.3], [-205.8, 69.6], [-188.2, 62.3], [-170.7, 64.7], [-153.2, 82.4], [-135.6, 80.8], [-118.1, 89.5], [-100.6, 96.9], [-83.0, 95.3], [-65.5, 90.2], [-47.9, 84.0], [-30.4, 73.0]],
+        hw: (y) => profileHW(SHAPES.glasssnowman.prof, y),
+        openY: -258.4, openHW: 77.4, rimHW: 85.1, topY: -380.0, fullY: -228.4, maxHW: 96.9, floor: -30.4, closed: true,
+        genGlass: true, image: { src: 'themes/jar-glasssnowman.webp', x: -158.9, y: -380.0, w: 317.9, h: 380.0 },
+      },
+      idolmic: { // ไมค์ไอดอล (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
+        prof: [[-361.0, 41.8], [-353.7, 48.1], [-346.4, 55.4], [-339.1, 57.1], [-331.8, 60.7], [-324.5, 63.8], [-317.2, 65.8], [-309.8, 71.5], [-302.5, 75.3], [-295.2, 75.0], [-287.9, 72.1], [-280.6, 67.4], [-273.3, 65.7], [-266.0, 63.5]],
+        hw: (y) => profileHW(SHAPES.idolmic.prof, y),
+        openY: -361.0, openHW: 41.8, rimHW: 46.0, topY: -380.0, fullY: -331.0, maxHW: 75.3, floor: -266.0, closed: true,
+        genGlass: true, image: { src: 'themes/jar-idolmic.webp', x: -92.7, y: -380.0, w: 185.3, h: 380.0 },
+      },
+      lantern: { // โคมจีนแก้ว (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
+        prof: [[-285.0, 63.0], [-268.9, 79.2], [-252.8, 105.4], [-236.8, 98.7], [-220.7, 114.2], [-204.6, 95.3], [-188.5, 91.6], [-172.5, 84.4], [-156.4, 70.8], [-140.3, 56.6], [-124.2, 53.3], [-108.2, 20], [-92.1, 20], [-76.0, 20]],
+        hw: (y) => profileHW(SHAPES.lantern.prof, y),
+        openY: -285.0, openHW: 63.0, rimHW: 69.3, topY: -380.0, fullY: -255.0, maxHW: 114.2, floor: -76.0, closed: true,
+        genGlass: true, image: { src: 'themes/jar-lantern.webp', x: -142.8, y: -380.0, w: 285.5, h: 380.0 },
+      },
+      pumpkinjar: { // ฟักทองแก้ว (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
+        prof: [[-285.0, 75.4], [-265.4, 97.5], [-245.8, 109.7], [-226.2, 131.6], [-206.7, 142.8], [-187.1, 149.9], [-167.5, 153.1], [-147.9, 154.6], [-128.3, 153.5], [-108.7, 150.6], [-89.2, 145.4], [-69.6, 137.7], [-50.0, 126.1], [-30.4, 107.4]],
+        hw: (y) => profileHW(SHAPES.pumpkinjar.prof, y),
+        openY: -285.0, openHW: 75.4, rimHW: 82.9, topY: -380.0, fullY: -255.0, maxHW: 154.6, floor: -30.4, closed: true,
+        genGlass: true, image: { src: 'themes/jar-pumpkinjar.webp', x: -184.6, y: -380.0, w: 369.1, h: 380.0 },
+      },
+      sakurabottle: { // ขวดซากุระ (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
+        prof: [[-247.0, 56.4], [-230.0, 68.3], [-213.1, 61.3], [-196.1, 61.3], [-179.2, 60.2], [-162.2, 58.1], [-145.3, 55.8], [-128.3, 52.8], [-111.4, 49.8], [-94.4, 46.4], [-77.5, 43.3], [-60.5, 40.5], [-43.6, 39.4], [-26.6, 50.3]],
+        hw: (y) => profileHW(SHAPES.sakurabottle.prof, y),
+        openY: -247.0, openHW: 56.4, rimHW: 62.0, topY: -380.0, fullY: -217.0, maxHW: 68.3, floor: -26.6, closed: true,
+        genGlass: true, image: { src: 'themes/jar-sakurabottle.webp', x: -97.5, y: -380.0, w: 194.9, h: 380.0 },
+      },
+      tuktuk: { // ตุ๊กตุ๊กใส (ภาพ AI) — ผนังวัดจากภาพอัตโนมัติ
+        prof: [[-266.0, 130.3], [-254.3, 131.9], [-242.6, 133.8], [-230.9, 149.8], [-219.2, 136.3], [-207.5, 137.6], [-195.8, 138.8], [-184.2, 140.1], [-172.5, 146.6], [-160.8, 147.5], [-149.1, 146.5], [-137.4, 139.6], [-125.7, 140.0], [-114.0, 139.6]],
+        hw: (y) => profileHW(SHAPES.tuktuk.prof, y),
+        openY: -266.0, openHW: 130.3, rimHW: 143.3, topY: -380.0, fullY: -236.0, maxHW: 149.8, floor: -114.0, closed: true,
+        genGlass: true, image: { src: 'themes/jar-tuktuk.webp', x: -181.7, y: -380.0, w: 363.4, h: 380.0 },
       },
       jstar: { // โหลดาว (ภาพ 3D) — ผนังวัดจากภาพ
         prof: [[-319.4,51.9],[-267.9,66.2],[-250.1,172.9],[-218.1,180.0],[-182.5,119.5],[-154.0,112.4],[-100.7,130.2],[-65.1,151.5],[-26.0,123.1]],
@@ -498,7 +601,7 @@
         ctx.beginPath(); ctx.ellipse(0, -2, SH.maxHW * 0.9, 12, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(90,70,140,.25)'; ctx.fill();
         if (SH.solid) { if (shapeImg.ready()) ctx.drawImage(shapeImg.source, SH.image.x, SH.image.y, SH.image.w, SH.image.h); return; } // รถทึบ: วาดเต็มเป็นชั้นหลัง
         if (shapeBack) { if (shapeBack.ready()) ctx.drawImage(shapeBack.source, SH.image.x, SH.image.y, SH.image.w, SH.image.h); return; } // ชั้นหลัง (บ้าน/ฐาน)
-        if (shapeImg.ready()) { ctx.save(); ctx.globalAlpha = 0.35; ctx.drawImage(shapeImg.source, SH.image.x, SH.image.y, SH.image.w, SH.image.h); ctx.restore(); } // ผนังหลัง
+        if (shapeImg.ready()) { ctx.save(); ctx.globalAlpha = SH.genGlass ? 1 : 0.35; ctx.drawImage(shapeImg.source, SH.image.x, SH.image.y, SH.image.w, SH.image.h); ctx.restore(); } // ผนังหลัง (รูป Gen: เต็มทั้งรูป ของขวัญวาดทับ)
         return;
       }
       if (SH.solid) return drawCar();
@@ -526,7 +629,8 @@
             const wx = SH.image.x + x * kx; if (Math.abs(wx) > half) continue;
             const i = (y * w + x) * 4; if (a[i + 3] < 8) continue;
             const r = a[i], gg = a[i + 1], b = a[i + 2], mx = Math.max(r, gg, b), mn = Math.min(r, gg, b);
-            if (mx > 195 && (mx - mn) / mx < 0.16) a[i + 3] = Math.round(a[i + 3] * 0.4);
+            if (SH.genGlass) a[i + 3] = (mx > 240 && (mx - mn) / mx < 0.08) ? Math.round(a[i + 3] * 0.35) : 0; // รูป Gen: ช่องใส่ของโปร่งทั้งหมด (เหลือแค่ประกายแสง) — ของขวัญสีสดเต็ม ๆ
+            else if (mx > 195 && (mx - mn) / mx < 0.16) a[i + 3] = Math.min(Math.round(a[i + 3] * 0.4), 45); // ฝ้าขาวในกระจก → ใส
           }
         }
         g.putImageData(d, 0, 0); glassCanvas = c;
@@ -711,7 +815,7 @@
       if (SH.solid && !dropFromTop && !g.o) { b.x = (Math.random() - .5) * 180; b.y = SH.topY - 20 - Math.random() * 200; b.px = b.x; b.py = b.y; }
       if (SH.mouth && dropFromTop && !out) { b.eat = true; b.x = SH.mouth.x + (Math.random() - .5) * 60; b.y = SH.topY - 50 - Math.random() * 70; b.px = b.x; b.py = b.y - 2; } // หมู: ตกลงปากก่อน
       bodies.push(b);
-      if (dropFromTop) fx.sparkle(b.x, b.y, 5, b.d >= 1000 ? '#ffe08a' : '#fff6e8');
+      if (dropFromTop && !SHOT) fx.sparkle(b.x, b.y, 5, b.d >= 1000 ? '#ffe08a' : '#fff6e8');
       if (dropFromTop && SH.music && fx.notes) fx.notes(b.x, SH.topY + 20, b.d >= 100 ? 5 : 2); // ธีมนักร้อง: โน้ตดนตรีลอย
       if (dropFromTop && SH.dome && SWIRL) swirlUntil = Math.max(swirlUntil, performance.now() + (b.d >= 1000 ? 4200 : b.d >= 100 ? 3200 : 2400)); // ลูกแก้ว: เขย่าเบา ๆ
       const alive = bodies.filter((k) => !k.dying);
@@ -823,7 +927,7 @@
         const vout = b.y - b.py;
         if (b.vin > 4 && vout < b.vin * 0.35 && b.age > 3) {
           (b.sq ||= new Juice.Spring(260, 13)).kick(-Math.min(b.vin, 14) * 0.9);
-          if (b.vin > 7) fx.dust(b.x, b.y + b.r * 0.8, 3);
+          if (b.vin > 9 && b.age > 30 && Math.random() < 0.35) fx.dust(b.x, b.y + b.r * 0.8, 2); // ฝุ่นเฉพาะตอนตกกระแทกจริง (ไม่ฟุ้งตอนกองขยับ)
           if (b.d >= 1000) jarWobble.kick(Math.min(b.vin, 14) * 0.012 * (Math.random() < 0.5 ? -1 : 1));
         }
         if (b.sq) b.sq.step(1 / 60);
@@ -855,7 +959,7 @@
       // ชิ้นในโหลที่ไม่ได้กำลังตก (อายุ > 2 วิ) กองสูงถึงไหล่โหล = เต็ม
       // โดมอวกาศ (ลอยหมุน): ดูจากพื้นที่ที่ของขวัญใช้จริงในโดม — ชิ้นที่ลอยผ่านด้านบนไม่นับว่าเต็ม
       const full = SH.space
-        ? bodies.reduce((a, b) => a + (!b.out && !b.dying ? Math.PI * b.r * b.r : 0), 0) > Math.PI * SH.dome.r * SH.dome.r * 0.5
+        ? bodies.reduce((a, b) => a + (!b.out && !b.dying ? Math.PI * b.r * b.r : 0), 0) > Math.PI * SH.dome.r * SH.dome.r * 0.4 // ไม่อัดแน่นจนเด้งกระจาย
         : bodies.some((b) => !b.out && !b.dying && b.age > 120 && b.y - b.r < SH.fullY);
       spilling = full && FULL_MODE === 'spill';
       if (FULL_MODE === 'spill') {
@@ -894,7 +998,9 @@
     function drawBody(b) {
       if (b.life > 0.5) Juice.aura(ctx, b.x, b.y, b.r, b.d, nowT);
       const q = b.sq ? Math.max(-0.35, Math.min(0.35, b.sq.x)) : 0;
-      ctx.save(); ctx.globalAlpha = b.life; ctx.translate(b.x, b.y + b.r * -q * 0.5); ctx.scale(1 - q, 1 + q);
+      // ลูกแก้ว/โดม: ลอยขึ้นลงเบา ๆ ไม่พร้อมกัน (ภาพอย่างเดียว ไม่กระทบฟิสิกส์)
+      const fl = SH.dome && !b.out ? Math.sin(nowT * (0.7 + (b.r % 7) * 0.05) + b.x * 0.07 + b.r) * Math.min(7, 2 + b.r * 0.12) : 0;
+      ctx.save(); ctx.globalAlpha = b.life; ctx.translate(b.x, b.y + fl + b.r * -q * 0.5); ctx.scale(1 - q, 1 + q);
       ctx.rotate(b.rot + (WAVES && SH.water != null && !b.out && b.y > SH.water ? Math.sin(nowT * 1.4 + b.x * 0.05) * 0.14 : 0)); // ใต้น้ำ: เอียงโยกไปมา
       const st = Juice.sticker ? Juice.sticker(b.img, b.r * 2.2 * S() * DPR) : null; // สติกเกอร์คมชัด ขอบขาว + เงานุ่ม
       if (st) { const s = b.r * 2.2 * Juice.STICKER_PAD; ctx.drawImage(st, -s / 2, -s / 2, s, s); }
@@ -1016,7 +1122,7 @@
     requestAnimationFrame(frame);
 
     // ---- ตัววัดประสิทธิภาพ (?debug=1) + ทดสอบของจำนวนมาก (?n=300) — ใช้เทียบกับ lab/giftjar-pixi.html ----
-    if (P('debug', '0') === '1') {
+    if (P('debug', '0') === '1') { window.__bodies = bodies;
       const el = document.createElement('div');
       el.style.cssText = 'position:fixed;left:8px;top:8px;font:13px/1.4 monospace;color:#fff;background:rgba(20,10,30,.7);padding:6px 10px;border-radius:8px;white-space:pre;z-index:99';
       document.body.appendChild(el);
@@ -1033,7 +1139,7 @@ FPS ${frames}  แย่สุด ${worst.toFixed(1)} ms
     // ---- เดโม (เปิดไฟล์ตรง ๆ / ?demo=1) ----
     if (!Overlay.connected && !STRESS) {
       VJLCollect.demoBurst(onGift);
-      setInterval(() => onGift(VJLCollect.demoGift()), 1300); // ของขวัญจริง (รูปจาก TikTok)
+      if (P('shot', '0') !== '1') setInterval(() => onGift(VJLCollect.demoGift()), 1300); // ของขวัญจริง (รูปจาก TikTok)
     }
   })();
   </script>

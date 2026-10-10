@@ -73,7 +73,8 @@ window.Juice = (function () {
   }
 
   // ระดับออร่าตามมูลค่า (เหรียญต่อชิ้น): ทอง >= 1000, ม่วง >= 100, ฟ้า >= 20
-  function auraColor(d) { return d >= 1000 ? '255,205,90' : d >= 100 ? '200,150,255' : d >= 20 ? '140,200,255' : null; }
+  // ออร่าเฉพาะของแพง (1,000+) — ของถูก/กลางไม่มีหมอกแสง (กองแน่น ๆ แล้วแสงซ้อนจนของขวัญดูขาวซีด)
+  function auraColor(d) { return d >= 1000 ? '255,205,90' : null; }
   function aura(ctx, x, y, r, d, t) {
     const c = auraColor(d); if (!c) return;
     const pulse = 0.75 + 0.25 * Math.sin(t * 4 + x * 0.05);
@@ -142,10 +143,10 @@ window.Juice = (function () {
     const lg = sil.getContext('2d'); lg.drawImage(shape, 0, 0); lg.globalCompositeOperation = 'source-in'; lg.fillStyle = '#ffffff'; lg.fillRect(0, 0, size, size);
     c = document.createElement('canvas'); c.width = c.height = full;
     const g = c.getContext('2d'), rim = Math.max(1.2, size * 0.025); // ขอบขาวบางลง สีของขวัญเด่น
-    g.save(); g.shadowColor = 'rgba(60,40,100,.28)'; g.shadowBlur = size * 0.04; g.shadowOffsetY = size * 0.03;
-    for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6; g.drawImage(sil, off + Math.cos(a) * rim, off + Math.sin(a) * rim); } // ขอบขาว + เงา
-    g.restore();
-    g.drawImage(shape, off, off);
+    // ไม่มีขอบขาว (สีของขวัญเต็ม ๆ) — เงานุ่มบาง ๆ ใต้ชิ้นพอให้แยกชิ้นตอนกองซ้อน
+    void sil; void rim;
+    g.save(); g.shadowColor = 'rgba(40,25,80,.32)'; g.shadowBlur = size * 0.05; g.shadowOffsetY = size * 0.025;
+    g.drawImage(shape, off, off); g.restore();
     if (stickerCache.size > 400) stickerCache.delete(stickerCache.keys().next().value);
     stickerCache.set(key, c);
     return c;

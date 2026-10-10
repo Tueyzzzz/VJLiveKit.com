@@ -626,6 +626,24 @@
       for (let k = 0; k < FER.n; k++) { if (used[k] + Math.PI * r * r > cap) continue; const y = ferPin(k, th).y; if (y > by) { by = y; best = k; } }
       return best;
     }
+    // กระเช้าเต็มทุกอัน → กระเช้าล่างสุด (ชานชาลา): ชิ้นถูกสุด-เก่าสุดลงจากกระเช้าไปกองพื้น (ไม่หาย) ให้ของใหม่ขึ้นแทน → คนดูเห็นของขวัญใหม่ทุกชิ้น
+    function ferBoard(r) {
+      const free = ferPick(r);
+      if (free >= 0) return free;
+      const th = ferAngle(); let k = 0, by = -Infinity;
+      for (let i = 0; i < FER.n; i++) { const y = ferPin(i, th).y; if (y > by) { by = y; k = i; } }
+      const cap = FER.glass.hw * 2 * (FER.glass.floor - FER.glass.top) * 0.68;
+      for (let tries = 0; tries < 8; tries++) {
+        const used = bodies.reduce((a, b) => a + (b.gi === k && !b.dying ? Math.PI * b.r * b.r : 0), 0);
+        if (used + Math.PI * r * r <= cap) break;
+        const v = ((window.VJLCollect && VJLCollect.victims) ? VJLCollect.victims(bodies, 1, (b) => b.gi === k) : bodies.filter((b) => b.gi === k && !b.dying).slice(0, 1))[0];
+        if (!v) break;
+        const p = ferPin(k, th); // ลงจากกระเช้า → ตกลงกองข้างฐาน
+        v.gi = -1; v.out = true; v.src = { ...v.src, o: 1 }; v.x += p.x; v.y += p.y;
+        const side = Math.random() < 0.5 ? -1 : 1; v.px = v.x - side * 7; v.py = v.y + 4; // กระโดดลงไปข้าง ๆ ฐาน (ไม่กองหน้ากระเช้าล่าง)
+      }
+      return k;
+    }
     function drawFerris() {
       const f = FER, th = ferAngle(), kc = f.kc, ks = f.ks;
       ctx.beginPath(); ctx.ellipse(0, -2, 160, 13, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(90,70,140,.25)'; ctx.fill();
@@ -865,7 +883,7 @@
     }
     const jarUsed = () => bodies.reduce((a, b) => a + (!b.out && !b.dying && !b.eat ? Math.PI * b.r * b.r : 0), 0);
     function addBody(g, dropFromTop = true) {
-      const gi = FER && g.o !== 1 ? ferPick(radiusFor(g.d) * FER.gr) : -1; // ชิงช้าสวรรค์: นั่งกระเช้าที่ยังว่าง
+      const gi = FER && g.o !== 1 ? ferBoard(radiusFor(g.d) * FER.gr) : -1; // ชิงช้าสวรรค์: ของใหม่ได้ขึ้นกระเช้าเสมอ (เต็ม → ชิ้นถูกสุดลงไปกองพื้น)
       const r = radiusFor(g.d) * (gi >= 0 ? FER.gr : 1);
       // โหลเต็ม (โหมด spill) → ชิ้นใหม่ทะลักออกปากโหลไปกองข้าง ๆ
       // เช็กที่ว่างก่อนใส่ (พื้นที่ของขวัญรวม ≤ 60% ของช่องในโหล) → โหลเล็ก/ปิดฝาไม่อัดแน่นจนของเด้งเหมือนจะระเบิด
@@ -1033,7 +1051,7 @@
     let outCheck = 0;
     function trimOutside() {
       if (++outCheck % 30) return;
-      const limitY = -(H / S()) * OUT_MAX;
+      const limitY = -(H / S()) * (FER ? Math.min(OUT_MAX, 0.22) : OUT_MAX); // ชิงช้า: กองพื้นต่ำ ไม่บังวงล้อ
       const over = bodies.filter((b) => b.out && !b.dying && b.age > 180 && b.y - b.r < limitY).length;
       if (over) ((window.VJLCollect && VJLCollect.victims) ? VJLCollect.victims(bodies, Math.min(6, over), (b) => b.out) : bodies.filter((b) => b.out && !b.dying).slice(0, Math.min(6, over))).forEach((b) => { b.dying = true; });
     }
@@ -1114,8 +1132,9 @@
       ctx.translate(o.x, o.y); ctx.scale(s, s);
       ctx.rotate(jarWobble.x); ctx.scale(1, Juice.breathe(nowT, 0.005)); // โหลสั่น + หายใจ (หมุนรอบก้นโหล)
       if (SH.mouth) { const q = Math.max(-0.09, Math.min(0.09, gulp.x * 0.02)); ctx.scale(1 + q, 1 - q); } // หมูกลืน: ตัวยุบ-ยืด
+      if (FER) for (const b of bodies) if (b.gi < 0) drawBody(b); // ชิงช้า: กองพื้นอยู่หลังชิงช้า → วงล้อ/กระเช้าเห็นชัดเสมอ
       drawJarBack();
-      for (const b of bodies) if (!b.eat && !(b.gi >= 0)) drawBody(b); // ชิงช้า: ของในกระเช้าวาดพร้อมกระเช้า
+      if (!FER) for (const b of bodies) if (!b.eat) drawBody(b);
       drawJarFront();
       for (const b of bodies) if (b.eat) drawBody(b); // ของที่กำลังตกเข้าปากอยู่หน้าหน้าหมู
       fx.draw(ctx);

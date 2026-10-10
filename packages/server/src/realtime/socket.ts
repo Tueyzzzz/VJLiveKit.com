@@ -50,7 +50,7 @@ async function resolveViewer(token: string | undefined, username: string | undef
  * - join `room:<username>` (อีเวนต์ไลฟ์) + `owner:<userId>:<username>` (Actions ของเจ้าของ token)
  */
 export function setupRealtime(httpServer: HttpServer): RoomHub {
-  const io = new Server(httpServer, { cors: { origin: '*' } });
+  const io = new Server(httpServer, { cors: { origin: '*' }, maxHttpBufferSize: 64_000 }); // ข้อความจาก client เล็กมาก → จำกัดขนาด กันยิงก้อนใหญ่
   const hub = new RoomHub(io, rulesProvider, config.demoMode);
 
   // เรทลิมิตการเชื่อมต่อต่อ IP: กันสคริปต์เปิด socket รัว ๆ (แต่ละครั้งต้องเช็ก token + DB)
@@ -60,12 +60,24 @@ export function setupRealtime(httpServer: HttpServer): RoomHub {
   const ipOf = (s: { handshake: { address: string; headers: Record<string, unknown> } }) =>
     String(s.handshake.headers['x-forwarded-for'] ?? s.handshake.address).split(',')[0]!.trim();
   setInterval(() => { const cut = Date.now() - 60_000; for (const [ip, ts] of recent) { const keep = ts.filter((t) => t > cut); if (keep.length) recent.set(ip, keep); else recent.delete(ip); } }, 60_000).unref();
+  // โดนปฏิเสธซ้ำ ๆ (สคริปต์ยิง) → แบน IP ชั่วคราว 10 นาที ตัดทิ้งทันทีโดยไม่ต้องนับ/เช็กอะไรเพิ่ม
+  const BAN_AFTER = 20, BAN_MS = 10 * 60_000;
+  const strikes = new Map<string, number[]>(), banned = new Map<string, number>();
+  setInterval(() => { const now = Date.now(); for (const [ip, until] of banned) if (until < now) banned.delete(ip); for (const [ip, ts] of strikes) { const keep = ts.filter((t) => t > now - 60_000); if (keep.length) strikes.set(ip, keep); else strikes.delete(ip); } }, 60_000).unref();
   io.use((socket, next) => {
     const ip = ipOf(socket), now = Date.now();
+    if ((banned.get(ip) ?? 0) > now) return next(new Error('rate limited'));
     const ts = (recent.get(ip) ?? []).filter((t) => t > now - 60_000);
-    if (ts.length >= MAX_PER_MIN || (open.get(ip) ?? 0) >= MAX_OPEN) return next(new Error('rate limited'));
+    if (ts.length >= MAX_PER_MIN || (open.get(ip) ?? 0) >= MAX_OPEN) {
+      const st = (strikes.get(ip) ?? []).filter((t) => t > now - 60_000); st.push(now); strikes.set(ip, st);
+      if (st.length >= BAN_AFTER) { banned.set(ip, now + BAN_MS); strikes.delete(ip); console.warn(`[socket] แบน IP ${ip} 10 นาที (เชื่อมต่อถี่ผิดปกติ)`); }
+      return next(new Error('rate limited'));
+    }
     ts.push(now); recent.set(ip, ts); open.set(ip, (open.get(ip) ?? 0) + 1);
     socket.once('disconnect', () => { const n = (open.get(ip) ?? 1) - 1; if (n > 0) open.set(ip, n); else open.delete(ip); });
+    // กันยิงข้อความรัว: ฝั่งวิดเจ็ต/แดชบอร์ดส่งหาเซิร์ฟเวอร์แค่ไม่กี่ครั้ง เกิน 50 ครั้งใน 10 วิ = ผิดปกติ → ตัด
+    let msgs = 0, win = now;
+    socket.onAny(() => { const t = Date.now(); if (t - win > 10_000) { win = t; msgs = 0; } if (++msgs > 50) socket.disconnect(true); });
     next();
   });
 

@@ -77,34 +77,44 @@ export default function BeatPadPage() {
       <PageHeader title="🎛️ Beat Pad" description={t('กดปุ่มเล่นเสียงระหว่างไลฟ์ — เปิดหน้านี้บนมือถือใช้เป็นรีโมทได้ เสียงไปดังที่คอมที่ไลฟ์')} />
       {note && <div className="mb-4"><Alert tone={note.tone === 'error' ? undefined : 'info'}>{note.text}</Alert></div>}
 
-      <div className="rounded-3xl border border-white/10 bg-[#17121f] p-3 shadow-xl sm:p-5">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <Select className="!w-auto !border-white/10 !bg-white/5 !text-white" value={board.cols} onChange={(e) => void save({ ...board, cols: Number(e.target.value) })} aria-label={t('จำนวนคอลัมน์')}>
+      {/* ตัวเครื่องสไตล์ของเล่นสีชมพู: หูแมว · หัวใจขอบทอง · ปุ่มหมุนทอง · ช่องปุ่มเว้าลง */}
+      <div className="relative mx-auto mt-6 max-w-3xl sm:mt-8">
+        <span aria-hidden className="absolute -top-5 left-[12%] h-12 w-14 rotate-[-18deg] rounded-t-[60%] border-4 border-[#ffd3e6] bg-gradient-to-b from-[#d9c8ff] to-[#f3c6e4] sm:-top-7 sm:h-16 sm:w-20" />
+        <span aria-hidden className="absolute -top-5 right-[12%] h-12 w-14 rotate-[18deg] rounded-t-[60%] border-4 border-[#ffd3e6] bg-gradient-to-b from-[#d9c8ff] to-[#f3c6e4] sm:-top-7 sm:h-16 sm:w-20" />
+      <div className="relative rounded-[2rem] border-[5px] border-white bg-gradient-to-b from-[#ffe4f0] via-[#ffd6e8] to-[#ffc4dd] p-3 shadow-[0_18px_40px_-12px_rgba(236,72,153,.45),inset_0_2px_0_rgba(255,255,255,.9),inset_0_-6px_0_rgba(236,72,153,.15)] sm:rounded-[2.6rem] sm:p-6">
+        <Knob className="left-2.5 top-2.5 sm:left-4 sm:top-4" /><Knob className="right-2.5 top-2.5 sm:right-4 sm:top-4" />
+        <Knob className="bottom-2.5 left-2.5 sm:bottom-4 sm:left-4" /><Knob className="bottom-2.5 right-2.5 sm:bottom-4 sm:right-4" />
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 px-6 sm:px-8">
+          <Select className="!w-auto !rounded-full !border-[#ffb6d5] !bg-white/80 !text-[#b0407a]" value={board.cols} onChange={(e) => void save({ ...board, cols: Number(e.target.value) })} aria-label={t('จำนวนคอลัมน์')}>
             {/* ตัวเลือกในรายการต้องเป็นตัวเข้มบนพื้นขาว (ปุ่มเป็นตัวขาวบนพื้นมืด — เดิมรายการเป็นขาวบนขาว มองไม่เห็น) */}
             {[2, 3, 4, 5].map((c) => <option key={c} value={c} style={{ color: '#3d2f45', background: '#fff' }}>{t('{n} คอลัมน์', { n: c })}</option>)}
           </Select>
-          {/* หัวแผงแบบ VJLiveKit: หัวใจในวงกลมทอง + ชื่อไล่สีชมพู-ม่วง */}
-          <h2 className="flex items-center gap-2 font-display text-xl font-bold sm:text-2xl">
-            <svg width="28" height="28" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="33" r="27" fill="#ffcf5c"/><path d="M32 50c-8-5.6-15-11-15-18.6A8 8 0 0 1 32 27a8 8 0 0 1 15 4.4C47 39 40 44.4 32 50z" fill="#ff6aa8"/></svg>
-            <span className="bg-gradient-to-r from-[#ff8ac2] via-[#e0b0ff] to-[#9ad9ff] bg-clip-text text-transparent">VJ Beat Pad</span>
+          {/* หัวแผง: หัวใจเงาขอบทอง + ชื่อ */}
+          <h2 className="order-first flex w-full items-center justify-center gap-2 font-display text-xl font-bold sm:order-none sm:w-auto sm:text-2xl">
+            <svg width="40" height="34" viewBox="0 0 64 54" aria-hidden="true">
+              <defs><linearGradient id="bph" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#ffd1e6" /><stop offset="1" stopColor="#ff8cc0" /></linearGradient></defs>
+              <path d="M32 51C17 41 4 31 4 17.5A13.5 13.5 0 0 1 32 10a13.5 13.5 0 0 1 28 7.5C60 31 47 41 32 51z" fill="url(#bph)" stroke="#e9b44c" strokeWidth="4" />
+              <ellipse cx="20" cy="17" rx="6" ry="3.5" fill="#fff" opacity=".75" transform="rotate(-25 20 17)" />
+            </svg>
+            <span className="bg-gradient-to-r from-[#ff5fa2] via-[#c77dff] to-[#7aa7ff] bg-clip-text text-transparent">VJ Beat Pad</span>
           </h2>
-          <label className="flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2 text-xs text-white/80">
+          <label className="flex items-center gap-2 rounded-full border border-[#ffb6d5] bg-white/80 px-3 py-2 text-xs text-[#b0407a]">
             <input type="checkbox" className="accent-pink" checked={here} onChange={(e) => { setHere(e.target.checked); try { localStorage.setItem('vjl-pad-here', e.target.checked ? '1' : '0'); } catch { /* ignore */ } }} />
             {t('เล่นที่เครื่องนี้ด้วย')}
           </label>
         </div>
 
-        <div className="grid gap-2.5 sm:gap-3" style={{ gridTemplateColumns: `repeat(${Math.min(board.cols, narrow ? 3 : 4)}, minmax(0,1fr))` }}>
+        <div className="grid gap-2.5 rounded-[1.4rem] bg-[#fbe7f1] p-2.5 shadow-[inset_0_3px_8px_rgba(214,92,150,.25)] sm:gap-4 sm:rounded-[1.8rem] sm:p-4" style={{ gridTemplateColumns: `repeat(${Math.min(board.cols, narrow ? 3 : 4)}, minmax(0,1fr))` }}>
           {Array.from({ length: slots }, (_, i) => {
             const p = board.pads[i], locked = i >= limit;
             if (locked) return (
-              <Link key={i} href="/dashboard/billing/" className="grid aspect-square place-items-center rounded-2xl border border-white/10 bg-black/40 p-2 text-center text-[11px] font-semibold text-white/60 sm:text-sm">
+              <Link key={i} href="/dashboard/billing/" className="grid aspect-square place-items-center rounded-2xl border-2 border-white bg-[#f3d9e6] p-2 text-center text-[11px] font-semibold text-[#b07a95] sm:text-sm">
                 <span><Lock className="mx-auto mb-1 size-5" />{t('อัปเกรดเป็น Pro เพื่อปลดล็อก')}</span>
               </Link>
             );
             if (!p) return (
               <button key={i} onClick={() => { void save({ ...board, pads: [...board.pads, { label: '', emoji: '🎵', color: COLORS[i % COLORS.length]!, sound: 'pop', volume: 1 }] }); setEdit(board.pads.length); }}
-                className="grid aspect-square place-items-center rounded-2xl border border-dashed border-white/15 bg-white/5 text-white/50 transition hover:bg-white/10">
+                className="grid aspect-square place-items-center rounded-2xl border-2 border-dashed border-[#f5a9cb] bg-white/60 text-[#d0679a] transition hover:bg-white">
                 <span className="text-center"><Plus className="mx-auto size-6" /><span className="text-xs sm:text-sm">{t('เพิ่ม Pad')}</span></span>
               </button>
             );
@@ -112,24 +122,30 @@ export default function BeatPadPage() {
             return (
               <div key={i} className="relative">
                 <button onPointerDown={(e) => { e.preventDefault(); void press(i); }}
-                  className={`grid aspect-square w-full select-none place-items-center rounded-2xl p-2 text-center text-white shadow-[0_6px_0_rgba(0,0,0,.35)] transition active:translate-y-1 active:shadow-[0_2px_0_rgba(0,0,0,.35)] ${hit === i ? 'brightness-125' : ''} ${ready ? '' : 'opacity-50'}`}
-                  style={{ background: `linear-gradient(160deg, ${p.color}, color-mix(in srgb, ${p.color} 70%, #000))` }}>
-                  <span>
-                    <span className="block text-2xl sm:text-4xl">{p.emoji || '🎵'}</span>
+                  className={`relative grid aspect-square w-full select-none place-items-center overflow-hidden rounded-2xl border-[3px] p-2 text-center text-[#5b3150] transition active:translate-y-0.5 active:scale-[.97] sm:rounded-3xl ${hit === i ? 'brightness-110 saturate-150' : ''} ${ready ? '' : 'opacity-50'}`}
+                  style={{
+                    background: `radial-gradient(120% 90% at 50% 15%, color-mix(in srgb, ${p.color} 18%, #fff), color-mix(in srgb, ${p.color} 48%, #fff) 70%)`,
+                    borderColor: `color-mix(in srgb, ${p.color} 75%, #fff)`,
+                    boxShadow: `0 0 ${hit === i ? 26 : 12}px color-mix(in srgb, ${p.color} ${hit === i ? 90 : 55}%, transparent), inset 0 -5px 10px color-mix(in srgb, ${p.color} 30%, transparent), 0 4px 0 color-mix(in srgb, ${p.color} 35%, #f2b8d2)`,
+                  }}>
+                  <span aria-hidden className="pointer-events-none absolute inset-x-[10%] top-[6%] h-[32%] rounded-full bg-gradient-to-b from-white/85 to-white/0" />
+                  <span className="relative">
+                    <PadIcon pad={p} />
                     <span className="mt-1 block truncate text-xs font-bold sm:text-sm">{p.label || (p.sound ? t(SFX.find(([id]) => id === p.sound)?.[1] ?? p.sound) : t('ไฟล์ของฉัน'))}</span>
-                    {(p.key || i < 9) && <span className="mt-0.5 block text-[10px] text-white/70">{p.key ? p.key.toUpperCase() : i + 1}</span>}
+                    {(p.key || i < 9) && <span className="mt-0.5 block text-[10px] text-[#5b3150]/55">{p.key ? p.key.toUpperCase() : i + 1}</span>}
                   </span>
                 </button>
-                <button onClick={() => setEdit(i)} aria-label={t('แก้ไข')} className="absolute right-1 top-1 grid size-6 place-items-center rounded-full bg-black/25 text-white/90 hover:bg-black/50 sm:right-1.5 sm:top-1.5 sm:size-8"><Pencil className="size-3 sm:size-3.5" /></button>
+                <button onClick={() => setEdit(i)} aria-label={t('แก้ไข')} className="absolute right-1 top-1 grid size-6 place-items-center rounded-full border border-white bg-white/70 text-[#c2558d] shadow-sm hover:bg-white sm:right-1.5 sm:top-1.5 sm:size-8"><Pencil className="size-3 sm:size-3.5" /></button>
               </div>
             );
           })}
         </div>
         <div className="mt-4 flex justify-center">
           <button onClick={async () => { if (!confirm(t('เปลี่ยนเป็นชุดเสียงมีม 12 ปุ่ม? (ปุ่มที่ตั้งไว้จะถูกแทนที่)'))) return; const r = await api<{ board: Board }>('/api/beatpad/default'); void save(r.board); }}
-            className="rounded-full bg-white/10 px-4 py-1.5 text-xs text-white/80 hover:bg-white/20">🎭 {t('ใช้ชุดเสียงมีม (ค่าเริ่มต้น)')}</button>
+            className="rounded-full border-2 border-white bg-gradient-to-b from-[#ffd0e4] to-[#ff9cc8] px-4 py-1.5 text-xs font-semibold text-white shadow-[0_3px_0_#e77aaa] hover:brightness-105">🎭 {t('ใช้ชุดเสียงมีม (ค่าเริ่มต้น)')}</button>
         </div>
-        <p className="mt-3 text-center text-xs text-white/50">{t('กด 1–9 บนคีย์บอร์ดได้ · เสียงดังที่คอมที่เปิดเว็บนี้ไว้ (เปิด “เสียงจากกฎ” ที่เมนูข้าง) หรือที่ลิงก์ FX')}</p>
+        <p className="mt-3 px-6 text-center text-xs text-[#b0407a]/70">{t('กด 1–9 บนคีย์บอร์ดได้ · เสียงดังที่คอมที่เปิดเว็บนี้ไว้ (เปิด “เสียงจากกฎ” ที่เมนูข้าง) หรือที่ลิงก์ FX')}</p>
+      </div>
       </div>
 
       {edit !== null && board.pads[edit] && (
@@ -139,6 +155,22 @@ export default function BeatPadPage() {
       )}
     </div>
   );
+}
+
+/** รูปประจำเสียงมีม (public/beatpad/<sound>.webp) — ใช้เมื่อยังเป็นอีโมจิเดิมของเสียงนั้น · ไม่มีรูป → อีโมจิ */
+const SOUND_EMOJI: Record<string, string> = { boom: '💥', airhorn: '📯', sadtrombone: '🎺', crickets: '🦗', bonk: '🔨', correct: '✅', wrong: '❌', suspense: '😱', drumroll: '🥁', tada: '🎉', kaching: '💰', scratch: '💿' };
+function PadIcon({ pad }: { pad: Pad }) {
+  const [bad, setBad] = useState(false);
+  const def = pad.sound ? SOUND_EMOJI[pad.sound] : undefined;
+  if (def && !bad && (!pad.emoji || pad.emoji === def)) {
+    return <img src={`/beatpad/${pad.sound}.webp`} alt="" draggable={false} onError={() => setBad(true)} className="mx-auto block size-12 object-contain drop-shadow-[0_3px_4px_rgba(176,64,122,.3)] sm:size-20" />;
+  }
+  return <span className="block text-2xl sm:text-4xl">{pad.emoji || '🎵'}</span>;
+}
+
+/** ปุ่มหมุนตกแต่งขอบทอง (มุมเครื่อง) */
+function Knob({ className }: { className: string }) {
+  return <span aria-hidden className={`absolute size-5 rounded-full border-[3px] border-[#e9b44c] bg-gradient-to-b from-[#ffe1ee] to-[#ff9fc9] shadow-[inset_0_2px_0_rgba(255,255,255,.8),0_2px_3px_rgba(176,64,122,.35)] sm:size-7 ${className}`} />;
 }
 
 function PadEditor({ pad, uploads, onUploaded, onChange, onClose, onDelete }: {

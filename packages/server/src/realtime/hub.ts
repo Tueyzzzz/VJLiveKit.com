@@ -23,6 +23,8 @@ interface RoomEntry {
   dirty: boolean;
   saveTimer: NodeJS.Timeout | null;
   attempts: number;
+  /** ต่อไม่ติดติดกันกี่ครั้ง (ยังไม่ไลฟ์) → ยิ่งนานยิ่งเว้นช่วงลองใหม่ */
+  fails: number;
   connectedAt: number | null;
   lastError: string | null;
   lastErrorAt: number | null;
@@ -49,6 +51,7 @@ export class RoomHub {
   private readonly RULES_TTL = 30_000;
   private readonly IDLE_STOP_MS = 60_000;
   private readonly RETRY_MS = 30_000;
+  private readonly RETRY_MAX_MS = 120_000;
   private readonly SAVE_MS = 20_000;
 
   constructor(private io: Server, private rulesProvider?: RulesProvider, private demo = false) {
@@ -221,7 +224,7 @@ export class RoomHub {
 
   private create(key: string): RoomEntry {
     const room = new TikTokRoom(key);
-    const entry: RoomEntry = { room, viewers: 0, owners: new Map(), stopTimer: null, retryTimer: null, connecting: null, dirty: false, saveTimer: null, restoredFor: null, attempts: 0, connectedAt: null, lastError: null, lastErrorAt: null };
+    const entry: RoomEntry = { room, viewers: 0, owners: new Map(), stopTimer: null, retryTimer: null, connecting: null, dirty: false, saveTimer: null, restoredFor: null, attempts: 0, fails: 0, connectedAt: null, lastError: null, lastErrorAt: null };
     const ch = RoomHub.roomChannel(key);
     room.on('event', (e) => {
       entry.dirty = true;
@@ -266,7 +269,7 @@ export class RoomHub {
           await entry.room.disconnect().catch(() => {});
           throw new Error('ยังไม่ได้เริ่มไลฟ์ (ห้องเก่าที่จบแล้ว)');
         }
-        entry.connectedAt = Date.now(); entry.lastError = null;
+        entry.connectedAt = Date.now(); entry.lastError = null; entry.fails = 0;
         if (this.demo) return;
         connStats.bump('success');
         // ไลฟ์เดิม (เซิร์ฟเวอร์เพิ่งรีสตาร์ท/deploy) → โหลดสถิติ/อันดับที่บันทึกไว้กลับมา
@@ -283,7 +286,7 @@ export class RoomHub {
         entry.lastError = message.slice(0, 300); entry.lastErrorAt = Date.now(); entry.connectedAt = null;
         if (!this.demo) connStats.bump('failed');
         this.io.to(RoomHub.roomChannel(key)).emit('status', {
-          type: 'offline', message: `ยังเชื่อมต่อ @${key} ไม่ได้ (ยังไม่ได้ไลฟ์?) จะลองใหม่ใน ${this.RETRY_MS / 1000} วินาที`, detail: message,
+          type: 'offline', message: `ยังเชื่อมต่อ @${key} ไม่ได้ (ยังไม่ได้ไลฟ์?) ระบบจะลองต่อใหม่ให้เอง`, detail: message,
         });
         this.scheduleRetry(key, entry);
       })
@@ -292,10 +295,12 @@ export class RoomHub {
 
   private scheduleRetry(key: string, entry: RoomEntry): void {
     if (entry.retryTimer || this.rooms.get(key) !== entry) return;
+    // ยังไม่ไลฟ์: ลองใหม่ 30 วิ → 60 วิ → ทุก 2 นาที (สุ่มเหลื่อม ±15% ไม่ให้ทุกห้องยิง TikTok พร้อมกัน)
+    const n = ++entry.fails, delay = Math.min(this.RETRY_MAX_MS, this.RETRY_MS * 2 ** Math.min(n - 1, 3)) * (0.85 + Math.random() * 0.3);
     entry.retryTimer = setTimeout(() => {
       entry.retryTimer = null;
       if (this.rooms.get(key) === entry && entry.viewers > 0 && !entry.room.isConnected()) this.connect(key, entry);
-    }, this.RETRY_MS);
+    }, delay);
   }
 
   get(username: string): TikTokRoom | undefined { return this.rooms.get(normalize(username))?.room; }

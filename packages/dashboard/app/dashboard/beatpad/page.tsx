@@ -129,7 +129,7 @@ export default function BeatPadPage() {
                     boxShadow: `0 0 ${hit === i ? 26 : 12}px color-mix(in srgb, ${p.color} ${hit === i ? 90 : 55}%, transparent), inset 0 -5px 10px color-mix(in srgb, ${p.color} 30%, transparent), 0 4px 0 color-mix(in srgb, ${p.color} 35%, #f2b8d2)`,
                   }}>
                   <span aria-hidden className="pointer-events-none absolute inset-x-[10%] top-[6%] h-[32%] rounded-full bg-gradient-to-b from-white/85 to-white/0" />
-                  <span className="relative">
+                  <span className="relative block w-full">
                     <PadIcon pad={p} />
                     <span className="mt-1 block truncate text-xs font-bold sm:text-sm">{p.label || (p.sound ? t(SFX.find(([id]) => id === p.sound)?.[1] ?? p.sound) : t('ไฟล์ของฉัน'))}</span>
                     {(p.key || i < 9) && <span className="mt-0.5 block text-[10px] text-[#5b3150]/55">{p.key ? p.key.toUpperCase() : i + 1}</span>}
@@ -163,7 +163,7 @@ function PadIcon({ pad }: { pad: Pad }) {
   const [bad, setBad] = useState(false);
   const def = pad.sound ? SOUND_EMOJI[pad.sound] : undefined;
   if (def && !bad && (!pad.emoji || pad.emoji === def)) {
-    return <img src={`/beatpad/${pad.sound}.webp`} alt="" draggable={false} onError={() => setBad(true)} className="mx-auto block size-12 object-contain drop-shadow-[0_3px_4px_rgba(176,64,122,.3)] sm:size-20" />;
+    return <img src={`/beatpad/${pad.sound}.webp`} alt="" draggable={false} onError={() => setBad(true)} className="mx-auto block aspect-square w-[78%] object-contain drop-shadow-[0_3px_4px_rgba(176,64,122,.3)]" />;
   }
   return <span className="block text-2xl sm:text-4xl">{pad.emoji || '🎵'}</span>;
 }

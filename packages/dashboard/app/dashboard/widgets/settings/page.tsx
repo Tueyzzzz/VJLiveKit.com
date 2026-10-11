@@ -449,11 +449,14 @@ function WidgetSettings() {
       {!values ? <Spinner /> : (
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
           <div className="space-y-4">
-            {def.sections.map((s) => {
+            {/* ซ้าย: กล่องแรก (เลือกแบบ) · กล่องตั้งค่าที่เหลือย้ายไปอยู่ใต้ปุ่มบันทึกทางขวา (ผู้ใช้ขอ — เดิมเรียงยาวลงมาทางซ้าย) */}
+            {def.sections.map((s, si) => {
+              if (def.sections.length > 1 && si > 0) return null;
               const fields = s.fields.filter((f) => !f.when || f.when(values));
               if (!fields.length) return null;
               return (
-                <Card key={s.title}>
+                // คอมพิวเตอร์: กล่องเลือกแบบเลื่อนในกรอบ (สูงไม่เกินจอ) ไม่ทำให้หน้ายาว
+                <Card key={s.title} className={def.sections.length > 1 ? 'lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto' : ''}>
                   <h2 className="mb-3 text-sm font-semibold text-violet">{t(s.title)}</h2>
                   <div className="space-y-4">
                     {fields.map((f) => f.type === 'toggle' ? (
@@ -473,7 +476,7 @@ function WidgetSettings() {
           </div>
 
           {/* มือถือ: พรีวิว + ปุ่มบันทึกขึ้นก่อน แล้วค่อยเป็นช่องตั้งค่า (เดิมปุ่มบันทึกอยู่ล่างสุด ต้องเลื่อนยาว) */}
-          <div className="order-first space-y-4 lg:order-none lg:sticky lg:top-4 lg:self-start">
+          <div className="order-first space-y-4 lg:order-none">
             <Card className="p-3">
               <div className="mb-2 flex items-center justify-between gap-2 text-xs text-muted">
                 <span>{t('พรีวิว (ข้อมูลจำลอง)')}</span>
@@ -509,6 +512,28 @@ function WidgetSettings() {
                 </Button>
               )}
             </div>
+            {def.sections.length > 1 && def.sections.map((s, si) => {
+              if (si === 0) return null;
+              const fields = s.fields.filter((f) => !f.when || f.when(values));
+              if (!fields.length) return null;
+              return (
+                <Card key={s.title}>
+                  <h2 className="mb-3 text-sm font-semibold text-violet">{t(s.title)}</h2>
+                  <div className="space-y-4">
+                    {fields.map((f) => f.type === 'toggle' ? (
+                      <div key={f.key} className="flex items-center justify-between gap-3">
+                        <span className="text-sm font-medium text-ink">{t(f.label)}</span>
+                        <FieldInput f={f} value={values[f.key]} onChange={(v) => setValues({ ...values, [f.key]: v })} />
+                      </div>
+                    ) : (
+                      <Field key={f.key} label={t(f.label)} hint={f.hint ? t(f.hint) : f.hint}>
+                        <FieldInput f={f} value={values[f.key]} onChange={(v) => setValues({ ...values, [f.key]: v })} />
+                      </Field>
+                    ))}
+                  </div>
+                </Card>
+              );
+            })}
           </div>
         </div>
       )}

@@ -521,7 +521,16 @@
         bigs.push({ g, img: giftImg(g.u), born, color: PETALS[bigs.length % PETALS.length], jx: 0, jy: 0 });
         const sp = BIG_SPOTS[(bigs.length - 1) % BIG_SPOTS.length]; if (sp.stem && sp.stem.grow) feedStem(sp.stem, g, born, bigs[bigs.length - 1]);
       } else {
-        if (flowers.length >= slots.length) return dropToGround(g, born); // กิ่งเต็ม → ร่วงลงพื้น
+        if (flowers.length >= slots.length) {
+          // กิ่งเต็ม: ของที่แพงกว่าดอกที่ถูกที่สุดบนกิ่ง → ได้ขึ้นกิ่งแทน (ดอกถูกร่วงลงพื้น ไม่หาย) · ไม่งั้นของใหม่ร่วงลงพื้น
+          // เดิมของแพง (เช่น 99 เหรียญ) ร่วงไปกองพื้นปนของถูก คนส่งมองไม่เห็นของตัวเอง
+          let k = -1; for (let i = 0; i < flowers.length; i++) if (!flowers[i].dying && (k < 0 || (flowers[i].g.d || 0) < (flowers[k].g.d || 0))) k = i;
+          if (k < 0 || (g.d || 0) <= (flowers[k].g.d || 0)) return dropToGround(g, born);
+          const old = flowers[k]; dropToGround(old.g, born > 0 ? born : 0);
+          flowers[k] = { g, img: giftImg(g.u), born, sl: old.sl, jx: 0, jy: 0 };
+          const f = flowers[k]; if (f.sl.stem && f.sl.stem.grow) feedStem(f.sl.stem, g, born, f);
+          return;
+        }
         flowers.push({ g, img: giftImg(g.u), born, sl: slots[flowers.length], jx: 0, jy: 0 });
         const f = flowers[flowers.length - 1]; if (f.sl.stem && f.sl.stem.grow) feedStem(f.sl.stem, g, born, f);
       }

@@ -574,8 +574,21 @@
       <path d="M128 32l6-12 6 12 12 3-9 8 2 12-11-6-11 6 2-12-9-8z" fill="#fff6a8"/></svg>`;
     const GLOVE_IMG={ok:false}; { const im=new Image(); im.onload=()=>{ GLOVE_IMG.ok=im.naturalWidth>0; }; im.src='fx/glove.webp'; }
     const POWS=['ปั้ก!','POW!','ตุ๊บ!','BAM!','ปึ้ก!'];
+    // วิดีโอนวม (WebP เคลื่อนไหวพื้นใส): 1 หมัด / 2 หมัดซ้าย-ขวา · ไฟล์ไหนโหลดไม่ได้ → นวมแบบเดิม
+    const GLOVE_VID={ 'glove-1':{ms:5000,hits:[650]}, 'glove-2':{ms:4500,hits:[1100,1950]} }, gloveOk={};
+    for(const k in GLOVE_VID){ const im=new Image(); im.onerror=()=>{ gloveOk[k]=false; }; im.src='fx/'+k+'.webp'+(window.VJL_VERSION?'?v='+window.VJL_VERSION:''); }
+    function gloveVideo(a,ev,n,vol){
+      const k=n>=2?'glove-2':'glove-1', g=GLOVE_VID[k];
+      const el=document.createElement('img'); el.className='pkfx'; el.alt=''; el.src='fx/'+k+'.webp?t='+Date.now(); document.body.appendChild(el); setTimeout(()=>el.remove(), g.ms);
+      const title=fill(a.text,ev); if(title){ const t=document.createElement('div'); t.className='ftitle'; t.textContent=title; t.style.setProperty('--out',(g.ms/1000-0.6)+'s'); fx.appendChild(t); setTimeout(()=>t.remove(),g.ms); }
+      for(const h of g.hits) setTimeout(()=>{ // จังหวะโดนในคลิป → เสียงต่อย + จอสั่น
+        if(window.VJLSfx && !VJLSfx.play('punch',vol) && !audioArmed) armBtn.style.display='block';
+        document.body.classList.remove('shake'); void document.body.offsetWidth; document.body.classList.add('shake');
+      }, h);
+    }
     function glove(a,ev){
       const n=Math.max(1,Math.min(5,a.count||1)), vol=a.volume==null?1:a.volume;
+      if(gloveOk[n>=2?'glove-2':'glove-1']!==false) return gloveVideo(a,ev,n,vol);
       const title=fill(a.text,ev); if(title){ const t=document.createElement('div'); t.className='ftitle'; t.textContent=title; t.style.setProperty('--out',(Math.max(3,n*1.1+1.6))+'s'); fx.appendChild(t); setTimeout(()=>t.remove(),(n*1.1+2.6)*1000); }
       for(let k=0;k<n;k++) setTimeout(()=>{
         const side=k%2?'l':'r', g=document.createElement('div'); g.className='glv '+side;

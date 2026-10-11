@@ -45,6 +45,11 @@ window.Overlay = (function () {
   const CFG_KEY = 'vjl-cfg:' + widgetName + ':' + owner;
   let cfg = {};
   try { cfg = owner ? JSON.parse(localStorage.getItem(CFG_KEY) || '{}') : {}; } catch { cfg = {}; }
+  // เปิดครั้งแรก (เครื่องนี้ยังไม่เคยจำตั้งค่า) → ซ่อนไว้ก่อนจนเซิร์ฟเวอร์ส่งตั้งค่ามา ไม่ให้แวบเห็นแบบเริ่มต้น (เช่น โหลเก่าที่วาดด้วยโค้ด) แล้วค่อยเปลี่ยน
+  let firstCfg = false;
+  try { firstCfg = !!owner && !!params.get('t') && localStorage.getItem(CFG_KEY) == null; } catch { firstCfg = false; }
+  const unhide = () => { document.documentElement.style.visibility = ''; };
+  if (firstCfg) { document.documentElement.style.visibility = 'hidden'; setTimeout(unhide, 5000); } // ต่อไม่ติด → โชว์ตามปกติหลัง 5 วิ
   // ปุ่ม "ล้าง/เริ่มใหม่" ใน Dashboard (resetAt เปลี่ยน) → ลบข้อมูลที่วิดเจ็ตจำไว้ (กองของขวัญ, อันดับ, เวลา)
   const STORE_PREFIX = { giftjar: 'vjl-giftjar:', belly: 'vjl-belly:', aquarium: 'vjl-aquarium:', spacedome: 'vjl-spacedome:', snowglobe: 'vjl-snowglobe:', vehicle: 'vjl-vehicle:', garden: 'vjl-garden:', tree: 'vjl-tree:', coinjar: 'vjl-coinjar2:', pile: 'vjl-pile:', timer: 'vjl-timer:', league: 'vjl-league:', topgifters: 'vjl-rank:gifts:', toplikers: 'vjl-rank:likes:' };
   try {
@@ -126,8 +131,8 @@ window.Overlay = (function () {
     socket.on('reload', () => setTimeout(() => location.reload(), 200 + Math.random() * 1500));
     socket.on('config', (c) => {
       const next = JSON.stringify(c || {});
-      if (next === JSON.stringify(cfg)) return;
       try { localStorage.setItem(CFG_KEY, next); } catch { /* storage ปิด */ }
+      if (next === JSON.stringify(cfg)) { unhide(); return; }
       location.reload(); // ใช้ตั้งค่าใหม่
     });
     // ป้ายเล็ก ๆ มุมขวาล่าง สำหรับแพลนฟรี/ทดลอง — ไม่โชว์ค้าง (จะบังหน้าวีเจ) : โผล่ 6 วิ ตอนเปิด แล้วทุก 10 นาที

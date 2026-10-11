@@ -300,7 +300,9 @@ function WidgetSettings() {
     const w = x1 - x0, h = y1 - y0;
     setFit({ z: Math.max(1, Math.min(3, 0.85 * Math.min(1920 / w, 1080 / h))), cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 });
   }, []);
-  useEffect(() => { setFit(null); }, [previewSrc]);
+  // พรีวิว: ซ่อนไว้จนวิดเจ็ตโหลดรูปเสร็จ แล้วค่อยเฟดขึ้น — ไม่ให้แวบเห็นแบบเริ่มต้น (โหลเก่าที่วาดด้วยโค้ด) ก่อนเปลี่ยนเป็นแบบที่เลือก
+  const [prevShown, setPrevShown] = useState(false);
+  useEffect(() => { setFit(null); setPrevShown(false); }, [previewSrc]);
   const [boxW, setBoxW] = useState(0);
   const roRef = useRef<ResizeObserver | null>(null);
   const boxRef = useCallback((el: HTMLDivElement | null) => {
@@ -454,9 +456,9 @@ function WidgetSettings() {
                   // เลื่อนให้ตรงกลางวิดเจ็ตอยู่กลางกรอบ แต่ไม่เลยขอบจอจำลอง
                   const tx = Math.min(0, Math.max(boxW - 1920 * S, boxW / 2 - f.cx * S)), ty = Math.min(0, Math.max(boxH - 1080 * S, boxH / 2 - f.cy * S));
                   return <iframe key={previewSrc} ref={frameRef} src={previewSrc} title={t('พรีวิววิดเจ็ต')}
-                    onLoad={() => { for (const ms of [600, 1500, 3000]) setTimeout(measure, ms); }}
+                    onLoad={() => { for (const ms of [600, 1500, 3000]) setTimeout(measure, ms); setTimeout(() => setPrevShown(true), 700); }}
                     className="absolute left-0 top-0 h-[1080px] w-[1920px] origin-top-left border-0"
-                    style={{ transform: `translate(${tx}px, ${ty}px) scale(${S})`, transition: 'transform .4s ease' }} />;
+                    style={{ transform: `translate(${tx}px, ${ty}px) scale(${S})`, transition: 'transform .4s ease, opacity .35s ease', opacity: prevShown ? 1 : 0 }} />;
                 })()}
               </div>
             </Card>

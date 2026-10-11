@@ -375,6 +375,8 @@ export const EN_WIDGETS: Record<string, string> = {
   "กระถางก้อนเมฆ": "Cloud planter",
   "กล่องสายรุ้ง": "Rainbow box",
   "รถแทรกเตอร์ของเล่น": "Toy tractor",
+  "ถังไม้ครึ่งซีก": "Half wine barrel",
+  "ยางรถทาสีพาสเทล": "Pastel painted tire",
   "ความสูงกองบนพื้นสูงสุด": "Max pile height on the ground",
   "ดอกเต็มต้นแล้วของขวัญร่วงกองพื้น — เกินความสูงนี้ชิ้นเก่าสุดค่อย ๆ จางไป": "When the plant is full of flowers, gifts drop to the ground — beyond this height the oldest pieces fade out",
   "ขนาดดอกไม้": "Flower size",

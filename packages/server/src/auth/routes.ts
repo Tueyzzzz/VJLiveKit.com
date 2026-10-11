@@ -7,6 +7,7 @@ import { getEntitlements } from '../plans/index.js';
 import { recordReferral, checkReferralReward } from '../referrals/routes.js';
 import { isAdmin } from '../admin/routes.js';
 import { getHub } from '../realtime/hub.js';
+import { supportNotice } from '../support/routes.js';
 
 /** ชื่อ TikTok: ตัวอักษร/ตัวเลข/จุด/ขีดล่าง (ตัด @ นำหน้าให้) */
 const tiktokUsernameSchema = z.string().trim().transform((s) => s.replace(/^@/, ''))
@@ -59,6 +60,19 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     const remember = (req.body as { remember?: boolean } | undefined)?.remember !== false; // ค่าเริ่มต้น = จำไว้
     const token = signSession({ userId: user.id, email: user.email, role: user.role }, remember ? '90d' : '1d');
     return reply.send({ token, user: { id: user.id, email: user.email, displayName: user.displayName } });
+  });
+
+  // ลืมรหัสผ่าน: ยังไม่มีระบบส่งอีเมล → ส่งคำขอเข้าแชทแอดมิน (แอดมินรีเซ็ตรหัสชั่วคราวแล้วติดต่อกลับทางช่องทางที่ให้ไว้)
+  // ตอบเหมือนกันเสมอ ไม่บอกว่าอีเมลนี้มีบัญชีหรือไม่
+  app.post('/api/auth/forgot', { config: { rateLimit: { max: 5, timeWindow: '1 hour' } } }, async (req, reply) => {
+    const parsed = z.object({ email: z.string().trim().email().max(200), contact: z.string().trim().min(3).max(200) }).safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send({ error: 'กรอกอีเมลและช่องทางติดต่อกลับให้ครบ' });
+    const user = await prisma.user.findUnique({ where: { email: parsed.data.email.toLowerCase() }, select: { id: true } });
+    if (user) await supportNotice(user.id, `🔑 ขอรีเซ็ตรหัสผ่าน (จากหน้าเข้าสู่ระบบ)
+ติดต่อกลับ: ${parsed.data.contact}
+→ แอดมิน: เปิดข้อมูลลูกค้า กด "รีเซ็ตรหัส" แล้วส่งรหัสชั่วคราวให้ทางช่องทางนี้`);
+    else req.log.info({ email: parsed.data.email }, 'forgot-password: no such user');
+    return reply.send({ ok: true });
   });
 
   // ข้อมูลผู้ใช้ปัจจุบัน + สิทธิ์ตามแพลน

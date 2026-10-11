@@ -66,6 +66,14 @@ async function requireAdmin(req: FastifyRequest, reply: FastifyReply) {
   if (!isAdmin(req)) await reply.code(403).send({ error: 'สำหรับแอดมินเท่านั้น' });
 }
 
+/** ข้อความจากระบบเข้าห้องแชทของลูกค้า (เช่น ขอรีเซ็ตรหัสจากหน้า login) → แอดมินเห็นเป็นยังไม่อ่าน */
+export async function supportNotice(userId: string, text: string): Promise<void> {
+  const t = await threadFor(userId);
+  push(t, { from: 'user', text });
+  t.unreadAdmin++; t.status = 'open'; save();
+  getHub()?.emitAdmins('support', { userId });
+}
+
 export async function supportRoutes(app: FastifyInstance): Promise<void> {
   // ---- ลูกค้า ----
   app.get('/api/support', { preHandler: requireUser }, async (req) => {

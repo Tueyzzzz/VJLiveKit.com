@@ -21,6 +21,7 @@
   #char.turning img { transition:none; } /* หมุนตัว: สลับเฟรมทันที ไม่จาง */
   #char.video img:not(.vid) { display:none; }
   #char img.vid { opacity:1; transition:none; }
+  #char:not(.video) img.vid { display:none; } /* หมุนรอบตัวในโหมดวิดีโอ: ซ่อนคลิปชั่วคราว */
   /* ท่าทางทั้งตัวต้องเหมือนคนจริง: ไม่เอียง/โยก/หมุน/บีบยืดทั้งรูป — มีแค่หายใจเบา ๆ กับขยับขึ้นลงตามจังหวะ */
   #char.video { animation:none; } /* โหมดวิดีโอ: คลิปขยับเองอยู่แล้ว */
   #char.hop { animation:hop .5s ease-out, breath 3.4s ease-in-out .5s infinite; }
@@ -240,10 +241,12 @@
     }
     // หมุนตัวแบบคน: หันหลัง (ท่ามองจากด้านหลัง) แล้วหันกลับมาดีใจ — ไม่พลิกรูปแบน ๆ
     async function spin() {
-      if (TURN === 7 && !VIDEO.on) { // หมุนรอบตัวจริง 8 เฟรม
+      if (TURN === 7) { // หมุนรอบตัวจริง 8 เฟรม (โหมดวิดีโอ: ซ่อนคลิปชั่วคราวแล้วใช้รูป)
+        const vid = VIDEO.on; if (vid) { clearTimeout(VIDEO.t); $char.classList.remove('video'); }
         $char.classList.add('turning');
         for (const n of [18, 19, 20, 21, 22, 23, 24, 1]) { pose(n); await wait(125); } // ~1 วิ/รอบ เหมือนคนหมุนจริง
         $char.classList.remove('turning');
+        if (vid) { $char.classList.add('video'); playClip('joy'); particles(['✨', '⭐', '💫'], 8, 1.6); await wait(1200); return; }
         pose(7); hop(); particles(['✨', '⭐', '💫'], 8, 1.6); if (SPARK !== 'off') twinkle(12, 1); await wait(700); return;
       }
       pose(16); await wait(480); pose(7); hop(); particles(['✨', '⭐', '💫'], 8, 1.6); if (SPARK !== 'off') twinkle(12, 1); await wait(700); }
@@ -259,7 +262,7 @@
       async () => { pose(7); hop(); particles(['✨', '⭐'], 4, 1.4); await wait(900); },                        // ดีใจเบา ๆ
     ];
     (function idleAct() {
-      setTimeout(async () => { if (!busy && !running) { busy = true; try { if (VIDEO.on) { if (Math.random() < 0.3 && VIDEO.clips.dance) await clip('dance', 3600); } else await IDLE[Math.floor(Math.random() * IDLE.length)](); } catch (e) { /* ignore */ } pose(1); busy = false; } idleAct(); }, 6000 + Math.random() * 6000);
+      setTimeout(async () => { if (!busy && !running) { busy = true; try { if (VIDEO.on) { const r = Math.random(); if (r < 0.15 && TURN === 7) await spin(); else if (r < 0.4 && VIDEO.clips.dance) await clip('dance', 3600); } else await IDLE[Math.floor(Math.random() * IDLE.length)](); } catch (e) { /* ignore */ } pose(1); busy = false; } idleAct(); }, 6000 + Math.random() * 6000);
     })();
 
     // ---- คิวท่าทาง (ทีละอย่าง ไม่ทับกัน) ----

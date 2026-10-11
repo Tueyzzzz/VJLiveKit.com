@@ -35,7 +35,7 @@ export async function sendMailDetailed(to: string, subject: string, html: string
   const c = current;
   try {
     if (c.provider === 'smtp' && c.smtpHost) {
-      transport ??= nodemailer.createTransport({ host: c.smtpHost, port: c.smtpPort, secure: c.smtpSecure, auth: c.smtpUser ? { user: c.smtpUser, pass: c.smtpPass } : undefined, connectionTimeout: 10_000 });
+      transport ??= nodemailer.createTransport({ host: c.smtpHost, port: c.smtpPort, secure: c.smtpSecure, auth: c.smtpUser ? { user: c.smtpUser, pass: c.smtpPass } : undefined, connectionTimeout: 10_000, greetingTimeout: 10_000, socketTimeout: 15_000 });
       await transport.sendMail({ from: c.from || c.smtpUser, to, subject, html });
       return { ok: true };
     }
@@ -48,7 +48,15 @@ export async function sendMailDetailed(to: string, subject: string, html: string
       signal: AbortSignal.timeout(10_000),
     });
     return r.ok ? { ok: true } : { ok: false, error: `Resend ${r.status}: ${(await r.text().catch(() => '')).slice(0, 300)}` };
-  } catch (e) { return { ok: false, error: (e as Error).message }; }
+  } catch (e) {
+    transport = null; // ต่อใหม่ครั้งหน้า (ไม่ค้าง connection เสีย)
+    const m = (e as Error).message || String(e);
+    // ต่อพอร์ตเมลไม่ได้เลย = ผู้ให้บริการเซิร์ฟเวอร์ (เช่น Vultr) บล็อก SMTP ขาออก → บอกทางแก้ชัด ๆ
+    if (/timeout|ETIMEDOUT|ECONNREFUSED|EHOSTUNREACH|ENETUNREACH/i.test(m) && c.provider === 'smtp')
+      return { ok: false, error: `ต่อเมลเซิร์ฟเวอร์ ${c.smtpHost}:${c.smtpPort} ไม่ได้ (${m}) — เซิร์ฟเวอร์อาจถูกผู้ให้บริการบล็อกพอร์ตส่งเมล: ขอ Vultr เปิดพอร์ต SMTP หรือเปลี่ยนไปใช้ Resend` };
+    if (/Invalid login|535|534/i.test(m)) return { ok: false, error: `ล็อกอิน Gmail ไม่ผ่าน (${m}) — ตรวจอีเมลผู้ใช้และ App Password 16 ตัว` };
+    return { ok: false, error: m };
+  }
 }
 
 export async function sendMail(to: string, subject: string, html: string): Promise<boolean> {

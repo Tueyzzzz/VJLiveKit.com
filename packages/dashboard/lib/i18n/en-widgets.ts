@@ -733,6 +733,7 @@ export const EN_WIDGETS: Record<string, string> = {
   "✨ คนจริง 3D": "✨ Realistic 3D",
   "🎮 สาวเกมเมอร์ (คนจริง 3D)": "🎮 Gamer girl (realistic 3D)",
   "🖤 สาวสตรีท (คนจริง 3D)": "🖤 Street-style girl (realistic 3D)",
+  "🎤 นักร้องสาว (คนจริง 3D)": "🎤 Diva singer (realistic 3D)",
   "👘 สาวยูกาตะ (คนจริง 3D)": "👘 Yukata girl (realistic 3D)",
   "🏃‍♀️ สาวสปอร์ต (คนจริง 3D)": "🏃‍♀️ Sporty girl (realistic 3D)",
   "🏖️ สาวซัมเมอร์ (คนจริง 3D)": "🏖️ Summer girl (realistic 3D)",

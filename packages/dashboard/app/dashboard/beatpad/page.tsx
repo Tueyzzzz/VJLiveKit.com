@@ -141,8 +141,13 @@ export default function BeatPadPage() {
                   <span className="relative block w-full [text-shadow:0_1px_1px_rgba(255,255,255,.9),0_0_6px_rgba(255,255,255,.8)]">
                     <PadIcon pad={p} />
                     <span className="mt-0.5 block truncate text-[11px] font-bold leading-tight sm:mt-1 sm:text-sm">{p.label || (p.sound ? t(SFX.find(([id]) => id === p.sound)?.[1] ?? p.sound) : t('ไฟล์ของฉัน'))}</span>
-                    {(p.key || i < 9) && <span className="block text-[9px] leading-tight text-[#5b3150]/70 sm:mt-0.5 sm:text-[10px]">{p.key ? p.key.toUpperCase() : i + 1}</span>}
                   </span>
+                  {/* คีย์ลัดบนคีย์บอร์ด: ปุ่มคีย์แคปขาวมุมซ้ายบน เห็นชัดว่ากดปุ่มไหน */}
+                  {(p.key || i < 9) && (
+                    <kbd className="pointer-events-none absolute left-1 top-1 grid h-5 min-w-5 place-items-center rounded-md border border-[#e3b9cf] bg-white px-1 font-mono text-[11px] font-black leading-none text-[#5b3150] shadow-[0_2px_0_#d99bbb] sm:left-2 sm:top-2 sm:h-7 sm:min-w-7 sm:rounded-lg sm:text-sm">
+                      {p.key ? p.key.toUpperCase() : i + 1}
+                    </kbd>
+                  )}
                 </button>
                 <button onClick={() => setEdit(i)} aria-label={t('แก้ไข')} className="absolute right-0.5 top-0.5 grid size-6 place-items-center rounded-full border border-white bg-white/75 text-[#c2558d] shadow-sm hover:bg-white sm:right-1.5 sm:top-1.5 sm:size-8"><Pencil className="size-3 sm:size-3.5" /></button>
               </div>

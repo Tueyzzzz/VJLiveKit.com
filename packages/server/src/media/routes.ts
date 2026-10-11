@@ -3,6 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { z } from 'zod';
+import { prisma } from '../db/prisma.js';
+import { isAdmin } from '../admin/routes.js';
 import { requireUser, getUser } from '../auth/middleware.js';
 import { config } from '../config/index.js';
 import { settings } from '../settings/index.js';
@@ -40,6 +42,18 @@ const uploadSchema = z.object({
 });
 
 export async function mediaRoutes(app: FastifyInstance): Promise<void> {
+  // ---- แอดมิน: ไฟล์ที่ลูกค้าอัปโหลดทั้งหมด (เสียง/วิดีโอ/รูป) ดูว่ามีอะไรบ้าง ใช้พื้นที่เท่าไร ----
+  app.get('/api/admin/media', { preHandler: requireUser }, async (req, reply) => {
+    if (!isAdmin(req)) return reply.code(403).send({ error: 'สำหรับแอดมินเท่านั้น' });
+    let dirs: string[] = []; try { dirs = fs.readdirSync(ROOT); } catch { /* ยังไม่มีใครอัปโหลด */ }
+    const users = await prisma.user.findMany({ where: { id: { in: dirs } }, select: { id: true, email: true, displayName: true, tiktokUsername: true } });
+    const byId = new Map(users.map((u) => [u.id, u]));
+    const files = dirs.flatMap((uid) => list(uid).map((f) => ({ id: f.id, name: f.name, size: f.size, createdAt: f.createdAt, kind: f.kind ?? 'audio', ext: f.file.split('.').pop() ?? '', url: urlOf(uid, f),
+      userId: uid, email: byId.get(uid)?.email ?? '', displayName: byId.get(uid)?.displayName ?? '', tiktok: byId.get(uid)?.tiktokUsername ?? null })));
+    files.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    return { files, totalBytes: files.reduce((s, f) => s + f.size, 0) };
+  });
+
   app.get('/api/sounds', { preHandler: requireUser }, async (req) => {
     const { userId } = getUser(req)!;
     const all = list(userId);

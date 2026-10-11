@@ -16,7 +16,7 @@ import { EFFECTS, effectLabel, PK_TEMPLATES, TEMPLATES, TEMPLATE_GROUPS, type Ef
 
 const EVENT_LABELS: Record<TriggerEvent, string> = { gift: '🎁 ได้รับกิฟต์', follow: '➕ มีคนติดตาม', share: '🔁 มีคนแชร์', like: '❤️ มีคนกดไลค์', chat: '💬 แชทมีคำว่า', pk: '⚔️ PK (แข่ง)' };
 /** สถานการณ์ PK ที่ตั้งกฎได้ */
-const PK_LABELS: Record<string, string> = { start: '🔔 เริ่ม PK', win: '🏆 ชนะ PK', lose: '💪 แพ้ PK', draw: '🤝 เสมอ', anycard: '🃏 มีคนใช้การ์ดอะไรก็ได้', glove: '🥊 การ์ดนวม', critical: '⚡ การ์ดสายฟ้า', smoke: '🌫️ การ์ดหมอก', extra: '⏱️ การ์ดต่อเวลา', potion: '🧪 การ์ดยาพลัง', wave: '🌊 การ์ดคลื่น', effect: '✨ การ์ดเอฟเฟกต์พิเศษ', top2: '🥈 เก้าอี้ที่ 2 X2 (อันดับ 2 ส่งได้คะแนนคูณ 2)', top3: '🥉 เก้าอี้ที่ 3 X2 (อันดับ 3 ส่งได้คะแนนคูณ 2)' };
+const PK_LABELS: Record<string, string> = { start: '🔔 เริ่ม PK', end: '🏁 จบ PK (ทุกผล · ประกาศ MVP)', win: '🏆 ชนะ PK', lose: '💪 แพ้ PK', draw: '🤝 เสมอ', anycard: '🃏 มีคนใช้การ์ดอะไรก็ได้', glove: '🥊 การ์ดนวม', critical: '⚡ การ์ดสายฟ้า', smoke: '🌫️ การ์ดหมอก', extra: '⏱️ การ์ดต่อเวลา', potion: '🧪 การ์ดยาพลัง', wave: '🌊 การ์ดคลื่น', effect: '✨ การ์ดเอฟเฟกต์พิเศษ', top2: '🥈 เก้าอี้ที่ 2 X2 (อันดับ 2 ส่งได้คะแนนคูณ 2)', top3: '🥉 เก้าอี้ที่ 3 X2 (อันดับ 3 ส่งได้คะแนนคูณ 2)' };
 const ACTION_LABELS: Record<ActionType, string> = { sound: '🔊 เล่นเสียง', image: '🖼️ แสดงรูป/GIF', video: '🎬 เล่นวิดีโอ', text: '✏️ แสดงข้อความ', tarot: '🔮 สุ่มไพ่ทาโร่', effect: '✨ เอฟเฟกต์เต็มจอ', sign: '💡 ป้ายไฟ', glove: '🥊 ส่งนวม', mascot: '🧸 มาสคอตทำท่า' };
 
 interface Draft {
@@ -94,7 +94,7 @@ function toBody(d: Draft) {
     if (!d.giftName.trim() && d.minDiamonds.trim()) trigger.minDiamonds = Math.max(0, Math.floor(Number(d.minDiamonds)));
   }
   if (d.event === 'chat' && d.keyword.trim()) trigger.keyword = d.keyword.trim();
-  if (d.event === 'pk') { trigger.pk = d.pk || 'win'; if (d.pkSide && !['start', 'win', 'lose', 'draw'].includes(trigger.pk)) trigger.pkSide = d.pkSide; }
+  if (d.event === 'pk') { trigger.pk = d.pk || 'win'; if (d.pkSide && !['start', 'end', 'win', 'lose', 'draw'].includes(trigger.pk)) trigger.pkSide = d.pkSide; }
   const action: Rule['action'] = { type: d.type };
   const needsFile = (d.type === 'sound' && !d.sound) || d.type === 'image' || d.type === 'video';
   if (needsFile && d.url.trim()) action.url = d.url.trim();
@@ -357,7 +357,7 @@ function ActionsInner() {
               {draft.event === 'pk' && (
                 <>
                   <Field label={t('สถานการณ์ PK')}><Select value={draft.pk} onChange={(e) => set('pk', e.target.value)}>{Object.entries(PK_LABELS).map(([k, v]) => <option key={k} value={k}>{t(v)}</option>)}</Select></Field>
-                  {!['start', 'win', 'lose', 'draw'].includes(draft.pk) && (
+                  {!['start', 'end', 'win', 'lose', 'draw'].includes(draft.pk) && (
                     <Field label={t('การ์ดนี้ใช้กับ')}><Select value={draft.pkSide} onChange={(e) => set('pkSide', e.target.value as Draft['pkSide'])}><option value="">{t('ทั้งสองฝั่ง')}</option><option value="us">{t('💖 ฝั่งเรา (มีคนช่วยเรา)')}</option><option value="them">{t('😈 ฝั่งคู่แข่ง')}</option></Select></Field>
                   )}
                 </>
@@ -400,7 +400,7 @@ function ActionsInner() {
                   </div>
                 </Field>
               )}
-              <Field label={draft.type === 'text' ? t('ข้อความ') : t('ข้อความประกอบ (ไม่บังคับ)')} hint={draft.type === 'sign' ? t('ข้อความบนป้าย · {user} = ชื่อคนส่ง · แนะนำแสดงนาน 5–8 วินาที') : draft.type === 'tarot' ? t('สุ่มไพ่ครบสำรับ 78 ใบ พร้อมคำทำนาย · {user} = ชื่อคนส่ง · แนะนำแสดงนาน 8 วินาที') : t('ใช้ {user} แทนชื่อคนที่ทำให้เกิดเหตุการณ์')}>
+              <Field label={draft.type === 'text' ? t('ข้อความ') : t('ข้อความประกอบ (ไม่บังคับ)')} hint={draft.event === 'pk' && ['end', 'win', 'lose', 'draw'].includes(draft.pk) ? t('{mvp} = คนช่วยเรามากสุดใน PK · {mvpScore} = คะแนนของ MVP · {mvp2} {mvp3} = อันดับ 2–3 · {themMvp} = MVP ฝั่งคู่แข่ง · {us} {them} = คะแนน PK') : draft.type === 'sign' ? t('ข้อความบนป้าย · {user} = ชื่อคนส่ง · แนะนำแสดงนาน 5–8 วินาที') : draft.type === 'tarot' ? t('สุ่มไพ่ครบสำรับ 78 ใบ พร้อมคำทำนาย · {user} = ชื่อคนส่ง · แนะนำแสดงนาน 8 วินาที') : t('ใช้ {user} แทนชื่อคนที่ทำให้เกิดเหตุการณ์')}>
                 <Input maxLength={200} value={draft.text} onChange={(e) => set('text', e.target.value)} placeholder={t('ขอบคุณ {user} 💕')} />
               </Field>
               {draft.type === 'tarot' && (
@@ -521,7 +521,7 @@ function ActionsInner() {
                   <div key={tp.rule.name} className="flex flex-col rounded-xl border border-line bg-canvas/50 p-3">
                     {/* PK: รูปวีเจประจำเทมเพลต (ตามการ์ด/สถานการณ์) */}
                     {tp.rule.trigger.pk
-                      ? <img src={`/pk-tpl/${tp.rule.trigger.pk}.webp`} alt="" width={96} height={96} loading="lazy" className="mx-auto -mt-1 size-24 object-contain drop-shadow-md" />
+                      ? <img src={`/pk-tpl/${tp.rule.trigger.pk === 'end' ? 'win' : tp.rule.trigger.pk}.webp`} alt="" width={96} height={96} loading="lazy" className="mx-auto -mt-1 size-24 object-contain drop-shadow-md" />
                       : <div className="text-2xl">{tp.icon}</div>}
                     <div className="mt-1 text-sm font-medium leading-snug">{t(tp.title)}</div>
                     <div className="mt-0.5 flex-1 text-xs text-muted">{t(tp.desc)}</div>

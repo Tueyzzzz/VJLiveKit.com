@@ -25,6 +25,7 @@ function summarize(l: LiveRecord) {
     hasTimeline: samples.length > 0,
     joins: st ? st.totals.uniqueJoiners : null, follows: st ? st.totals.follows : null,
     shares: st ? st.totals.shares : null, chats: st ? st.totals.chats : null,
+    pkCount: st?.pks?.length ?? 0, pkWins: st?.pks?.filter((p) => p.result === 'win').length ?? 0,
   };
 }
 
@@ -47,6 +48,6 @@ export async function statsRoutes(app: FastifyInstance): Promise<void> {
     if (!l) return reply.code(404).send({ error: 'ไม่พบไลฟ์นี้' });
     if (!tk || l.username.toLowerCase() !== tk) return reply.code(403).send({ error: 'ไม่ใช่ไลฟ์ของคุณ' });
     const st = readLiveStats(roomId);
-    return { live: summarize(l), samples: st?.samples ?? [], totals: st?.totals ?? null };
+    return { live: summarize(l), samples: st?.samples ?? [], totals: st?.totals ?? null, pks: st?.pks ?? [] };
   });
 }

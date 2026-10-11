@@ -9,7 +9,7 @@ import { isAdmin } from '../admin/routes.js';
 
 const triggerSchema = z.object({
   event: z.enum(['gift', 'follow', 'share', 'like', 'chat', 'pk']),
-  pk: z.enum(['start', 'win', 'lose', 'draw', 'anycard', 'glove', 'critical', 'smoke', 'extra', 'potion', 'wave', 'effect', 'top2', 'top3']).optional(),
+  pk: z.enum(['start', 'end', 'win', 'lose', 'draw', 'anycard', 'glove', 'critical', 'smoke', 'extra', 'potion', 'wave', 'effect', 'top2', 'top3']).optional(),
   pkSide: z.enum(['us', 'them']).optional(),
   giftName: z.string().optional(),
   minDiamonds: z.number().int().nonnegative().optional(),
@@ -110,7 +110,8 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
     const u = { uniqueId: user.tiktokUsername, nickname: nick };
     const pk = tr.event !== 'pk' ? null
       : tr.pk === 'start' ? { kind: 'start' }
-      : tr.pk === 'win' || tr.pk === 'lose' || tr.pk === 'draw' ? { kind: 'end', result: tr.pk }
+      : tr.pk === 'end' || tr.pk === 'win' || tr.pk === 'lose' || tr.pk === 'draw'
+        ? { kind: 'end', result: tr.pk === 'end' ? 'win' : tr.pk, us: 1280, them: 960, mvp: [{ name: nick, score: 520 }, { name: 'ผู้ชม B', score: 310 }, { name: 'ผู้ชม C', score: 150 }], themMvp: { name: 'คู่แข่ง A', score: 400 } }
       : { kind: 'card', card: !tr.pk || tr.pk === 'anycard' ? 'glove' : tr.pk, side: tr.pkSide ?? 'us', by: nick };
     const event = pk ? { type: 'pk', user: u, pk } : { type: 'gift', user: u, giftName: 'ทดสอบ', comment: 'ทดสอบ' };
     const screens = (await getHub()?.emitOwnerCount(claims.userId, user.tiktokUsername, 'action', { ruleId: rule.id, name: rule.name, action: rule.action, event, ts: Date.now() })) ?? 0;

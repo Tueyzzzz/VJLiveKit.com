@@ -11,7 +11,10 @@ interface LiveSum {
   peakViewers: number; diamonds: number; gifts: number; likes: number;
   avgViewers: number | null; hasTimeline: boolean;
   joins: number | null; follows: number | null; shares: number | null; chats: number | null;
+  pkCount?: number; pkWins?: number;
 }
+interface PkMvp { name: string; score: number }
+interface PkRec { id: string; startedAt: number; endedAt?: number; us?: number; them?: number; result?: 'win' | 'lose' | 'draw'; mvp: PkMvp[]; themMvp?: PkMvp }
 interface Sample { t: number; viewers: number; likes: number; diamonds: number; joins: number; follows: number; shares: number; chats: number; giftsCount: number }
 type T = ReturnType<typeof useT>;
 
@@ -179,16 +182,68 @@ function Timeline({ samples, t, locale }: { samples: Sample[]; t: T; locale: str
   );
 }
 
+function PkList({ pks, t, locale }: { pks: PkRec[]; t: T; locale: string }) {
+  const tm = (v: number) => new Date(v).toLocaleTimeString(locale, { timeZone: TZ, hour: '2-digit', minute: '2-digit' });
+  const wins = pks.filter((p) => p.result === 'win').length, loses = pks.filter((p) => p.result === 'lose').length, draws = pks.filter((p) => p.result === 'draw').length;
+  const RES: Record<string, [string, string]> = { win: ['🏆 ชนะ', 'bg-[#e3f6ef] text-[#2e8b75]'], lose: ['💪 แพ้', 'bg-red-50 text-red-500'], draw: ['🤝 เสมอ', 'bg-canvas text-muted'] };
+  const MEDAL = ['🥇', '🥈', '🥉'];
+  return (
+    <div className="mt-4">
+      <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <h3 className="text-sm font-semibold text-ink">{t('⚔️ PK ในไลฟ์นี้')}</h3>
+        <div className="text-xs text-muted">{t('{n} ครั้ง · ชนะ {w} · แพ้ {l} · เสมอ {d}', { n: pks.length, w: wins, l: loses, d: draws })}</div>
+      </div>
+      <div className="space-y-2">
+        {pks.map((p, i) => {
+          const res = p.result ? RES[p.result] : null;
+          const dur = p.endedAt ? Math.max(1, Math.round((p.endedAt - p.startedAt) / 60_000)) : null;
+          return (
+            <div key={p.id} className="rounded-xl border border-line bg-canvas/40 p-3">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
+                <span className="font-semibold text-ink">PK #{i + 1}</span>
+                <span>{tm(p.startedAt)}{p.endedAt ? `–${tm(p.endedAt)}` : ''}{dur ? ` · ${t('{m} นาที', { m: dur })}` : ''}</span>
+                <span className={cx('ml-auto rounded-full px-2 py-0.5 text-[11px] font-semibold', res ? res[1] : 'bg-canvas text-muted')}>{res ? t(res[0]) : p.endedAt ? t('ไม่ทราบผล') : t('ยังไม่จบ/ไม่ทราบ')}</span>
+              </div>
+              <div className="mt-1.5 flex items-center gap-2 text-sm tabular-nums">
+                <span className="font-semibold text-pink">💖 {p.us != null ? n0(p.us) : '—'}</span>
+                <span className="text-muted">vs</span>
+                <span className="font-semibold text-[#7c5fd6]">{p.them != null ? n0(p.them) : '—'} 😈</span>
+              </div>
+              {p.mvp.length > 0 ? (
+                <ol className="mt-2 space-y-1">
+                  {p.mvp.slice(0, 3).map((m, j) => (
+                    <li key={m.name + j} className="flex min-w-0 items-center gap-2 text-sm">
+                      <span className="w-5 shrink-0 text-center">{MEDAL[j]}</span>
+                      <span className="min-w-0 flex-1 truncate text-ink">{m.name}{j === 0 && <span className="ml-1 text-[10px] font-semibold text-pink">MVP</span>}</span>
+                      <span className="shrink-0 tabular-nums text-muted">{n0(m.score)}</span>
+                    </li>
+                  ))}
+                </ol>
+              ) : <div className="mt-2 text-xs text-muted">{t('ไม่มีข้อมูลคนช่วยฝั่งเรา')}</div>}
+              {p.themMvp && <div className="mt-1.5 truncate text-xs text-muted">{t('MVP ฝั่งคู่แข่ง')}: <span className="text-ink">{p.themMvp.name}</span> · {n0(p.themMvp.score)}</div>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function LiveDetail({ roomId, q, t, locale }: { roomId: string; q: string; t: T; locale: string }) {
-  const [samples, setSamples] = useState<Sample[] | null>(null);
+  const [data, setData] = useState<{ samples: Sample[]; pks: PkRec[] } | null>(null);
   const [err, setErr] = useState<string | null>(null);
   useEffect(() => {
-    api<{ samples: Sample[] }>(`/api/stats/lives/${encodeURIComponent(roomId)}${q}`).then((d) => setSamples(d.samples)).catch((e) => setErr((e as Error).message));
+    api<{ samples: Sample[]; pks?: PkRec[] }>(`/api/stats/lives/${encodeURIComponent(roomId)}${q}`).then((d) => setData({ samples: d.samples, pks: d.pks ?? [] })).catch((e) => setErr((e as Error).message));
   }, [roomId, q]);
   if (err) return <Alert>{err}</Alert>;
-  if (!samples) return <Spinner />;
-  if (samples.length < 2) return <p className="py-4 text-center text-sm text-muted">{t('ไลฟ์นี้ยังไม่มีข้อมูลรายนาที (เก็บตั้งแต่เปิดฟีเจอร์นี้)')}</p>;
-  return <Timeline samples={samples} t={t} locale={locale} />;
+  if (!data) return <Spinner />;
+  const { samples, pks } = data;
+  return (
+    <>
+      {samples.length < 2 ? <p className="py-4 text-center text-sm text-muted">{t('ไลฟ์นี้ยังไม่มีข้อมูลรายนาที (เก็บตั้งแต่เปิดฟีเจอร์นี้)')}</p> : <Timeline samples={samples} t={t} locale={locale} />}
+      {pks.length > 0 && <PkList pks={pks} t={t} locale={locale} />}
+    </>
+  );
 }
 
 function Tile({ label, cur, prev, fmt, t }: { label: string; cur: number | null; prev: number | null; fmt: (v: number) => string; t: T }) {
@@ -280,7 +335,7 @@ export default function StatsPage() {
                 <div className="flex items-center justify-between gap-2 md:block">
                   <div>
                     <div className="text-sm font-semibold text-ink">{fmtDate(l.startedAt)}</div>
-                    <div className="text-xs text-muted">{fmtTime(l.startedAt)}–{l.ended ? fmtTime(l.endedAt) : t('ยังไลฟ์อยู่/ไม่ทราบ')}{!l.hasTimeline && <span className="ml-1 text-[10px]">· {t('สรุปเท่านั้น')}</span>}</div>
+                    <div className="text-xs text-muted">{fmtTime(l.startedAt)}–{l.ended ? fmtTime(l.endedAt) : t('ยังไลฟ์อยู่/ไม่ทราบ')}{!l.hasTimeline && <span className="ml-1 text-[10px]">· {t('สรุปเท่านั้น')}</span>}{(l.pkCount ?? 0) > 0 && <span className="ml-1 text-[10px]">· {t('⚔️ PK {n} (ชนะ {w})', { n: l.pkCount ?? 0, w: l.pkWins ?? 0 })}</span>}</div>
                   </div>
                   <ChevronDown className={cx('size-4 shrink-0 text-muted transition md:hidden', isOpen && 'rotate-180')} />
                 </div>

@@ -22,6 +22,7 @@ const PARAM_HINTS: Record<string, string> = {
   follower: '&label=...&showCount=0',
   topgifters: '&max=5&label=...&bg=35&pos=tr',
   toplikers: '&max=5&label=...&bg=35&pos=tr',
+  pkmvp: '&pos=tr&theme=candy|glass|white|gold&them=1&idle=wait|hide&hold=20&scale=1',
   timer: '&start=60&coin=5&like=0&follow=30&share=10&max=0&label=...&fontSize=90&bg=35',
   league: '&tier=B&level=1&levels=3&target=44999&start=0&label=...',
   tts: '&lang=th-TH&rate=1&readChat=1&readGift=1&minGift=1',
@@ -46,7 +47,7 @@ const GROUP_KEYS: Record<string, string> = { rank: '🥇 อันดับผ�
 const WIDGET_GROUPS: [string, string[]][] = [
   [COLLECT_GROUP, ['pile', 'giftjar', 'aquarium', 'belly', 'snowglobe', 'spacedome', 'vehicle', 'tree', 'garden', 'coinjar']],
   ['🧸 ตัวแทนวีเจ', ['mascot']],
-  ['🥇 อันดับผู้ชม', ['topgifters', 'toplikers']],
+  ['🥇 อันดับผู้ชม', ['topgifters', 'toplikers', 'pkmvp']],
   ['🏆 เป้าหมายและลีก', ['league', 'goal', 'timer']],
   ['🔔 แจ้งเตือนและแชท', ['alerts', 'chat', 'follower']],
   ['✨ เอฟเฟกต์', ['fx', 'fxmenu', 'sign']],
@@ -71,6 +72,7 @@ const WIDGET_BLURB: Record<string, string> = {
   follower: 'ผู้ติดตามล่าสุด',
   topgifters: 'อันดับคนส่งของขวัญ (จำทั้งไลฟ์)',
   toplikers: 'อันดับคนกดไลค์',
+  pkmvp: 'ตอน PK โชว์ 3 อันดับคนช่วยฝั่งเรามากสุดแบบสด จบ PK ประกาศ MVP ตัวใหญ่',
   timer: 'นาฬิกานับถอยหลัง ผู้ชมเติมเวลาได้',
   league: 'โดมโล่พลังงาน ของขวัญพุ่งชน ปลดล็อกลีก B1 → B2 → A1',
   tts: 'อ่านแชท/ของขวัญออกเสียง',
@@ -82,7 +84,7 @@ const WIDGET_BLURB: Record<string, string> = {
 
 /** พรีวิวสดของวิดเจ็ต (โหมดเดโม) — ย่อจาก 1920×1080 ให้พอดีการ์ด, โหลดเฉพาะตอนเลื่อนมาเห็น */
 /** ความกว้างจอจำลองของตัวอย่าง (ยิ่งแคบ = วิดเจ็ตดูใหญ่ขึ้น) — วิดเจ็ตเล็ก ๆ ไม่ต้องย่อจากจอ 1920 */
-const PREVIEW_W: Record<string, number> = { goal: 1500, chat: 820, follower: 640, alerts: 900, timer: 760, topgifters: 900, toplikers: 900, tts: 900, fx: 1100, fxmenu: 760, sign: 1000, mascot: 900, league: 1400, donate: 900 };
+const PREVIEW_W: Record<string, number> = { goal: 1500, chat: 820, follower: 640, alerts: 900, timer: 760, topgifters: 900, toplikers: 900, pkmvp: 760, tts: 900, fx: 1100, fxmenu: 760, sign: 1000, mascot: 900, league: 1400, donate: 900 };
 
 /** ตั้งค่าที่บันทึกไว้ → พารามิเตอร์ URL ของตัวอย่าง (พารามิเตอร์ใน URL มาก่อนค่าเริ่มต้นเสมอ) */
 function configQuery(config?: Record<string, unknown>): string {
@@ -121,7 +123,7 @@ function posterOf(type: string, config?: Record<string, unknown>): string | null
   if (type === 'pile') return `${API_BASE}/overlay/thumbs/pile.webp`;
   return null;
 }
-const ICON: Record<string, string> = { league: '🏆', goal: '🎯', timer: '⏱️', alerts: '🔔', chat: '💬', follower: '➕', topgifters: '🥇', toplikers: '💗', tts: '🔊', fx: '✨', fxmenu: '📜', sign: '💡', donate: '💸', mascot: '🧸' };
+const ICON: Record<string, string> = { league: '🏆', goal: '🎯', timer: '⏱️', alerts: '🔔', chat: '💬', follower: '➕', topgifters: '🥇', toplikers: '💗', pkmvp: '👑', tts: '🔊', fx: '✨', fxmenu: '📜', sign: '💡', donate: '💸', mascot: '🧸' };
 
 /**
  * ตัวอย่างวิดเจ็ต: ปกติแสดงรูปนิ่ง (เบา ไม่หน่วงหน้าเว็บ) — ชี้เมาส์/กดเล่น ถึงจะเปิดตัวอย่างจริง ทีละใบ

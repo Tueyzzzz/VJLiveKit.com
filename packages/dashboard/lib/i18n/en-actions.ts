@@ -356,4 +356,7 @@ export const EN_ACTIONS: Record<string, string> = {
   "ยิงกระดาษสีจากมุมจอแล้วโปรยพลิ้วลงมา": "Confetti cannons fire from the corners, then flutter down",
   "พิมพ์ “ปั้ก” ในแชท → นวม 2 หมัด": "Type “ปั้ก” in chat → 2 glove punches",
   "ให้คนดูแกล้งวีเจได้ นวมพุ่งซ้าย-ขวา": "Let viewers tease the VJ — gloves punch left and right",
+  "{mvp} = คนช่วยเรามากสุดใน PK · {mvpScore} = คะแนนของ MVP · {mvp2} {mvp3} = อันดับ 2–3 · {themMvp} = MVP ฝั่งคู่แข่ง · {us} {them} = คะแนน PK": "{mvp} = our top PK supporter · {mvpScore} = the MVP's points · {mvp2} {mvp3} = 2nd–3rd · {themMvp} = opponent MVP · {us} {them} = PK scores",
+  "จบ PK → ประกาศ MVP": "PK ends → announce MVP",
+  "ป้ายไฟกลางจอ ขอบคุณคนที่ช่วยเรามากที่สุดใน PK ({mvp} {mvpScore})": "Center neon sign thanking our biggest PK supporter ({mvp} {mvpScore})",
 };

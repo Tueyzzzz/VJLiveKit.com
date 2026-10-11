@@ -28,6 +28,7 @@ export const WIDGET_LABELS: Record<string, string> = {
   follower: 'ผู้ติดตามล่าสุด',
   topgifters: 'Top Gifters',
   toplikers: 'อันดับยอดไลค์',
+  pkmvp: 'MVP ของ PK',
   timer: 'นาฬิกาจับเวลา (Subathon)',
   league: 'ปลดล็อกเป้าหมายลีก (TikTok League)',
   tts: 'อ่านแชทออกเสียง (TTS)',

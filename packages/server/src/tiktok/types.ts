@@ -12,7 +12,17 @@ export interface PkInfo {
   text?: string;
   us?: number; them?: number; // คะแนน PK
   result?: 'win' | 'lose' | 'draw';
+  battleId?: string;
+  /** ผู้ช่วยฝั่งเรา 3 อันดับแรก (kind score/end) */
+  mvp?: PkMvp[];
+  /** อันดับ 1 ฝั่งคู่แข่ง */
+  themMvp?: PkMvp;
+  /** เวลาเริ่ม PK (ms) — ส่งมากับ kind end */
+  startedAt?: number;
 }
+
+/** ผู้ช่วย PK หนึ่งคน: ชื่อ · คะแนน PK · รูป (ถ้ามี) */
+export interface PkMvp { name: string; score: number; avatar?: string; id?: string }
 
 export interface NormalizedUser {
   userId: string;

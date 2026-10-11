@@ -36,7 +36,7 @@ export function GiftCell({ name, event, pk }: { name?: string; event: string; pk
   // PK: รูปวีเจประจำการ์ด (หลัง hooks ทั้งหมด)
   if (event === 'pk' && pk) return (
     <div className="flex w-24 shrink-0 flex-col items-center gap-0.5 text-center">
-      <img src={`/pk-tpl/${pk === 'draw' ? 'win' : ['potion', 'wave', 'effect'].includes(pk) ? 'anycard' : pk}.webp`} alt="" className="size-14 object-contain" loading="lazy" />
+      <img src={`/pk-tpl/${pk === 'draw' || pk === 'end' ? 'win' : ['potion', 'wave', 'effect'].includes(pk) ? 'anycard' : pk}.webp`} alt="" className="size-14 object-contain" loading="lazy" />
       <div className="text-xs font-medium">PK</div>
     </div>
   );

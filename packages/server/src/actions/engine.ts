@@ -4,7 +4,7 @@ import { giftIdOf, giftInfo } from '../tiktok/giftCatalog.js';
 /** กฎทริกเกอร์: ถ้าเหตุการณ์เข้าเงื่อนไข trigger ให้ทำ action */
 export interface RuleTrigger {
   event: 'gift' | 'follow' | 'share' | 'like' | 'chat' | 'pk';
-  /** PK: start / win / lose / draw / anycard / รหัสการ์ด (glove critical smoke ...) (เฉพาะ event=pk) */
+  /** PK: start / end (จบทุกผล) / win / lose / draw / anycard / รหัสการ์ด (glove critical smoke ...) (เฉพาะ event=pk) */
   pk?: string;
   /** PK การ์ด: ใช้กับฝั่งไหน (us = ให้เรา · them = คู่แข่ง · ไม่ระบุ = ทั้งคู่) */
   pkSide?: 'us' | 'them';
@@ -86,6 +86,7 @@ export function ruleMatches(rule: ActionRule, e: TikTokEvent): boolean {
   if (e.type === 'pk') { // PK: เริ่ม / ผลแพ้ชนะ / การ์ด
     const k = e.pk; if (!k || !t.pk) return false;
     if (t.pk === 'start') return k.kind === 'start';
+    if (t.pk === 'end') return k.kind === 'end'; // จบ PK ทุกผล (ประกาศ MVP)
     if (t.pk === 'win' || t.pk === 'lose' || t.pk === 'draw') return k.kind === 'end' && k.result === t.pk;
     if (k.kind !== 'card') return false;
     if (t.pk !== 'anycard' && t.pk !== k.card) return false;

@@ -30,6 +30,8 @@ export const PK_TEMPLATES: Template[] = [
     rule: { name: 'PK เริ่มแล้ว', trigger: { event: 'pk', pk: 'start' }, action: { type: 'sign', signStyle: 'neon', signMode: 'pulse', signPos: 'center', color: '#ff4fa3', text: '⚔️ PK เริ่มแล้ว! ช่วยกันส่งของขวัญนะ 💖', durationMs: 5000 } } },
   { icon: '🏆', title: 'ชนะ PK → ฉลอง', desc: 'ผีเสื้อสีทองเต็มจอ + ข้อความขอบคุณทุกคน',
     rule: { name: 'ชนะ PK ฉลอง', trigger: { event: 'pk', pk: 'win' }, action: { type: 'effect', effect: 'butterflies', tint: 'gold', count: 20, text: '🏆 ชนะแล้ว! ขอบคุณทุกคนที่ช่วยกันนะ 💖', durationMs: 8000 } } },
+  { icon: '👑', title: 'จบ PK → ประกาศ MVP', desc: 'ป้ายไฟกลางจอ ขอบคุณคนที่ช่วยเรามากที่สุดใน PK ({mvp} {mvpScore})',
+    rule: { name: 'ประกาศ MVP ของ PK', trigger: { event: 'pk', pk: 'end' }, action: { type: 'sign', signStyle: 'neon', signMode: 'pulse', signPos: 'center', color: '#ffcf5c', text: '👑 MVP ของ PK นี้คือ {mvp} ({mvpScore} คะแนน) ขอบคุณมากก 💖', durationMs: 8000 } } },
   { icon: '💪', title: 'แพ้ PK → ขอบคุณ', desc: 'ข้อความให้กำลังใจ ขอบคุณที่ช่วยกันสู้',
     rule: { name: 'แพ้ PK ขอบคุณ', trigger: { event: 'pk', pk: 'lose' }, action: { type: 'text', text: '💪 สู้เต็มที่แล้ว ขอบคุณทุกคนมาก ๆ นะ 💖', durationMs: 6000 } } },
   { icon: '🥊', title: 'มีคนใช้นวมให้เรา', desc: 'นวมพุ่งเต็มจอ + ขอบคุณคนกด',

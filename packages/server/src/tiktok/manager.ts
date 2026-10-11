@@ -3,7 +3,8 @@ import { recordGift } from './giftCatalog.js';
 import { recordCollect } from './collectStore.js';
 import { recordError } from '../errlog/store.js';
 import { config } from '../config/index.js';
-import { emptyStats, type LiveStats, type NormalizedUser, type TikTokEvent, type TikTokEventType, type TopGifter } from './types.js';
+import { emptyStats, type LiveStats, type NormalizedUser, type PkMvp, type TikTokEvent, type TikTokEventType, type TopGifter } from './types.js';
+import { extractPkArmies } from './pkmvp.js';
 
 // tiktok-live-connector v2 เป็น ESM — โหลดแบบ optional (dynamic import) เพื่อให้ DEMO_MODE ทำงานได้แม้ยังไม่ติดตั้ง
 let TikTokLiveConnection: any = null;
@@ -215,6 +216,10 @@ export class TikTokRoom extends EventEmitter {
   /** รหัสผู้ใช้ TikTok ของเจ้าของห้อง (รู้จากข้อมูล PK) — ไว้แยกฝั่งเรา/คู่แข่ง */
   private hostId = '';
   private lastPkScore = '';
+  /** PK ที่กำลังแข่ง: คะแนน + ผู้ช่วยล่าสุด (ไว้แนบ MVP ตอนจบ) */
+  private pkEnded = '';
+  private pkLastEnd: TikTokRoom['pkCur'] = null;
+  private pkCur: { battleId?: string; startedAt: number; us?: number; them: number; mvp: PkMvp[]; themMvp?: PkMvp } | null = null;
   /** อีเวนต์ PK ดิบล่าสุด (หน้าแอดมินดูไว้ตรวจว่า TikTok ส่งอะไรมา) */
   pkLog: { t: number; kind: string; raw: string }[] = [];
   private logPk(kind: string, d: unknown) {
@@ -228,20 +233,40 @@ export class TikTokRoom extends EventEmitter {
     if (this.isDuplicate(d)) return;
     this.logPk('battle', d); this.learnHost(d?.anchorsInfo);
     const act = Number(d?.action);
-    if (act === 4 || act === 7) { this.lastPkScore = ''; this.send('pk', { pk: { kind: 'start' } }); }
-    else if (act === 5 || act === 6) {
+    const battleId = d?.battleId ? String(d.battleId) : undefined;
+    if (act === 4 || act === 7) {
+      this.lastPkScore = '';
+      this.pkCur = { battleId, startedAt: Date.now(), mvp: [], them: 0 };
+      this.send('pk', { pk: { kind: 'start', battleId } });
+    } else if (act === 5 || act === 6) {
       const res = d?.battleResult ?? {}, me = res[this.hostId], r = Number(me?.result);
-      this.send('pk', { pk: { kind: 'end', result: r === 0 ? 'win' : r === 1 ? 'lose' : r === 2 ? 'draw' : undefined, us: me ? Number(me.score) : undefined } });
+      // MVP สุดท้าย = ข้อมูลกองทัพล่าสุดของ PK นี้ (TikTok ส่งจบมาบางทีโดยไม่มีกองทัพแนบ)
+      const cur = this.pkCur && (!battleId || !this.pkCur.battleId || this.pkCur.battleId === battleId) ? this.pkCur
+        : this.pkLastEnd && battleId && this.pkLastEnd.battleId === battleId ? this.pkLastEnd : null; // ส่งจบซ้ำ (action 5 แล้ว 6) → ใช้ MVP ชุดเดิม
+      let themScore = cur?.them;
+      for (const [id, v] of Object.entries<any>(res)) if (this.hostId && id !== this.hostId && v?.score != null) themScore = Math.max(themScore ?? 0, Number(v.score) || 0);
+      const mvp = cur?.mvp ?? [];
+      this.send('pk', { pk: {
+        kind: 'end', result: r === 0 ? 'win' : r === 1 ? 'lose' : r === 2 ? 'draw' : undefined, us: me ? Number(me.score) : cur?.us,
+        them: themScore, battleId: battleId ?? cur?.battleId, mvp, themMvp: cur?.themMvp, startedAt: cur?.startedAt,
+      } });
+      this.pkEnded = battleId ?? cur?.battleId ?? '';
+      if (cur) this.pkLastEnd = { ...cur, battleId: this.pkEnded || cur.battleId };
+      this.pkCur = null;
     }
   }
   private onArmies(d: any) {
     this.logPk('armies', d);
-    const armies: Record<string, any> = d?.armies ?? {};
-    let us: number | undefined, them = 0;
-    for (const [id, a] of Object.entries(armies)) { const sc = Number(a?.hostscore ?? 0); if (id === this.hostId || String(a?.anchorIdStr) === this.hostId) us = sc; else them = Math.max(them, sc); }
+    const { us, them, mvp, themMvp } = extractPkArmies(d?.armies, this.hostId);
     if (us === undefined) return; // ยังไม่รู้ว่าฝั่งไหนคือเรา
-    const key = us + ':' + them; if (key === this.lastPkScore) return; this.lastPkScore = key;
-    this.send('pk', { pk: { kind: 'score', us, them } });
+    const battleId = d?.battleId ? String(d.battleId) : undefined;
+    if (battleId && battleId === this.pkEnded) return; // คะแนนที่มาช้าหลัง PK จบ
+    if (!this.pkCur || (battleId && this.pkCur.battleId && this.pkCur.battleId !== battleId)) this.pkCur = { battleId, startedAt: Date.now(), mvp: [], them: 0 };
+    if (battleId && !this.pkCur.battleId) this.pkCur.battleId = battleId;
+    Object.assign(this.pkCur, { us, them, mvp, themMvp });
+    const key = us + ':' + them + ':' + mvp.map((m) => m.name + '=' + m.score).join(',') + ':' + (themMvp ? themMvp.name + '=' + themMvp.score : '');
+    if (key === this.lastPkScore) return; this.lastPkScore = key;
+    this.send('pk', { pk: { kind: 'score', us, them, battleId: this.pkCur.battleId, mvp, themMvp } });
   }
   private static CARDS: Record<number, [string, string, string]> = {
     2: ['critical', '⚡ สายฟ้า', 'useCriticalStrikeCard'], 3: ['smoke', '🌫️ หมอก', 'useSmokeCard'], 5: ['extra', '⏱️ ต่อเวลา', 'useExtraTimeCard'],

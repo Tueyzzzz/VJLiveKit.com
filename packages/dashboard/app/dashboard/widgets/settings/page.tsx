@@ -433,7 +433,8 @@ function WidgetSettings() {
             })}
           </div>
 
-          <div className="space-y-4 lg:sticky lg:top-4 lg:self-start">
+          {/* มือถือ: พรีวิว + ปุ่มบันทึกขึ้นก่อน แล้วค่อยเป็นช่องตั้งค่า (เดิมปุ่มบันทึกอยู่ล่างสุด ต้องเลื่อนยาว) */}
+          <div className="order-first space-y-4 lg:order-none lg:sticky lg:top-4 lg:self-start">
             <Card className="p-3">
               <div className="mb-2 flex items-center justify-between gap-2 text-xs text-muted">
                 <span>{t('พรีวิว (ข้อมูลจำลอง)')}</span>

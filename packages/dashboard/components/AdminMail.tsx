@@ -25,6 +25,9 @@ export function AdminMail() {
   async function test() {
     setBusy('test'); setMsg(null);
     try {
+      // บันทึกค่าในฟอร์มก่อนทุกครั้ง (เดิมต้องกดบันทึกก่อน — ลืมกดแล้วขึ้น "ยังไม่ได้ตั้งค่า")
+      if (cfg!.provider === 'off') { setMsg({ tone: 'error', text: 'เลือก "ผู้ให้บริการ" เป็น SMTP (Gmail) หรือ Resend ก่อน' }); return; }
+      const sv = await api<{ mail: MailCfg }>('/api/admin/mail', { method: 'PUT', body: cfg }); setCfg(sv.mail);
       const r = await api<{ ok: boolean; error?: string }>('/api/admin/mail/test', { method: 'POST', body: to ? { to } : {} });
       setMsg(r.ok ? { tone: 'success', text: `ส่งอีเมลทดสอบแล้ว ✓ ไปที่ ${to || 'อีเมลแอดมิน'} (ไม่เจอ ลองดูในสแปม)` } : { tone: 'error', text: `ส่งไม่สำเร็จ: ${r.error ?? ''}` });
     } catch (e) { setMsg({ tone: 'error', text: (e as Error).message }); } finally { setBusy(''); }
@@ -70,7 +73,7 @@ export function AdminMail() {
           <Button variant="secondary" loading={busy === 'test'} onClick={test}><Send className="size-4" /> ส่งอีเมลทดสอบ</Button>
         </div>
       </div>
-      <p className="text-xs text-muted">กดบันทึกก่อน แล้วค่อยกดส่งอีเมลทดสอบ</p>
+      <p className="text-xs text-muted">กดส่งอีเมลทดสอบ = บันทึกค่าในฟอร์มให้ด้วย</p>
     </Card>
   );
 }

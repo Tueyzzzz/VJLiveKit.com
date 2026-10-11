@@ -40,7 +40,7 @@ export async function sendMailDetailed(to: string, subject: string, html: string
       return { ok: true };
     }
     const key = c.provider === 'resend' ? c.resendKey : c.provider === 'off' ? config.resendKey : '';
-    if (!key) return { ok: false, error: 'ยังไม่ได้ตั้งค่าเมลเซิร์ฟเวอร์' };
+    if (!key) return { ok: false, error: c.provider === 'smtp' ? 'ยังไม่ได้ใส่ SMTP Host' : 'ยังไม่ได้ตั้งค่าเมลเซิร์ฟเวอร์ — เลือกผู้ให้บริการเป็น SMTP แล้วกดบันทึก' };
     const r = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' },

@@ -1,8 +1,9 @@
-import { Swords, LayoutDashboard, LayoutTemplate, Zap, CreditCard, Gift, BookOpen, Wallet, ScrollText, Lightbulb, Volume2, Grid3x3, Speech, MessageCircle, Smile, Medal, Trophy } from 'lucide-react';
+import { Swords, LayoutDashboard, LayoutTemplate, Zap, CreditCard, Gift, BookOpen, Wallet, ScrollText, Lightbulb, Volume2, Grid3x3, Speech, MessageCircle, Smile, Medal, Trophy, TrendingUp } from 'lucide-react';
 
 /** เมนูหลักของแดชบอร์ด (section = หัวข้อหมวดในเมนูข้าง ให้หาง่าย) — ใช้ทั้งเมนูข้าง และการ์ดใหญ่หน้าภาพรวม (img = รูป VJ ใน /menu/<img>.webp) */
 export const NAV = [
   { section: '', href: '/dashboard/', label: 'ภาพรวม', img: 'overview', desc: 'ภาพรวมบัญชีและกฎที่ตั้งไว้', icon: LayoutDashboard },
+  { section: 'ไลฟ์ของคุณ', href: '/dashboard/stats/', label: 'สถิติไลฟ์', img: 'stats', desc: 'คนดูกี่คน อยู่นานไหม ช่วงไหนดีสุด พร้อมข้อแนะนำ', icon: TrendingUp },
   { section: 'บนจอไลฟ์', href: '/dashboard/widgets/', label: 'โอเวอร์เลย์', img: 'overlay', desc: 'วิดเจ็ตบนจอไลฟ์ สร้างลิงก์ใส่ OBS / TikTok Studio', icon: LayoutTemplate },
   { section: 'บนจอไลฟ์', href: '/dashboard/widgets/settings/?type=mascot', label: 'ตัวแทนวีเจ', img: 'mascot', desc: 'ตัวละครเดิน เต้น รับของขวัญบนจอ เลือกได้หลายสิบแบบ', icon: Smile },
   { section: 'บนจอไลฟ์', href: '/dashboard/widgets/?g=rank', label: 'อันดับผู้ชม', img: 'rank', desc: 'อันดับคนส่งของขวัญ คนกดหัวใจ กรอบ MVP', icon: Medal },

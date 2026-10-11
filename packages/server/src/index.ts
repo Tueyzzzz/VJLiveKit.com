@@ -1,4 +1,5 @@
 import { flushCollect } from './tiktok/collectStore.js';
+import { flushLiveStats } from './realtime/livestats.js';
 import { buildApp } from './app.js';
 import { setupRealtime } from './realtime/socket.js';
 import { config } from './config/index.js';
@@ -31,6 +32,7 @@ async function main(): Promise<void> {
     app.log.info(`received ${sig}, shutting down...`);
     await hub.stopAll();
     flushCollect(); // กองของขวัญสะสมที่ยังไม่ลงดิสก์
+    try { flushLiveStats(); } catch { /* ignore */ } // สถิติไลฟ์รายนาที
     await app.close();
     await disconnectDb();
     process.exit(0);

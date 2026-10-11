@@ -4,6 +4,7 @@ import type { Server } from 'socket.io';
 import { loadSession, saveSession } from './sessions.js';
 import { connStats } from './connstats.js';
 import { trackLive, listLives } from './lives.js';
+import { noteLiveEvent } from './livestats.js';
 import { settings } from '../settings/index.js';
 import { config } from '../config/index.js';
 import fs from 'node:fs';
@@ -271,6 +272,8 @@ export class RoomHub {
         });
       }
     });
+    // สถิติไลฟ์รายนาที (หน้าสถิติไลฟ์) — ตัวนับแยก ไม่ยุ่งกับการส่งต่ออีเวนต์/ของขวัญ
+    room.on('event', (e) => { if (!this.demo && room.liveRoomId) noteLiveEvent(room.liveRoomId, room.username, e, room.stats); });
     room.on('stats', (s) => this.io.to(ch).emit('stats', s));
     room.on('status', (s) => {
       this.io.to(ch).emit('status', s);

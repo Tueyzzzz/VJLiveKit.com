@@ -20,6 +20,7 @@ import { mailRoutes } from './mail/routes.js';
 import { mascotRoutes } from './mascots/routes.js';
 import { beatpadRoutes } from './media/beatpad.js';
 import { errlogRoutes, installErrorHooks } from './errlog/routes.js';
+import { statsRoutes } from './stats/routes.js';
 import { installErrorCapture } from './errlog/store.js';
 import { settings } from './settings/index.js';
 import { config } from './config/index.js';
@@ -126,6 +127,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(mascotRoutes);
   await app.register(beatpadRoutes);
   await app.register(errlogRoutes);
+  await app.register(statsRoutes);
 
   // 404: API ตอบ JSON, หน้าเว็บตอบหน้า 404 ของ Dashboard
   const notFoundPage = path.join(DASHBOARD_DIR, '404.html');

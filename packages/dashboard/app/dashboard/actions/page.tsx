@@ -12,11 +12,12 @@ import { toAudioDataUrl } from '@/lib/sounds';
 import { api, ApiError, type OverlayTokenRow, type ActionType, type Rule, type TarotDeck, type TarotTopic, type TriggerEvent } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { translate, useT } from '@/lib/i18n';
+import { EFFECTS, effectLabel, PK_TEMPLATES, TEMPLATES, TEMPLATE_GROUPS, type EffectName, type Template, type TemplateGroup } from '@/lib/actionTemplates';
 
 const EVENT_LABELS: Record<TriggerEvent, string> = { gift: '🎁 ได้รับกิฟต์', follow: '➕ มีคนติดตาม', share: '🔁 มีคนแชร์', like: '❤️ มีคนกดไลค์', chat: '💬 แชทมีคำว่า', pk: '⚔️ PK (แข่ง)' };
 /** สถานการณ์ PK ที่ตั้งกฎได้ */
 const PK_LABELS: Record<string, string> = { start: '🔔 เริ่ม PK', win: '🏆 ชนะ PK', lose: '💪 แพ้ PK', draw: '🤝 เสมอ', anycard: '🃏 มีคนใช้การ์ดอะไรก็ได้', glove: '🥊 การ์ดนวม', critical: '⚡ การ์ดสายฟ้า', smoke: '🌫️ การ์ดหมอก', extra: '⏱️ การ์ดต่อเวลา', potion: '🧪 การ์ดยาพลัง', wave: '🌊 การ์ดคลื่น', effect: '✨ การ์ดเอฟเฟกต์พิเศษ', top2: '🥈 เก้าอี้ที่ 2 X2 (อันดับ 2 ส่งได้คะแนนคูณ 2)', top3: '🥉 เก้าอี้ที่ 3 X2 (อันดับ 3 ส่งได้คะแนนคูณ 2)' };
-const ACTION_LABELS: Record<ActionType, string> = { sound: '🔊 เล่นเสียง', image: '🖼️ แสดงรูป/GIF', video: '🎬 เล่นวิดีโอ', text: '✏️ แสดงข้อความ', tarot: '🔮 สุ่มไพ่ทาโร่', effect: '🦋 ผีเสื้อเทพนิยาย', sign: '💡 ป้ายไฟ', glove: '🥊 ส่งนวม', mascot: '🧸 มาสคอตทำท่า' };
+const ACTION_LABELS: Record<ActionType, string> = { sound: '🔊 เล่นเสียง', image: '🖼️ แสดงรูป/GIF', video: '🎬 เล่นวิดีโอ', text: '✏️ แสดงข้อความ', tarot: '🔮 สุ่มไพ่ทาโร่', effect: '✨ เอฟเฟกต์เต็มจอ', sign: '💡 ป้ายไฟ', glove: '🥊 ส่งนวม', mascot: '🧸 มาสคอตทำท่า' };
 
 interface Draft {
   id?: string;
@@ -42,7 +43,9 @@ interface Draft {
   move: 'dance' | 'kiss' | 'joy' | 'heart' | 'walk' | 'spin' | 'jump';
   /** คอมโบเล่นซ้ำสูงสุดกี่ครั้ง */
   repeat: string;
-  /** สีผีเสื้อ */
+  /** เอฟเฟกต์เต็มจอ: แบบ */
+  effect: EffectName;
+  /** สีผีเสื้อ/อนุภาค */
   tint: 'pink' | 'blue' | 'purple' | 'mint' | 'gold' | 'rainbow';
   /** ป้ายไฟ */
   signStyle: 'led' | 'neon' | 'bulb' | 'cute' | 'pixel' | 'y2k' | 'glass' | 'surreal' | 'boho' | 'victorian' | 'graffiti' | 'future' | 'mwhite' | 'mblack' | 'mline' | 'mpill';
@@ -51,77 +54,7 @@ interface Draft {
   color: string;
 }
 
-const EMPTY: Draft = { name: '', enabled: true, event: 'gift', giftName: '', minDiamonds: '', keyword: '', pk: 'win', pkSide: '', type: 'sound', url: '', sound: 'chime', text: '', durationSec: '5', cards: '1', deck: 'full', topic: 'general', count: '12', move: 'dance', repeat: '1', tint: 'pink', signStyle: 'led', signMode: 'scroll', signPos: 'top', color: '#ff4fa3' };
-
-/** เทมเพลตยอดนิยม — กดครั้งเดียวสร้างกฎได้เลย (ไม่ต้องหาไฟล์เสียง/รูปเอง) */
-interface Template { icon: string; title: string; desc: string; rule: { name: string; trigger: Rule['trigger']; action: Rule['action'] } }
-/** เทมเพลต PK — โชว์ในเมนู ⚔️ PK Battle */
-const PK_TEMPLATES: Template[] = [
-  { icon: '🥈', title: 'เก้าอี้ที่ 2 X2 → เรียกอันดับ 2', desc: 'อันดับ 2 ส่งของขวัญได้คะแนน x2 — ป้ายไฟเรียกให้รีบส่ง',
-    rule: { name: 'เก้าอี้ที่ 2 X2', trigger: { event: 'pk', pk: 'top2', pkSide: 'us' }, action: { type: 'sign', signStyle: 'neon', signMode: 'pulse', signPos: 'top', color: '#c9d4e8', text: '🥈 เก้าอี้ที่ 2 X2! อันดับ 2 ส่งตอนนี้คะแนนคูณ 2 รีบเลย 💨', durationMs: 6000 } } },
-  { icon: '🥉', title: 'เก้าอี้ที่ 3 X2 → เรียกอันดับ 3', desc: 'อันดับ 3 ส่งของขวัญได้คะแนน x2 — ป้ายไฟเรียกให้รีบส่ง',
-    rule: { name: 'เก้าอี้ที่ 3 X2', trigger: { event: 'pk', pk: 'top3', pkSide: 'us' }, action: { type: 'sign', signStyle: 'neon', signMode: 'pulse', signPos: 'top', color: '#e8b98a', text: '🥉 เก้าอี้ที่ 3 X2! อันดับ 3 ส่งตอนนี้คะแนนคูณ 2 รีบเลย 💨', durationMs: 6000 } } },
-  { icon: '🔔', title: 'ประกาศเริ่ม PK', desc: 'ป้ายไฟกลางจอ ชวนผู้ชมช่วยกันส่งของขวัญ',
-    rule: { name: 'PK เริ่มแล้ว', trigger: { event: 'pk', pk: 'start' }, action: { type: 'sign', signStyle: 'neon', signMode: 'pulse', signPos: 'center', color: '#ff4fa3', text: '⚔️ PK เริ่มแล้ว! ช่วยกันส่งของขวัญนะ 💖', durationMs: 5000 } } },
-  { icon: '🏆', title: 'ชนะ PK → ฉลอง', desc: 'ผีเสื้อสีทองเต็มจอ + ข้อความขอบคุณทุกคน',
-    rule: { name: 'ชนะ PK ฉลอง', trigger: { event: 'pk', pk: 'win' }, action: { type: 'effect', effect: 'butterflies', tint: 'gold', count: 20, text: '🏆 ชนะแล้ว! ขอบคุณทุกคนที่ช่วยกันนะ 💖', durationMs: 8000 } } },
-  { icon: '💪', title: 'แพ้ PK → ขอบคุณ', desc: 'ข้อความให้กำลังใจ ขอบคุณที่ช่วยกันสู้',
-    rule: { name: 'แพ้ PK ขอบคุณ', trigger: { event: 'pk', pk: 'lose' }, action: { type: 'text', text: '💪 สู้เต็มที่แล้ว ขอบคุณทุกคนมาก ๆ นะ 💖', durationMs: 6000 } } },
-  { icon: '🥊', title: 'มีคนใช้นวมให้เรา', desc: 'นวมพุ่งเต็มจอ + ขอบคุณคนกด',
-    rule: { name: 'นวมช่วยเรา', trigger: { event: 'pk', pk: 'glove', pkSide: 'us' }, action: { type: 'glove', count: 2, text: '🥊 {user} ใช้นวมช่วยเรา! ขอบคุณน้า', durationMs: 4000 } } },
-  { icon: '⚡', title: 'สายฟ้าให้เรา', desc: 'เสียงเลเวลอัป + ป้ายไฟสีทอง',
-    rule: { name: 'สายฟ้าช่วยเรา', trigger: { event: 'pk', pk: 'critical', pkSide: 'us' }, action: { type: 'sign', signStyle: 'led', signMode: 'blink', signPos: 'top', color: '#ffcf5c', text: '⚡ {user} ปล่อยสายฟ้า x2! ขอบคุณ ⚡', durationMs: 5000 } } },
-  { icon: '🌫️', title: 'โดนหมอก (คู่แข่งใช้)', desc: 'เตือนผู้ชมให้ช่วยกันส่งต่อ',
-    rule: { name: 'โดนหมอก', trigger: { event: 'pk', pk: 'smoke', pkSide: 'them' }, action: { type: 'text', text: '🌫️ โดนหมอกแล้ว! ส่งต่อเลยทุกคน อย่าหยุดนะ', durationMs: 5000 } } },
-  { icon: '⏱️', title: 'ต่อเวลา', desc: 'แจ้งว่าได้เวลาเพิ่ม',
-    rule: { name: 'ต่อเวลา PK', trigger: { event: 'pk', pk: 'extra' }, action: { type: 'text', text: '⏱️ ต่อเวลาแล้ว! ยังมีลุ้น ช่วยกันอีกนิด', durationMs: 4000 } } },
-  { icon: '🃏', title: 'ขอบคุณทุกการ์ด', desc: 'ใครใช้การ์ดอะไรช่วยเรา ขึ้นข้อความขอบคุณ',
-    rule: { name: 'ขอบคุณการ์ด PK', trigger: { event: 'pk', pk: 'anycard', pkSide: 'us' }, action: { type: 'text', text: '🃏 ขอบคุณ {user} ที่ใช้การ์ดช่วยเรา 💖', durationMs: 4000 } } },
-];
-const TEMPLATES: Template[] = [
-  { icon: '🔮', title: 'ได้ Rose → เปิดไพ่ 1 ใบ', desc: 'ทุกกุหลาบ = คำทำนาย 1 ใบให้คนส่ง',
-    rule: { name: 'Rose เปิดไพ่ทาโร่', trigger: { event: 'gift', giftName: 'Rose' }, action: { type: 'tarot', cards: 1, text: '🌹 คำทำนายของ {user}', durationMs: 8000 } } },
-  { icon: '🃏', title: 'กิฟต์ 99 เพชรขึ้นไป → ไพ่ 3 ใบ', desc: 'อดีต · ปัจจุบัน · อนาคต',
-    rule: { name: 'ไพ่ 3 ใบ (99 เพชร+)', trigger: { event: 'gift', minDiamonds: 99 }, action: { type: 'tarot', cards: 3, text: '✨ {user} เปิดดวง 3 ใบ', durationMs: 13000 } } },
-  { icon: '🌌', title: 'กิฟต์ 1,000 เพชรขึ้นไป → ไพ่ 7 ใบ', desc: 'ดูดวงเต็มชุดให้สายเปย์',
-    rule: { name: 'ไพ่ 7 ใบ (1,000 เพชร+)', trigger: { event: 'gift', minDiamonds: 1000 }, action: { type: 'tarot', cards: 7, text: '👑 ดูดวงเต็มชุดให้ {user}', durationMs: 20000 } } },
-  { icon: '💬', title: 'พิมพ์ “ดูดวง” ในแชท → ไพ่ 1 ใบ', desc: 'ให้คนดูเล่นได้ทุกคน',
-    rule: { name: 'แชทดูดวง', trigger: { event: 'chat', keyword: 'ดูดวง' }, action: { type: 'tarot', cards: 1, text: '🔮 ไพ่ของ {user}', durationMs: 8000 } } },
-  { icon: '💘', title: 'ทำนายความรัก 3 ใบ', desc: 'กิฟต์ 30 เพชรขึ้นไป → ใจคุณ · ใจเขา · อนาคตความรัก',
-    rule: { name: 'ทำนายความรัก', trigger: { event: 'gift', minDiamonds: 30 }, action: { type: 'tarot', cards: 3, topic: 'love', text: '💘 ดวงความรักของ {user}', durationMs: 13000 } } },
-  { icon: '💌', title: 'พิมพ์ “ดูดวงความรัก” → ไพ่ 1 ใบ', desc: 'คนดูขอดูดวงความรักในแชท',
-    rule: { name: 'แชทดูดวงความรัก', trigger: { event: 'chat', keyword: 'ดูดวงความรัก' }, action: { type: 'tarot', cards: 1, topic: 'love', text: '💌 ความรักของ {user}', durationMs: 8000 } } },
-  { icon: '🪷', title: 'ไพ่พระแม่ลักษมี ดูดวงความรัก', desc: 'กิฟต์ 30 เพชรขึ้นไป → ไพ่ลักษมี 3 ใบ · ใจคุณ · ใจเขา · อนาคตความรัก',
-    rule: { name: 'ไพ่พระแม่ลักษมี', trigger: { event: 'gift', minDiamonds: 30 }, action: { type: 'tarot', cards: 3, deck: 'lakshmi', topic: 'love', text: '🪷 ไพ่พระแม่ลักษมี ทำนายความรักของ {user}', durationMs: 13000 } } },
-  { icon: '💰', title: 'ทำนายการเงิน 3 ใบ', desc: 'กิฟต์ 99 เพชรขึ้นไป → การเงินตอนนี้ · สิ่งที่ต้องระวัง · โชคลาภ',
-    rule: { name: 'ทำนายการเงิน', trigger: { event: 'gift', minDiamonds: 99 }, action: { type: 'tarot', cards: 3, topic: 'money', text: '💰 ดวงการเงินของ {user}', durationMs: 13000 } } },
-  { icon: '🪞', title: 'ทำนายตัวตน 3 ใบ', desc: 'กิฟต์ 30 เพชรขึ้นไป → ตัวตนจริง · ที่คนอื่นมอง · จุดเด่น',
-    rule: { name: 'ทำนายตัวตน', trigger: { event: 'gift', minDiamonds: 30 }, action: { type: 'tarot', cards: 3, topic: 'self', text: '🪞 ตัวตนของ {user}', durationMs: 13000 } } },
-  { icon: '💃', title: 'มาสคอตเต้น', desc: 'ได้ Finger Heart → ตัวแทนวีเจเต้นบนจอ',
-    rule: { name: 'มาสคอตเต้น', trigger: { event: 'gift', giftName: 'Finger Heart' }, action: { type: 'mascot', move: 'dance', text: '💃 เต้นให้ {user} ดู!' } } },
-  { icon: '💋', title: 'มาสคอตเดินมาส่งจุ๊บ', desc: 'ได้ Rosa → เดินเข้ามาส่งจุ๊บ แล้วเดินกลับ',
-    rule: { name: 'มาสคอตส่งจุ๊บ', trigger: { event: 'gift', giftName: 'Rosa' }, action: { type: 'mascot', move: 'kiss' } } },
-  { icon: '📅', title: 'เปิดไพ่ประจำวัน', desc: 'พิมพ์ "ไพ่ประจำวัน" ในแชท → ไพ่ของวันนี้ (คนเดิมได้ใบเดิมทั้งวัน)',
-    rule: { name: 'เปิดไพ่ประจำวัน', trigger: { event: 'chat', keyword: 'ไพ่ประจำวัน' }, action: { type: 'tarot', cards: 1, topic: 'daily', text: '📅 ไพ่ประจำวันของ {user}', durationMs: 9000 } } },
-  { icon: '🦋', title: 'ได้ Rose → ผีเสื้อเทพนิยาย', desc: 'ผีเสื้อปีกวาวบินข้ามจอ โปรยผงประกาย',
-    rule: { name: 'ผีเสื้อเทพนิยาย', trigger: { event: 'gift', giftName: 'Rose' }, action: { type: 'effect', effect: 'butterflies', count: 12, text: '🦋 {user} เสกผีเสื้อให้ ✨', durationMs: 8000 } } },
-  { icon: '⚔️', title: 'ร่างกายต้องการดาบ', desc: 'ได้กิฟต์ → สุ่มไพ่ชุดดาบ 1 ใบ ตามเทรนด์',
-    rule: { name: 'ร่างกายต้องการดาบ', trigger: { event: 'gift', minDiamonds: 1 }, action: { type: 'tarot', cards: 1, deck: 'swords', text: '⚔️ ร่างกายของ {user} ต้องการดาบ!', durationMs: 8000 } } },
-  { icon: '💖', title: 'มีคนติดตาม → ข้อความขอบคุณ', desc: '“ขอบคุณ {user} ที่กดติดตามนะ”',
-    rule: { name: 'ขอบคุณผู้ติดตามใหม่', trigger: { event: 'follow' }, action: { type: 'text', text: '💖 ขอบคุณ {user} ที่กดติดตามนะ!', durationMs: 4000 } } },
-  { icon: '🔁', title: 'มีคนแชร์ → ข้อความขอบคุณ', desc: 'กระตุ้นให้คนช่วยแชร์ไลฟ์',
-    rule: { name: 'ขอบคุณที่แชร์', trigger: { event: 'share' }, action: { type: 'text', text: '🔁 ขอบคุณ {user} ที่ช่วยแชร์ไลฟ์ 🙏', durationMs: 4000 } } },
-  { icon: '🎉', title: 'กิฟต์ 500 เพชรขึ้นไป → ข้อความว้าว', desc: 'ฉลองให้คนส่งกิฟต์ใหญ่',
-    rule: { name: 'ว้าว! กิฟต์ใหญ่ (500+)', trigger: { event: 'gift', minDiamonds: 500 }, action: { type: 'text', text: '🎉 ว้าว! {user} ใจดีสุด ๆ ขอบคุณมาก!', durationMs: 5000 } } },
-  { icon: '💡', title: 'กิฟต์ 100 เพชรขึ้นไป → ป้ายไฟขอบคุณ', desc: 'ป้าย LED วิ่ง “ขอบคุณ {user}” กลางจอ',
-    rule: { name: 'ป้ายไฟขอบคุณ (100💎+)', trigger: { event: 'gift', minDiamonds: 100 }, action: { type: 'sign', signStyle: 'led', signMode: 'scroll', signPos: 'center', color: '#ffcf5c', text: '🎉 ขอบคุณ {user} ใจดีสุด ๆ 💖', durationMs: 7000 } } },
-  { icon: '🌈', title: 'มีคนติดตาม → ป้ายนีออน', desc: 'ป้ายนีออนเต้นตุบ ๆ “{user} ติดตามแล้ว”',
-    rule: { name: 'ป้ายนีออนผู้ติดตาม', trigger: { event: 'follow' }, action: { type: 'sign', signStyle: 'neon', signMode: 'pulse', signPos: 'top', color: '#ff4fa3', text: '💗 {user} ติดตามแล้ว ขอบคุณน้า', durationMs: 4000 } } },
-  { icon: '🥊', title: 'ได้ Rose → ส่งนวม', desc: 'นวมน่ารักพุ่งมาต่อยกลางจอ ปั้ก! พร้อมเสียงตื่นเต้น',
-    rule: { name: 'ส่งนวม', trigger: { event: 'gift', giftName: 'Rose' }, action: { type: 'glove', count: 1, text: '🥊 {user} ส่งนวม!', durationMs: 4000 } } },
-  { icon: '🌟', title: 'ได้ Galaxy → ข้อความพิเศษ', desc: 'ขอบคุณแบบเฉพาะกิฟต์',
-    rule: { name: 'ขอบคุณ Galaxy', trigger: { event: 'gift', giftName: 'Galaxy' }, action: { type: 'text', text: '🌌 {user} ส่ง Galaxy! รักเลย 💜', durationMs: 5000 } } },
-];
+const EMPTY: Draft = { name: '', enabled: true, event: 'gift', giftName: '', minDiamonds: '', keyword: '', pk: 'win', pkSide: '', type: 'sound', url: '', sound: 'chime', text: '', durationSec: '5', cards: '1', deck: 'full', topic: 'general', count: '12', effect: 'butterflies', move: 'dance', repeat: '1', tint: 'pink', signStyle: 'led', signMode: 'scroll', signPos: 'top', color: '#ff4fa3' };
 
 /** เสียงสำเร็จรูป — ชุดเดียวกับ overlay/js/sfx.js (ฟังตัวอย่างโดยโหลดไฟล์นั้นมาเล่น) */
 const SFX: [string, string][] = [['chime', '🔔 กริ๊ง'], ['coin', '🪙 เหรียญ'], ['levelup', '⬆️ เลเวลอัป'], ['fanfare', '🎺 ฟันแฟร์'], ['magic', '✨ เวทมนตร์'], ['pop', '🫧 ป๊อป'], ['whoosh', '💨 วู้ช'], ['drum', '🥁 ตึ่งโป๊ะ'], ['boing', '🌀 ดึ๋ง'], ['heart', '💗 หัวใจ'], ['applause', '👏 ปรบมือ'], ['alarm', '🚨 ไซเรน']];
@@ -146,6 +79,7 @@ function toDraft(r: Rule): Draft {
     deck: r.action.deck ?? 'full',
     topic: r.action.topic ?? 'general',
     count: String(r.action.count ?? 12),
+    effect: r.action.effect ?? 'butterflies',
     move: r.action.move ?? 'dance',
     repeat: String(r.action.repeat ?? 1),
     tint: r.action.tint ?? 'pink',
@@ -167,7 +101,7 @@ function toBody(d: Draft) {
   if (d.type === 'sound' && d.sound) action.sound = d.sound;
   if (d.type === 'mascot') action.move = d.move;
   if (d.type === 'glove') action.count = Math.max(1, Math.min(5, Number(d.count) || 1));
-  if (d.type === 'effect') { action.tint = d.tint; action.effect = 'butterflies'; action.count = Math.max(1, Math.min(30, Number(d.count) || 12)); }
+  if (d.type === 'effect') { action.tint = d.tint; action.effect = d.effect; action.count = Math.max(1, Math.min(30, Number(d.count) || 12)); }
   if (d.text.trim()) action.text = d.text.trim();
   if (d.type === 'tarot') { action.cards = Number(d.cards) || 1; if (d.deck !== 'full') action.deck = d.deck; if (d.topic !== 'general') action.topic = d.topic; }
   if (d.type === 'sign') { action.signStyle = d.signStyle; action.signMode = d.signMode; action.signPos = d.signPos; if (/^#[0-9a-fA-F]{3,8}$/.test(d.color)) action.color = d.color; }
@@ -184,7 +118,7 @@ function describe(r: Rule, t: typeof translate): string {
   if (tr.event === 'gift' && !tr.giftName && tr.minDiamonds) s += ` ≥ ${tr.minDiamonds} 💎`;
   if (tr.event === 'chat') s += ` “${tr.keyword ?? ''}”`;
   if (tr.event === 'pk') s += ` ${t(PK_LABELS[tr.pk ?? ''] ?? '')}${tr.pkSide === 'us' ? t(' (ให้เรา)') : tr.pkSide === 'them' ? t(' (ใส่คู่แข่ง)') : ''}`;
-  return `${s} → ${t(ACTION_LABELS[r.action.type])}${r.action.type === 'tarot' ? ` ${t('{n} ใบ', { n: r.action.cards ?? 1 })}` : ''}${r.action.text ? ` “${r.action.text}”` : ''}`;
+  return `${s} → ${t(ACTION_LABELS[r.action.type])}${r.action.type === 'tarot' ? ` ${t('{n} ใบ', { n: r.action.cards ?? 1 })}` : ''}${r.action.type === 'effect' ? ` ${t(effectLabel(r.action.effect))}` : ''}${r.action.text ? ` “${r.action.text}”` : ''}`;
 }
 
 export default function ActionsPage() {
@@ -311,6 +245,12 @@ function ActionsInner() {
     finally { setAdding(null); }
   }
   const have = new Set((rules ?? []).map((r) => r.name));
+  // เทมเพลตจัดหมวด: ไพ่ทาโร่ = แอดมินเท่านั้น (เหมือนเดิม) · โชว์เฉพาะหมวดที่มีเทมเพลต
+  const tplVisible = TEMPLATES.filter((tp) => isAdmin || tp.rule.action.type !== 'tarot');
+  const tplGroups = TEMPLATE_GROUPS.map(([g, l]) => [g, l, tplVisible.filter((tp) => tp.group === g).length] as const).filter(([, , n]) => n > 0);
+  const [tplGroupSel, setTplGroup] = useState<TemplateGroup>('fx');
+  const tplGroup = tplGroups.some(([g]) => g === tplGroupSel) ? tplGroupSel : tplGroups[0]?.[0] ?? 'fx';
+  const tplShown = tplVisible.filter((tp) => tp.group === tplGroup);
   // เมนู ⚔️ PK Battle (/dashboard/actions/?pk=1): โชว์เฉพาะกฎ/เทมเพลต PK
   const sp = useSearchParams(), path = usePathname();
   const pkMode = path.includes('/dashboard/pk') || sp.get('pk') === '1'; // เปลี่ยนเมนู Actions ↔ PK แล้วหน้าเปลี่ยนตามทันที (เดิมอ่านครั้งเดียวตอนเปิด → กดจากหน้า Actions แล้วค้าง)
@@ -449,7 +389,15 @@ function ActionsInner() {
                 </Field>
               )}
               {draft.type === 'effect' && (
-                <Field label={t('สีผีเสื้อ')}>
+                <Field label={t('แบบเอฟเฟกต์')} hint={t('ดูตัวอย่างจริงทุกแบบได้ที่เทมเพลต “🦋 เอฟเฟกต์เต็มจอ” ด้านล่าง')}>
+                  {/* เปลี่ยนแบบ → ตั้งสีเริ่มต้นที่เข้ากับแบบนั้นให้ด้วย (เช่น เหรียญ = ทอง หิมะ = ฟ้า) */}
+                  <Select value={draft.effect} onChange={(e) => { const v = e.target.value as EffectName; setDraft((d) => (d ? { ...d, effect: v, tint: EFFECTS.find(([k]) => k === v)?.[2] ?? d.tint } : d)); }}>
+                    {EFFECTS.map(([k, l]) => <option key={k} value={k}>{t(l)}</option>)}
+                  </Select>
+                </Field>
+              )}
+              {draft.type === 'effect' && draft.effect !== 'coins' && (
+                <Field label={t(draft.effect === 'butterflies' ? 'สีผีเสื้อ' : 'โทนสี')}>
                   <Select value={draft.tint} onChange={(e) => set('tint', e.target.value as Draft['tint'])}>
                     <option value="pink">{t('🩷 ชมพู (ค่าเริ่มต้น)')}</option><option value="purple">{t('💜 ม่วง')}</option><option value="blue">{t('💙 ฟ้า')}</option>
                     <option value="mint">{t('💚 มิ้นต์')}</option><option value="gold">{t('💛 ทอง')}</option><option value="rainbow">{t('🌈 หลากสี')}</option>
@@ -457,7 +405,7 @@ function ActionsInner() {
                 </Field>
               )}
               {draft.type === 'effect' && (
-                <Field label={t('จำนวนผีเสื้อ')} hint={t('1–30 ตัว · ข้อความประกอบจะขึ้นเป็นหัวเรื่องกลางจอ')}>
+                <Field label={t(draft.effect === 'butterflies' ? 'จำนวนผีเสื้อ' : 'ความหนาแน่น')} hint={t(draft.effect === 'butterflies' ? '1–30 ตัว · ข้อความประกอบจะขึ้นเป็นหัวเรื่องกลางจอ' : '1–30 (มาก = อนุภาคเยอะขึ้น) · ข้อความประกอบจะขึ้นเป็นหัวเรื่องกลางจอ')}>
                   <Input type="text" inputMode="numeric" value={draft.count} onChange={(e) => set('count', toDigits(e.target.value))} />
                 </Field>
               )}
@@ -528,24 +476,62 @@ function ActionsInner() {
         <Card className="mb-6">
           <h2 className="mb-1 flex items-center gap-2 font-medium"><Sparkles className="size-4 text-pink" /> {t('เทมเพลตยอดนิยม')}</h2>
           <p className="mb-4 text-sm text-muted">{t('กด “ใช้เลย” แล้วใช้ได้ทันที — แก้ข้อความหรือเงื่อนไขทีหลังได้ด้วยปุ่มดินสอ')}</p>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {(pkMode ? PK_TEMPLATES : TEMPLATES).filter((tp) => isAdmin || tp.rule.action.type !== 'tarot').map((tp) => {
-              const added = have.has(tp.rule.name);
-              return (
-                <div key={tp.rule.name} className="flex flex-col rounded-xl border border-line bg-canvas/50 p-3">
-                  {/* PK: รูปวีเจประจำเทมเพลต (ตามการ์ด/สถานการณ์) · เทมเพลตอื่นใช้อีโมจิ */}
-                  {tp.rule.trigger.event === 'pk' && tp.rule.trigger.pk
-                    ? <img src={`/pk-tpl/${tp.rule.trigger.pk}.webp`} alt="" width={96} height={96} loading="lazy" className="mx-auto -mt-1 size-24 object-contain drop-shadow-md" />
-                    : <div className="text-2xl">{tp.icon}</div>}
-                  <div className="mt-1 text-sm font-medium leading-snug">{t(tp.title)}</div>
-                  <div className="mt-0.5 flex-1 text-xs text-muted">{t(tp.desc)}</div>
-                  <Button variant={added ? 'ghost' : 'secondary'} className="mt-3 w-full" disabled={added} loading={adding === tp.rule.name} onClick={() => applyTemplate(tp)}>
-                    {added ? <><Check className="size-4" /> {t('เพิ่มแล้ว')}</> : t('ใช้เลย')}
-                  </Button>
+          {pkMode ? (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {PK_TEMPLATES.map((tp) => {
+                const added = have.has(tp.rule.name);
+                return (
+                  <div key={tp.rule.name} className="flex flex-col rounded-xl border border-line bg-canvas/50 p-3">
+                    {/* PK: รูปวีเจประจำเทมเพลต (ตามการ์ด/สถานการณ์) */}
+                    {tp.rule.trigger.pk
+                      ? <img src={`/pk-tpl/${tp.rule.trigger.pk}.webp`} alt="" width={96} height={96} loading="lazy" className="mx-auto -mt-1 size-24 object-contain drop-shadow-md" />
+                      : <div className="text-2xl">{tp.icon}</div>}
+                    <div className="mt-1 text-sm font-medium leading-snug">{t(tp.title)}</div>
+                    <div className="mt-0.5 flex-1 text-xs text-muted">{t(tp.desc)}</div>
+                    <Button variant={added ? 'ghost' : 'secondary'} className="mt-3 w-full" disabled={added} loading={adding === tp.rule.name} onClick={() => applyTemplate(tp)}>
+                      {added ? <><Check className="size-4" /> {t('เพิ่มแล้ว')}</> : t('ใช้เลย')}
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <>
+              {/* แถบหมวด (แบบเดียวกับแถบสลับแบบสะสมของขวัญ) — มือถือเลื่อนซ้ายขวาได้ */}
+              <div className="-mx-4 mb-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+                <div className="flex w-max gap-1.5 rounded-2xl border border-line bg-white p-1.5 shadow-sm" role="tablist">
+                  {tplGroups.map(([g, label, n]) => (
+                    <button key={g} type="button" role="tab" aria-selected={g === tplGroup} onClick={() => setTplGroup(g)}
+                      className={`whitespace-nowrap rounded-xl px-3 py-1.5 text-sm transition ${g === tplGroup ? 'bg-pink font-medium text-white' : 'text-muted hover:bg-pink-soft hover:text-ink'}`}>
+                      {t(label)} <span className={`ml-0.5 text-xs ${g === tplGroup ? 'text-white/80' : 'text-muted/70'}`}>{n}</span>
+                    </button>
+                  ))}
                 </div>
-              );
-            })}
-          </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4">
+                {tplShown.map((tp) => {
+                  const added = have.has(tp.rule.name);
+                  return (
+                    <div key={tp.rule.name} className={`group flex flex-col overflow-hidden rounded-xl border bg-white transition ${added ? 'border-pink/40' : 'border-line hover:border-pink/40 hover:shadow-md'}`}>
+                      {/* ตัวอย่างจริง: อัดจากวิดเจ็ต FX ตอนเล่นเอฟเฟกต์นั้น (public/tpl/<id>.webp) · อีโมจิเป็นป้ายเล็กมุมซ้าย */}
+                      <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-pink-soft to-violet-soft">
+                        {tp.id && <img src={`/tpl/${tp.id}.webp`} alt={t(tp.title)} width={480} height={270} loading="lazy" decoding="async"
+                          className="size-full object-cover transition duration-300 group-hover:scale-105" />}
+                        <span className="absolute left-1.5 top-1.5 grid size-7 place-items-center rounded-full bg-white/90 text-sm shadow-sm sm:size-8 sm:text-base">{tp.icon}</span>
+                      </div>
+                      <div className="flex flex-1 flex-col p-2.5 sm:p-3">
+                        <div className="text-[13px] font-medium leading-snug sm:text-sm">{t(tp.title)}</div>
+                        <div className="mt-0.5 line-clamp-3 flex-1 text-[11px] leading-snug text-muted sm:text-xs">{t(tp.desc)}</div>
+                        <Button variant={added ? 'ghost' : 'secondary'} className="mt-2.5 w-full px-2 text-sm" disabled={added} loading={adding === tp.rule.name} onClick={() => applyTemplate(tp)}>
+                          {added ? <><Check className="size-4" /> {t('เพิ่มแล้ว')}</> : t('ใช้เลย')}
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </Card>
       )}
 

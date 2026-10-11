@@ -85,6 +85,7 @@
   .burst i { position:absolute; left:0; top:0; font-size:34px; animation:burst .9s ease-out forwards; }
   @keyframes burst { from { transform:translate(-50%,-50%) scale(.3); opacity:1 } to { transform:translate(calc(-50% + var(--x)),calc(-50% + var(--y))) scale(1.1) rotate(var(--r)); opacity:0 } }
   .shake { animation:shake .35s linear; } @keyframes shake { 20% { transform:translate(-10px,6px) } 40% { transform:translate(9px,-7px) } 60% { transform:translate(-7px,-4px) } 80% { transform:translate(5px,5px) } }
+  .pfx { position:fixed; inset:0; width:100%; height:100%; pointer-events:none; }
   .ftitle { position:fixed; left:0; right:0; top:12%; text-align:center; font-size:44px; color:#fff; pointer-events:none;
     text-shadow:0 0 12px rgba(255,180,240,.9), 0 2px 6px rgba(80,20,90,.7); animation:tPop .6s both, fade .8s var(--out,5s) forwards; }
   /* ป้ายไฟ (Action) — แบบเดียวกับวิดเจ็ตป้ายไฟ แต่โผล่ชั่วคราว */
@@ -381,6 +382,169 @@
       }
     }
 
+    // ---- เอฟเฟกต์อนุภาคเต็มจอ 10 แบบ (ซากุระ หัวใจ เหรียญ ดาว หิมะ ฟองสบู่ ลูกโป่ง กลีบกุหลาบ หิ่งห้อย คอนเฟตติ) ----
+    // ใช้ canvas เดียวร่วมกันทุกเอฟเฟกต์ · รูปอนุภาควาดล่วงหน้าเป็น sprite ครั้งเดียว → แต่ละเฟรมแค่ drawImage (GPU เร็ว ลื่นใน OBS)
+    // จำกัดอนุภาครวม MAXP ชิ้น · หมดเวลา durationMs แล้วค่อย ๆ จางหาย · ไม่มีอนุภาคเหลือ → ถอด canvas ออก หยุดลูป
+    const PAL={ pink:['#ffe0ef','#ff9fcd','#ff6fb1','#e84d97'], blue:['#e0f2ff','#9fd4ff','#62b1ff','#3d8bf0'], purple:['#efe4ff','#c9adff','#a283ff','#7d5ce6'],
+      mint:['#dcfff2','#97f0cf','#4fd6a8','#2bb487'], gold:['#fff6cf','#ffe07a','#ffbe3d','#f09a1a'] };
+    const TINTS=['pink','blue','purple','mint','gold'];
+    const palOf=(a,i,def)=>{ const k=a.tint||def; return PAL[k==='rainbow'?TINTS[i%5]:(PAL[k]?k:def==='rainbow'?TINTS[i%5]:def)]; };
+    const rgba=(h,al)=>{ const n=parseInt(h.slice(1),16); return `rgba(${n>>16},${(n>>8)&255},${n&255},${al})`; };
+    const rnd=(a,b)=>a+Math.random()*(b-a);
+    // sprite: วาดครั้งเดียวที่ความละเอียด 2 เท่า แล้วเก็บไว้ใช้ซ้ำ
+    const SPR={};
+    function spr(key,w,h,draw){ if(SPR[key]) return SPR[key]; const c=document.createElement('canvas'); c.width=w*2; c.height=h*2; const g=c.getContext('2d'); g.scale(2,2); draw(g,w,h); return SPR[key]={c,w,h}; }
+    const sprPetal=(c)=>spr('pt'+c[2],48,48,(g)=>{ g.translate(4,4); g.shadowColor=rgba(c[3],.45); g.shadowBlur=4;
+      g.beginPath(); g.moveTo(20,38); g.bezierCurveTo(4,30,1,12,12,3); g.quadraticCurveTo(17,1,20,9); g.quadraticCurveTo(23,1,28,3); g.bezierCurveTo(39,12,36,30,20,38); g.closePath();
+      const gr=g.createLinearGradient(20,38,20,2); gr.addColorStop(0,c[3]); gr.addColorStop(.4,c[2]); gr.addColorStop(1,c[0]); g.fillStyle=gr; g.fill();
+      g.shadowBlur=0; g.strokeStyle='rgba(255,255,255,.75)'; g.lineWidth=1; g.stroke();
+      g.beginPath(); g.moveTo(20,35); g.quadraticCurveTo(19,24,20,13); g.strokeStyle=rgba(c[3],.35); g.stroke(); });
+    const sprHeart=(c)=>spr('ht'+c[2],80,76,(g)=>{ g.translate(10,10); g.shadowColor=rgba(c[1],.9); g.shadowBlur=9;
+      g.beginPath(); g.moveTo(30,52); g.bezierCurveTo(4,34,0,16,12,8); g.bezierCurveTo(22,0,30,8,30,14); g.bezierCurveTo(30,8,38,0,48,8); g.bezierCurveTo(60,16,56,34,30,52); g.closePath();
+      const gr=g.createRadialGradient(22,18,2,30,26,34); gr.addColorStop(0,c[0]); gr.addColorStop(.45,c[1]); gr.addColorStop(1,c[3]); g.fillStyle=gr; g.fill();
+      g.shadowBlur=0; g.strokeStyle='rgba(255,255,255,.85)'; g.lineWidth=2; g.stroke();
+      g.save(); g.translate(18,16); g.rotate(-.6); g.beginPath(); g.ellipse(0,0,6.5,3.6,0,0,6.3); g.fillStyle='rgba(255,255,255,.8)'; g.fill(); g.restore();
+      g.beginPath(); g.arc(42,14,2.2,0,6.3); g.fillStyle='rgba(255,255,255,.7)'; g.fill(); });
+    const sprCoin=()=>spr('coin',64,64,(g)=>{ g.translate(32,32); g.shadowColor='rgba(255,200,60,.85)'; g.shadowBlur=8;
+      const gr=g.createRadialGradient(-8,-9,2,0,0,26); gr.addColorStop(0,'#fff6c4'); gr.addColorStop(.5,'#ffd24a'); gr.addColorStop(1,'#e39b12');
+      g.beginPath(); g.arc(0,0,25,0,6.3); g.fillStyle=gr; g.fill(); g.shadowBlur=0; g.lineWidth=3; g.strokeStyle='#c98309'; g.stroke();
+      g.beginPath(); g.arc(0,0,18,0,6.3); g.lineWidth=2; g.strokeStyle='rgba(255,240,170,.95)'; g.stroke();
+      g.font='bold 24px Kanit, sans-serif'; g.textAlign='center'; g.textBaseline='middle'; g.fillStyle='#c98309'; g.fillText('฿',1,2); g.fillStyle='#fff3b0'; g.fillText('฿',0,0);
+      g.beginPath(); g.arc(0,0,22,3.6,4.6); g.lineWidth=3; g.strokeStyle='rgba(255,255,255,.8)'; g.lineCap='round'; g.stroke(); });
+    const starPath=(g,R,r,n)=>{ g.beginPath(); for(let k=0;k<n*2;k++){ const rr=k%2?r:R, an=-Math.PI/2+k*Math.PI/n; g.lineTo(Math.cos(an)*rr,Math.sin(an)*rr); } g.closePath(); };
+    const sprStar=(c)=>spr('st'+c[2],72,72,(g)=>{ g.translate(36,36);
+      const gl=g.createRadialGradient(0,0,0,0,0,34); gl.addColorStop(0,rgba(c[1],.55)); gl.addColorStop(1,rgba(c[1],0)); g.fillStyle=gl; g.fillRect(-36,-36,72,72);
+      starPath(g,20,8.5,5); const gr=g.createRadialGradient(-3,-4,1,0,0,20); gr.addColorStop(0,'#fff'); gr.addColorStop(.5,c[1]); gr.addColorStop(1,c[2]);
+      g.fillStyle=gr; g.fill(); g.lineJoin='round'; g.lineWidth=1.6; g.strokeStyle='rgba(255,255,255,.9)'; g.stroke(); });
+    const sprTwinkle=(c)=>spr('tw'+c[1],48,48,(g)=>{ g.translate(24,24);
+      const gl=g.createRadialGradient(0,0,0,0,0,16); gl.addColorStop(0,'rgba(255,255,255,.95)'); gl.addColorStop(.35,rgba(c[1],.6)); gl.addColorStop(1,rgba(c[1],0)); g.fillStyle=gl; g.fillRect(-24,-24,48,48);
+      starPath(g,22,3,4); g.fillStyle='#fff'; g.fill(); });
+    const sprFlake=(c)=>spr('fl'+c[1],64,64,(g)=>{ g.translate(32,32); g.shadowColor=rgba(c[2],.9); g.shadowBlur=5; g.strokeStyle='#fff'; g.lineCap='round'; g.lineWidth=2.6;
+      for(let k=0;k<6;k++){ g.save(); g.rotate(k*Math.PI/3); g.beginPath(); g.moveTo(0,0); g.lineTo(0,-24);
+        g.moveTo(0,-10); g.lineTo(-6,-16); g.moveTo(0,-10); g.lineTo(6,-16); g.moveTo(0,-17); g.lineTo(-4,-21); g.moveTo(0,-17); g.lineTo(4,-21); g.stroke(); g.restore(); }
+      g.beginPath(); g.arc(0,0,3.2,0,6.3); g.fillStyle='#fff'; g.fill(); });
+    const sprDot=(c)=>spr('dt'+c[0],32,32,(g)=>{ const gr=g.createRadialGradient(16,16,0,16,16,15); gr.addColorStop(0,'rgba(255,255,255,1)'); gr.addColorStop(.45,rgba(c[0],.85)); gr.addColorStop(1,rgba(c[1],0)); g.fillStyle=gr; g.fillRect(0,0,32,32); });
+    const sprBubble=()=>spr('bub',100,100,(g)=>{ g.translate(50,50);
+      const gr=g.createRadialGradient(0,0,0,0,0,44); gr.addColorStop(0,'rgba(255,255,255,.03)'); gr.addColorStop(.75,'rgba(220,235,255,.12)'); gr.addColorStop(.92,'rgba(255,255,255,.5)'); gr.addColorStop(1,'rgba(255,255,255,.9)');
+      g.beginPath(); g.arc(0,0,44,0,6.3); g.fillStyle=gr; g.fill();
+      const iri=['#ff9fcd','#ffe07a','#97f0cf','#9fd4ff','#c9adff','#ff9fcd']; g.lineWidth=3;
+      iri.forEach((col,k)=>{ g.beginPath(); g.arc(0,0,42.5,k*1.05,k*1.05+1.2); g.strokeStyle=rgba(col,.75); g.stroke(); });
+      g.save(); g.rotate(-.75); g.beginPath(); g.ellipse(0,-30,13,5.5,0,0,6.3); g.fillStyle='rgba(255,255,255,.85)'; g.fill(); g.restore();
+      g.beginPath(); g.arc(18,22,3.2,0,6.3); g.fillStyle='rgba(255,255,255,.6)'; g.fill(); });
+    const sprBalloon=(c)=>spr('bl'+c[2],80,160,(g)=>{ g.translate(40,48);
+      g.beginPath(); g.moveTo(0,40); g.quadraticCurveTo(10,52,-4,62); g.quadraticCurveTo(-14,74,2,86); g.quadraticCurveTo(12,96,0,108); g.strokeStyle='rgba(140,110,150,.65)'; g.lineWidth=1.4; g.stroke();
+      g.beginPath(); g.moveTo(0,36); g.lineTo(-5,43); g.lineTo(5,43); g.closePath(); g.fillStyle=c[3]; g.fill();
+      g.shadowColor=rgba(c[2],.5); g.shadowBlur=8;
+      g.beginPath(); g.moveTo(0,37); g.bezierCurveTo(-22,30,-32,8,-31,-8); g.bezierCurveTo(-30,-30,-14,-40,0,-40); g.bezierCurveTo(14,-40,30,-30,31,-8); g.bezierCurveTo(32,8,22,30,0,37); g.closePath();
+      const gr=g.createRadialGradient(-11,-17,3,0,-4,40); gr.addColorStop(0,c[0]); gr.addColorStop(.5,c[1]); gr.addColorStop(1,c[3]); g.fillStyle=gr; g.fill(); g.shadowBlur=0;
+      g.save(); g.translate(-14,-18); g.rotate(.45); g.beginPath(); g.ellipse(0,0,5.5,11,0,0,6.3); g.fillStyle='rgba(255,255,255,.7)'; g.fill(); g.restore(); });
+    const ROSE={ pink:['#ffd3de','#ff6f96','#e2366b','#b01c4c'] };
+    const sprRose=(c)=>spr('rs'+c[2],52,52,(g)=>{ g.translate(26,26); g.shadowColor=rgba(c[3],.45); g.shadowBlur=5;
+      g.beginPath(); g.moveTo(0,20); g.bezierCurveTo(-19,12,-21,-10,-11,-17); g.bezierCurveTo(-5,-21,5,-21,11,-17); g.bezierCurveTo(21,-10,19,12,0,20); g.closePath();
+      const gr=g.createRadialGradient(0,8,2,0,0,24); gr.addColorStop(0,c[3]); gr.addColorStop(.5,c[2]); gr.addColorStop(1,c[1]); g.fillStyle=gr; g.fill(); g.shadowBlur=0;
+      g.beginPath(); g.moveTo(-12,-15); g.bezierCurveTo(-5,-20,5,-20,12,-15); g.lineWidth=2.4; g.strokeStyle=rgba(c[0],.9); g.lineCap='round'; g.stroke(); });
+    const sprFly=(c)=>spr('ff'+c[1],56,56,(g)=>{ const gr=g.createRadialGradient(28,28,0,28,28,27); gr.addColorStop(0,'#fff'); gr.addColorStop(.12,'#fffbe0'); gr.addColorStop(.25,rgba(c[1],.85)); gr.addColorStop(.55,rgba(c[2],.28)); gr.addColorStop(1,rgba(c[2],0)); g.fillStyle=gr; g.fillRect(0,0,56,56); });
+    const sprConf=(col,k)=>spr('cf'+col+k,28,28,(g)=>{ g.translate(14,14); g.fillStyle=col;
+      if(k===0){ g.fillRect(-5,-9,10,18); g.fillStyle='rgba(255,255,255,.4)'; g.fillRect(-5,-9,3,18); }
+      else if(k===1){ g.beginPath(); g.arc(0,0,6.5,0,6.3); g.fill(); g.beginPath(); g.arc(-2,-2,2,0,6.3); g.fillStyle='rgba(255,255,255,.55)'; g.fill(); }
+      else if(k===2){ g.beginPath(); g.moveTo(-3,-12); g.quadraticCurveTo(5,-6,-3,0); g.quadraticCurveTo(-11,6,-3,12); g.strokeStyle=col; g.lineWidth=4; g.lineCap='round'; g.stroke(); }
+      else { starPath(g,9,4,5); g.fill(); } });
+    // ประกายเล็ก ๆ (ใช้ร่วม: หางดาว · เหรียญวิบวับ · หัวใจ)
+    function glint(x,y,c,U,s){ addP({img:sprTwinkle(c),x,y,r:Math.random()*.8,s:s||rnd(.25,.5),life:rnd(.4,.7),fi:.08,fo:.35,add:true,upd:(p,dt)=>{ p.r+=dt*1.5; }},0); }
+
+    const L={ cv:null, g:null, parts:[], em:[], raf:0, last:0, dpr:1, W:0, H:0, U:1 }, MAXP=420;
+    function pfSize(){ L.dpr=Math.min(2,window.devicePixelRatio||1); L.W=innerWidth; L.H=innerHeight; L.U=Math.max(.6,Math.min(L.W,L.H)/720); if(L.cv){ L.cv.width=L.W*L.dpr|0; L.cv.height=L.H*L.dpr|0; } }
+    addEventListener('resize',pfSize);
+    function addP(p,kill){ if(L.parts.length>=MAXP) return; p.t=0; p.kill=kill||Infinity; L.parts.push(p); }
+    function pfLoop(now){
+      const dt=Math.min(.05,(now-L.last)/1000); L.last=now; const W=L.W, H=L.H, U=L.U, g=L.g, dpr=L.dpr;
+      for(let i=L.em.length-1;i>=0;i--){ const e=L.em[i]; if(now>=e.end){ L.em.splice(i,1); continue; }
+        e.acc+=e.rate*dt; while(e.acc>=1){ e.acc--; addP(e.fx.spawn(e.a,e.n++,W,H,U,false),e.kill); } }
+      g.setTransform(1,0,0,1,0,0); g.clearRect(0,0,L.cv.width,L.cv.height);
+      let w=0;
+      for(let i=0;i<L.parts.length;i++){ const p=L.parts[i];
+        p.t+=dt; if(now>p.kill && p.life>p.t+.6) p.life=p.t+.6; // หมดเวลา → จางออกพร้อมกัน
+        if(p.t>=p.life || p.upd(p,dt,W,H,U)===false) continue;
+        L.parts[w++]=p;
+        const al=Math.min(1,p.t/(p.fi||.35),(p.life-p.t)/(p.fo||.6))*(p.al==null?1:p.al); if(al<=.01) continue;
+        const s=p.s*U, sx=s*(p.sx==null?1:p.sx), sy=s*(p.sy==null?1:p.sy), co=Math.cos(p.r||0), si=Math.sin(p.r||0), sp=p.img;
+        g.globalAlpha=al; g.globalCompositeOperation=p.add?'lighter':'source-over';
+        g.setTransform(co*sx*dpr,si*sx*dpr,-si*sy*dpr,co*sy*dpr,p.x*dpr,p.y*dpr);
+        g.drawImage(sp.c,-sp.w/2,-sp.h/2,sp.w,sp.h);
+      }
+      L.parts.length=w;
+      if(!L.parts.length && !L.em.length){ L.cv.remove(); L.cv=null; L.raf=0; return; }
+      L.raf=requestAnimationFrame(pfLoop);
+    }
+    const flip=(v)=>Math.abs(v)<.12?(v<0?-.12:.12):v; // พลิก 3 มิติ (ไม่ให้บางจนหาย)
+    const PFX={
+      // 🌸 ซากุระร่วง: กลีบปลิวตามลม พลิกไปมา
+      sakura:{ def:'pink', rate:(n)=>n*1.1, burst:(n)=>n*2, spawn(a,i,W,H,U,b){ return { img:sprPetal(palOf(a,i,'pink')), x:rnd(0,W*1.25), y:b?rnd(-.1,.7)*H:-30*U,
+        vx:-rnd(15,55)*U, vy:rnd(45,100)*U, r:rnd(0,6.3), vr:rnd(-1.2,1.2), s:rnd(.7,1.45), ph:rnd(0,6.3), fl:rnd(2,4.5), life:40,
+        upd(p,dt,W,H,U){ p.ph+=dt; p.x+=(p.vx+Math.sin(p.ph*1.3)*30*U)*dt; p.y+=p.vy*dt; p.r+=p.vr*dt; p.sx=flip(Math.cos(p.ph*p.fl)); return p.y<H+40*U && p.x>-60*U; } }; } },
+      // 💗 หัวใจลอยขึ้น: ส่ายเบา ๆ เต้นตุบ ๆ มีประกายตามหลัง
+      hearts:{ def:'pink', rate:(n)=>n*.85, spawn(a,i,W,H,U){ const c=palOf(a,i,'pink'), vy=-rnd(80,170)*U, x=W*rnd(.04,.96);
+        return { img:sprHeart(c), c, x, x0:x, y:H+40*U, vy, s0:rnd(.45,1.25), s:1, ph:rnd(0,6.3), fq:rnd(1,2), amp:rnd(20,55), life:H*rnd(.55,1.05)/-vy, fo:1.1, gl:0,
+          upd(p,dt,W,H,U){ p.ph+=dt; p.y+=p.vy*dt; const sw=Math.sin(p.ph*p.fq); p.x=p.x0+sw*p.amp*U; p.r=sw*.22; p.s=p.s0*(1+Math.max(0,Math.sin(p.ph*7))*.07);
+            if((p.gl+=dt)>.35){ p.gl=0; glint(p.x+rnd(-15,15)*U,p.y+22*U*p.s0,p.c,U); } } }; } },
+      // 🪙 ฝนเหรียญทอง: หมุนแวววับ ร่วงเร็วขึ้นเรื่อย ๆ (สีทองเสมอ)
+      coins:{ def:'gold', rate:(n)=>n*1.3, burst:(n)=>n, spawn(a,i,W,H,U,b){ return { img:sprCoin(), x:rnd(0,W), y:b?-rnd(30,H*.6):-40*U, vx:rnd(-20,20)*U, vy:rnd(120,260)*U,
+        r:rnd(-.3,.3), s:rnd(.55,1.15), ph:rnd(0,6.3), spin:rnd(5,11), life:30, fi:.1,
+        upd(p,dt,W,H,U){ p.vy=Math.min(760*U,p.vy+380*U*dt); p.y+=p.vy*dt; p.x+=p.vx*dt; p.ph+=p.spin*dt; p.sx=flip(Math.cos(p.ph));
+          if(Math.random()<dt*1.4) glint(p.x+rnd(-10,10)*U*p.s,p.y-8*U*p.s,PAL.gold,U,rnd(.35,.6)); return p.y<H+50*U; } }; } },
+      // ⭐ ฝนดาววิบวับ: ดาวตกเฉียงมีหางประกาย + ประกายกะพริบทั่วจอ
+      stars:{ def:'gold', rate:(n)=>n*1.2, spawn(a,i,W,H,U){ const c=palOf(a,i,'gold');
+        if(i%3===0){ const pk=rnd(.5,1.1); return { img:sprTwinkle(c), x:rnd(0,W), y:rnd(0,H*.9), r:rnd(0,1), s:0, life:rnd(.9,1.6), fi:.05, fo:.2, add:true,
+          upd(p,dt){ p.s=pk*Math.sin(Math.PI*Math.min(1,p.t/p.life)); p.r+=dt*1.2; } }; }
+        return { img:sprStar(c), c, x:rnd(-.2,.95)*W, y:-40*U, vx:rnd(60,140)*U, vy:rnd(140,260)*U, r:rnd(0,6.3), vr:rnd(-1.6,1.6), s:rnd(.4,.95), ph:rnd(0,6.3), life:30, tr:0,
+          upd(p,dt,W,H,U){ p.x+=p.vx*dt; p.y+=p.vy*dt; p.r+=p.vr*dt; p.al=.7+.3*Math.sin(p.t*9+p.ph);
+            if((p.tr+=dt)>.12){ p.tr=0; glint(p.x-p.vx*.05,p.y-p.vy*.05,p.c,U,p.s*.55); } return p.y<H+40*U && p.x<W+60*U; } }; } },
+      // ❄️ หิมะโปรย: เกล็ดหิมะ 6 แฉก + ปุยหิมะ ใกล้-ไกลมีมิติ
+      snow:{ def:'blue', rate:(n)=>n*1.2, burst:(n)=>n*2, spawn(a,i,W,H,U,b){ const c=palOf(a,i,'blue'), d=Math.random(), fk=d>.45, x=rnd(-.05,1.05)*W;
+        return { img:fk?sprFlake(c):sprDot(c), x, x0:x, y:b?rnd(-.1,.6)*H:-30*U, vy:(25+d*60)*U, s:fk?.35+d*.6:.45+d*.7, al:.55+d*.45, ph:rnd(0,6.3), fq:rnd(.5,1.2), amp:10+d*30, vr:rnd(-.6,.6), r:rnd(0,6.3), life:60, fi:.6,
+          upd(p,dt,W,H,U){ p.ph+=dt*p.fq; p.y+=p.vy*dt; p.x=p.x0+Math.sin(p.ph)*p.amp*U; p.r+=p.vr*dt; return p.y<H+30*U; } }; } },
+      // 🫧 ฟองสบู่: ลอยขึ้นช้า ๆ สีรุ้งเหลือบ บุ๋ม ๆ แล้วแตกป๊อบ
+      bubbles:{ def:'blue', rate:(n)=>n*.55, burst:(n)=>Math.ceil(n*.6), spawn(a,i,W,H,U,b){ const c=palOf(a,i,'blue'), vy=-rnd(50,120)*U, x=W*rnd(.04,.96), y=b?H*rnd(.5,1):H+60*U;
+        return { img:sprBubble(), c, x, x0:x, y, vy, s:rnd(.4,1.3), ph:rnd(0,6.3), amp:rnd(15,45), life:(y-H*rnd(-.05,.45))/-vy, fo:.12, popped:false,
+          upd(p,dt,W,H,U){ p.ph+=dt; p.y+=p.vy*dt; p.x=p.x0+Math.sin(p.ph*1.4)*p.amp*U; const q=Math.sin(p.ph*5)*.05; p.sx=1+q; p.sy=1-q;
+            if(!p.popped && p.t>p.life-.12){ p.popped=true; for(let k=0;k<7;k++){ const an=k/7*6.28, sp=rnd(90,160)*U;
+              addP({img:sprDot(p.c),x:p.x+Math.cos(an)*30*U*p.s,y:p.y+Math.sin(an)*30*U*p.s,vx:Math.cos(an)*sp,vy:Math.sin(an)*sp,s:rnd(.25,.45),life:.4,fi:.02,fo:.3,upd(d,dt){ d.x+=d.vx*dt; d.y+=d.vy*dt; d.vx*=.9; d.vy*=.9; }},0); } } } }; } },
+      // 🎈 ลูกโป่งลอย: หลากสี มีเชือก แกว่งเบา ๆ
+      balloons:{ def:'rainbow', rate:(n)=>n*.42, burst:(n)=>Math.ceil(n*.35), spawn(a,i,W,H,U,b){ const c=palOf(a,i,'rainbow'), x=W*rnd(.05,.95);
+        return { img:sprBalloon(c), x, x0:x, y:b?H*rnd(.6,1.1):H+100*U, vy:-rnd(85,160)*U, s:rnd(.6,1.15), ph:rnd(0,6.3), fq:rnd(.8,1.5), amp:rnd(12,35), life:40,
+          upd(p,dt,W,H,U){ p.ph+=dt*p.fq; p.y+=p.vy*dt; const sw=Math.sin(p.ph); p.x=p.x0+sw*p.amp*U; p.r=-Math.cos(p.ph)*.12; return p.y>-130*U; } }; } },
+      // 🌹 กลีบกุหลาบหมุนวน: บานออกจากกลางจอเป็นเกลียว + กลีบโปรยจากฟ้า
+      roses:{ def:'pink', rate:(n)=>n*1.6, burst:(n)=>n*2, spawn(a,i,W,H,U,b){ const k=a.tint||'pink', c=k==='pink'?ROSE.pink:palOf(a,i,'pink');
+        if(i%4===3 && !b) return { img:sprRose(c), x:rnd(0,W), y:-30*U, vy:rnd(60,110)*U, r:rnd(0,6.3), vr:rnd(-1.5,1.5), s:rnd(.5,1), ph:rnd(0,6.3), fl:rnd(2,4), life:30,
+          upd(p,dt,W,H,U){ p.ph+=dt; p.y+=p.vy*dt; p.x+=Math.sin(p.ph*1.5)*40*U*dt; p.r+=p.vr*dt; p.sx=flip(Math.cos(p.ph*p.fl)); return p.y<H+40*U; } };
+        return { img:sprRose(c), cx:W/2, cy:H*.45, th:rnd(0,6.3), rad:rnd(5,b?40:70)*U, w:rnd(1.4,2.6), vrad:rnd(70,150)*U, vy:rnd(10,35)*U, s:rnd(.5,1.05), fl:rnd(2.5,5), x:0, y:0, life:14,
+          upd(p,dt,W,H,U){ p.th+=p.w*dt*Math.max(.3,1-p.rad/(Math.max(W,H)*.7)); p.rad+=p.vrad*dt; p.cy+=p.vy*dt;
+            p.x=p.cx+Math.cos(p.th)*p.rad; p.y=p.cy+Math.sin(p.th)*p.rad*.62; p.r=p.th+1.57+Math.sin(p.t*3)*.4; p.sx=flip(Math.cos(p.t*p.fl)); return p.rad<Math.max(W,H)*.85; } }; } },
+      // ✨ หิ่งห้อยเรืองแสง: ล่องลอยช้า ๆ กะพริบนุ่ม ๆ
+      fireflies:{ def:'gold', rate:(n)=>n*.9, burst:(n)=>Math.ceil(n*1.3), spawn(a,i,W,H,U){ const c=palOf(a,i,'gold'), x=rnd(0,W), y=H*rnd(.15,.98);
+        return { img:sprFly(c), x, y, x0:x, y0:y, s:rnd(.5,1.25), life:rnd(3.5,7), fi:.9, fo:1.2, a1:rnd(.3,.8), a2:rnd(.9,1.6), a3:rnd(.3,.7), a4:rnd(.8,1.5), p1:rnd(0,6.3), p2:rnd(0,6.3), p3:rnd(0,6.3), pf:rnd(2,4), vy:-rnd(4,16),
+          upd(p,dt,W,H,U){ const t=p.t; p.x=p.x0+(Math.sin(t*p.a1+p.p1)*45+Math.sin(t*p.a2+p.p2)*18)*U; p.y=p.y0+(Math.cos(t*p.a3+p.p3)*35+Math.sin(t*p.a4)*14+p.vy*t)*U;
+            p.al=.3+.7*Math.pow(.5+.5*Math.sin(t*p.pf+p.p2),2); } }; } },
+      // 🎊 คอนเฟตติ: ปืนยิงจากมุมล่างสองข้าง แล้วโปรยลงมาพลิ้ว ๆ
+      confetti:{ def:'rainbow', rate:(n)=>n*1.3, burst:(n)=>Math.min(160,50+n*5), emit:.6, spawn(a,i,W,H,U,b){
+        const k=a.tint&&a.tint!=='rainbow'?a.tint:null, cs=k?[PAL[k][1],PAL[k][2],PAL[k][3],'#ffffff',PAL.gold[2]]:TINTS.map((t)=>PAL[t][2]).concat(TINTS.map((t)=>PAL[t][1]));
+        const col=cs[i%cs.length], side=i%2, p={ img:sprConf(col,i%4), s:rnd(1,1.7), r:rnd(0,6.3), vr:rnd(-6,6), ph:rnd(0,6.3), fl:rnd(5,11), life:30, fi:.05, term:rnd(110,190)*U,
+          upd(p,dt,W,H,U){ p.vy=Math.min(p.term,p.vy+900*U*dt); p.vx*=1-Math.min(.9,2.4*dt); p.ph+=dt; p.x+=(p.vx+Math.sin(p.ph*2)*25*U)*dt; p.y+=p.vy*dt; p.r+=p.vr*dt; p.sx=flip(Math.cos(p.ph*p.fl)); return p.y<H+30*U; } };
+        if(b){ const gv=900*U, v=Math.sqrt(2*gv*H*rnd(.45,.95)); p.x=side?W+10*U:-10*U; p.y=H*.9; p.vy=-v; p.vx=(side?-1:1)*rnd(.25,1)*W*gv/v*1.3; p.term=rnd(110,190)*U; }
+        else { p.x=rnd(0,W); p.y=-20*U; p.vx=rnd(-30,30)*U; p.vy=rnd(60,140)*U; }
+        return p; } },
+    };
+    function showTitle(title,dur){ if(!title) return; const t=document.createElement('div'); t.className='ftitle'; t.textContent=title; t.style.setProperty('--out',(dur/1000-.8)+'s'); fx.appendChild(t); setTimeout(()=>t.remove(),dur+200); }
+    function particles(a,ev){
+      const f=PFX[a.effect], dur=Math.max(3000,a.durationMs||8000), n=Math.max(1,Math.min(30,a.count||12)), now=performance.now();
+      showTitle(fill(a.text,ev),dur);
+      if(!L.cv){ L.cv=document.createElement('canvas'); L.cv.className='pfx'; L.g=L.cv.getContext('2d'); document.body.insertBefore(L.cv,fx); pfSize(); } // ใต้ #fx → หัวเรื่องอยู่บนอนุภาค
+      if(!L.raf){ L.last=now; L.raf=requestAnimationFrame(pfLoop); }
+      const kill=now+dur;
+      if(f.burst){ const k=Math.min(160,Math.ceil(f.burst(n))); for(let i=0;i<k;i++) addP(f.spawn(a,i,L.W,L.H,L.U,true),kill); }
+      L.em.push({ fx:f, a, n:1000, acc:0, end:now+dur*(f.emit||.7), kill, rate:f.rate(n) });
+    }
+
     // ป้ายไฟชั่วคราว: LED / นีออน / ไฟหลอด / พาสเทล · วิ่ง / อยู่กับที่ / กะพริบ / เต้น
     function sign(a,ev){
       const dur=Math.max(2000,a.durationMs||6000), st=['led','neon','bulb','cute','pixel','y2k','glass','surreal','boho','victorian','graffiti','future','mwhite','mblack','mline','mpill'].includes(a.signStyle)?a.signStyle:'led';
@@ -438,7 +602,7 @@
       if(a.type==='tarot') return tarot(a,ev);
       if(a.type==='glove') return glove(a,ev);
       if(a.type==='sign') return sign(a,ev);
-      if(a.type==='effect') return butterflies(a,ev);
+      if(a.type==='effect') return a.effect&&PFX[a.effect]?particles(a,ev):butterflies(a,ev); // ผีเสื้อ = แบบเดิม · อื่น ๆ = อนุภาค canvas
       const dur=a.durationMs||5000;
       const text=fill(a.text,ev);
       const vol=Math.max(0,Math.min(1.5,a.volume==null?1:a.volume));
@@ -487,7 +651,7 @@
 
     // demo fallback — จำลองกฎ "ได้ Galaxy -> โชว์ข้อความ"
     if(!Overlay.connected){
-      const samples=[{type:'text',text:'🎉 ขอบคุณสำหรับ Galaxy!'},{type:'tarot',cards:3},{type:'effect',effect:'butterflies',text:'🦋 {user} เสกผีเสื้อ!'},{type:'sign',signStyle:'neon',signMode:'pulse',text:'💗 ขอบคุณ {user} ที่ติดตาม',durationMs:4000},{type:'glove',count:2,text:'🥊 {user} ส่งนวม!'}];
+      const samples=[{type:'text',text:'🎉 ขอบคุณสำหรับ Galaxy!'},{type:'tarot',cards:3},{type:'effect',effect:'butterflies',text:'🦋 {user} เสกผีเสื้อ!'},{type:'effect',effect:'sakura',text:'🌸 {user} โปรยซากุระ'},{type:'effect',effect:'confetti',text:'🎊 ขอบคุณ {user}!'},{type:'sign',signStyle:'neon',signMode:'pulse',text:'💗 ขอบคุณ {user} ที่ติดตาม',durationMs:4000},{type:'glove',count:2,text:'🥊 {user} ส่งนวม!'}];
       setInterval(()=>play(samples[Math.floor(Math.random()*samples.length)],{user:{nickname:'mimi'}}), 5000);
     }
   })();

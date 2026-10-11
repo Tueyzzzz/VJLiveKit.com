@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { WIDGET_SETTINGS } from '@/lib/widgetSettings';
 import { WIDGET_LABELS } from './Pricing';
 import { SFX, playSound } from '@/lib/sounds';
+import { effectLabel } from '@/lib/actionTemplates';
 import { Alert, Badge, Button, Card, Spinner } from './ui';
 
 interface Detail {
@@ -14,7 +15,7 @@ interface Detail {
     subscription: { status: string; provider: string | null; currentPeriodEnd: string | null; cancelAtPeriodEnd: boolean; plan: { code: string } } | null;
     payments: { id: string; provider: string; amountCents: number; currency: string; status: string; createdAt: string }[];
     overlayTokens: { id: string; label: string | null; revoked: boolean; createdAt: string }[];
-    actionRules: { id: string; name: string; enabled: boolean; trigger: { event: string; giftName?: string; minDiamonds?: number; keyword?: string }; action: { type: string; sound?: string; url?: string; text?: string; cards?: number; signStyle?: string; volume?: number; key?: string; repeat?: number } }[];
+    actionRules: { id: string; name: string; enabled: boolean; trigger: { event: string; giftName?: string; minDiamonds?: number; keyword?: string }; action: { type: string; effect?: string; sound?: string; url?: string; text?: string; cards?: number; signStyle?: string; volume?: number; key?: string; repeat?: number } }[];
     widgetConfigs: { type: string; updatedAt: string; settings: Record<string, unknown> | null }[];
   };
   entitlements: { plan: string; trialEndsAt?: string; widgets: string[] };
@@ -41,7 +42,7 @@ function describeSettings(type: string, s: Record<string, unknown> | null): [str
 }
 const actionText = (a: Detail['user']['actionRules'][number]['action']) =>
   a.type === 'sound' ? `🔊 ${a.sound ? (SFX.find(([id]) => id === a.sound)?.[1] ?? a.sound) : 'ไฟล์ของลูกค้า'}${a.volume != null ? ` · ${Math.round(a.volume * 100)}%` : ''}${a.key ? ` · ปุ่มลัด ${a.key}` : ''}`
-    : a.type === 'tarot' ? `🔮 ไพ่ ${a.cards ?? 1} ใบ` : a.type === 'sign' ? `💡 ป้ายไฟ ${a.signStyle ?? 'led'}` : a.type === 'effect' ? '🦋 ผีเสื้อ' : a.type;
+    : a.type === 'tarot' ? `🔮 ไพ่ ${a.cards ?? 1} ใบ` : a.type === 'sign' ? `💡 ป้ายไฟ ${a.signStyle ?? 'led'}` : a.type === 'effect' ? effectLabel(a.effect) : a.type;
 
 const d = (s?: string | null) => (s ? new Date(s).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }) : '-');
 const PLAN: Record<string, string> = { pro: 'Pro', trial: 'ทดลองฟรี', free: 'Free' };

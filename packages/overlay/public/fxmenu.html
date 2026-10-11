@@ -78,6 +78,8 @@
     animation:ringSpin var(--rs,6s) linear infinite; }
   .row:nth-child(2n) .ring { animation-direction:reverse; } /* สลับทิศ ดูมีชีวิต */
   @keyframes ringSpin { from { transform:rotate(0deg) } to { transform:rotate(360deg) } }
+  /* กรอบรูปทรง (หัวใจ ดาว หกเหลี่ยม หูแมว มงกุฎ โบว์) หมุนแล้วดูแปลก → เต้นตุบ ๆ เบา ๆ แทน */
+  .ring.still { animation:ringPulse 1.8s ease-in-out infinite; } @keyframes ringPulse { 0%,100% { transform:scale(1) } 50% { transform:scale(1.05) } }
   /* วงแหวนเส้นบาง (?ring=t1..t10) — วาดด้วย CSS ไม่ใช้รูป: เส้นบาง ~2px ไล่สีเป็นหางดาวหาง มีจุดสว่างวิ่งนำ */
   .ring.thin { width:128%; height:128%; margin:-64% 0 0 -64%; border-radius:50%; background:var(--tg);
     -webkit-mask:radial-gradient(farthest-side, transparent calc(100% - var(--tw,2.5px)), #000 calc(100% - var(--tw,2.5px) + .5px));
@@ -126,8 +128,9 @@
       t9: ['repeating-conic-gradient(#ffffff 0deg 3deg, transparent 3deg 12deg)', '#b9e6ff', 0],
       t10: ['linear-gradient(#ffffff55, #ffffff55)', '#e8e8f0', 1],
     };
-    const RING = RING_RAW === 'mix' ? 'mix' : THIN[RING_RAW] ? RING_RAW : RN >= 1 && RN <= 30 ? String(RN).padStart(2, '0') : 'off';
-    const RING_GLOW = ['#ffd76a', '#ffb3e6', '#9fd4ff', '#ffc0d8', '#ff4fd8', '#ff8a3d', '#bfe9ff', '#b48bff', '#ffd24a', '#fff1e0', '#ffb0cf', '#7fd8ff', '#ff5a7a', '#ffd76a', '#e6c2ff', '#e8f1ff', '#ffcf5c', '#ff6b8a', '#9dff8a', '#c8f4ff', '#ffd76a', '#ffb3d6', '#bfe9ff', '#d7c2ff', '#ffe3f3', '#fff6f0', '#ffd24a', '#ffc6a8', '#e8f1ff', '#ffffff'];
+    const RING = RING_RAW === 'mix' ? 'mix' : THIN[RING_RAW] ? RING_RAW : RN >= 1 && RN <= 40 ? String(RN).padStart(2, '0') : 'off';
+    const RING_GLOW = ['#ffd76a', '#ffb3e6', '#9fd4ff', '#ffc0d8', '#ff4fd8', '#ff8a3d', '#bfe9ff', '#b48bff', '#ffd24a', '#fff1e0', '#ffb0cf', '#7fd8ff', '#ff5a7a', '#ffd76a', '#e6c2ff', '#e8f1ff', '#ffcf5c', '#ff6b8a', '#9dff8a', '#c8f4ff', '#ffd76a', '#ffb3d6', '#bfe9ff', '#d7c2ff', '#ffe3f3', '#fff6f0', '#ffd24a', '#ffc6a8', '#e8f1ff', '#ffffff', '#ff8fc8', '#ffd24a', '#ff4fd8', '#ffc0d8', '#d7c2ff', '#ff5a7a', '#ffb3d6', '#b48bff', '#fff1e0', '#ffd76a'];
+    const RING_STILL = new Set(['31', '32', '33', '35', '36', '37']);
     if (RING !== 'off') {
       box.classList.add('has-ring');
       box.style.setProperty('--rs', Math.max(2, Math.min(20, parseFloat(P('ringSpeed', '6')) || 6)) + 's');
@@ -167,7 +170,7 @@
       if (RING !== 'off') { // ใส่วงแหวนไว้ใต้รูปของขวัญ (เริ่มมุมต่างกันนิดหน่อย ไม่หมุนพร้อมกันเป๊ะ)
         const n = ringFor(i || 0), rg = document.createElement('span'); rg.className = 'ring';
         if (THIN[n]) { const [g, glow, dot, dbl] = THIN[n]; rg.classList.add('thin'); if (dbl) rg.classList.add('dbl'); rg.style.setProperty('--tg', g); rg.style.setProperty('--rg', glow); if (!dot) rg.style.setProperty('--dot', 'none'); }
-        else { rg.style.backgroundImage = `url(rings/ring-${n}.webp)`; rg.style.setProperty('--rg', RING_GLOW[+n - 1] + 'aa'); }
+        else { rg.style.backgroundImage = `url(rings/ring-${n}.webp)`; rg.style.setProperty('--rg', RING_GLOW[+n - 1] + 'aa'); if (RING_STILL.has(n)) rg.classList.add('still'); }
         rg.style.animationDelay = -((i || 0) * 1.3) + 's'; ico.prepend(rg);
       }
       tx.append(what, how); r.append(ico, tx); return r;

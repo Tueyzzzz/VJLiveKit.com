@@ -148,7 +148,7 @@ function WidgetPreview({ type, config, live, onLive }: { type: string; config?: 
   return (
     <div ref={ref} className="group relative aspect-video overflow-hidden rounded-xl"
       onMouseEnter={() => onLive(true)} onMouseLeave={() => onLive(false)}
-      style={{ background: 'radial-gradient(circle at 30% 20%, #3a2d52, #17121f 70%)' }}>
+      style={{ background: 'linear-gradient(135deg, #ffe3f0, #ece3ff)' }}> {/* พื้นชมพู-ม่วงอ่อน แบบเดียวกับการ์ดสะสมของขวัญ */}
       {live && scale > 0 ? (
         <iframe src={`${API_BASE}/overlay/${type}.html?demo=1&reset=1${configQuery(config)}`} title={t('ตัวอย่าง {type}', { type })}
           ref={frameRef} onLoad={() => { for (const ms of [500, 1400, 2800]) setTimeout(() => { const f = measureFit(frameRef.current, FW, FH, 2.5); if (f) setFit(f); }, ms); }}

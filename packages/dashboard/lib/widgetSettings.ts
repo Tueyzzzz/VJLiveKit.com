@@ -23,7 +23,7 @@ const bg = (def = 35): FieldDef => ({ key: 'bg', label: 'ความทึบ�
 const size = (def = 1): FieldDef => ({ key: 'scale', label: 'ขนาด', type: 'range', min: 0.4, max: 2, step: 0.05, def, unit: '×' });
 // เปลี่ยนสีภาพ 3D (หมุนเฉดสี): 0 = ชมพูเดิม · -60 ม่วง · -120 ฟ้า · 180 มิ้นต์ · 120 เขียว · 50 พีช/ทอง
 // แบบสายเท่/เกมมิ่ง (นีออนฟ้า-ชมพูบนตัวดำ) — ใช้จุดสีชุดคู่นีออนของตัวเอง
-const COOL_THEMES = new Set(['gcontroller', 'gheadset', 'gpctower', 'gkeycap', 'gpotionhp', 'gpotionmp', 'glootbox', 'gcrystal', 'gpixheart', 'gtoken', 'gtrophy', 'gmushroom', 'gvr', 'gmecha', 'gsoda', 'gbattery', 'gportal', 'gghost', 'grank', 'gdice', 'capsule', 'xtech', 'xcan', 'xcan2', 'xchest', 'xrobot', 'xwolf', 'xdragon', 'arcade', 'atm', 'reactor', 'sports', 'offroad', 'jdm', 'bike', 'cyber', 'tech', 'smilitary', 'sshield']);
+const COOL_THEMES = new Set(['gcontroller', 'gheadset', 'gpctower', 'gkeycap', 'gpotionhp', 'gpotionmp', 'glootbox', 'gcrystal', 'gpixheart', 'gtoken', 'gtrophy', 'gmushroom', 'gvr', 'gmecha', 'gsoda', 'gbattery', 'gportal', 'gghost', 'grank', 'gdice', 'capsule', 'xtech', 'xcan', 'xcan2', 'xchest', 'xrobot', 'xwolf', 'xdragon', 'arcade', 'atm', 'reactor', 'sports', 'offroad', 'jdm', 'bike', 'cyber', 'tech', 'smilitary', 'sshield', 'sneon', 'slava', 'sstarship', 'sarcade', 'sblackhole']);
 const isCool = (v: Values) => COOL_THEMES.has(String(v.shape ?? v.skin ?? v.car ?? ''));
 // แบบสายนักร้อง (ไวน์แดง + ทอง/โรสโกลด์) — จุดสีชุดคู่สีหรูของตัวเอง
 const SING_THEMES = new Set(['mmic', 'mcoupe', 'mbox', 'mdrum', 'mjuke', 'gstage', 'gpiano', 'mbird', 'mcat', 'mbear', 'karaoke', 'tourbus', 'limo', 'vintage', 'notes', 'trumpet', 'drum']);
@@ -70,7 +70,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
           ['mmic', 'โหลไมโครโฟน', '🎤 สายนักร้อง', 'gj-mmic'], ['mcoupe', 'แก้วแชมเปญยักษ์', '🎤 สายนักร้อง', 'gj-mcoupe'], ['mbox', 'กล่องดนตรี', '🎤 สายนักร้อง', 'gj-mbox'], ['mdrum', 'กลองใส', '🎤 สายนักร้อง', 'gj-mdrum'], ['mjuke', 'โดมตู้เพลง', '🎤 สายนักร้อง', 'gj-mjuke'],
         ] },
         ...tint((v) => ['gcontroller', 'gheadset', 'gpctower', 'gkeycap', 'gpotionhp', 'gpotionmp', 'glootbox', 'gcrystal', 'gpixheart', 'gtoken', 'gtrophy', 'gmushroom', 'gvr', 'gmecha', 'gsoda', 'gbattery', 'gportal', 'gghost', 'grank', 'gdice', 'fcarousel', 'fballoon', 'fcotton', 'fpopcorn', 'fgumball', 'fcircus', 'fbumper', 'frocket', 'fteacup', 'fbauble', 'fsongkran', 'fkrathong', 'fgoldpot', 'fcauldron', 'feaster', 'fheartbal', 'fgiftbox', 'ffirework', 'ficecream', 'fprize', 'moak', 'mvase', 'mcloche', 'msage', 'mfishbowl', 'mmason', 'mapoth', 'mcork', 'mhex', 'mmilk', 'boba', 'cakejar', 'latte', 'milkbox', 'cupcake1', 'cupcake2', 'strawberry', 'glassbear', 'glasspig', 'glasssnowman', 'claw', 'tuktuk', 'perfume', 'diamond', 'crownjar', 'mailbox', 'hourglass', 'sakurabottle', 'ferris', 'lantern', 'pumpkinjar', 'cloud', 'planetjar', 'idolmic', 'vaseglass', 'capsule', 'heart', 'orb', 'tank', 'pig', 'sundae', 'jstar', 'jbasket', 'cauldron', 'catbank', 'jsnowman', 'catbelly', 'jdino', 'jbear', 'jfrog', 'castle', 'fishbowl', 'hearttank', 'moon', 'gacha', 'shell', 'sub', 'snow', 'van'].includes(String(v.shape))),
-        { key: 'physics', label: 'ระบบฟิสิกส์ (ทดลอง)', type: 'select', def: '', when: (v) => !['ferris', 'car', 'van', 'pig', 'smoon', 'sring', 'sufo', 'shelmet', 'sstation', 'sgalaxy', 'srocket', 'sshield', 'sobservatory', 'smilitary'].includes(String(v.shape)), options: [['', '⚡ มาตรฐาน (ลื่นสุด รับของได้หลักพัน)'], ['matter', '🧪 สมจริง — ของหมุนเอียงตามแรงกระแทก (ทดลอง)']], hint: 'แบบสมจริงใช้ Matter.js · ถ้าจอกระตุกให้กลับไปแบบมาตรฐาน' },
+        { key: 'physics', label: 'ระบบฟิสิกส์ (ทดลอง)', type: 'select', def: '', when: (v) => !['ferris', 'car', 'van', 'pig', 'smoon', 'sring', 'sufo', 'shelmet', 'sstation', 'sgalaxy', 'srocket', 'sshield', 'sobservatory', 'smilitary', 'saurora', 'scrystal', 'sneon', 'ssakura', 'scandy', 'socean', 'sice', 'slava', 'smars', 'ssun', 'sjelly', 'sbunny', 'scat', 'sstarship', 'sarcade', 'sheart', 'scloud', 'szodiac', 'sblackhole', 'sdiamond'].includes(String(v.shape)), options: [['', '⚡ มาตรฐาน (ลื่นสุด รับของได้หลักพัน)'], ['matter', '🧪 สมจริง — ของหมุนเอียงตามแรงกระแทก (ทดลอง)']], hint: 'แบบสมจริงใช้ Matter.js · ถ้าจอกระตุกให้กลับไปแบบมาตรฐาน' },
         { key: 'bounce', label: 'การเด้งของขวัญในโหล', type: 'select', def: 'normal', when: (v) => v.physics === 'matter', options: [['normal', '🪨 ปกติ (กองนิ่ง)'], ['high', '🏀 เด้งสูง'], ['orbit', '🌀 วงโคจร หมุนรอบโหล'], ['float', '🎈 ลอยเอื่อย ๆ']] },
         { key: 'bounceK', label: 'ความแรงการเด้ง', type: 'range', min: 0.2, max: 3, step: 0.1, def: 1, unit: '×', when: (v) => v.physics === 'matter' && v.bounce !== 'normal' },
         { key: 'cabs', label: 'สีกระเช้า', type: 'select', def: 'mix', when: (v) => v.shape === 'ferris', options: [['mix', 'คละสีพาสเทล'], ['pink', 'ชมพู'], ['lilac', 'ม่วงลาเวนเดอร์'], ['mint', 'มิ้นต์'], ['sky', 'ฟ้า'], ['peach', 'พีช']] },
@@ -233,6 +233,26 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
           ['sshield', 'โดมโล่พลังงาน', '🎮 สายเท่ เกมมิ่ง', 'sp-shield'],
           ['sobservatory', 'หอดูดาว', '🌸 พาสเทลน่ารัก', 'sp-observatory'],
           ['smilitary', 'ฐานทัพอวกาศ', '🎮 สายเท่ เกมมิ่ง', 'sp-military'],
+          ['saurora', 'ดาวแสงเหนือ', '🌸 พาสเทลน่ารัก', 'sp-aurora'],
+          ['scrystal', 'ถ้ำคริสตัล', '🌸 พาสเทลน่ารัก', 'sp-crystal'],
+          ['sneon', 'เมืองนีออน', '🎮 สายเท่ เกมมิ่ง', 'sp-neon'],
+          ['ssakura', 'สวนซากุระลอยฟ้า', '🌸 พาสเทลน่ารัก', 'sp-sakura'],
+          ['scandy', 'ดาวขนมหวาน', '🌸 พาสเทลน่ารัก', 'sp-candy'],
+          ['socean', 'ใต้ทะเลปะการัง', '🌸 พาสเทลน่ารัก', 'sp-ocean'],
+          ['sice', 'ดาวน้ำแข็งเพนกวิน', '🌸 พาสเทลน่ารัก', 'sp-ice'],
+          ['slava', 'ดาวลาวา', '🎮 สายเท่ เกมมิ่ง', 'sp-lava'],
+          ['smars', 'ฐานบนดาวอังคาร', '🌸 พาสเทลน่ารัก', 'sp-mars'],
+          ['ssun', 'วิหารพระอาทิตย์', '🌸 พาสเทลน่ารัก', 'sp-sun'],
+          ['sjelly', 'เนบิวลาแมงกะพรุน', '🌸 พาสเทลน่ารัก', 'sp-jelly'],
+          ['sbunny', 'ฐานกระต่ายบนดวงจันทร์', '🌸 พาสเทลน่ารัก', 'sp-bunny'],
+          ['scat', 'สถานีแมวนักบินอวกาศ', '🌸 พาสเทลน่ารัก', 'sp-cat'],
+          ['sstarship', 'ห้องบังคับยานอวกาศ', '🎮 สายเท่ เกมมิ่ง', 'sp-starship'],
+          ['sarcade', 'สถานีอาร์เคดอวกาศ', '🎮 สายเท่ เกมมิ่ง', 'sp-arcade'],
+          ['sheart', 'ดาวหัวใจ', '🌸 พาสเทลน่ารัก', 'sp-heart'],
+          ['scloud', 'อาณาจักรเมฆ', '🌸 พาสเทลน่ารัก', 'sp-cloud'],
+          ['szodiac', 'หอดูดาวจักรราศี', '🌸 พาสเทลน่ารัก', 'sp-zodiac'],
+          ['sblackhole', 'แล็บหลุมดำ', '🎮 สายเท่ เกมมิ่ง', 'sp-blackhole'],
+          ['sdiamond', 'พระราชวังเพชร', '🌸 พาสเทลน่ารัก', 'sp-diamond'],
         ] },
         ...tint(() => true),
         { key: 'fullText', label: 'ข้อความตอนโหลเต็ม', type: 'text', def: 'โหลเต็มแล้ว! 🎉', when: (v) => v.full === 'reset' },

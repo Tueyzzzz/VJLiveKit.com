@@ -87,7 +87,7 @@ export default function BeatPadPage() {
 
       {/* ตัวเครื่องของเล่นสีชมพู (รูป AI) — ซ้อน 3 ชั้น: หัว (หูแมว·หัวใจ·ปุ่มหมุนบน) · ตัวกลางยืดตามจำนวนแถว · ท้าย (ปุ่มหมุนล่าง)
           หัว/ท้ายสเกลตามความกว้างเท่านั้น (padding/margin เป็น % ของความกว้าง) · เนื้อหาทั้งหมดอยู่ในช่องเว้าตรงกลาง */}
-      <div className="relative mx-auto mt-4 max-w-3xl sm:mt-6" style={{ padding: `${DEV.padTop}% ${DEV.padX}% ${DEV.padBottom}%` }}>
+      <div className="relative mx-auto mt-4 max-w-5xl sm:mt-6" style={{ padding: `${DEV.padTop}% ${DEV.padX}% ${DEV.padBottom}%` }}>
         <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 bg-[url(/beatpad/device-top.webp)] bg-[length:100%_100%]" style={{ aspectRatio: `${DEV.w} / ${DEV.top}` }} />
         <span aria-hidden className="pointer-events-none absolute inset-0 bg-[url(/beatpad/device-mid.webp)] bg-[length:100%_100%]" style={{ marginTop: `${(DEV.top - 1) / DEV.w * 100}%`, marginBottom: `${(DEV.bot - 1) / DEV.w * 100}%` }} />
         <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 bg-[url(/beatpad/device-bot.webp)] bg-[length:100%_100%]" style={{ aspectRatio: `${DEV.w} / ${DEV.bot}` }} />
@@ -107,7 +107,7 @@ export default function BeatPadPage() {
           </label>
         </div>
 
-        <div className="grid gap-1.5 sm:gap-3" style={{ gridTemplateColumns: `repeat(${Math.min(board.cols, narrow ? 3 : 4)}, minmax(0,1fr))` }}>
+        <div className="grid gap-1.5 sm:gap-3" style={{ gridTemplateColumns: `repeat(${Math.min(board.cols, narrow ? 3 : 5)}, minmax(0,1fr))` }}>
           {Array.from({ length: slots }, (_, i) => {
             const p = board.pads[i], locked = i >= limit;
             if (locked) return (

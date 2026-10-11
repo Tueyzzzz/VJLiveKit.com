@@ -319,8 +319,9 @@ function WidgetsInner() {
           </Card>
         )).flatMap((card, i) => title === COLLECT_GROUP && list[i]?.type === 'giftjar' ? [card, ...JAR_CARDS.map((j) => (
           <Card key={j.g} className={`p-3 ${collectStyle === 'giftjar' ? 'ring-1 ring-pink/40' : ''}`}>
-            <Link href={`/dashboard/widgets/settings/?type=giftjar&g=${j.g}`} className="grid aspect-video grid-cols-4 items-end gap-1 overflow-hidden rounded-xl bg-gradient-to-br from-pink-soft to-violet-soft p-2">
-              {j.thumbs.map((k) => <img key={k} src={`${API_BASE}/overlay/themes/thumbs/gj-${k}.webp`} alt="" loading="lazy" className="w-full object-contain" />)}
+            <Link href={`/dashboard/widgets/settings/?type=giftjar&g=${j.g}`} className="grid aspect-video place-items-center overflow-hidden rounded-xl bg-gradient-to-br from-pink-soft to-violet-soft px-3 py-4">
+              {/* รูปรวมโหลในหมวด (ตัดขอบว่างแล้ว) ให้เห็นชัดเต็มการ์ด */}
+              <img src={`/cards/jar-${j.g}.webp`} alt="" loading="lazy" className="max-h-full max-w-full object-contain drop-shadow-sm" />
             </Link>
             <div className="mt-3 flex items-start justify-between gap-2">
               <div className="min-w-0">

@@ -16,6 +16,7 @@ import { mediaRoutes } from './media/routes.js';
 import { avatarRoutes } from './tiktok/avatar.js';
 import { notificationRoutes } from './admin/notifications.js';
 import { supportRoutes } from './support/routes.js';
+import { mailRoutes } from './mail/routes.js';
 import { mascotRoutes } from './mascots/routes.js';
 import { beatpadRoutes } from './media/beatpad.js';
 import { errlogRoutes, installErrorHooks } from './errlog/routes.js';
@@ -106,6 +107,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(ttsRoutes);
   await app.register(referralRoutes);
   await app.register(adminRoutes);
+  await app.register(mailRoutes);
   await app.register(donateRoutes);
   await app.register(mediaRoutes);
   await app.register(avatarRoutes);

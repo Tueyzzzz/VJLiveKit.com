@@ -90,7 +90,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   );
 }
 
-/** ลืมรหัสผ่าน: ส่งคำขอถึงแอดมิน → แอดมินตั้งรหัสชั่วคราวให้แล้วติดต่อกลับทางช่องทางที่กรอก */
+/** ลืมรหัสผ่าน: ส่งลิงก์ตั้งรหัสใหม่ไปที่อีเมล (ระบบอีเมลยังไม่พร้อม → ทีมงานติดต่อกลับทางอีเมลแทน) */
 function ForgotPassword({ onBack }: { onBack: () => void }) {
   const t = useT();
   const [busy, setBusy] = useState(false);
@@ -101,7 +101,7 @@ function ForgotPassword({ onBack }: { onBack: () => void }) {
     const form = new FormData(e.currentTarget);
     setError(null); setBusy(true);
     try {
-      await api('/api/auth/forgot', { method: 'POST', body: { email: String(form.get('email') ?? ''), contact: String(form.get('contact') ?? '') } });
+      await api('/api/auth/forgot', { method: 'POST', body: { email: String(form.get('email') ?? '') } });
       setSent(true);
     } catch (err) { setError((err as Error).message); } finally { setBusy(false); }
   }
@@ -112,20 +112,17 @@ function ForgotPassword({ onBack }: { onBack: () => void }) {
         <h1 className="mb-2 font-display text-2xl">{t('ลืมรหัสผ่าน')}</h1>
         {sent ? (
           <>
-            <Alert tone="success">{t('ส่งคำขอแล้ว ✓ ทีมงานจะตั้งรหัสผ่านชั่วคราวให้ แล้วติดต่อกลับทางช่องทางที่ให้ไว้ (ปกติภายในวันเดียวกัน) — เข้าได้แล้วเปลี่ยนรหัสใหม่ได้ที่หน้าโปรไฟล์')}</Alert>
+            <Alert tone="success">{t('ถ้าอีเมลนี้มีบัญชีอยู่ เราส่งลิงก์ตั้งรหัสผ่านใหม่ไปให้แล้ว 📩 เปิดอีเมลแล้วกดลิงก์ภายใน 30 นาที (ไม่เจอ ลองดูในโฟลเดอร์สแปม/โปรโมชัน)')}</Alert>
             <Button variant="secondary" className="mt-4 w-full" onClick={onBack}>{t('กลับไปหน้าเข้าสู่ระบบ')}</Button>
           </>
         ) : (
           <form onSubmit={onSubmit} className="space-y-4">
-            <p className="text-sm text-muted">{t('กรอกอีเมลที่ใช้สมัคร และช่องทางให้ทีมงานติดต่อกลับ เราจะตั้งรหัสผ่านชั่วคราวให้')}</p>
+            <p className="text-sm text-muted">{t('กรอกอีเมลที่ใช้สมัคร เราจะส่งลิงก์สำหรับตั้งรหัสผ่านใหม่ไปให้')}</p>
             <Field label={t('อีเมลที่ใช้สมัคร')}>
               <Input name="email" type="email" required autoComplete="username" inputMode="email" placeholder="you@example.com" />
             </Field>
-            <Field label={t('ช่องทางติดต่อกลับ')} hint={t('เช่น LINE ID, เบอร์โทร, Facebook หรือชื่อ TikTok')}>
-              <Input name="contact" required minLength={3} maxLength={200} placeholder={t('LINE: mimi123')} />
-            </Field>
             {error && <Alert>{error}</Alert>}
-            <Button type="submit" loading={busy} className="w-full">{t('ส่งคำขอรีเซ็ตรหัสผ่าน')}</Button>
+            <Button type="submit" loading={busy} className="w-full">{t('ส่งลิงก์ตั้งรหัสผ่านใหม่')}</Button>
             <button type="button" onClick={onBack} className="w-full text-center text-sm text-muted hover:text-pink">{t('← กลับไปหน้าเข้าสู่ระบบ')}</button>
           </form>
         )}

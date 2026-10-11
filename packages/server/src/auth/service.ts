@@ -1,4 +1,4 @@
-import { randomBytes, scrypt as _scrypt, timingSafeEqual } from 'node:crypto';
+import { createHash, randomBytes, scrypt as _scrypt, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
 import jwt from 'jsonwebtoken';
 import { config } from '../config/index.js';
@@ -29,5 +29,15 @@ export function signSession(claims: SessionClaims, expiresIn: '1d' | '30d' | '90
 
 export function verifySession(token: string): SessionClaims | null {
   try { return jwt.verify(token, config.jwtSecret) as SessionClaims; }
+  catch { return null; }
+}
+
+/** ลิงก์ตั้งรหัสใหม่: ผูกกับรหัสผ่านปัจจุบัน (เปลี่ยนรหัสแล้วลิงก์เดิมใช้ไม่ได้ = ใช้ได้ครั้งเดียว) อายุ 30 นาที */
+export const resetFingerprint = (hash: string | null) => createHash('sha256').update('pwreset:' + (hash ?? 'none')).digest('hex').slice(0, 20);
+export function signPasswordReset(userId: string, passwordHash: string | null): string {
+  return jwt.sign({ uid: userId, ph: resetFingerprint(passwordHash), typ: 'pwreset' }, config.jwtSecret, { expiresIn: '30m' });
+}
+export function verifyPasswordReset(token: string): { uid: string; ph: string } | null {
+  try { const c = jwt.verify(token, config.jwtSecret) as { uid?: string; ph?: string; typ?: string }; return c.typ === 'pwreset' && c.uid && c.ph ? { uid: c.uid, ph: c.ph } : null; }
   catch { return null; }
 }

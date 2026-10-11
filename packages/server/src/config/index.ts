@@ -37,6 +37,10 @@ export const config = {
   /** อีเมลแอดมิน (คั่นด้วย ,) — เข้าหน้าหลังบ้าน /dashboard/admin/ */
   adminEmails: (process.env.ADMIN_EMAILS || '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean),
 
+  /** ส่งอีเมล (ลิงก์ตั้งรหัสผ่านใหม่) ผ่าน Resend — ไม่ตั้ง = ส่งคำขอเข้าแชทแอดมินแทน */
+  resendKey: process.env.RESEND_API_KEY || undefined,
+  mailFrom: process.env.MAIL_FROM || 'VJLiveKit <no-reply@vjlivekit.com>',
+
   publicBaseUrl: (process.env.PUBLIC_BASE_URL ?? 'http://localhost:8080').replace(/\/+$/, ''),
 
   /** โฟลเดอร์ไฟล์ static ของ Dashboard (Next.js static export) — ไม่มีก็ข้าม */

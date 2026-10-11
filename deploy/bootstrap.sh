@@ -108,6 +108,8 @@ set_env STRIPE_WEBHOOK_SECRET "${STRIPE_WEBHOOK_SECRET:-}"
 set_env STRIPE_PRICE_PRO_MONTHLY "${STRIPE_PRICE_PRO_MONTHLY:-}"
 set_env ADMIN_EMAILS "${ADMIN_EMAILS:-}"
 set_env EASYSLIP_API_KEY "${EASYSLIP_API_KEY:-}"
+set_env RESEND_API_KEY "${RESEND_API_KEY:-}"
+set_env MAIL_FROM "${MAIL_FROM:-}"
 
 # ---------- 4.5) พื้นที่ดิสก์: ล้าง image เก่า (deploy บ่อย → image แท็กเก่าค้างจนดิสก์เต็ม → Postgres ล่ม) ----------
 log "พื้นที่ดิสก์ก่อนล้าง"; df -h / || true

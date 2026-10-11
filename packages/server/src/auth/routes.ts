@@ -1,7 +1,9 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { prisma } from '../db/prisma.js';
-import { hashPassword, verifyPassword, signSession } from './service.js';
+import { hashPassword, verifyPassword, signSession, signPasswordReset, verifyPasswordReset, resetFingerprint } from './service.js';
+import { sendMail } from '../mail/send.js';
+import { config } from '../config/index.js';
 import { requireUser, getUser } from './middleware.js';
 import { getEntitlements } from '../plans/index.js';
 import { recordReferral, checkReferralReward } from '../referrals/routes.js';
@@ -62,17 +64,34 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     return reply.send({ token, user: { id: user.id, email: user.email, displayName: user.displayName } });
   });
 
-  // ลืมรหัสผ่าน: ยังไม่มีระบบส่งอีเมล → ส่งคำขอเข้าแชทแอดมิน (แอดมินรีเซ็ตรหัสชั่วคราวแล้วติดต่อกลับทางช่องทางที่ให้ไว้)
+  // ลืมรหัสผ่าน: ส่งลิงก์ตั้งรหัสใหม่ทางอีเมล (อายุ 30 นาที ใช้ได้ครั้งเดียว) · ยังไม่ตั้งค่าอีเมล → ส่งคำขอเข้าแชทแอดมินแทน
   // ตอบเหมือนกันเสมอ ไม่บอกว่าอีเมลนี้มีบัญชีหรือไม่
   app.post('/api/auth/forgot', { config: { rateLimit: { max: 5, timeWindow: '1 hour' } } }, async (req, reply) => {
-    const parsed = z.object({ email: z.string().trim().email().max(200), contact: z.string().trim().min(3).max(200) }).safeParse(req.body);
-    if (!parsed.success) return reply.code(400).send({ error: 'กรอกอีเมลและช่องทางติดต่อกลับให้ครบ' });
-    const user = await prisma.user.findUnique({ where: { email: parsed.data.email.toLowerCase() }, select: { id: true } });
-    if (user) await supportNotice(user.id, `🔑 ขอรีเซ็ตรหัสผ่าน (จากหน้าเข้าสู่ระบบ)
-ติดต่อกลับ: ${parsed.data.contact}
-→ แอดมิน: เปิดข้อมูลลูกค้า กด "รีเซ็ตรหัส" แล้วส่งรหัสชั่วคราวให้ทางช่องทางนี้`);
-    else req.log.info({ email: parsed.data.email }, 'forgot-password: no such user');
+    const parsed = z.object({ email: z.string().trim().email().max(200) }).safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send({ error: 'กรอกอีเมลให้ถูกต้อง' });
+    const user = await prisma.user.findUnique({ where: { email: parsed.data.email.toLowerCase() }, select: { id: true, email: true, passwordHash: true, displayName: true } });
+    if (!user) { req.log.info({ email: parsed.data.email }, 'forgot-password: no such user'); return reply.send({ ok: true }); }
+    const link = `${config.publicBaseUrl}/reset-password/?token=${encodeURIComponent(signPasswordReset(user.id, user.passwordHash))}`;
+    const sent = await sendMail(user.email, 'ตั้งรหัสผ่านใหม่ — VJLiveKit', `
+      <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:24px;color:#3d2f45">
+        <h2 style="color:#ff4f9a">ตั้งรหัสผ่านใหม่</h2>
+        <p>สวัสดีค่ะ${user.displayName ? ' ' + escapeHtml(user.displayName) : ''} — มีคำขอตั้งรหัสผ่านใหม่สำหรับบัญชี ${escapeHtml(user.email)}</p>
+        <p style="margin:28px 0"><a href="${link}" style="background:#ff4f9a;color:#fff;padding:12px 22px;border-radius:999px;text-decoration:none;font-weight:bold">ตั้งรหัสผ่านใหม่</a></p>
+        <p style="font-size:13px;color:#8a7a95">ลิงก์ใช้ได้ 30 นาที และใช้ได้ครั้งเดียว · ถ้าไม่ได้ขอ ไม่ต้องทำอะไร รหัสเดิมยังใช้ได้ตามปกติ</p>
+      </div>`);
+    if (!sent) await supportNotice(user.id, '🔑 ขอรีเซ็ตรหัสผ่าน (จากหน้าเข้าสู่ระบบ — ระบบอีเมลยังไม่พร้อม)\n→ แอดมิน: เปิดข้อมูลลูกค้า กด "รีเซ็ตรหัส" แล้วส่งรหัสชั่วคราวให้ทางอีเมล ' + user.email);
     return reply.send({ ok: true });
+  });
+
+  // ตั้งรหัสผ่านใหม่จากลิงก์ในอีเมล → เข้าสู่ระบบให้เลย
+  app.post('/api/auth/reset', { config: { rateLimit: { max: 10, timeWindow: '15 minutes' } } }, async (req, reply) => {
+    const parsed = z.object({ token: z.string().min(10).max(2000), password: z.string().min(8).max(200) }).safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send({ error: 'รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร' });
+    const claims = verifyPasswordReset(parsed.data.token);
+    const user = claims && await prisma.user.findUnique({ where: { id: claims.uid } });
+    if (!user || claims.ph !== resetFingerprint(user.passwordHash)) return reply.code(400).send({ error: 'ลิงก์หมดอายุหรือถูกใช้ไปแล้ว — กดลืมรหัสผ่านเพื่อขอลิงก์ใหม่' });
+    await prisma.user.update({ where: { id: user.id }, data: { passwordHash: await hashPassword(parsed.data.password) } });
+    return reply.send({ token: signSession({ userId: user.id, email: user.email, role: user.role }) });
   });
 
   // ข้อมูลผู้ใช้ปัจจุบัน + สิทธิ์ตามแพลน
@@ -119,3 +138,5 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     return { user };
   });
 }
+
+const escapeHtml = (t: string) => t.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);

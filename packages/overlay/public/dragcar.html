@@ -378,8 +378,9 @@
           ties.add(hx);
         }
         ctx.lineCap = 'round';
-        ctx.lineWidth = 2.6; ctx.strokeStyle = 'rgba(70,45,100,.35)'; ctx.stroke(dr);
-        ctx.lineWidth = 1.3; ctx.strokeStyle = `rgba(255,255,255,${Math.max(0.55, Math.min(0.9, 1.1 - dl.length / 260)).toFixed(2)})`; ctx.stroke(dr);
+        // เชือกลากกระป๋อง: สีเทาอ่อน (ขอบเข้มจาง ๆ ให้เห็นบนพื้นสว่าง)
+        ctx.lineWidth = 2.6; ctx.strokeStyle = 'rgba(60,60,70,.28)'; ctx.stroke(dr);
+        ctx.lineWidth = 1.4; ctx.strokeStyle = `rgba(196,196,204,${Math.max(0.6, Math.min(0.95, 1.15 - dl.length / 260)).toFixed(2)})`; ctx.stroke(dr);
         for (const x of ties) { ctx.beginPath(); ctx.arc(x, hy, 3.6, 0, Math.PI * 2); ctx.fillStyle = '#f4f0fb'; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(120,90,160,.6)'; ctx.stroke(); }
         for (const { b, p } of dl) {
           if (b.dying) b.life -= 0.03;

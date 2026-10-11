@@ -16,6 +16,7 @@ export const EFFECTS: [EffectName, string, NonNullable<Rule['action']['tint']>][
   ['butterflies', '🦋 ผีเสื้อเทพนิยาย', 'pink'], ['sakura', '🌸 ซากุระร่วง', 'pink'], ['hearts', '💗 หัวใจลอยฟุ้ง', 'pink'], ['coins', '🪙 ฝนเหรียญทอง', 'gold'],
   ['stars', '⭐ ฝนดาววิบวับ', 'gold'], ['snow', '❄️ หิมะโปรย', 'blue'], ['bubbles', '🫧 ฟองสบู่ลอย', 'blue'], ['balloons', '🎈 ลูกโป่งลอย', 'rainbow'],
   ['roses', '🌹 กลีบกุหลาบหมุนวน', 'pink'], ['fireflies', '✨ หิ่งห้อยเรืองแสง', 'gold'], ['confetti', '🎊 คอนเฟตติฉลอง', 'rainbow'],
+  ['vcake', '🎬 เค้กปาหน้า (วิดีโอ)', 'pink'], ['vcat', '🎬 แมวร่มชูชีพ (วิดีโอ)', 'pink'], ['vchicks', '🎬 ลูกเจี๊ยบวิ่งป่วน (วิดีโอ)', 'pink'],
 ];
 export const effectLabel = (e?: string) => EFFECTS.find(([k]) => k === (e ?? 'butterflies'))?.[1] ?? EFFECTS[0][1];
 

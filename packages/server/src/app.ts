@@ -23,6 +23,7 @@ import { errlogRoutes, installErrorHooks } from './errlog/routes.js';
 import { installErrorCapture } from './errlog/store.js';
 import { settings } from './settings/index.js';
 import { config } from './config/index.js';
+import { prisma } from './db/prisma.js';
 import { OVERLAY_DIR, OVERLAY_VERSION } from './overlay-version.js';
 import { runtime } from './runtime.js';
 import { listGifts } from './tiktok/giftCatalog.js';
@@ -98,7 +99,16 @@ export async function buildApp(): Promise<FastifyInstance> {
   // ค่าสาธารณะจากหน้าตั้งค่าระบบ (ประกาศบนแดชบอร์ด · วันทดลองฟรี)
   app.get('/api/settings/public', async () => ({ announcement: settings().announcement, trialDays: settings().trialDays }));
 
-  app.get('/healthz', async () => ({ ok: true, live: runtime.liveRooms() }));
+  // liveOthers = ไลฟ์ที่ไม่ใช่บัญชีแอดมิน (Deploy อัตโนมัติรอให้ค่านี้เป็น 0 — แอดมินไลฟ์ทดสอบอยู่ก็ Deploy ได้)
+  let adminTiktok: { at: number; names: Set<string> } = { at: 0, names: new Set() };
+  app.get('/healthz', async () => {
+    if (Date.now() - adminTiktok.at > 60_000 && config.adminEmails.length) {
+      const us = await prisma.user.findMany({ where: { email: { in: config.adminEmails } }, select: { tiktokUsername: true } }).catch(() => []);
+      adminTiktok = { at: Date.now(), names: new Set(us.map((u) => (u.tiktokUsername ?? '').toLowerCase().replace(/^@/, '')).filter(Boolean)) };
+    }
+    const names = runtime.liveUsernames();
+    return { ok: true, live: runtime.liveRooms(), liveOthers: names.filter((n) => !adminTiktok.names.has(n.toLowerCase().replace(/^@/, ''))).length };
+  });
 
   await app.register(authRoutes);
   await app.register(widgetRoutes);

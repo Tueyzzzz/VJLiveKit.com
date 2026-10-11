@@ -384,6 +384,8 @@ export class RoomHub {
   /** จำนวนห้องที่เชื่อม TikTok อยู่ (กำลังไลฟ์) */
   liveCount(): number { let n = 0; for (const e of this.rooms.values()) if (e.room.isConnected()) n++; return n; }
 
+  liveUsernames(): string[] { const out: string[] = []; for (const [k, e] of this.rooms) if (e.room.isConnected()) out.push(k); return out; }
+
   async stopAll(): Promise<void> {
     await Promise.all([...this.rooms.keys()].map((k) => this.stop(k)));
   }

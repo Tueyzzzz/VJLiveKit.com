@@ -18,6 +18,7 @@ async function main(): Promise<void> {
   // ผูก Socket.IO เข้ากับ HTTP server ตัวเดียวกับ Fastify
   const hub = setupRealtime(app.server);
   runtime.liveRooms = () => hub.liveCount();
+  runtime.liveUsernames = () => hub.liveUsernames();
 
   await app.listen({ port: config.port, host: '0.0.0.0' });
 

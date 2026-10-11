@@ -112,7 +112,7 @@
       st.textContent = `#box .what, #box .title, #box .how, #box .how b { color:${TFG} !important; -webkit-text-stroke:4px ${TBG}; paint-order:stroke fill; text-shadow:none !important }`;
       document.head.appendChild(st);
     }
-    // วงแหวนรอบไอคอน: 01..20 · mix = แต่ละข้อคนละแบบ · off = ปิด
+    // วงแหวนรอบไอคอน: 01..20 (ภาพ AI) · 21..30 (เส้นบาง ภาพ AI) · t1..t10 (เส้นบาง CSS) · mix = แต่ละข้อคนละแบบ · off = ปิด
     const RING_RAW = String(P('ring', '01')).toLowerCase(), RN = parseInt(RING_RAW, 10);
     const THIN = { // เส้นบาง: [พื้นสี (conic), สีเรืองแสง, มีจุดวิ่งนำ, เส้นคู่]
       t1: ['conic-gradient(from 0deg, #ffd76a00 0%, #ffd76a 55%, #fff6c8 100%)', '#ffd76a', 1],
@@ -126,8 +126,8 @@
       t9: ['repeating-conic-gradient(#ffffff 0deg 3deg, transparent 3deg 12deg)', '#b9e6ff', 0],
       t10: ['linear-gradient(#ffffff55, #ffffff55)', '#e8e8f0', 1],
     };
-    const RING = RING_RAW === 'mix' ? 'mix' : THIN[RING_RAW] ? RING_RAW : RN >= 1 && RN <= 20 ? String(RN).padStart(2, '0') : 'off';
-    const RING_GLOW = ['#ffd76a', '#ffb3e6', '#9fd4ff', '#ffc0d8', '#ff4fd8', '#ff8a3d', '#bfe9ff', '#b48bff', '#ffd24a', '#fff1e0', '#ffb0cf', '#7fd8ff', '#ff5a7a', '#ffd76a', '#e6c2ff', '#e8f1ff', '#ffcf5c', '#ff6b8a', '#9dff8a', '#c8f4ff'];
+    const RING = RING_RAW === 'mix' ? 'mix' : THIN[RING_RAW] ? RING_RAW : RN >= 1 && RN <= 30 ? String(RN).padStart(2, '0') : 'off';
+    const RING_GLOW = ['#ffd76a', '#ffb3e6', '#9fd4ff', '#ffc0d8', '#ff4fd8', '#ff8a3d', '#bfe9ff', '#b48bff', '#ffd24a', '#fff1e0', '#ffb0cf', '#7fd8ff', '#ff5a7a', '#ffd76a', '#e6c2ff', '#e8f1ff', '#ffcf5c', '#ff6b8a', '#9dff8a', '#c8f4ff', '#ffd76a', '#ffb3d6', '#bfe9ff', '#d7c2ff', '#ffe3f3', '#fff6f0', '#ffd24a', '#ffc6a8', '#e8f1ff', '#ffffff'];
     if (RING !== 'off') {
       box.classList.add('has-ring');
       box.style.setProperty('--rs', Math.max(2, Math.min(20, parseFloat(P('ringSpeed', '6')) || 6)) + 's');

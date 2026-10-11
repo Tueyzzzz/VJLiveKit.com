@@ -374,17 +374,46 @@
     //   + ยิปโซขาวแซมระหว่างดอก · โคนกิ่งรวบอยู่ในห่อ (ซ่อนหลังกระดาษ) · ดอกของขวัญวาดทับ
     const BQ_GREEN = { euca: [['themes/veg/bq-euca-0.webp', 1.667], ['themes/veg/bq-euca-1.webp', 1.53], ['themes/veg/bq-euca-2.webp', 1.327], ['themes/veg/bq-euca-3.webp', 1.34]], ruscus: [['themes/veg/bq-ruscus-0.webp', 1.34], ['themes/veg/bq-ruscus-1.webp', 1.162], ['themes/veg/bq-ruscus-2.webp', 1.152], ['themes/veg/bq-ruscus-3.webp', 1.373]], gyps: [['themes/veg/bq-gyps-0.webp', 1.162], ['themes/veg/bq-gyps-1.webp', 1.239], ['themes/veg/bq-gyps-2.webp', 1.116], ['themes/veg/bq-gyps-3.webp', 1.162]] };
     const BQLEAF = [];
+    // ปากห่อ/ปากแจกันของแต่ละแบบ (สัดส่วนในภาพ: y, ซ้าย, ขวา) — ใบเขียวโผล่ได้เฉพาะจากปากนี้ขึ้นไปเป็นกรวยบานนิด ๆ ไม่ล้นขอบห่อซ้าย/ขวา
+    const BQ_MOUTH = { bqpaper: [0.14, 0.12, 0.90], bqtulle: [0.14, 0.10, 0.90], bqkorean: [0.14, 0.10, 0.88], bqheart: [0.12, 0.16, 0.86], bqbasket: [0.43, 0.12, 0.82], bqcrown: [0.14, 0.10, 0.90], vasegold: [0.08, 0.18, 0.82], vasecat: [0.09, 0.22, 0.78] };
+    const MOUTH = BOUQ ? (() => {
+      const P = POT_SKIN, m = BQ_MOUTH[SKIN_NAME] || [(BOUQ.rimY - P.y) / P.h, 0.15, 0.85];
+      const y = P.y + P.h * m[0], L = P.x + P.w * m[1], R = P.x + P.w * m[2], k = 0.2, E = P.w * 0.08;
+      const ext = (yy) => Math.min(E, Math.max(0, (y - yy) * k)); // กรวยบานขึ้นไป สูงสุด E ต่อข้าง
+      const lo = (yy) => Math.max(P.x, L - ext(yy)), hi = (yy) => Math.min(P.x + P.w, R + ext(yy));
+      return { y, L, R, k, E, lo, hi, inside: (x, yy) => x >= lo(yy) && x <= hi(yy) };
+    })() : null;
     if (BOUQ) {
-      const bx0 = 0, by0 = BOUQ.rimY + POT_SKIN.h * 0.12;
-      const reach = (ang) => { let L = 40; while (L < 700) { const x = bx0 + Math.sin(ang) * L, y = by0 - Math.cos(ang) * L; if ((x / BOUQ.rx) ** 2 + ((y - BOUQ.cy) / BOUQ.ry) ** 2 > 1 && y < BOUQ.cy) break; L += 4; } return L; };
-      const fan = POT_SKIN.narrow ? 0.75 : 1;
-      [-1.2, 1.15, -0.85, 0.9, -0.45, 0.5, -1.0, 1.0, 0.05, -0.2, 0.25].forEach((ang, j) => { // ใบเขียว
-        const kind = j % 3 === 2 ? 'ruscus' : j % 2 ? 'euca' : 'ruscus', spr = BQ_GREEN[kind][(j * 3 + 1) % 4], a2 = ang * fan;
-        BQLEAF.push({ spr: spr[0], asp: spr[1], rot: a2, len: reach(a2) * (1.08 + (j % 3) * 0.07), m: j % 2 ? -1 : 1, phase: j * 1.3, bx: bx0 + ang * 6, by: by0 });
+      const M = MOUTH, cx = (M.L + M.R) / 2, half = (M.R - M.L) / 2, by0 = M.y + POT_SKIN.h * 0.07; // โคนรวบใต้ปากห่อ (ซ่อนหลังห่อหน้า)
+      const reach = (bx, ang) => { let L = 40; while (L < 700) { const x = bx + Math.sin(ang) * L, y = by0 - Math.cos(ang) * L; if ((x / BOUQ.rx) ** 2 + ((y - BOUQ.cy) / BOUQ.ry) ** 2 > 1 && y < BOUQ.cy) break; L += 4; } return L; };
+      const fits = (bx, a, H, W) => { // จุดตัวอย่างบนภาพใบ (หมุนแล้ว) ต้องอยู่ในกรวยปากห่อทั้งหมด
+        const s = Math.sin(a), c = Math.cos(a);
+        for (const t of [0.3, 0.5, 0.7, 0.85, 1]) for (const u of [-1, 1]) {
+          const lx = u * W * (t < 0.45 ? 0.26 : 0.4), ly = -H * t;
+          if (!M.inside(bx + lx * c - ly * s, by0 + lx * s + ly * c)) return false;
+        }
+        return true;
+      };
+      const place = (bx, ang, want, asp) => { // ลดมุม/ความยาวจนใบอยู่ในกรวยทั้งก้าน → ไม่โดนตัดแบน
+        let best = null;
+        for (const f of [1, 0.75, 0.5, 0.25, 0]) {
+          const a = ang * f; let H = want(bx, a);
+          while (H > 30 && !fits(bx, a, H, H / asp)) H *= 0.95;
+          if (!best || H > best.H) best = { a, H };
+          if (H >= want(bx, a) * 0.8) return { a, H };
+        }
+        return best;
+      };
+      // ใบเขียว: ยูคาลิปตัส/รัสคัส ตั้งขึ้นจากปากห่อ แผ่นิด ๆ (u = ตำแหน่งโคนข้ามความกว้างปาก)
+      [[-0.75, -0.42], [0.75, 0.42], [-0.5, -0.28], [0.5, 0.3], [-0.25, -0.14], [0.25, 0.15], [-0.62, -0.36], [0.62, 0.36], [0, 0.02], [-0.12, -0.06], [0.12, 0.07]].forEach(([u, ang], j) => {
+        const kind = j % 3 === 2 ? 'ruscus' : j % 2 ? 'euca' : 'ruscus', spr = BQ_GREEN[kind][(j * 3 + 1) % 4], bx = cx + u * half * 0.6;
+        const p = place(bx, ang, (x, a) => reach(x, a) * (1.06 + (j % 3) * 0.06), spr[1]);
+        BQLEAF.push({ spr: spr[0], asp: spr[1], rot: p.a, len: p.H, m: j % 2 ? -1 : 1, phase: j * 1.3, bx, by: by0 });
       });
-      [-0.7, 0.65, -0.25, 0.3, 0].forEach((ang, j) => { // ยิปโซ (อยู่หน้าใบเขียว หลังดอก)
-        const spr = BQ_GREEN.gyps[j % 4], a2 = ang * fan;
-        BQLEAF.push({ spr: spr[0], asp: spr[1], rot: a2, len: reach(a2) * 0.98, m: j % 2 ? -1 : 1, phase: 2 + j, bx: bx0, by: by0 });
+      [[-0.45, -0.3], [0.45, 0.28], [-0.15, -0.12], [0.15, 0.14], [0, 0]].forEach(([u, ang], j) => { // ยิปโซ (อยู่หน้าใบเขียว หลังดอก)
+        const spr = BQ_GREEN.gyps[j % 4], bx = cx + u * half * 0.6;
+        const p = place(bx, ang, (x, a) => reach(x, a) * 0.98, spr[1]);
+        BQLEAF.push({ spr: spr[0], asp: spr[1], rot: p.a, len: p.H, m: j % 2 ? -1 : 1, phase: 2 + j, bx, by: by0 });
       });
     }
     BQLEAF.forEach((c) => vegImg(c.spr));
@@ -615,8 +644,8 @@
     function drawBouquetLeaves(time) { // ใบเฟิร์น/ยูคาลิปตัสโผล่รอบช่อ (อยู่หลังห่อ)
       const n = 16;
       for (let i = 0; i < n; i++) {
-        const a = Math.PI + (i / (n - 1)) * Math.PI, sway = Math.sin(time * 1.1 + i) * 0.05 * SWAY;
-        const x = Math.cos(a) * BOUQ.rx * 1.02, y = BOUQ.cy + Math.sin(a) * BOUQ.ry * 1.05;
+        const a = Math.PI + 0.55 + (i / (n - 1)) * (Math.PI - 1.1), sway = Math.sin(time * 1.1 + i) * 0.05 * SWAY; // เฉพาะโค้งบน → อยู่ในกรวยปากห่อ
+        const y = BOUQ.cy + Math.sin(a) * BOUQ.ry * 1.05, x = Math.max(MOUTH.lo(y) + 22, Math.min(MOUTH.hi(y) - 22, Math.cos(a) * BOUQ.rx * 1.02));
         ctx.save(); ctx.translate(x, y); ctx.rotate(a + Math.PI / 2 + sway);
         ctx.fillStyle = i % 3 === 0 ? STEM.leaf2 : STEM.leaf;
         for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.ellipse((k - 1) * 9, -14 - k % 2 * 6, 7, 18, (k - 1) * 0.35, 0, Math.PI * 2); ctx.fill(); }
@@ -704,6 +733,13 @@
       } else c.leaves.forEach((L) => drawLeaf(L, c.ch, time, c));
     }
     function drawBouquetGreens(time) { // ช่อ: ใบจริง (ภาพ) รอบโดม + ก้านภาพ AI · โหลดภาพไม่ได้ → ใบเฟิร์นวาดเอง
+      const M = MOUTH, P = POT_SKIN, dy = M.E / M.k, top = -4000; // ตัดให้อยู่ในกรวยปากห่อ: ใต้ปาก = กว้างเท่าปาก (ห่อหน้าบัง) · เหนือปาก = บานนิด ๆ ไม่เกินขอบห่อ
+      ctx.save(); ctx.beginPath();
+      ctx.moveTo(M.L, P.y + P.h); ctx.lineTo(M.L, M.y); ctx.lineTo(M.lo(M.y - dy), M.y - dy); ctx.lineTo(M.lo(top), top);
+      ctx.lineTo(M.hi(top), top); ctx.lineTo(M.hi(M.y - dy), M.y - dy); ctx.lineTo(M.R, M.y); ctx.lineTo(M.R, P.y + P.h); ctx.closePath(); ctx.clip();
+      drawBouquetGreensIn(time); ctx.restore();
+    }
+    function drawBouquetGreensIn(time) {
       if (!BQLEAF.length || !vegImg(BQLEAF[0].spr)) drawBouquetLeaves(time);
       else for (const c of BQLEAF) { // โคนกลางล่างของภาพ = จุดรวบในห่อ · หมุนออกเป็นพัด · ไหวเบา ๆ
         const im = vegImg(c.spr); if (!im) continue;

@@ -334,7 +334,12 @@
     function slotPoint(sl, time) {
       if (sl.cl) { const c = sl.cl, k = -sl.dy / c.ch; return { x: c.bx + sl.dx + Math.sin(time * 1.1 + c.phase) * 2.2 * SWAY * k, y: c.by + sl.dy }; } // แปลงผัก: ผลบนกอ ไหวตามใบ
       if (sl.tree) return { x: sl.x + Math.sin(time * 0.9 + sl.y * 0.02) * 3 * SWAY * (-sl.y / 400), y: sl.y }; // พุ่มใบไหวตามลม
-      if (!sl.twig) { const p = stemPoint(sl.stem, sl.t, time); return { x: p.x + sl.off, y: p.y }; }
+      if (!sl.twig) {
+        const p = stemPoint(sl.stem, sl.t, time);
+        if (!sl.perp) return { x: p.x + sl.off, y: p.y };
+        const k = sl.perp * (sl.stem.grow ? Math.min(1, sl.stem.cur / 0.62) : 1); // จุดดอกเสริม: เกาะข้างก้าน (ระยะออกข้างยืดตามก้านที่งอก)
+        return { x: p.x + sl.off - Math.sin(p.a) * k, y: p.y + Math.cos(p.a) * k };
+      }
       const p0 = stemPoint(sl.stem, sl.twig.t, time);
       if (sl.stem.grow && sprOf(sl.stem)) { // ก้านภาพ: ดอกข้างเกาะข้างก้าน (ตรงใบ) ฝั่งตามกิ่งย่อย
         const sd = Math.sign(sl.twig.a) || 1, q = sl.t >= 1 ? p0 : stemPoint(sl.stem, Math.min(0.95, sl.twig.t + (sl.t - 0.5) * 0.18), time);
@@ -352,6 +357,7 @@
     if (BED) BSTEMS.forEach((st, i) => setupGrowStem(st, Math.abs(st.bx - (BED[0][0] + BED[BED.length - 1][0]) / 2) < (BED[BED.length - 1][0] - BED[0][0]) * 0.27, i));
     // ช่อดอกไม้: ก้านภาพ AI แผ่เป็นพัดจากในห่อ (โคนซ่อนหลังกระดาษห่อ) ไปยังโดมดอก · ดอกในโดมผูกกับก้านที่ใกล้ที่สุดตามมุม
     const QSTEMS = [];
+    let bqNear = null; // ช่อ: หาก้านที่ใกล้จุดดอกที่สุด (ใช้ตอนเพิ่มจุดดอกใหม่ด้วย)
     if (BOUQ) {
       const bx0 = 0, by0 = BOUQ.rimY + POT_SKIN.h * 0.1, K = 11;
       for (let i = 0; i < K; i++) {
@@ -365,7 +371,7 @@
         st.grow = true; st.cur = 0; st.target = 0; st.len = 0; st.rev = 1; st.ang = lean;
         QSTEMS.push(st);
       }
-      const near = (x, y) => { const a = Math.atan2(x - bx0, -(y - by0)); let b = QSTEMS[0]; for (const q of QSTEMS) if (Math.abs(q.ang - a) < Math.abs(b.ang - a)) b = q; return b; };
+      const near = bqNear = (x, y) => { const a = Math.atan2(x - bx0, -(y - by0)); let b = QSTEMS[0]; for (const q of QSTEMS) if (Math.abs(q.ang - a) < Math.abs(b.ang - a)) b = q; return b; };
       slots.forEach((sl) => { sl.stem = near(sl.x, sl.y); });
       BIG_SPOTS.forEach((sp) => { sp.stem = near(sp.x, sp.y); });
     }
@@ -438,6 +444,68 @@
     const flowers = [], bigs = [], fx = new Juice.Particles();
     // ขนาดดอก: ของขวัญต่ำกว่า 200 เหรียญ (เช่น 99) = ดอกเล็ก โตขึ้นนิดเดียว · 200+ ค่อยใหญ่ตามราคา
     const flowerSize = (d, max) => { const s = Juice.sizeFor ? Juice.sizeFor(d, max) : 1; return d < 200 ? 1 + (s - 1) * 0.35 : s; };
+    // ---- จุดดอกเต็ม → เพิ่มจุดดอกไปเรื่อย ๆ (ของยิ่งเยอะ แปลงยิ่งแน่น ดอกเล็กลง) · กองพื้นเป็นทางสุดท้ายเมื่อเกิน SLOT_CAP/BIG_CAP เท่านั้น ----
+    //   จุดเดิม (BASE_N) ใช้ตามลำดับเหมือนเดิม · จุดเสริมสุ่มคงที่ (seed ตามแบบ) กระจายในพื้นที่เดิมของแต่ละแบบ
+    //   แต่ละจุดมีค่า c (0 = ล่าง/ริม … 1 = บน/กลาง) → ของถูกได้จุดล่าง/ริม ของแพงได้จุดบน/กลาง
+    const BASE_N = slots.length, BIG_BASE = BIG_SPOTS.length, SLOT_CAP = 600, BIG_CAP = 120;
+    const freeSlots = [];
+    let s3 = 11; for (const ch of SKIN_NAME) s3 = (s3 * 31 + ch.charCodeAt(0)) % 2147483647;
+    const xr = () => (s3 = (s3 * 48271) % 2147483647) / 2147483647;
+    const clamp01 = (v) => Math.max(0, Math.min(1, v));
+    const stemCen = (st) => 1 - Math.min(1, Math.abs(st.lean != null ? st.lean : st.a + Math.PI / 2) / 1.1); // ก้านตั้งตรงกลาง = 1
+    function stemSlot(st, t0) { // เกาะข้างก้าน (ซ้าย/ขวาสลับ) ตามความสูง t
+      const t = t0 + xr() * (0.98 - t0), side = xr() < 0.5 ? -1 : 1;
+      return { stem: st, twig: null, t, off: 0, perp: side * (7 + xr() * 24), c: t * 0.65 + stemCen(st) * 0.35 };
+    }
+    function makeSlot() {
+      let sl;
+      if (TREE) { // พุ่มต้นไม้: เกาะใกล้จุดเดิมในพุ่มใบ
+        const b = TREE.slots[Math.floor(xr() * TREE.slots.length)], a = xr() * 6.283, r = 6 + xr() * 22, x = b[0] + Math.cos(a) * r, y = b[1] + Math.sin(a) * r * 0.8;
+        sl = { tree: true, x, y, t: xr(), c: clamp01((-y - 180) / 290) * 0.6 + (1 - Math.min(1, Math.abs(x) / 240)) * 0.4 };
+      } else if (BOUQ) { // ช่อ: จุดสุ่มในโดมเดิม ไม่ล้นกรวยปากห่อ (BQ_MOUTH)
+        const r = Math.sqrt(xr()) * 0.98, th = xr() * 6.283, sx = Math.cos(th), sy = Math.sin(th);
+        const y = Math.min(BOUQ.rimY + 6, BOUQ.cy + BOUQ.ry * r * (sy > 0 ? sy * 0.45 : sy));
+        let x = BOUQ.rx * r * sx; if (MOUTH) x = Math.max(MOUTH.lo(y) + 10, Math.min(MOUTH.hi(y) - 10, x));
+        sl = { tree: true, x, y, t: xr(), c: 0.75 * (1 - r) + 0.25 * clamp01(-sy) };
+        if (bqNear) sl.stem = bqNear(x, y);
+      } else if (BED && CLUMPS.length) { // แปลงผัก: ส่วนใหญ่ซุกบนกอทั่วแปลง · บางส่วนเกาะข้างก้านดอก
+        if (BSTEMS.length && xr() < 0.3) sl = stemSlot(BSTEMS[Math.floor(xr() * BSTEMS.length)], 0.45), sl.c = 0.5 + sl.c * 0.5;
+        else {
+          const cl = CLUMPS[Math.floor(xr() * CLUMPS.length)], rr = Math.sqrt(xr()) * 0.95, th = xr() * 6.283;
+          const x0 = BED[0][0], x1 = BED[BED.length - 1][0], mid = (x0 + x1) / 2, half = (x1 - x0) / 2 || 1, up = clamp01(-Math.sin(th) * rr);
+          sl = { cl, dx: Math.cos(th) * rr * cl.cw * 0.5, dy: -cl.ch * 0.6 + Math.sin(th) * rr * cl.ch * 0.42, c: (1 - Math.min(1, Math.abs(cl.bx - mid) / half)) * 0.3 + (1 - cl.dep) * 0.05 + up * 0.15 };
+        }
+      } else { // กระถาง/คลาสสิก: เกาะข้างก้านทั่วพุ่ม (อยู่ใต้เพดานป้ายแจ้งเตือนเพราะก้านถูกจำกัดความสูงอยู่แล้ว)
+        sl = stemSlot(stems[Math.floor(xr() * stems.length)], 0.35);
+      }
+      sl.j = xr() * 0.12; // สุ่มนิด ๆ ให้ไม่เรียงเป็นแถว
+      return sl;
+    }
+    function growSlots() {
+      const n = Math.min(SLOT_CAP - slots.length, Math.max(24, Math.round(BASE_N * 0.3)));
+      for (let i = 0; i < n; i++) { const sl = makeSlot(); slots.push(sl); freeSlots.push(sl); }
+    }
+    function takeSlot(g) { // จุดว่างที่ c ใกล้ "ระดับราคา" ของของขวัญที่สุด
+      const r = clamp01(Math.log10(Math.max(1, g.d || 1)) / Math.log10(Math.max(10, BIG)));
+      let bi = 0, bs = 1e9;
+      for (let i = 0; i < freeSlots.length; i++) { const s = Math.abs(freeSlots[i].c - r) + freeSlots[i].j; if (s < bs) { bs = s; bi = i; } }
+      const sl = freeSlots[bi]; freeSlots[bi] = freeSlots[freeSlots.length - 1]; freeSlots.pop(); return sl;
+    }
+    function growBigs() { // ดอกใหญ่เสริม: เลือกจุดที่บน/กลางที่สุดจากตัวเลือกสุ่ม
+      for (let i = 0; i < 6 && BIG_SPOTS.length < BIG_CAP; i++) {
+        let best = null; for (let k = 0; k < 6; k++) { const sl = makeSlot(); if (!best || sl.c > best.c) best = sl; }
+        BIG_SPOTS.push({ ext: best, stem: best.stem, bed: !!best.cl });
+      }
+    }
+    // ขนาดดอกตามความแน่น: sqrt(ความจุเดิม / จำนวนดอก) ไม่ต่ำกว่า 0.45 · เปลี่ยนแบบค่อย ๆ (ไม่เด้ง) · โหลดจากที่จำไว้ = ขนาดสุดท้ายทันที
+    let dens = 1, densT = 1, densAt = performance.now();
+    function updDens(born) {
+      const n = flowers.length + 3 * bigs.length, base = BASE_N + 3 * Math.min(BIG_BASE, 10); // ดอกใหญ่ 1 = ดอกเล็ก 3 (แปลงผักมีจุดดอกใหญ่มาก → นับแค่ 10)
+      densT = Math.max(0.45, Math.min(1, Math.sqrt(base / Math.max(1, n))));
+      if (born <= 0) dens = densT;
+    }
+    function stepDens(now) { const dt = Math.min(1000, Math.max(0, now - densAt)); densAt = now; dens += (densT - dens) * (1 - Math.exp(-dt / 700)); }
+    let fVer = 0; // เปลี่ยนเมื่อชุดดอกเปลี่ยน (แปลงผักจัดกลุ่มดอกตามกอใหม่เฉพาะตอนนั้น)
     if (POT_SKIN && POT_SKIN.music) setInterval(() => { if (!document.hidden && fx.notes) fx.notes((Math.random() - .5) * 260, TREE ? -340 - Math.random() * 80 : POT_TOP - 100, 1); }, 1800);
     const imgCache = {};
     function giftImg(url) { if (!url || !/^https:\/\//.test(url)) return null; let im = imgCache[url]; if (!im) { im = new Image(); im.src = url; imgCache[url] = im; } return im; }
@@ -515,13 +583,16 @@
       ground.push({ g, img: giftImg(g.u), x, y, px: x - (Math.random() - .5) * 2, py: y + 1, r, rot: Math.random() * 6.28, born, big, life: 1 });
       const alive = ground.filter((b) => !b.dying); if (alive.length > GROUND_MAX) ((window.VJLCollect && VJLCollect.victims) ? VJLCollect.victims(ground.map((b) => ({ ...b, d: b.g.d, ref: b })), 1).map((x) => x.ref) : [alive[0]]).forEach((b) => { b.dying = true; });
     }
-    function addFlower(g, born) {
+    function addFlower(g, born) { addFlower0(g, born); fVer++; updDens(born); }
+    function addFlower0(g, born) {
       if (g.big) {
-        if (bigs.length >= BIG_SPOTS.length) return dropToGround(g, born); // ยอดเต็ม → ร่วงลงพื้น
+        if (bigs.length >= BIG_SPOTS.length) growBigs(); // ยอดเต็ม → เพิ่มจุดดอกใหญ่
+        if (bigs.length >= BIG_SPOTS.length) return dropToGround(g, born); // เกินเพดาน BIG_CAP → ร่วงลงพื้น (ทางสุดท้าย)
         bigs.push({ g, img: giftImg(g.u), born, color: PETALS[bigs.length % PETALS.length], jx: 0, jy: 0 });
         const sp = BIG_SPOTS[(bigs.length - 1) % BIG_SPOTS.length]; if (sp.stem && sp.stem.grow) feedStem(sp.stem, g, born, bigs[bigs.length - 1]);
       } else {
-        if (flowers.length >= slots.length) {
+        if (flowers.length >= slots.length && slots.length < SLOT_CAP) growSlots(); // จุดเต็ม → เพิ่มจุดดอก (แปลงแน่นขึ้น)
+        if (flowers.length >= slots.length) { // เกินเพดาน SLOT_CAP (ประสิทธิภาพ) เท่านั้น
           // กิ่งเต็ม: ของที่แพงกว่าดอกที่ถูกที่สุดบนกิ่ง → ได้ขึ้นกิ่งแทน (ดอกถูกร่วงลงพื้น ไม่หาย) · ไม่งั้นของใหม่ร่วงลงพื้น
           // เดิมของแพง (เช่น 99 เหรียญ) ร่วงไปกองพื้นปนของถูก คนส่งมองไม่เห็นของตัวเอง
           let k = -1; for (let i = 0; i < flowers.length; i++) if (!flowers[i].dying && (k < 0 || (flowers[i].g.d || 0) < (flowers[k].g.d || 0))) k = i;
@@ -531,7 +602,7 @@
           const f = flowers[k]; if (f.sl.stem && f.sl.stem.grow) feedStem(f.sl.stem, g, born, f);
           return;
         }
-        flowers.push({ g, img: giftImg(g.u), born, sl: slots[flowers.length], jx: 0, jy: 0 });
+        flowers.push({ g, img: giftImg(g.u), born, sl: flowers.length < BASE_N ? slots[flowers.length] : takeSlot(g), jx: 0, jy: 0 });
         const f = flowers[flowers.length - 1]; if (f.sl.stem && f.sl.stem.grow) feedStem(f.sl.stem, g, born, f);
       }
     }
@@ -761,9 +832,10 @@
     function drawPotLeaves(time) { // กระถาง: กอใบเล็ก ๆ ปิดปากกระถาง ทับโคนก้าน
       for (const c of POTLEAF) { ctx.save(); ctx.translate(c.bx, c.by); drawClumpLeaves(c, time); ctx.restore(); }
     }
+    const bedPer = CLUMPS.map(() => []); let bedVer = -1;
     function drawBed(time, now) {
-      const per = CLUMPS.map(() => []);
-      for (const f of flowers) if (f.sl.cl) per[f.sl.cl.i].push(f);
+      if (bedVer !== fVer) { bedVer = fVer; bedPer.forEach((a) => { a.length = 0; }); for (const f of flowers) if (f.sl.cl) bedPer[f.sl.cl.i].push(f); } // จัดกลุ่มใหม่เฉพาะตอนดอกเปลี่ยน
+      const per = bedPer;
       ctx.lineCap = 'round';
       CLUMPS.forEach((c, i) => {
         c.fst.forEach((st, k) => { if (st.len > 2) drawStem(st, i + k, time, 1); }); // ก้านดอกก่อน → ใบกอทับโคนก้าน (ยังไม่ได้ของขวัญ = ยังไม่งอก)
@@ -775,8 +847,13 @@
       });
     }
     const pop = (born, now) => { const k = Math.min(1, (now - born) / 450); return k < 1 ? 1.25 * Math.sin(k * Math.PI / 2) - 0.25 * Math.sin(k * Math.PI) : 1; };
-    function drawGift(img, emoji, size) {
-      const st = Juice.sticker ? Juice.sticker(img, size * S() * DPR) : null; // สติกเกอร์คมชัด ขอบขาว + เงานุ่ม
+    function drawGift(img, emoji, size, hold) {
+      const px = size * S() * DPR; let st = null;
+      if (hold) { // แคชสติกเกอร์ไว้ที่ตัวดอก (ไม่ต้องสร้างคีย์ทุกเฟรม) — ขนาดปัดเป็นขั้นเดียวกับ Juice.sticker
+        const q = Math.ceil(px * 1.25 / 8);
+        if (hold.stQ === q && hold.stI === img && hold.st) st = hold.st;
+        else if (Juice.sticker) { st = Juice.sticker(img, px); if (st) { hold.st = st; hold.stQ = q; hold.stI = img; } }
+      } else st = Juice.sticker ? Juice.sticker(img, px) : null; // สติกเกอร์คมชัด ขอบขาว + เงานุ่ม
       if (st) { const s = size * Juice.STICKER_PAD; ctx.drawImage(st, -s / 2, -s / 2, s, s); }
       else if (img && img.complete && img.naturalWidth) ctx.drawImage(img, -size / 2, -size / 2, size, size);
       else { ctx.font = Math.round(size * .8) + 'px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(emoji || '🌹', 0, 2); }
@@ -794,17 +871,18 @@
         const p = slotPoint(f.sl, time), s = pop(f.born, now) * bk;
         if (!f.sparkled && bk >= 1) { f.sparkled = true; if (f.born > 0) fx.sparkle(p.x + f.jx, p.y + f.jy, 4); }
         ctx.save(); ctx.translate(p.x + f.jx, p.y + f.jy); ctx.scale(s, s); ctx.rotate(Math.sin(time * 1.6 + f.sl.t * 9) * .12 * SWAY);
-        drawGift(f.img, f.g.e, Math.min(30 * FLOWER * (BOUQ ? 1.35 : f.sl.cl ? 0.9 : 1) * flowerSize(f.g.d, 2.5), 75)); ctx.restore(); // ของแพงดอกใหญ่ขึ้น
+        if (f.fs == null) f.fs = Math.min(30 * FLOWER * (BOUQ ? 1.35 : f.sl.cl ? 0.9 : 1) * flowerSize(f.g.d, 2.5), 75); // ของแพงดอกใหญ่ขึ้น
+        drawGift(f.img, f.g.e, f.fs * dens, f); ctx.restore(); // ดอกเยอะ = เล็กลงพร้อมกันทุกดอก
       }
     }
     function drawBigs(time, now) {
       bigs.forEach((b, i) => {
         // ตำแหน่งดอกใหญ่: ยอดกิ่งหลัก (กลางก่อน) → ปลายกิ่งย่อย · เกินแล้ววนซ้ำแบบเหลื่อมนิด ๆ (ไม่ซ้อนเป็นเสา)
         const k = i % BIG_SPOTS.length, lap = Math.floor(i / BIG_SPOTS.length), sp = BIG_SPOTS[k];
-        const p0 = sp.tree ? slotPoint(sp, time) : sp.twig ? slotPoint({ stem: sp.stem, twig: sp.twig, t: 1 }, time) : stemPoint(sp.stem, 1, time);
-        const px = p0.x + (lap ? b.jx : 0), py = p0.y - (sp.tree ? 0 : sp.twig ? 8 : 26) + (lap ? b.jy : 0);
+        const p0 = sp.ext ? slotPoint(sp.ext, time) : sp.tree ? slotPoint(sp, time) : sp.twig ? slotPoint({ stem: sp.stem, twig: sp.twig, t: 1 }, time) : stemPoint(sp.stem, 1, time);
+        const px = p0.x + (lap ? b.jx : 0), py = p0.y - (sp.tree || sp.ext ? 0 : sp.twig ? 8 : 26) + (lap ? b.jy : 0);
         const bk = bloomK(b, sp.stem); if (bk <= 0) return;
-        const s = pop(b.born, now) * bk, R = 46 * FLOWER * (BOUQ ? 0.55 : sp.bed ? 0.7 : sp.stem && sp.stem.bed ? 0.75 : sp.twig ? 0.72 : sp.tree ? 0.85 : 1); // ช่อ: ดอกใหญ่เล็กลงให้กลืนกับช่อ
+        const s = pop(b.born, now) * bk, R = 46 * FLOWER * (0.4 + 0.6 * dens) * (BOUQ ? 0.55 : sp.bed ? 0.7 : sp.stem && sp.stem.bed ? 0.75 : sp.twig || sp.ext ? 0.72 : sp.tree ? 0.85 : 1); // ช่อ: ดอกใหญ่เล็กลงให้กลืนกับช่อ · แน่นขึ้นก็เล็กลง (น้อยกว่าดอกเล็ก → ยังใหญ่เด่น)
         if (sp.stalk != null) { // แปลงผัก: ก้านสั้นแข็งแรงโผล่จากกอ
           ctx.beginPath(); ctx.moveTo(sp.x, sp.stalk); ctx.quadraticCurveTo(sp.x - 4, (sp.stalk + py) / 2, px, py + R * 0.4);
           ctx.lineCap = 'round'; ctx.lineWidth = 6; ctx.strokeStyle = STEM.stem; ctx.stroke();
@@ -814,16 +892,17 @@
         ctx.save(); ctx.translate(px, py); ctx.scale(s, s); ctx.rotate(Math.sin(time * .7 + i) * .1 * SWAY);
         for (let k = 0; k < 10; k++) { // กลีบ
           ctx.save(); ctx.rotate(k * Math.PI / 5); ctx.beginPath(); ctx.ellipse(0, -R * .78, R * .3, R * .5, 0, 0, Math.PI * 2);
-          const pg = ctx.createLinearGradient(0, -R * 1.2, 0, -R * .3); pg.addColorStop(0, '#ffffff'); pg.addColorStop(1, b.color);
-          ctx.fillStyle = pg; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(90,70,140,.35)'; ctx.stroke(); ctx.restore();
+          if (b.pgR !== R) { b.pgR = R; b.pg = ctx.createLinearGradient(0, -R * 1.2, 0, -R * .3); b.pg.addColorStop(0, '#ffffff'); b.pg.addColorStop(1, b.color); } // ไล่สีกลีบเดียวกันทุกกลีบ → สร้างครั้งเดียว
+          ctx.fillStyle = b.pg; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(90,70,140,.35)'; ctx.stroke(); ctx.restore();
         }
         ctx.beginPath(); ctx.arc(0, 0, R * .62, 0, Math.PI * 2); ctx.fillStyle = '#fff8f0'; ctx.fill();
-        drawGift(b.img, b.g.e, R * 1.15); ctx.restore();
+        drawGift(b.img, b.g.e, R * 1.15, b); ctx.restore();
       });
     }
     function frame(now) {
       const time = now / 1000;
       if (GSTEMS.length) growStems(performance.now()); // นาฬิกาเดียวกับ feedStem (เวลา rAF อาจคนละฐาน)
+      stepDens(performance.now());
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.imageSmoothingQuality = 'high';
       const o = origin(), s = S(); ctx.translate(o.x, o.y); ctx.scale(s, s);
       // ต้นไม้/กระถาง + กิ่ง + ดอกไม้ (ของขวัญ) หายใจด้วยค่าเดียวกัน — ยุบ-ยืดรอบโคนไปพร้อมกัน

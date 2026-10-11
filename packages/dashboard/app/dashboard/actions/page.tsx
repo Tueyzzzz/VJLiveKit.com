@@ -396,7 +396,7 @@ function ActionsInner() {
                   </Select>
                 </Field>
               )}
-              {draft.type === 'effect' && draft.effect !== 'coins' && (
+              {draft.type === 'effect' && draft.effect !== 'coins' && !draft.effect.startsWith('v') && (
                 <Field label={t(draft.effect === 'butterflies' ? 'สีผีเสื้อ' : 'โทนสี')}>
                   <Select value={draft.tint} onChange={(e) => set('tint', e.target.value as Draft['tint'])}>
                     <option value="pink">{t('🩷 ชมพู (ค่าเริ่มต้น)')}</option><option value="purple">{t('💜 ม่วง')}</option><option value="blue">{t('💙 ฟ้า')}</option>
@@ -404,7 +404,7 @@ function ActionsInner() {
                   </Select>
                 </Field>
               )}
-              {draft.type === 'effect' && (
+              {draft.type === 'effect' && !draft.effect.startsWith('v') && (
                 <Field label={t(draft.effect === 'butterflies' ? 'จำนวนผีเสื้อ' : 'ความหนาแน่น')} hint={t(draft.effect === 'butterflies' ? '1–30 ตัว · ข้อความประกอบจะขึ้นเป็นหัวเรื่องกลางจอ' : '1–30 (มาก = อนุภาคเยอะขึ้น) · ข้อความประกอบจะขึ้นเป็นหัวเรื่องกลางจอ')}>
                   <Input type="text" inputMode="numeric" value={draft.count} onChange={(e) => set('count', toDigits(e.target.value))} />
                 </Field>

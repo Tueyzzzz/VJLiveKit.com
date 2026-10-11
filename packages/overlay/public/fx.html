@@ -534,6 +534,17 @@
         else { p.x=rnd(0,W); p.y=-20*U; p.vx=rnd(-30,30)*U; p.vy=rnd(60,140)*U; }
         return p; } },
     };
+    // เอฟเฟกต์วิดีโอเต็มจอ (WebP เคลื่อนไหวพื้นใส แนวนอน 16:9) — fx/v-<ชื่อ>.webp
+    const VFX={ vcake:{ms:5000,hits:[900],sfx:'pop'}, vcat:{ms:5000,hits:[],sfx:''}, vchicks:{ms:5000,hits:[],sfx:''} };
+    const vfxOk={}; for(const k in VFX){ const im=new Image(); im.onerror=()=>{ vfxOk[k]=false; }; im.src='fx/v-'+k.slice(1)+'.webp'+(window.VJL_VERSION?'?v='+window.VJL_VERSION:''); } // โหลดล่วงหน้า
+    const vfxStyle=document.createElement('style'); vfxStyle.textContent='.vfx{position:fixed;left:50%;top:50%;width:min(100vw,177.8vh);transform:translate(-50%,-50%);pointer-events:none;z-index:49}'; document.head.appendChild(vfxStyle);
+    function playVfx(a,ev){
+      const v=VFX[a.effect], el=document.createElement('img'); el.className='vfx'; el.alt=''; el.src='fx/v-'+a.effect.slice(1)+'.webp?t='+Date.now();
+      document.body.appendChild(el); setTimeout(()=>el.remove(),v.ms);
+      showTitle(fill(a.text,ev),v.ms);
+      const vol=a.volume==null?1:a.volume;
+      for(const h of v.hits) setTimeout(()=>{ if(v.sfx&&window.VJLSfx) VJLSfx.play(v.sfx,vol); document.body.classList.remove('shake'); void document.body.offsetWidth; document.body.classList.add('shake'); },h);
+    }
     function showTitle(title,dur){ if(!title) return; const t=document.createElement('div'); t.className='ftitle'; t.textContent=title; t.style.setProperty('--out',(dur/1000-.8)+'s'); fx.appendChild(t); setTimeout(()=>t.remove(),dur+200); }
     function particles(a,ev){
       const f=PFX[a.effect], dur=Math.max(3000,a.durationMs||8000), n=Math.max(1,Math.min(30,a.count||12)), now=performance.now();
@@ -615,6 +626,7 @@
       if(a.type==='tarot') return tarot(a,ev);
       if(a.type==='glove') return glove(a,ev);
       if(a.type==='sign') return sign(a,ev);
+      if(a.type==='effect'&&VFX[a.effect]) return vfxOk[a.effect]===false?particles({...a,effect:'confetti'},ev):playVfx(a,ev); // ไฟล์วิดีโอยังไม่มี → คอนเฟตติแทน
       if(a.type==='effect') return a.effect&&PFX[a.effect]?particles(a,ev):butterflies(a,ev); // ผีเสื้อ = แบบเดิม · อื่น ๆ = อนุภาค canvas
       const dur=a.durationMs||5000;
       const text=fill(a.text,ev);

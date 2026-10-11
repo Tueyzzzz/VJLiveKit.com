@@ -731,4 +731,5 @@ export const EN_WIDGETS: Record<string, string> = {
   "โหลรางวัลงานวัด": "Fair prize jar",
   "💗 ไอดอลสาว (คนจริง 3D)": "💗 Idol girl (realistic 3D)",
   "✨ คนจริง 3D": "✨ Realistic 3D",
+  "🎮 สาวเกมเมอร์ (คนจริง 3D)": "🎮 Gamer girl (realistic 3D)",
 };

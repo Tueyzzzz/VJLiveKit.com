@@ -19,6 +19,11 @@
   #time.done{color:#ffd76a;font-size:calc(var(--fs) * .6px)}
   .plus{position:fixed;font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:calc(var(--fs) * .4px);color:#8fe3cf;
     text-shadow:0 2px 6px rgba(0,0,0,.6);pointer-events:none;animation:up 1.6s ease-out forwards;white-space:nowrap}
+  .plus.add{color:#7dffa8}
+  .plus.sub{color:#ff6b6b;text-shadow:0 0 10px rgba(255,60,60,.6),0 2px 6px rgba(0,0,0,.6)}
+  .plus.sub,.plus.add{font-size:calc(var(--fs) * .34px);animation-duration:2.2s}
+  #box.hit{animation:hit .45s ease-out}
+  @keyframes hit{20%{transform:translate(calc(-50% - 6px),-50%)}40%{transform:translate(calc(-50% + 6px),-50%)}60%{transform:translate(calc(-50% - 4px),-50%)}80%{transform:translate(calc(-50% + 2px),-50%)}}
   @keyframes up{0%{opacity:0;transform:translate(-50%,10px) scale(.7)}15%{opacity:1;transform:translate(-50%,0) scale(1.1)}100%{opacity:0;transform:translate(-50%,-60px) scale(1)}}
 </style>
 </head>
@@ -32,6 +37,8 @@
    *   start=60      เวลาเริ่มต้น (นาที)
    *   coin=5        วินาทีต่อ 1 เพชร        like=0     วินาทีต่อ 1 ไลค์
    *   follow=30     วินาทีต่อการติดตาม       share=10   วินาทีต่อการแชร์
+   *   giftAdd=[{"name":"Rose","sec":60}]   ของขวัญที่เลือกเอง เพิ่มเวลา (วินาทีต่อชิ้น × คอมโบ) — ใช้แทนค่าต่อเหรียญ
+   *   giftSub=[{"name":"GG","sec":30}]     ของขวัญที่เลือกเอง ลดเวลา (ไม่ต่ำกว่า 0)
    *   max=0         เวลาสูงสุด (นาที, 0 = ไม่จำกัด)
    *   label=...     ข้อความบน    done=...  ข้อความเมื่อหมดเวลา    blink=60  กะพริบเมื่อเหลือ (วินาที)
    *   fontSize=90 bg=35          ขนาดตัวเลข / ความทึบพื้นหลัง (0 = ใส)
@@ -44,6 +51,9 @@
     const START = num('start', 60) * 60e3, PER_COIN = num('coin', 5) * 1e3, PER_LIKE = num('like', 0) * 1e3;
     const PER_FOLLOW = num('follow', 30) * 1e3, PER_SHARE = num('share', 10) * 1e3, MAX = num('max', 0) * 60e3, BLINK = num('blink', 60) * 1e3;
     const DONE = P('done', 'หมดเวลา! 🎉');
+    // ของขวัญที่เลือกเอง: ชื่อ (ตัวเล็ก) → วินาทีต่อชิ้น
+    const giftMap = (k) => { const m = new Map(); try { const a = JSON.parse(P(k, '') || '[]'); if (Array.isArray(a)) a.forEach((g) => { const n = g && String(g.name || '').trim().toLowerCase(), sec = Number(g && g.sec) || 0; if (n && sec > 0) m.set(n, sec * 1e3); }); } catch { /* ค่าเสีย */ } return m; };
+    const GIFT_ADD = giftMap('giftAdd'), GIFT_SUB = giftMap('giftSub');
     const box = document.getElementById('box'), $time = document.getElementById('time');
     document.documentElement.style.setProperty('--fs', String(num('fontSize', 90)));
     const BG = Math.max(0, Math.min(100, num('bg', 35))) / 100;
@@ -67,27 +77,57 @@
     }
     setInterval(render, 250); render();
 
-    function addTime(ms) {
+    const fmtSec = (sec) => { const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60); return (h ? h + ':' + pad(m) : m) + ':' + pad(sec % 60); };
+    function pop(text, cls) {
+      const r = box.getBoundingClientRect(), el = document.createElement('div'); el.className = 'plus' + (cls ? ' ' + cls : '');
+      el.textContent = text;
+      el.style.left = (r.left + r.width / 2 + (Math.random() - .5) * r.width * .5) + 'px'; el.style.top = (r.top - 10) + 'px';
+      document.body.appendChild(el); setTimeout(() => el.remove(), 2300);
+    }
+    function addTime(ms, who) {
       if (ms <= 0) return;
       const now = Date.now();
       end = Math.max(end, now) + ms; // หมดเวลาแล้วก็เริ่มนับใหม่จากตอนนี้
       if (MAX > 0) end = Math.min(end, now + MAX);
       save(); render();
-      const r = box.getBoundingClientRect(), el = document.createElement('div'); el.className = 'plus';
       const sec = Math.round(ms / 1000);
-      el.textContent = '+' + (sec >= 60 ? Math.floor(sec / 60) + ' นาที ' + (sec % 60 ? (sec % 60) + ' วิ' : '') : sec + ' วิ');
-      el.style.left = (r.left + r.width / 2 + (Math.random() - .5) * r.width * .5) + 'px'; el.style.top = (r.top - 10) + 'px';
-      document.body.appendChild(el); setTimeout(() => el.remove(), 1700);
+      if (who !== undefined) pop('+' + fmtSec(sec) + ' 🎁 ' + who, 'add');
+      else pop('+' + (sec >= 60 ? Math.floor(sec / 60) + ' นาที ' + (sec % 60 ? (sec % 60) + ' วิ' : '') : sec + ' วิ'));
     }
+    function subTime(ms, who) {
+      const now = Date.now();
+      if (ms <= 0 || end <= now) return; // หมดเวลาแล้ว ไม่มีอะไรให้ลด
+      end = Math.max(now, end - ms); // ไม่ต่ำกว่า 0
+      save(); render();
+      pop('−' + fmtSec(Math.round(ms / 1000)) + ' ⏬ ' + who, 'sub');
+      box.classList.remove('hit'); void box.offsetWidth; box.classList.add('hit');
+    }
+    const nameOf = (u) => (u && (u.nickname || u.uniqueId)) || 'ผู้ชม';
 
     Overlay.on('event', (e) => {
-      if (e.type === 'gift' && !e.streaking) addTime((e.totalValue || (e.diamondCount || 0) * (e.repeatCount || 1)) * PER_COIN);
+      if (e.type === 'gift' && !e.streaking) {
+        const g = String(e.giftName || '').trim().toLowerCase(), n = Math.max(1, e.repeatCount || 1);
+        if (GIFT_SUB.has(g)) subTime(GIFT_SUB.get(g) * n, nameOf(e.user));
+        else if (GIFT_ADD.has(g)) addTime(GIFT_ADD.get(g) * n, nameOf(e.user)); // ใช้แทนค่าต่อเหรียญ (ไม่นับซ้ำ)
+        else addTime((e.totalValue || (e.diamondCount || 0) * (e.repeatCount || 1)) * PER_COIN);
+      }
       else if (e.type === 'like') addTime((e.likeCount || 1) * PER_LIKE);
       else if (e.type === 'follow') addTime(PER_FOLLOW);
       else if (e.type === 'share') addTime(PER_SHARE);
     });
 
-    if (!Overlay.connected) setInterval(() => addTime([1, 5, 20][Math.floor(Math.random() * 3)] * PER_COIN), 2500);
+    // เดโม/พรีวิว: เพิ่มตามเหรียญ + บางครั้งโชว์ของขวัญเพิ่มเวลา/ลดเวลา
+    if (!Overlay.connected) {
+      const NAMES = ['มินนี่', 'ต้นข้าว', 'Jay', 'น้องฟ้า', 'Bam'], who = () => NAMES[Math.floor(Math.random() * NAMES.length)];
+      const pick = (m, d) => { const a = [...m.values()]; return a.length ? a[Math.floor(Math.random() * a.length)] : d; };
+      let i = 0;
+      setInterval(() => {
+        i++;
+        if (i % 4 === 2) addTime(pick(GIFT_ADD, 60e3), who());
+        else if (i % 4 === 0) subTime(pick(GIFT_SUB, 30e3), who());
+        else addTime([1, 5, 20][Math.floor(Math.random() * 3)] * PER_COIN);
+      }, 2500);
+    }
   })();
   </script>
 </body>

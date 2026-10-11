@@ -181,11 +181,48 @@ function MenuItemsEditor({ value, onChange }: { value: string; onChange: (v: str
   );
 }
 
+interface GiftSec { name: string; sec: number }
+/** อ่านค่า giftlist (JSON [{ name, sec }]) — ค่าเสีย/ว่าง = [] */
+function parseGiftList(v: string): GiftSec[] {
+  try { const a = v ? JSON.parse(v) as unknown : []; return Array.isArray(a) ? a.filter((x): x is GiftSec => !!x && typeof (x as GiftSec).name === 'string').map((x) => ({ name: x.name, sec: Number(x.sec) || 0 })) : []; } catch { return []; }
+}
+
+/** รายการของขวัญที่เลือกเอง + วินาทีต่อชิ้น (เช่น ของขวัญเพิ่มเวลา / ลดเวลา ของนาฬิกาจับเวลา) */
+function GiftListEditor({ value, onChange, tone = 'add' }: { value: string; onChange: (v: string) => void; tone?: 'add' | 'sub' }) {
+  const t = useT();
+  const list = parseGiftList(value);
+  const put = (next: GiftSec[]) => onChange(next.length ? JSON.stringify(next) : '');
+  const box = tone === 'sub' ? 'border-red-300 bg-red-50/60' : 'border-emerald-300 bg-emerald-50/60';
+  return (
+    <div className="space-y-2">
+      {list.map((g, i) => (
+        <div key={i} className={`flex items-center gap-2 rounded-xl border p-2 ${box}`}>
+          <div className="min-w-0 flex-1">
+            <GiftPicker value={g.name} onChange={(name) => { const next = list.slice(); if (name) next[i] = { ...g, name }; else next.splice(i, 1); put(next); }} />
+          </div>
+          <span className="shrink-0 text-sm font-semibold">{tone === 'sub' ? '−' : '+'}</span>
+          <div className="w-16 shrink-0" title={t('วินาทีต่อชิ้น')}>
+            <NumberInput min={1} max={86400} value={g.sec} className="!px-2 text-center" onChange={(n) => { const next = list.slice(); next[i] = { ...g, sec: n }; put(next); }} />
+          </div>
+          <span className="shrink-0 text-xs text-muted">{t('วิ')}</span>
+          <button type="button" aria-label={t('ลบ')} onClick={() => put(list.filter((_, j) => j !== i))} className="shrink-0 px-1 text-muted hover:text-red-600">✕</button>
+        </div>
+      ))}
+      <div className="rounded-xl border border-dashed border-line p-2">
+        <div className="mb-1.5 text-xs font-medium text-muted">{t(tone === 'sub' ? '+ เลือกของขวัญลดเวลา' : '+ เลือกของขวัญเพิ่มเวลา')}</div>
+        <GiftPicker value="" onChange={(name) => { if (name) put([...list, { name, sec: 60 }]); }} />
+      </div>
+    </div>
+  );
+}
+
 function FieldInput({ f, value, onChange }: { f: FieldDef; value: Values[string]; onChange: (v: Values[string]) => void }) {
   const t = useT();
   switch (f.type) {
     case 'menuItems':
       return <MenuItemsEditor value={String(value ?? '')} onChange={onChange} />;
+    case 'giftlist':
+      return <GiftListEditor value={String(value ?? '')} tone={f.tone} onChange={onChange} />;
     case 'toggle':
       return (
         <button type="button" role="switch" aria-checked={!!value} onClick={() => onChange(!value)}

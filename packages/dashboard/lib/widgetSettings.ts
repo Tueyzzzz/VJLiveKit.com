@@ -12,7 +12,9 @@ export type FieldDef =
   | { key: string; label: string; type: 'color'; def: string; hint?: string; when?: (v: Values) => boolean }
   | { key: string; label: string; type: 'text'; def: string; placeholder?: string; hint?: string; when?: (v: Values) => boolean }
   /** เลือกรายการในเมนูของขวัญ: ค่า = JSON { hide: [ruleId], icons: { ruleId: รูป } } */
-  | { key: string; label: string; type: 'menuItems'; def: string; hint?: string; when?: (v: Values) => boolean };
+  | { key: string; label: string; type: 'menuItems'; def: string; hint?: string; when?: (v: Values) => boolean }
+  /** รายการของขวัญที่เลือกเอง + วินาที: ค่า = JSON [{ name, sec }] · tone = สีแถว (เพิ่ม/ลด) */
+  | { key: string; label: string; type: 'giftlist'; def: string; tone?: 'add' | 'sub'; hint?: string; when?: (v: Values) => boolean };
 
 export type Values = Record<string, string | number | boolean>;
 export interface Section { title: string; fields: FieldDef[] }
@@ -619,6 +621,10 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
         { key: 'like', label: 'ต่อ 1 ไลค์', type: 'number', min: 0, def: 0 },
         { key: 'follow', label: 'ต่อการติดตาม', type: 'number', min: 0, def: 30 },
         { key: 'share', label: 'ต่อการแชร์', type: 'number', min: 0, def: 10 },
+      ] },
+      { title: 'ของขวัญที่เลือกเอง', fields: [
+        { key: 'giftAdd', label: '🎁 ของขวัญเพิ่มเวลา', type: 'giftlist', tone: 'add', def: '', hint: 'วินาทีต่อ 1 ชิ้น (คอมโบคูณตามจำนวน) · ใช้แทนค่าต่อเหรียญ ไม่นับซ้ำ' },
+        { key: 'giftSub', label: '⏬ ของขวัญลดเวลา', type: 'giftlist', tone: 'sub', def: '', hint: 'วินาทีต่อ 1 ชิ้น (คอมโบคูณตามจำนวน) · ลดได้ไม่ต่ำกว่า 0' },
       ] },
       { title: 'การแสดงผล', fields: [
         { key: 'label', label: 'ข้อความด้านบน', type: 'text', def: '⏳ ส่งของขวัญเพื่อเพิ่มเวลา' },

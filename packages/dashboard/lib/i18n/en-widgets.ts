@@ -861,4 +861,13 @@ export const EN_WIDGETS: Record<string, string> = {
   "โชว์ “รอ PK…”": "Show “Waiting for PK…”",
   "ซ่อนวิดเจ็ต": "Hide the widget",
   "จบ PK แล้วโชว์ MVP ค้างไว้": "Keep showing the MVP after the PK for",
+  "ของขวัญที่เลือกเอง": "Picked gifts",
+  "🎁 ของขวัญเพิ่มเวลา": "🎁 Gifts that add time",
+  "⏬ ของขวัญลดเวลา": "⏬ Gifts that subtract time",
+  "วินาทีต่อ 1 ชิ้น (คอมโบคูณตามจำนวน) · ใช้แทนค่าต่อเหรียญ ไม่นับซ้ำ": "Seconds per gift (combos multiply) · replaces the per-coin rule, never counted twice",
+  "วินาทีต่อ 1 ชิ้น (คอมโบคูณตามจำนวน) · ลดได้ไม่ต่ำกว่า 0": "Seconds per gift (combos multiply) · never goes below 0",
+  "+ เลือกของขวัญเพิ่มเวลา": "+ Pick a gift that adds time",
+  "+ เลือกของขวัญลดเวลา": "+ Pick a gift that subtracts time",
+  "วินาทีต่อชิ้น": "Seconds per gift",
+  "วิ": "s",
 };

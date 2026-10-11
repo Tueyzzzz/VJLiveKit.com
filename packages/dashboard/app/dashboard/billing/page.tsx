@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Pager, usePaged } from '@/components/Pager';
 import { ExternalLink } from 'lucide-react';
 import { PlanCards, usePlans } from '@/components/Pricing';
 import { Alert, Badge, Button, Card, PageHeader, Spinner } from '@/components/ui';
@@ -36,6 +37,7 @@ export default function BillingPage() {
     }
   }
 
+  const payPg = usePaged(payments, 10);
   if (!user) return null;
   const sub = user.subscription;
   const isPro = entitlements?.plan === 'pro';
@@ -105,7 +107,7 @@ export default function BillingPage() {
               <tr><th className="px-5 py-3 font-normal">{t('วันที่')}</th><th className="px-5 py-3 font-normal">{t('ยอด')}</th><th className="px-5 py-3 font-normal">{t('สถานะ')}</th><th className="px-5 py-3" /></tr>
             </thead>
             <tbody className="divide-y divide-line">
-              {payments.map((p) => (
+              {payPg.items.map((p) => (
                 <tr key={p.id}>
                   <td className="px-5 py-3">{new Date(p.createdAt).toLocaleDateString(loc)}</td>
                   <td className="px-5 py-3">{formatMoney(p.amountCents, p.currency)}</td>
@@ -121,6 +123,7 @@ export default function BillingPage() {
               ))}
             </tbody>
           </table>
+          <Pager {...payPg} />
         </Card>
       )}
     </div>

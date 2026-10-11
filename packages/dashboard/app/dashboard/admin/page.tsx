@@ -10,6 +10,7 @@ import { AdminServer } from '@/components/AdminServer';
 import { AdminErrors } from '@/components/AdminErrors';
 import { AdminMail } from '@/components/AdminMail';
 import { AdminMedia } from '@/components/AdminMedia';
+import { Pager, usePaged } from '@/components/Pager';
 import { WIDGET_LABELS } from '@/components/Pricing';
 import { Alert, Badge, Button, Card, Input, PageHeader, Spinner } from '@/components/ui';
 import { api, getToken } from '@/lib/api';
@@ -118,6 +119,8 @@ export default function AdminPage() {
     if (tab === 'live') { void loadLive(); const t = setInterval(loadLive, 10_000); return () => clearInterval(t); }
   }, [isAdmin, tab, users, loadOv, loadUsers, loadLive]);
 
+  // แบ่งหน้าตาราง (ข้อมูลเยอะขึ้นเรื่อย ๆ ไม่ให้หน้ายาวจนช้า)
+  const usersPg = usePaged(users, 25), payPg = usePaged(payments, 25), auditPg = usePaged(auditLog, 30), roomsPg = usePaged(rooms, 20), recentPg = usePaged(lives?.recent, 15);
   if (!isAdmin) return <Alert>หน้านี้สำหรับแอดมินเท่านั้น</Alert>;
 
   async function grant(u: UserRow) {
@@ -271,7 +274,7 @@ export default function AdminPage() {
                   <tr><th className="px-4 py-3 font-normal">ผู้ใช้</th><th className="px-4 py-3 font-normal">TikTok</th><th className="px-4 py-3 font-normal">สถานะไลฟ์</th><th className="px-4 py-3 font-normal">แพลน</th><th className="px-4 py-3 font-normal">หมดสิทธิ์</th><th className="px-4 py-3 font-normal">สมัคร</th><th className="px-4 py-3" /></tr>
                 </thead>
                 <tbody className="divide-y divide-line">
-                  {users.map((u) => (
+                  {usersPg.items.map((u) => (
                     <tr key={u.id}>
                       <td className="px-4 py-3"><button onClick={() => setDetail(u.id)} className="text-left hover:text-pink"><div className="font-medium underline-offset-2 hover:underline">{u.displayName ?? '-'} {u.admin && <Badge tone="pink">แอดมิน</Badge>}</div><div className="text-xs text-muted">{u.email}</div></button></td>
                       <td className="px-4 py-3">{u.tiktokUsername ? `@${u.tiktokUsername}` : '-'}</td>
@@ -293,6 +296,7 @@ export default function AdminPage() {
                   ))}
                 </tbody>
               </table>
+              <Pager {...usersPg} />
             </Card>
           )}
           <p className="mt-2 text-xs text-muted">แสดงล่าสุด 100 คน — ใช้ช่องค้นหาเพื่อหาคนอื่น</p>
@@ -313,7 +317,7 @@ export default function AdminPage() {
           <table className="w-full text-sm">
             <thead className="border-b border-line text-left text-xs text-muted"><tr><th className="px-4 py-3 font-normal">วันที่</th><th className="px-4 py-3 font-normal">ลูกค้า</th><th className="px-4 py-3 font-normal">ยอด</th><th className="px-4 py-3 font-normal">สถานะ</th><th className="px-4 py-3 font-normal">ช่องทาง</th></tr></thead>
             <tbody className="divide-y divide-line">
-              {payments.map((x) => (
+              {payPg.items.map((x) => (
                 <tr key={x.id}>
                   <td className="px-4 py-3 text-xs">{new Date(x.createdAt).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })}</td>
                   <td className="px-4 py-3"><button onClick={() => setDetail(x.user.id)} className="text-left hover:text-pink hover:underline">{x.user.email}</button>{x.user.tiktokUsername && <div className="text-xs text-muted">@{x.user.tiktokUsername}</div>}</td>
@@ -324,6 +328,7 @@ export default function AdminPage() {
               ))}
             </tbody>
           </table>
+          <Pager {...payPg} />
         </Card>
       ))}
 
@@ -332,7 +337,7 @@ export default function AdminPage() {
           <table className="w-full text-sm">
             <thead className="border-b border-line text-left text-xs text-muted"><tr><th className="px-4 py-3 font-normal">เวลา</th><th className="px-4 py-3 font-normal">แอดมิน</th><th className="px-4 py-3 font-normal">ทำอะไร</th><th className="px-4 py-3 font-normal">รายละเอียด</th></tr></thead>
             <tbody className="divide-y divide-line">
-              {auditLog.map((a, i) => (
+              {auditPg.items.map((a, i) => (
                 <tr key={i}>
                   <td className="px-4 py-3 text-xs">{new Date(a.at).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })}</td>
                   <td className="px-4 py-3 text-xs">{a.admin}</td>
@@ -342,6 +347,7 @@ export default function AdminPage() {
               ))}
             </tbody>
           </table>
+          <Pager {...auditPg} />
         </Card>
       ))}
 
@@ -409,11 +415,12 @@ export default function AdminPage() {
             <Card className="overflow-x-auto p-0">
               <h3 className="px-4 pt-4 text-sm font-semibold">ไลฟ์ล่าสุด</h3>
               <table className="mt-2 w-full text-sm"><tbody className="divide-y divide-line">
-                {lives.recent.length === 0 ? <tr><td className="px-4 py-6 text-center text-muted">ยังไม่มีข้อมูล</td></tr> : lives.recent.map((r) => {
+                {lives.recent.length === 0 ? <tr><td className="px-4 py-6 text-center text-muted">ยังไม่มีข้อมูล</td></tr> : recentPg.items.map((r) => {
                   const mins = Math.max(1, Math.round((new Date(r.lastSeenAt).getTime() - new Date(r.startedAt).getTime()) / 60000));
                   return <tr key={r.roomId}><td className="px-4 py-2 font-medium">@{r.username}</td><td className="px-4 py-2 text-xs">{new Date(r.startedAt).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })}</td><td className="px-4 py-2 text-xs">{mins >= 60 ? `${Math.floor(mins / 60)} ชม. ${mins % 60} น.` : `${mins} นาที`}</td><td className="px-4 py-2">💎 {r.diamonds.toLocaleString('th-TH')}</td><td className="px-4 py-2">{!r.ended && Date.now() - new Date(r.lastSeenAt).getTime() < 3 * 60_000 ? <Badge tone="mint">ไลฟ์อยู่</Badge> : <Badge tone="gray">จบแล้ว</Badge>}</td></tr>;
                 })}
               </tbody></table>
+              <Pager {...recentPg} />
             </Card>
           </div>
           <p className="text-xs text-muted">นับเฉพาะไลฟ์ที่วีเจเปิดวิดเจ็ต/เว็บไว้ (ระบบต่อเข้าไลฟ์ได้) · 1 รหัสห้องไลฟ์ของ TikTok = 1 ไลฟ์ · เริ่มนับตั้งแต่วันนี้</p>
@@ -431,7 +438,7 @@ export default function AdminPage() {
               <tr><th className="px-4 py-3 font-normal">TikTok</th><th className="px-4 py-3 font-normal">สถานะ</th><th className="px-4 py-3 font-normal">การเชื่อมต่อ</th><th className="px-4 py-3 font-normal">วิดเจ็ตเปิด</th><th className="px-4 py-3 font-normal">คนดู</th><th className="px-4 py-3 font-normal">เพชร</th><th className="px-4 py-3 font-normal">ไลค์</th><th className="px-4 py-3 font-normal">ส่งเยอะสุด</th><th className="px-4 py-3 font-normal">จัดการ</th></tr>
             </thead>
             <tbody className="divide-y divide-line">
-              {rooms.map((r) => (<Fragment key={r.username}>
+              {roomsPg.items.map((r) => (<Fragment key={r.username}>
                 <tr>
                   <td className="px-4 py-3 font-medium">@{r.username}</td>
                   <td className="px-4 py-3"><Badge tone={r.connected ? 'mint' : r.lastError ? 'pink' : 'gray'}>{r.connected ? 'ไลฟ์อยู่' : r.retrying ? 'รอไลฟ์ (ลองใหม่อัตโนมัติ)' : 'กำลังต่อ'}</Badge></td>
@@ -479,6 +486,7 @@ export default function AdminPage() {
               </Fragment>))}
             </tbody>
           </table>
+          <Pager {...roomsPg} />
         </Card>
       ))}
     </div>

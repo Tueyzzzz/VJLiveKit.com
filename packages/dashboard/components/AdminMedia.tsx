@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Download, Search } from 'lucide-react';
 import { Alert, Card, Input, Spinner } from './ui';
 import { api } from '@/lib/api';
+import { Pager, usePaged } from './Pager';
 
 interface MediaFile { id: string; name: string; size: number; createdAt: string; kind: 'audio' | 'video' | 'image'; ext: string; url: string; userId: string; email: string; displayName: string; tiktok: string | null }
 
@@ -21,6 +22,7 @@ export function AdminMedia() {
     const s = q.trim().toLowerCase();
     return (data?.files ?? []).filter((f) => (kind === 'all' || f.kind === kind) && (!s || [f.name, f.email, f.displayName, f.tiktok ?? ''].some((x) => x.toLowerCase().includes(s))));
   }, [data, kind, q]);
+  const pg = usePaged(list, 20);
   if (err) return <Alert>{err}</Alert>;
   if (!data) return <Spinner />;
   const users = new Set(data.files.map((f) => f.userId)).size;
@@ -42,7 +44,7 @@ export function AdminMedia() {
 
       {list.length === 0 ? <Card className="py-8 text-center text-sm text-muted">ไม่มีไฟล์</Card> : (
         <div className="space-y-2">
-          {list.map((f) => (
+          {pg.items.map((f) => (
             <Card key={f.userId + f.id} className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center">
               <div className="min-w-0 flex-1">
                 <div className="truncate font-medium">{f.name} <span className="text-xs font-normal uppercase text-muted">.{f.ext}</span></div>
@@ -54,6 +56,7 @@ export function AdminMedia() {
               <a href={f.url} download={f.name} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 self-start rounded-full border border-line px-3 py-1.5 text-xs text-muted hover:text-pink sm:self-auto"><Download className="size-3.5" /> ดาวน์โหลด</a>
             </Card>
           ))}
+          <Pager {...pg} />
         </div>
       )}
     </div>

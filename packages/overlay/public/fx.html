@@ -550,7 +550,7 @@
         return p; } },
     };
     // เอฟเฟกต์วิดีโอเต็มจอ (WebP เคลื่อนไหวพื้นใส แนวนอน 16:9) — fx/v-<ชื่อ>.webp
-    const VFX={ vcake:{ms:5000,hits:[900],sfx:'pop'}, vcat:{ms:5000,hits:[],sfx:''}, vchicks:{ms:5000,hits:[],sfx:''} };
+    const VFX={ vcake:{ms:5000,hits:[1150],sfx:'pop'}, vcat:{ms:5000,hits:[],sfx:''}, vchicks:{ms:5000,hits:[],sfx:''} };
     const vfxOk={}; for(const k in VFX){ const im=new Image(); im.onerror=()=>{ vfxOk[k]=false; }; im.src='fx/v-'+k.slice(1)+'.webp'+(window.VJL_VERSION?'?v='+window.VJL_VERSION:''); } // โหลดล่วงหน้า
     const vfxStyle=document.createElement('style'); vfxStyle.textContent='.vfx{position:fixed;left:50%;top:50%;width:min(100vw,177.8vh);transform:translate(-50%,-50%);pointer-events:none;z-index:49}'; document.head.appendChild(vfxStyle);
     function playVfx(a,ev){

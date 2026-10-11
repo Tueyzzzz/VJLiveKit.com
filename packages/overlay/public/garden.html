@@ -108,13 +108,13 @@
       cart: { src: 'themes/pot-cart.webp', x: -136.1, y: -139.9, w: 269.3, h: 139.9, top: -106.4, spread: 45.6 },
       basket: { src: 'themes/pot-basket.webp', x: -133.9, y: -189.8, w: 263.8, h: 189.8, top: -153.2, spread: 45.6 },
       // ห่อช่อ / แจกัน (ดอกไม้งอกจากปากห่อ)
-      bqpaper: { src: 'themes/pot-bqpaper.webp', x: -145.2, y: -300, w: 290.3, h: 300, top: -240.0, spread: 46.4, behind: true },
-      bqtulle: { src: 'themes/pot-bqtulle.webp', x: -147.8, y: -300, w: 295.5, h: 300, top: -234.0, spread: 47.3, behind: true },
-      bqkorean: { src: 'themes/pot-bqkorean.webp', x: -142.9, y: -300, w: 285.9, h: 300, top: -240.0, spread: 45.7, behind: true },
+      bqpaper: { src: 'themes/pot-bqpaper.webp', x: -145.2, y: -300, w: 290.3, h: 300, top: -240.0, spread: 46.4, ext: 3.0, behind: true },
+      bqtulle: { src: 'themes/pot-bqtulle.webp', x: -147.8, y: -300, w: 295.5, h: 300, top: -234.0, spread: 47.3, ext: 2.0, behind: true },
+      bqkorean: { src: 'themes/pot-bqkorean.webp', x: -142.9, y: -300, w: 285.9, h: 300, top: -240.0, spread: 45.7, ext: 2.0, behind: true },
       bqheart: { src: 'themes/pot-bqheart.webp', x: -149.4, y: -280, w: 298.9, h: 280, top: -224.0, spread: 47.8, behind: true },
       bqbasket: { src: 'themes/pot-bqbasket.webp', x: -133.8, y: -280, w: 267.6, h: 280, top: -140.0, spread: 42.8, behind: true },
-      vasegold: { src: 'themes/pot-vasegold.webp', x: -116.1, y: -270, w: 232.2, h: 270, top: -237.6, spread: 18.6, behind: true, narrow: true },
-      vasecat: { src: 'themes/pot-vasecat.webp', x: -107.5, y: -250, w: 214.9, h: 250, top: -200.0, spread: 30.1, behind: true },
+      vasegold: { src: 'themes/pot-vasegold.webp', x: -116.1, y: -270, w: 232.2, h: 270, top: -237.6, spread: 18.6, ext: 48.0, behind: true, narrow: true },
+      vasecat: { src: 'themes/pot-vasecat.webp', x: -107.5, y: -250, w: 214.9, h: 250, top: -200.0, spread: 30.1, ext: 29.0, behind: true },
       bqcrown: { src: 'themes/pot-bqcrown.webp', x: -139.8, y: -290, w: 279.5, h: 290, top: -237.8, spread: 44.7, behind: true },
       // แปลงผัก (ภาพกว้าง): n = จำนวนต้นตามขนาดแปลง · soil = ผิวดิน [x, y ขอบหลัง, y ขอบหน้า] ทุก ~10 หน่วย (สุ่มจุดปลูกทั่วพื้นที่)
       vwood: { src: 'themes/pot-vwood.webp', x: -199.5, y: -177.9, w: 399.8, h: 177.9, top: -119.6, n: 14, soil: [[-152.8,-130.4,-83.0],[-142.8,-143.4,-83.0],[-132.8,-156.3,-83.0],[-122.8,-156.3,-83.0],[-112.8,-156.3,-83.0],[-102.8,-156.3,-83.0],[-92.8,-156.3,-83.0],[-82.8,-156.3,-83.0],[-72.8,-156.3,-83.0],[-62.8,-156.3,-83.0],[-52.8,-156.3,-83.0],[-42.8,-156.3,-83.0],[-32.8,-156.3,-85.2],[-22.8,-156.3,-85.2],[-12.8,-156.3,-83.0],[-2.8,-156.3,-83.0],[7.2,-156.3,-83.0],[17.2,-156.3,-83.0],[27.2,-156.3,-83.0],[37.2,-156.3,-83.0],[47.2,-156.3,-83.0],[57.2,-156.3,-83.0],[67.2,-156.3,-83.0],[77.2,-156.3,-83.0],[87.2,-156.3,-83.0],[97.2,-156.3,-83.0],[107.2,-156.3,-83.0],[117.2,-156.3,-83.0],[127.2,-156.3,-83.0],[137.2,-152.0,-83.0],[147.2,-145.5,-83.0],[157.2,-121.8,-93.8]] },
@@ -384,10 +384,11 @@
     const BQ_MOUTH = { bqpaper: [0.14, 0.12, 0.90], bqtulle: [0.14, 0.10, 0.90], bqkorean: [0.14, 0.10, 0.88], bqheart: [0.12, 0.16, 0.86], bqbasket: [0.43, 0.12, 0.82], bqcrown: [0.14, 0.10, 0.90], vasegold: [0.08, 0.18, 0.82], vasecat: [0.09, 0.22, 0.78] };
     const MOUTH = BOUQ ? (() => {
       const P = POT_SKIN, m = BQ_MOUTH[SKIN_NAME] || [(BOUQ.rimY - P.y) / P.h, 0.15, 0.85];
-      const y = P.y + P.h * m[0], L = P.x + P.w * m[1], R = P.x + P.w * m[2], k = 0.2, E = P.w * 0.08;
+      const y = P.y + P.h * m[0], L = P.x + P.w * m[1], R = P.x + P.w * m[2], k = 0.3, E = (R - L) * 0.14; // เหนือปาก: ใบบานออกได้ ~14% ของความกว้างปากต่อข้าง (กรอบดอกแบบช่อร้านดอกไม้)
       const ext = (yy) => Math.min(E, Math.max(0, (y - yy) * k)); // กรวยบานขึ้นไป สูงสุด E ต่อข้าง
       const lo = (yy) => Math.max(P.x, L - ext(yy)), hi = (yy) => Math.min(P.x + P.w, R + ext(yy));
-      return { y, L, R, k, E, lo, hi, inside: (x, yy) => x >= lo(yy) && x <= hi(yy) };
+      const fe = (yy) => Math.min(P.w * 0.08, Math.max(0, (y - yy) * 0.2)), flo = (yy) => Math.max(P.x, L - fe(yy)), fhi = (yy) => Math.min(P.x + P.w, R + fe(yy)); // ดอก: กรวยแคบเดิม (ใบล้อมด้านนอก)
+      return { y, L, R, k, E, lo, hi, flo, fhi, inside: (x, yy) => x >= lo(yy) && x <= hi(yy) };
     })() : null;
     if (BOUQ) {
       const M = MOUTH, cx = (M.L + M.R) / 2, half = (M.R - M.L) / 2, by0 = M.y + POT_SKIN.h * 0.07; // โคนรวบใต้ปากห่อ (ซ่อนหลังห่อหน้า)
@@ -413,7 +414,7 @@
       // ใบเขียว: ยูคาลิปตัส/รัสคัส ตั้งขึ้นจากปากห่อ แผ่นิด ๆ (u = ตำแหน่งโคนข้ามความกว้างปาก)
       [[-0.75, -0.42], [0.75, 0.42], [-0.5, -0.28], [0.5, 0.3], [-0.25, -0.14], [0.25, 0.15], [-0.62, -0.36], [0.62, 0.36], [0, 0.02], [-0.12, -0.06], [0.12, 0.07]].forEach(([u, ang], j) => {
         const kind = j % 3 === 2 ? 'ruscus' : j % 2 ? 'euca' : 'ruscus', spr = BQ_GREEN[kind][(j * 3 + 1) % 4], bx = cx + u * half * 0.6;
-        const p = place(bx, ang, (x, a) => reach(x, a) * (1.06 + (j % 3) * 0.06), spr[1]);
+        const p = place(bx, ang, (x, a) => reach(x, a) * (1.12 + (j % 3) * 0.07), spr[1]); // ปลายใบเลยโดมดอก → เห็นใบล้อมดอก
         BQLEAF.push({ spr: spr[0], asp: spr[1], rot: p.a, len: p.H, m: j % 2 ? -1 : 1, phase: j * 1.3, bx, by: by0 });
       });
       [[-0.45, -0.3], [0.45, 0.28], [-0.15, -0.12], [0.15, 0.14], [0, 0]].forEach(([u, ang], j) => { // ยิปโซ (อยู่หน้าใบเขียว หลังดอก)
@@ -465,7 +466,7 @@
       } else if (BOUQ) { // ช่อ: จุดสุ่มในโดมเดิม ไม่ล้นกรวยปากห่อ (BQ_MOUTH)
         const r = Math.sqrt(xr()) * 0.98, th = xr() * 6.283, sx = Math.cos(th), sy = Math.sin(th);
         const y = Math.min(BOUQ.rimY + 6, BOUQ.cy + BOUQ.ry * r * (sy > 0 ? sy * 0.45 : sy));
-        let x = BOUQ.rx * r * sx; if (MOUTH) x = Math.max(MOUTH.lo(y) + 10, Math.min(MOUTH.hi(y) - 10, x));
+        let x = BOUQ.rx * r * sx; if (MOUTH) x = Math.max(MOUTH.flo(y) + 10, Math.min(MOUTH.fhi(y) - 10, x));
         sl = { tree: true, x, y, t: xr(), c: 0.75 * (1 - r) + 0.25 * clamp01(-sy) };
         if (bqNear) sl.stem = bqNear(x, y);
       } else if (BED && CLUMPS.length) { // แปลงผัก: ส่วนใหญ่ซุกบนกอทั่วแปลง · บางส่วนเกาะข้างก้านดอก
@@ -686,7 +687,7 @@
       ctx.save(); // การหายใจ (ยุบ-ยืด) ใส่ที่ frame ทั้งกลุ่ม ต้นไม้+กิ่ง+ดอกไม้ ขยับไปพร้อมกัน
       if (POT_SKIN) {
         ctx.beginPath(); ctx.ellipse(BED ? POT_SKIN.x + POT_SKIN.w / 2 : 0, -4, TREE ? 170 : BED ? POT_SKIN.w * 0.44 : 125, 12, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(90,70,140,.25)'; ctx.fill();
-        if (potImg.ready()) ctx.drawImage(potImg.source, POT_SKIN.x, POT_SKIN.y, POT_SKIN.w, POT_SKIN.h);
+        if (potImg.ready()) { const e = POT_SKIN.ext || 0; ctx.drawImage(potImg.source, POT_SKIN.x, POT_SKIN.y - e, POT_SKIN.w, POT_SKIN.h + e); } // ext = ภาพสูงเกินกรอบเดิมด้านบน (ใบในห่อโผล่เลยขอบ)
         ctx.restore(); return;
       }
       // เงา

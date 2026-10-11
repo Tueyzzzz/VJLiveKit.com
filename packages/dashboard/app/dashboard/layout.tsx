@@ -13,6 +13,7 @@ import { TikTokAvatar } from '@/components/TikTokAvatar';
 import { NotificationBell } from '@/components/NotificationBell';
 import { SupportBubble } from '@/components/SupportBubble';
 import { LiveStatusBar } from '@/components/LiveStatusBar';
+import { AdminLiveBar } from '@/components/AdminLiveBar';
 import { Badge, Spinner, cx } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { api, planLabel } from '@/lib/api';
@@ -132,6 +133,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
       <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-8 sm:py-8">
         {notice && <div className="mb-6 rounded-2xl bg-pink-soft px-4 py-3 text-sm text-ink">📢 {notice}</div>}
+        {isAdmin && <AdminLiveBar />}
         <LiveStatusBar />
         {children}
         <SupportBubble />

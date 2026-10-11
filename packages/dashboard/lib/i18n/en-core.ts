@@ -632,4 +632,6 @@ export const EN_CORE: Record<string, string> = {
   "MVP ฝั่งคู่แข่ง": "Opponent MVP",
   "⚔️ PK {n} (ชนะ {w})": "⚔️ {n} PK ({w} won)",
   "🏁 จบ PK (ทุกผล · ประกาศ MVP)": "🏁 PK ends (any result · announce MVP)",
+  'กำลังไลฟ์ {n} ห้อง': '{n} rooms live now',
+  'ตอนนี้ไม่มีใครไลฟ์': 'Nobody is live right now',
 };

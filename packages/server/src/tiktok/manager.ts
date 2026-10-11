@@ -1,5 +1,6 @@
 import { EventEmitter } from 'node:events';
 import { recordGift } from './giftCatalog.js';
+import { recordCollect } from './collectStore.js';
 import { recordError } from '../errlog/store.js';
 import { config } from '../config/index.js';
 import { emptyStats, type LiveStats, type NormalizedUser, type TikTokEvent, type TikTokEventType, type TopGifter } from './types.js';
@@ -130,6 +131,7 @@ export class TikTokRoom extends EventEmitter {
 
   // ---------- การเชื่อมต่อจริง ----------
   private async connectReal(): Promise<void> {
+    this.isDemo = false;
     const opts: Record<string, unknown> = {};
     if (config.signApiKey) opts.signApiKey = config.signApiKey;
     this.connection = new TikTokLiveConnection(this.username, opts);
@@ -266,6 +268,7 @@ export class TikTokRoom extends EventEmitter {
       const u = ev.user;
       this.recentGifts.push({ ...ev, user: u ? { userId: u.userId, uniqueId: u.uniqueId, nickname: u.nickname, avatar: '' } : undefined });
       if (this.recentGifts.length > 600) this.recentGifts.splice(0, this.recentGifts.length - 600);
+      if (!this.isDemo) recordCollect(this.username, this.recentGifts[this.recentGifts.length - 1]); // กองสะสมถาวร (ปิดเว็บ/ต่อใหม่ก็ไม่หาย)
     }
     this.emit('event', ev);
     this.emit('stats', this.stats);
@@ -321,7 +324,9 @@ export class TikTokRoom extends EventEmitter {
   }
 
   // ---------- โหมดเดโม ----------
+  private isDemo = false;
   private startDemo(): void {
+    this.isDemo = true;
     this.connected = true;
     this.emit('status', { type: 'connected', message: `โหมดเดโม @${this.username || 'demo'}`, demo: true });
     const names = ['somchai', 'nong_may', 'gamer_x', 'lisa_fan', 'ต้นน้ำ', 'บิ๊ก', 'mimi'];

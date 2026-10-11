@@ -28,12 +28,14 @@
   window.VJLCollect = {
     /** ของขวัญชิ้นนี้ยังไม่อยู่ในกอง (ใช้ตอนเติมชิ้นที่พลาดหลังต่อใหม่) */
     isNew: (e) => !read().some((x) => x.id === idOf(e)),
-    /** ต่อใหม่ (deploy/รีโหลด/เพิ่งเปิด): เติมของขวัญของไลฟ์นี้ที่ยังไม่มีในกอง แบบเงียบ (ไม่เด้งแจ้งเตือน) */
+    /** ต่อใหม่ (deploy/รีโหลด/เพิ่งเปิด/ปิดเว็บไปนาน/เครื่องใหม่): เติมของขวัญจากกองถาวรบนเซิร์ฟเวอร์ที่ยังไม่มีในเครื่อง แบบเงียบ (ไม่เด้งแจ้งเตือน) */
     backfill(state, onGift) {
       if (q.get('demo') === '1' || !state || !Array.isArray(state.recentGifts)) return;
       const after = Number(window.Overlay ? Overlay.param('resetAt', '0') : 0) || 0; // กด "ล้าง" แล้ว → ไม่เติมของก่อนหน้านั้น
       const have = new Set(read().map((x) => x.id));
-      state.recentGifts.filter((e) => e && e.ts > after && !have.has(idOf(e))).forEach((e, i) => setTimeout(() => onGift({ ...e, __quiet: 1 }), i * 40));
+      // เซิร์ฟเวอร์ส่งกองถาวรมาทั้งหมด (สูงสุด ~1500 ครั้ง) → ของเยอะเติมเร็วขึ้น ไม่ต้องรอนาน
+      const miss = state.recentGifts.filter((e) => e && e.ts > after && !have.has(idOf(e))), gap = Math.max(4, Math.min(40, 6000 / (miss.length || 1)));
+      miss.forEach((e, i) => setTimeout(() => onGift({ ...e, __quiet: 1 }), i * gap));
     },
     /**
      * รับของขวัญแบบสด: คอมโบ (กดรัว ๆ) แสดงทันทีทีละชุดระหว่างกด ไม่ต้องรอ TikTok ส่ง "คอมโบจบ" (ช้าหลายวินาที)

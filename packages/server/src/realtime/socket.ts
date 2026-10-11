@@ -11,6 +11,7 @@ import { settings } from '../settings/index.js';
 import { isSuspended } from '../admin/store.js';
 import type { ActionRule, RuleTrigger, RuleAction } from '../actions/engine.js';
 import { socketStats } from '../admin/server-stats.js';
+import { collectFor } from '../tiktok/collectStore.js';
 
 /** โหลดกฎ Actions ที่เปิดใช้ของผู้ใช้ */
 const rulesProvider: RulesProvider = async (userId) => {
@@ -152,7 +153,8 @@ export function setupRealtime(httpServer: HttpServer): RoomHub {
           if (socket.disconnected) { active = false; hub.detach(room, ownerId); return; }
           // รายการของขวัญย้อนหลัง ส่งเฉพาะวิดเจ็ตสะสมของขวัญ (ที่เหลือไม่ใช้ ประหยัดแบนด์วิดท์)
           const COLLECT = ['collect', 'giftjar', 'aquarium', 'belly', 'snowglobe', 'spacedome', 'vehicle', 'tree', 'garden', 'coinjar', 'pile'];
-          socket.emit('state', widget && COLLECT.includes(widget) ? state : { ...state, recentGifts: undefined });
+          // วิดเจ็ตสะสม: ส่งกองถาวรทั้งหมด (ดิสก์) + ของไลฟ์นี้ → เปิดใหม่ที่ไหนเมื่อไหร่ก็ได้ของครบ (วิดเจ็ตกรองของก่อนกด "ล้าง" เอง)
+          socket.emit('state', widget && COLLECT.includes(widget) ? { ...state, recentGifts: collectFor(room, state.recentGifts ?? []) } : { ...state, recentGifts: undefined });
         }).catch(() => { active = false; });
       };
       const off = () => {

@@ -158,6 +158,25 @@ function ActionsInner() {
     try { await navigator.clipboard.writeText(mascotUrl); } catch { window.prompt(t('คัดลอกลิงก์นี้'), mascotUrl); return; }
     setMascotCopied(true); setTimeout(() => setMascotCopied(false), 1500);
   }
+  // ลิงก์แยกหมวด (fx.html?only=<หมวด>) + "ลิงก์หลักไม่ต้องเล่นหมวดนี้" (ตั้งค่า fx: split) — วางแต่ละหมวดคนละตำแหน่งในโปรแกรมไลฟ์ได้
+  const [split, setSplit] = useState<string[]>([]);
+  const [catCopied, setCatCopied] = useState<string | null>(null);
+  useEffect(() => { api<{ config: Record<string, unknown> }>('/api/widgets/fx/config').then((r) => setSplit(String(r.config?.split ?? '').split(',').filter(Boolean))).catch(() => {}); }, []);
+  async function copyCat(g: string) {
+    if (!fxUrl) return;
+    const u = `${fxUrl}&only=${g}`;
+    try { await navigator.clipboard.writeText(u); } catch { window.prompt(t('คัดลอกลิงก์นี้'), u); return; }
+    setCatCopied(g); setTimeout(() => setCatCopied(null), 1500);
+  }
+  async function toggleSplit(g: string) {
+    try {
+      const cur = (await api<{ config: Record<string, unknown> }>('/api/widgets/fx/config')).config ?? {};
+      const list = String(cur.split ?? '').split(',').filter(Boolean);
+      const next = list.includes(g) ? list.filter((x) => x !== g) : [...list, g];
+      await api('/api/widgets/fx/config', { method: 'PUT', body: { ...cur, split: next.join(',') } });
+      setSplit(next);
+    } catch (err) { setError({ text: (err as Error).message }); }
+  }
   async function copyFx() {
     if (!fxUrl) return;
     try { await navigator.clipboard.writeText(fxUrl); } catch { window.prompt(t('คัดลอกลิงก์นี้'), fxUrl); return; }
@@ -526,6 +545,21 @@ function ActionsInner() {
                   ))}
                 </div>
               </div>
+              {fxUrl && ['fx', 'tarot', 'thanks', 'fun'].includes(tplGroup) && (
+                <div className="mb-4 rounded-xl border border-dashed border-line bg-canvas/60 p-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="min-w-0 flex-1 text-sm">
+                      <span className="font-medium">{t('🔗 ลิงก์เฉพาะหมวดนี้')}</span>
+                      <span className="block text-xs text-muted">{t('ไม่บังคับ — ใช้เมื่ออยากวางหมวดนี้แยกตำแหน่ง/ขนาดเอง (เช่น ไพ่ไว้มุมจอ) ถ้าใช้ลิงก์ FX ลิงก์เดียวก็ไม่ต้องทำอะไร')}</span>
+                    </div>
+                    <Button variant="secondary" onClick={() => copyCat(tplGroup)}>{catCopied === tplGroup ? <><Check className="size-4 text-mint" /> {t('คัดลอกแล้ว')}</> : <><Copy className="size-4" /> {t('คัดลอกลิงก์หมวดนี้')}</>}</Button>
+                  </div>
+                  <label className="mt-2 flex cursor-pointer items-start gap-2 text-xs text-muted">
+                    <input type="checkbox" className="mt-0.5 accent-pink" checked={split.includes(tplGroup)} onChange={() => void toggleSplit(tplGroup)} />
+                    <span>{t('ลิงก์ FX หลักไม่ต้องเล่นหมวดนี้ (ติ๊กหลังจากวางลิงก์หมวดนี้ในโปรแกรมไลฟ์แล้ว ไม่งั้นหมวดนี้จะไม่ขึ้นจอ)')}</span>
+                  </label>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4">
                 {tplShown.map((tp) => {
                   const added = have.has(tp.rule.name);

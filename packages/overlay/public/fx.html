@@ -673,17 +673,25 @@
     }
     if(Overlay.param('pktest','')) setInterval(()=>playPk(Overlay.param('pktest','')), 5500); // ?pktest=glove
 
+    // ลิงก์แยกหมวด: ?only=tarot (ลิงก์เฉพาะหมวด) · ลิงก์หลักข้ามหมวดที่วีเจตั้ง "แยกจอ" ไว้ (ตั้งค่า fx: split=fx,tarot)
+    // หมวดตามชนิด action: เอฟเฟกต์เต็มจอ=fx · ไพ่=tarot · ป้ายไฟ/ข้อความ=thanks · นวม=fun · เสียง/รูป/วิดีโอ=ลิงก์หลักเสมอ
+    const CAT=(t)=>t==='effect'?'fx':t==='tarot'?'tarot':(t==='sign'||t==='text')?'thanks':t==='glove'?'fun':'main';
+    const ONLY=(new URLSearchParams(location.search).get('only')||'').split(',').filter(Boolean);
+    const SPLIT=ONLY.length?[]:String(Overlay.param('split','')).split(',').filter(Boolean);
+    const mine=(a)=>{ const c=CAT(a&&a.type); return ONLY.length?ONLY.includes(c):!SPLIT.includes(c); };
     // รับ action จากเซิร์ฟเวอร์ (Actions & Events engine)
     Overlay.on('action',(fire)=>{
       const pk=fire.event&&fire.event.type==='pk'&&fire.event.pk;
       // เริ่ม PK / จบ (ชนะ แพ้ เสมอ) → วิดีโอประจำเหตุการณ์ (ใช้กติกาเดียวกับการ์ด: วิดีโออย่างเดียว เสียงยังเล่นได้)
       const pkVid=pk&&(pk.kind==='start'?'start':pk.kind==='end'?pk.result:'');
-      if(pkVid&&PK_VIDEO[pkVid]&&pkOk[pkVid]!==false){ playPk(pkVid); if(fire.action.type!=='sound') return; }
-      if(pk&&pk.kind==='card'&&pk.card&&PK_VIDEO[pk.card]){ // การ์ด PK ที่มีวิดีโอ → เล่นวิดีโออย่างเดียว
+      if(pkVid&&PK_VIDEO[pkVid]&&pkOk[pkVid]!==false&&!ONLY.length){ playPk(pkVid); if(fire.action.type!=='sound') return; }
+      if(pk&&pk.kind==='card'&&pk.card&&PK_VIDEO[pk.card]&&!ONLY.length){ // การ์ด PK ที่มีวิดีโอ → เล่นวิดีโออย่างเดียว
         playPk(pk.card);
         // ไม่เอาป้ายไฟ/ข้อความ/นวมพุ่งของกฎมาซ้อนวิดีโอ · กฎที่เป็นเสียงยังเล่นได้ (ไม่บังจอ)
         if(fire.action.type!=='sound') return;
       }
+      if(ONLY.length&&fire.action.type!=='sound'&&((pkVid&&PK_VIDEO[pkVid]&&pkOk[pkVid]!==false)||(pk&&pk.kind==='card'&&PK_VIDEO[pk.card]))) return; // ลิงก์หลักเล่นวิดีโอ PK แทนแล้ว
+      if(!mine(fire.action)) return; // หมวดนี้เล่นที่ลิงก์อื่น
       // เสียงเล่นที่แดชบอร์ด (ลำโพง) แล้ว → จอนี้โชว์แค่ข้อความ ไม่เล่นเสียงซ้ำ
       if(fire.elsewhere && fire.action.type==='sound'){ const t=fill(fire.action.text,fire.event); if(t) showText(t,fire.action.durationMs||5000); return; }
       // ส่งคอมโบ (เช่น กุหลาบ 10 ดอก) → เล่นซ้ำตามจำนวน ไม่เกินที่วีเจตั้ง (ไพ่ทาโร่ = 1 เสมอ)
@@ -696,7 +704,7 @@
     // demo fallback — จำลองกฎ "ได้ Galaxy -> โชว์ข้อความ"
     if(!Overlay.connected){
       const samples=[{type:'text',text:'🎉 ขอบคุณสำหรับ Galaxy!'},{type:'tarot',cards:3},{type:'effect',effect:'butterflies',text:'🦋 {user} เสกผีเสื้อ!'},{type:'effect',effect:'sakura',text:'🌸 {user} โปรยซากุระ'},{type:'effect',effect:'confetti',text:'🎊 ขอบคุณ {user}!'},{type:'sign',signStyle:'neon',signMode:'pulse',text:'💗 ขอบคุณ {user} ที่ติดตาม',durationMs:4000},{type:'glove',count:2,text:'🥊 {user} ส่งนวม!'}];
-      setInterval(()=>play(samples[Math.floor(Math.random()*samples.length)],{user:{nickname:'mimi'}}), 5000);
+      const ok=samples.filter(mine); if(ok.length) setInterval(()=>play(ok[Math.floor(Math.random()*ok.length)],{user:{nickname:'mimi'}}), 5000);
     }
   })();
   </script>

@@ -162,6 +162,12 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
           ['sports', 'รถสปอร์ต', '🎮 สายเท่ เกมมิ่ง', 'car-sports'], ['offroad', 'รถออฟโรด 4x4', '🎮 สายเท่ เกมมิ่ง', 'car-offroad'], ['jdm', 'รถดริฟต์ JDM', '🎮 สายเท่ เกมมิ่ง', 'car-jdm'], ['bike', 'บิ๊กไบค์', '🎮 สายเท่ เกมมิ่ง', 'car-bike'],
           ['tourbus', 'รถทัวร์คอนเสิร์ต', '🎤 สายนักร้อง', 'car-tourbus'], ['limo', 'รถลีมูซีนดารา', '🎤 สายนักร้อง', 'car-limo'], ['vintage', 'รถเปิดประทุนวินเทจ', '🎤 สายนักร้อง', 'car-vintage'],
         ] },
+        { key: 'mode', label: 'วิธีผูกของขวัญ', type: 'select', def: 'mix', options: [
+          ['mix', 'ผสม: ของแพงลอยเป็นลูกโป่ง · ของถูกลากท้ายรถ'],
+          ['balloon', 'ลอยเป็นช่อลูกโป่งเหนือรถทั้งหมด'],
+          ['drag', 'ลากท้ายรถบนถนนทั้งหมด (แบบกระป๋องรถงานแต่ง)'],
+        ] },
+        { key: 'balloonMin', label: 'ลอยเป็นลูกโป่งตั้งแต่ (เหรียญ)', type: 'number', min: 1, def: 100, when: (v) => (v.mode ?? 'mix') === 'mix', hint: 'ถูกกว่านี้ผูกเชือกลากท้ายรถ กระเด้งตามถนน' },
         ...tint(() => true),
         { key: 'alert', label: 'แสดงชื่อคนส่ง', type: 'toggle', def: true },
         { key: 'minCoins', label: 'รับเฉพาะของขวัญตั้งแต่ (เหรียญ)', type: 'number', min: 0, def: 0 },
@@ -169,7 +175,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
       { title: 'ขนาดและตำแหน่ง', fields: [
         size(),
         { key: 'giftScale', label: 'ขนาดของขวัญ', type: 'range', min: 0.5, max: 2.5, step: 0.05, def: 1, unit: '×' },
-        { key: 'rope', label: 'ความยาวเชือก', type: 'range', min: 40, max: 200, step: 10, def: 90, unit: '', hint: 'ระยะจากท้ายรถถึงของขวัญแถวแรก' },
+        { key: 'rope', label: 'ความยาวเชือก', type: 'range', min: 40, max: 200, step: 10, def: 90, unit: '', hint: 'เชือกลูกโป่ง: ยิ่งยาว ช่อยิ่งลอยสูงเหนือรถ', when: (v) => (v.mode ?? 'mix') !== 'drag' },
         { key: 'max', label: 'ลากได้สูงสุด (ชิ้น)', type: 'number', min: 30, max: 400, def: 140, hint: 'เกินแล้วชิ้นเก่าสุดค่อย ๆ จางไป — ของขวัญเล็กลงจะลากได้มากขึ้น' },
         ...pos(),
       ] },

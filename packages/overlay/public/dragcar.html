@@ -28,7 +28,10 @@
   <script src="js/juice.js"></script>
   <script>
   /*
-   * รถลากของขวัญ — ของขวัญจริงผูกเชือกยาวกับหลังคารถ ลอยเป็นช่อเหนือรถเหมือนลูกโป่ง แกว่งตามลมแบบหน่วง ๆ (สปริง)
+   * รถลากของขวัญ (แบบรถงานแต่ง Just Married)
+   *   mode=mix (ค่าเริ่มต้น)      ของแพง (≥ balloonMin) ลอยเป็นช่อลูกโป่งเหนือรถ · ของถูกผูกเชือกลากท้ายรถบนถนนแบบกระป๋อง
+   *   mode=balloon               ทุกชิ้นลอยเป็นช่อเหนือรถ · mode=drag = ทุกชิ้นลากบนถนน
+   *   balloonMin=100             เกณฑ์เหรียญของชิ้นที่ได้ลอยเป็นลูกโป่ง (mode=mix)
    *   car=van                    แบบรถ (ภาพ 3D มุมหลัง)
    *   hue=0 sat=1 bright=1       เปลี่ยนสีรถ
    *   scale=1 giftScale=1 carScale=0.8 rope=140 x=0 y=0 alert=1 minCoins=0 max=140 reset=1
@@ -40,7 +43,10 @@
     const SHOW_ALERT = P('alert', '1') !== '0', MIN_COINS = num('minCoins', 0);
     const MAX = Math.round(Math.max(30, Math.min(400, num('max', 140) / (GIFT_SCALE * GIFT_SCALE))));
 
-    // รถ (ภาพมุมหลัง) — พิกัดหน่วยออกแบบ: 0,0 = กลางล่างของรถ · hook = ตะขอกลางกันชนท้าย (ไม่ได้ใช้แล้ว เก็บไว้เผื่อ)
+    const MODE = ['mix', 'balloon', 'drag'].includes(P('mode', 'mix')) ? P('mode', 'mix') : 'mix', BAL_MIN = num('balloonMin', 100);
+    const kindOf = (g) => (MODE === 'balloon' ? 'b' : MODE === 'drag' ? 'd' : (g.d || 0) >= BAL_MIN ? 'b' : 'd'); // b = ลูกโป่งเหนือรถ · d = ลากบนถนน
+    const HAS_DRAG = MODE !== 'balloon';
+    // รถ (ภาพมุมหลัง) — พิกัดหน่วยออกแบบ: 0,0 = กลางล่างของรถ · hook = ตะขอกลางกันชนท้าย (จุดผูกเชือกของที่ลาก)
     const CARS = {
       pickup2: { src: 'themes/car-pickup2.webp', x: -209.4, y: -360, w: 418.9, h: 360, hook: { x: -0.4, y: -42.5 } },
       camper: { src: 'themes/car-camper.webp', x: -214.8, y: -360, w: 429.5, h: 360, hook: { x: -0.2, y: -47.0 } },
@@ -59,8 +65,10 @@
     };
     const CAR = CARS[P('car', 'van')] || CARS.van;
     const carImg = Juice.skin(CAR.src, num('hue', 0), num('sat', 1), num('bright', 1));
-    const CK = Math.max(0.5, Math.min(1.2, num('carScale', 0.8))); // ย่อรถลงนิด → เหลือที่ด้านบนให้เชือกยาว ๆ
-    const CAR_Y = -8; // รถชิดขอบล่าง ของขวัญลอยเป็นช่อด้านบน (ภาพรวมสมดุล: รถล่าง · ช่อบน)
+    const CK = Math.max(0.5, Math.min(1.2, num('carScale', MODE === 'mix' ? 0.62 : MODE === 'drag' ? 0.72 : 0.8))); // ย่อรถลงนิด → เหลือที่ด้านบนให้เชือกยาว ๆ / ด้านล่างให้ของที่ลาก
+    // ถนนท้ายรถ (ระหว่างรถกับขอบล่าง = ใกล้กล้อง) — โหมดที่มีของลาก รถยกขึ้นให้มีที่วางกระป๋อง · balloon = รถชิดขอบล่าง ช่อบน
+    const DRAG_H = MODE === 'drag' ? 215 : MODE === 'mix' ? 185 : 0;
+    const CAR_Y = HAS_DRAG ? -DRAG_H : -8;
     const ROPE = Math.max(60, num('rope', 140)); // เชือกสั้นสุด (หน่วยออกแบบ) ยิ่งมาก ช่อยิ่งลอยสูง
     if (CAR.music) setInterval(() => { if (!document.hidden && fx.notes) fx.notes((Math.random() - .5) * CAR.w * CK * 0.5, CAR_Y + CAR.y * CK + 30, 1); }, 1700);
 
@@ -90,7 +98,7 @@
     const tieX = (i) => (BUNDLE ? 0 : (i - (TIE_N - 1) / 2) * TIE_STEP);
     const BUN = { c: 16, ay: 0, yT: -600, y: NaN }; // กลางช่อ: ของน้อย = ช่อเล็กลอยเหนือรถด้วยเชือกยาว · ของเยอะ = ช่อโตขึ้นด้านบน
     function bunTarget() {
-      const n = gifts.filter((b) => !b.dying).length, Rn = BUN.c * Math.sqrt(n + 1) * 0.85;
+      const n = gifts.filter((b) => !b.dying && b.kind === 'b').length, Rn = BUN.c * Math.sqrt(n + 1) * 0.85;
       return Math.max(BUN.yT + Rn, Math.min(BUN.ay - ROPE * 1.3 - Rn, BUN.ay - ROPE * 1.3 - 20));
     }
 
@@ -137,7 +145,34 @@
         p.ph = (p.x * 0.013 + p.y * 0.021 + i * 0.7) % 6.283;
         p.k = 4.2 + (i * 7 % 5) * 0.55; // ความแข็งสปริงต่างกันนิด ๆ → แกว่งไม่พร้อมกัน
       });
-      slots = out; rebalance();
+      slots = out; rebalance(); buildDrag();
+    }
+
+    // ---- ช่องของที่ลากบนถนน (แบบกระป๋องรถงานแต่ง): แถวไล่จากท้ายรถลงมาหาขอบล่าง แถวใกล้กล้องตัวใหญ่ขึ้น และกางออกเป็นพัด ----
+    let dslots = [];
+    const dDepth = (y) => 0.82 + 0.46 * Math.max(0, Math.min(1, (y - CAR_Y) / Math.max(1, DRAG_H))); // ไกล (ติดรถ) เล็ก · ใกล้ (ล่างจอ) ใหญ่
+    function buildDrag() {
+      dslots = []; if (!HAS_DRAG) return;
+      const half = Math.max(160, Math.min(-area.left, area.right) - 34);
+      const yEnd = -16 * Math.max(1, GIFT_SCALE);
+      let y = CAR_Y + 26 * GIFT_SCALE, j = 0;
+      while (y <= yEnd && j < 14) {
+        const dep = dDepth(y), sp = 31 * GIFT_SCALE * dep;
+        const hw = Math.min(half, CAR.w * CK * 0.3 + (y - CAR_Y) * 1.9); // ยิ่งห่างรถ ยิ่งกางกว้าง
+        for (let m = 0; m < 60; m++) {
+          const ax = m * sp + (j % 2 ? sp / 2 : 0); if (ax > hw) break;
+          for (const sgn of ax ? [1, -1] : [1]) {
+            const h = Math.sin(j * 12.9898 + m * 78.233 + sgn) * 43758.5453, r = h - Math.floor(h);
+            dslots.push({ x: sgn * ax + (r - 0.5) * sp * 0.25, y: y + (r - 0.5) * sp * 0.2, j, dep, ph: (r * 6.283 + j * 0.9) % 6.283, sp: 3.1 + r * 1.3 });
+          }
+        }
+        y += 24 * GIFT_SCALE * dep; j++;
+      }
+      // เติมจากกลางถนนช่วงกลาง ๆ ก่อน (เชือกเห็นชัด) แล้วค่อยกระจายออกข้าง/หน้า-หลัง
+      const yc = CAR_Y + DRAG_H * 0.42;
+      dslots.sort((p, q) => Math.hypot(p.x * 0.55, (p.y - yc) * 1.2) - Math.hypot(q.x * 0.55, (q.y - yc) * 1.2) || q.x - p.x);
+      // จัดช่องใหม่ตามลำดับเดิม (ย่อ/ขยายจอแล้วไม่มีชิ้นไหนหาย — ถ้าช่องไม่พอค่อยซ้อนกัน)
+      gifts.filter((b) => !b.dying && b.kind === 'd').forEach((b, k) => { b.slot = k; });
     }
 
     // ---- ของขวัญ ----
@@ -146,8 +181,14 @@
     function giftImg(url) { if (!url || !/^https:\/\//.test(url)) return null; let im = imgCache[url]; if (!im) { im = new Image(); im.src = url; imgCache[url] = im; } return im; }
     const EMOJI = { Rose: '🌹', 'Finger Heart': '🫰', Perfume: '🧴', Galaxy: '🌌', Lion: '🦁', Universe: '🪐', Heart: '❤️', TikTok: '🎵' };
     const sizeFor = Juice.sizeFor || (() => 1);
+    function freeDrag() {
+      const used = new Set(gifts.filter((g) => !g.dying && g.kind === 'd').map((g) => g.slot));
+      const lim = dslots.length || MAX + 20; // ก่อนรู้ขนาดจอ (โหลดของเดิม) ยังไม่จำกัด
+      for (let i = 0; i < lim && i < MAX + 20; i++) if (!used.has(i)) return i;
+      return -1;
+    }
     function freeSlot(r) {
-      const alive = gifts.filter((g) => !g.dying), used = new Set(alive.map((g) => g.slot));
+      const alive = gifts.filter((g) => !g.dying && g.kind === 'b'), used = new Set(alive.map((g) => g.slot));
       const big = r > 34 && slots.length ? alive.filter((g) => g.r > 34) : [];
       let best = -1, bestS = Infinity;
       for (let i = 0; i < MAX + 20; i++) {
@@ -163,19 +204,26 @@
       return best;
     }
     function addGift(g, born) {
-      const r = Math.min(BUNDLE ? 44 : 58, 18 * GIFT_SCALE * sizeFor(g.d, BUNDLE ? 3 : 4.2)); // ของแพงใหญ่ชัด ๆ (Lion/Universe ≈ 3 เท่า) แต่ไม่บังทั้งช่อ
-      let slot = freeSlot(r);
+      const kind = kindOf(g);
+      const r = kind === 'd' ? Math.min(32 * GIFT_SCALE, 16 * GIFT_SCALE * sizeFor(g.d, 2)) // ของลาก: ขนาดพอ ๆ กัน (ของแพงใหญ่ขึ้นนิด) แถวอ่านง่าย
+        : Math.min(BUNDLE ? 44 : 58, 18 * GIFT_SCALE * sizeFor(g.d, BUNDLE ? 3 : 4.2)); // ของแพงใหญ่ชัด ๆ (Lion/Universe ≈ 3 เท่า) แต่ไม่บังทั้งช่อ
+      let slot = kind === 'd' ? freeDrag() : freeSlot(r);
       const alive = gifts.filter((b) => !b.dying);
-      if (alive.length >= MAX || slot < 0) { const old = (window.VJLCollect && VJLCollect.victims) ? VJLCollect.victims(gifts.map((x) => ({ ...x, d: x.g.d, ref: x })), 1).map((x) => x.ref)[0] : alive[0]; if (old) { old.dying = true; slot = old.slot; } }
+      if (alive.length >= MAX || slot < 0) {
+        // เต็ม: ชิ้นถูกสุด (แล้วเก่าสุด) จางไป — ถ้าเต็มเฉพาะพื้นที่ของแบบนี้ (ถนน/ช่อ) เลือกจากแบบเดียวกัน
+        const keep = slot < 0 ? (x) => x.kind === kind : null;
+        const old = (window.VJLCollect && VJLCollect.victims) ? VJLCollect.victims(gifts.map((x) => ({ ...x, d: x.g.d, ref: x })), 1, keep).map((x) => x.ref)[0] : alive.find((x) => !keep || keep(x));
+        if (old) { old.dying = true; if (old.kind === kind) slot = old.slot; }
+      }
       if (slot < 0) slot = 0;
-      gifts.push({ g, img: giftImg(g.u), slot, r, born, life: 1, landed: born <= 0, x: NaN, y: 0, vx: 0, vy: 0 });
+      gifts.push({ g, kind, img: giftImg(g.u), slot, r, born, life: 1, landed: born <= 0, x: NaN, y: 0, vx: 0, vy: 0, sx: (Math.random() - .5) * 160, sy: CAR_Y + CAR.hook.y * CK - 40 });
       if (born > 0) punch.kick(g.d >= 1000 ? -6 : -2.5);
       rebalance();
     }
     // ช่อลูกโป่ง: ของแพงอยู่บนสุด ของถูกอยู่ล่าง — มีของใหม่ ทั้งช่อค่อย ๆ เลื่อนจัดที่ใหม่ (สปริงพาไปเอง)
     function rebalance() {
       if (!BUNDLE || !slots.length) return;
-      const alive = gifts.filter((b) => !b.dying), n = Math.min(alive.length, slots.length);
+      const alive = gifts.filter((b) => !b.dying && b.kind === 'b'), n = Math.min(alive.length, slots.length);
       const pts = slots.slice(0, n).map((p, i) => ({ i, y: p.y + Math.abs(p.x) * 0.15 })).sort((p, q) => p.y - q.y); // บนก่อน · แถวเดียวกันเอากลางก่อน
       const oy = (b) => (slots[b.slot % slots.length] || { y: 0 }).y;
       alive.sort((a, c) => c.g.d - a.g.d || oy(a) - oy(c)); // ราคาเท่ากันคงลำดับเดิม ไม่สลับไปมา
@@ -228,9 +276,9 @@
     function spread(dt) {
       const n = gifts.length;
       for (let i = 0; i < n; i++) {
-        const a = gifts[i]; if (a.dying || !(a.x === a.x)) continue;
+        const a = gifts[i]; if (a.dying || a.kind !== 'b' || !(a.x === a.x)) continue;
         for (let j = i + 1; j < n; j++) {
-          const b = gifts[j]; if (b.dying || !(b.x === b.x)) continue;
+          const b = gifts[j]; if (b.dying || b.kind !== 'b' || !(b.x === b.x)) continue;
           const dx = b.x - a.x, dy = b.y - a.y, min = (a.r + b.r) * (BUNDLE ? 0.7 : 0.85), d2 = dx * dx + dy * dy;
           if (d2 >= min * min) continue;
           const d = Math.sqrt(d2) || 0.01, f = (min - d) / min * 900 * dt, wa = b.r / (a.r + b.r), wb = 1 - wa;
@@ -239,6 +287,25 @@
         }
       }
     }
+    // ---- ของที่ลากบนถนน: ตำแหน่งตายตัวตามช่อง + กระเด้งตามจังหวะถนน (หลุมเดียวกับที่รถเด้ง แต่มาถึงแถวหลังช้ากว่านิด) ----
+    const BUMP = (t, j) => Math.max(0, Math.sin(t * 2.3 - 0.45 - j * 0.32)) ** 12; // หลุมใหญ่: รถเด้งก่อน แถวกระป๋องเด้งตามทีละแถว
+    const bumpOn = [];
+    function dragPos(b, t, now) {
+      const sl = dslots.length ? dslots[b.slot % dslots.length] : { x: 0, y: CAR_Y + 60, j: 0, dep: 1, ph: 0, sp: 3.5 };
+      const dep = sl.dep, ph = sl.ph;
+      const hop = Math.pow(Math.max(0, Math.sin(t * sl.sp + ph)), 6) * (4 + sl.j * 0.8) * dep + BUMP(t, sl.j) * 15 * dep; // กุกกักตลอด + เด้งสูงตอนตกหลุม
+      let x = sl.x + Math.sin(t * 1.4 + ph) * 3 + Math.sin(t * 17 + ph * 3) * hop * 0.08, y = sl.y - hop;
+      if (b.born > 0 && !b.landed) { // ผูกเสร็จแล้วตกลงถนนจากท้ายรถ
+        const k = Math.min(1, (now - b.born) / 650), e = Juice.easeOutBack ? Juice.easeOutBack(k) : k;
+        x = b.sx + (x - b.sx) * Math.min(1, k * 1.15); y = b.sy + (y - b.sy) * e - Math.sin(k * Math.PI) * 40; // โยนโค้งลงถนน
+        if (k >= 1) { b.landed = true; fx.dust(x, y + b.r * 0.6 * dep, 5); fx.sparkle(x, y, 5, b.g.d >= 1000 ? '#ffe08a' : '#fff6e8'); }
+      }
+      b.x = x; b.y = y;
+      return { x, y, dep, hop, rot: Math.sin(t * 2.1 + ph) * 0.14 + Math.sin(t * 13 + ph * 2) * 0.03 * (1 + hop * 0.25) + hop * 0.008 * (sl.x >= 0 ? 1 : -1), j: sl.j };
+    }
+    const TIES = 7; // จุดผูกเรียงตามกันชนท้าย (รอบ ๆ ตะขอ)
+    const dTieX = (x) => CAR.hook.x * CK + Math.round(Math.max(-1, Math.min(1, x / 260)) * (TIES - 1) / 2) / ((TIES - 1) / 2) * CAR.w * CK * 0.2;
+
     let last = 0;
     function frame(now) {
       const t = now / 1000, dt = Math.min(0.05, last ? (now - last) / 1000 : 1 / 60); last = now;
@@ -251,7 +318,7 @@
       // ของแพงวาดทีหลัง = อยู่บนสุดของช่อ ไม่โดนของถูกบัง (แพงพอกันค่อยเรียงบน → ล่าง)
       const tier = (d) => (d >= 1000 ? 3 : d >= 100 ? 2 : d >= 20 ? 1 : 0);
       if (BUNDLE) { const ty = bunTarget(); BUN.y = BUN.y === BUN.y ? BUN.y + (ty - BUN.y) * Math.min(1, dt * 1.5) : ty; }
-      const list = gifts.map((b) => ({ b, sl: stepGift(b, t, dt, now, tY, bob, gust) }));
+      const list = gifts.filter((b) => b.kind === 'b').map((b) => ({ b, sl: stepGift(b, t, dt, now, tY, bob, gust) }));
       spread(dt);
       list.sort((a, c) => tier(a.b.g.d) - tier(c.b.g.d) || a.b.y - c.b.y);
       // เงารถ
@@ -297,6 +364,41 @@
         ctx.translate(b.x, b.y); ctx.rotate(Math.max(-0.3, Math.min(0.3, b.vx * 0.003)) + Math.sin(t * 1.2 + sl.ph) * 0.06); // เอียงตามทิศที่ลอย
         if (grow !== 1) ctx.scale(grow, grow);
         drawGift(b.img, b.g.e, size); ctx.restore();
+      }
+      // ---- ของที่ลากท้ายรถ (แบบกระป๋องรถงานแต่ง): เชือกจากกันชนท้าย → ของบนถนน · วาดไกล → ใกล้ ----
+      if (HAS_DRAG) {
+        const hy = CAR_Y + CAR.hook.y * CK - bob;
+        const dl = gifts.filter((b) => b.kind === 'd').map((b) => ({ b, p: dragPos(b, t, now) })).sort((a, c) => a.p.y - c.p.y || tier(a.b.g.d) - tier(c.b.g.d));
+        const dr = new Path2D(), ties = new Set();
+        for (const { b, p } of dl) {
+          if (b.life < 0.4 || (b.born > 0 && !b.landed)) continue;
+          const hx = dTieX(p.x), tx = p.x, ty = p.y - b.r * 0.55 * p.dep;
+          const slack = Math.max(0, 10 - p.hop * 0.9) + Math.abs(tx - hx) * 0.04; // ของเด้งขึ้น = เชือกตึง · ตกลงพื้น = เชือกหย่อน
+          dr.moveTo(hx, hy); dr.quadraticCurveTo(hx + (tx - hx) * 0.55, Math.max(hy, ty) + slack - (ty - hy) * 0.25, tx, ty);
+          ties.add(hx);
+        }
+        ctx.lineCap = 'round';
+        ctx.lineWidth = 2.6; ctx.strokeStyle = 'rgba(70,45,100,.35)'; ctx.stroke(dr);
+        ctx.lineWidth = 1.3; ctx.strokeStyle = `rgba(255,255,255,${Math.max(0.55, Math.min(0.9, 1.1 - dl.length / 260)).toFixed(2)})`; ctx.stroke(dr);
+        for (const x of ties) { ctx.beginPath(); ctx.arc(x, hy, 3.6, 0, Math.PI * 2); ctx.fillStyle = '#f4f0fb'; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(120,90,160,.6)'; ctx.stroke(); }
+        for (const { b, p } of dl) {
+          if (b.dying) b.life -= 0.03;
+          const size = b.r * 2 * p.dep, gy = dslots.length ? (dslots[b.slot % dslots.length] || p).y : p.y;
+          if (b.g.d >= 1000 && b.life > 0.5) Juice.aura(ctx, p.x, p.y, size * 0.4, b.g.d, t); // ของลาก: เรืองแสงเฉพาะของแพงมาก (ไม่เป็นก้อนเหลืองทั้งถนน)
+          ctx.save(); ctx.globalAlpha = Math.max(0, b.life);
+          const sh = Math.max(0.45, 1 - p.hop / 30); // เงาบนถนน: ลอยสูง = เงาเล็กลง
+          ctx.beginPath(); ctx.ellipse(p.x, gy + size * 0.42, size * 0.36 * sh, size * 0.09 * sh, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(60,40,90,.24)'; ctx.fill();
+          ctx.translate(p.x, p.y); ctx.rotate(p.rot); drawGift(b.img, b.g.e, size); ctx.restore();
+        }
+        // ฝุ่น/ประกายเบา ๆ ตอนแถวกระป๋องตกหลุมใหญ่ (ไม่กี่จุดต่อแถว)
+        for (let j = 0; j < 14; j++) {
+          const on = BUMP(t, j) > 0.85;
+          if (on && !bumpOn[j]) {
+            const row = dl.filter((q) => q.p.j === j && !q.b.dying && q.b.landed);
+            for (let k = 0; k < Math.min(2, row.length); k++) { const q = row[Math.floor(Math.random() * row.length)]; fx.dust(q.p.x, q.p.y + q.b.r * 0.7 * q.p.dep, 2); if (Math.random() < 0.4) fx.sparkle(q.p.x, q.p.y, 2, '#fff6e8'); }
+          }
+          bumpOn[j] = on;
+        }
       }
       for (let i = gifts.length - 1; i >= 0; i--) if (gifts[i].life <= 0) gifts.splice(i, 1);
       fx.draw(ctx);

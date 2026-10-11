@@ -180,53 +180,75 @@
       for (let k = 0; k < 3; k++) stem.twigs.push({ t: .35 + k * .2 + rnd() * .08, a: (rnd() < .5 ? -1 : 1) * (.45 + rnd() * .35), len: (50 + rnd() * 55) * (0.5 + STEM_K / 2) });
       stems.push(stem);
     }
-    // แปลงผัก: ปลูกแบบคนปลูกจริง — จุดโคนสุ่มคงที่ (seed ตามแบบ) ทั่วผิวดินทั้งซ้าย-ขวาและหน้า-หลัง มีกอเล็ก ๆ บ้าง
-    //   จำนวนต้น = n ตามขนาดแปลง · ต้นหลังวาดก่อน (ต้นหน้าทับ) และเตี้ย/บางกว่านิด · ขอบแปลงเอนออกมาก กลางแปลงตั้งตรง
+    // แปลงผัก: ผักเป็นกอเตี้ย ๆ ใบซ้อนกันเต็มแปลง (ผักสลัด/คะน้า/ขึ้นฉ่าย) — ไม่มีกิ่งยาว ของขวัญวางซุกบนกอเหมือนผลผลิต
+    //   จุดปลูกสุ่มคงที่ (seed ตามแบบ) ทั่วผิวดินซ้าย-ขวา/หน้า-หลัง มีกอชิดกันบ้าง · จำนวนกอ = n ตามขนาดแปลง · กอหลังวาดก่อน เล็กกว่านิด
+    const CLUMPS = [];
+    // ภาพกอผัก (AI, พื้นโปร่งใส) แยกตามชนิด: [ไฟล์, สูง/กว้าง] — สุ่มชนิด/แบบต่อกอ คละหลายชนิดในแปลงเดียว
+    const VEG_SPRITES = [[['themes/veg/lettuce-0.webp', 0.782], ['themes/veg/lettuce-1.webp', 0.768], ['themes/veg/lettuce-2.webp', 0.821], ['themes/veg/lettuce-3.webp', 0.793]], [['themes/veg/kale-0.webp', 0.861], ['themes/veg/kale-1.webp', 0.8], ['themes/veg/kale-2.webp', 0.8], ['themes/veg/kale-3.webp', 0.864]], [['themes/veg/herb-0.webp', 0.843], ['themes/veg/herb-1.webp', 0.85], ['themes/veg/herb-2.webp', 0.886], ['themes/veg/herb-3.webp', 0.85]], [['themes/veg/berry-0.webp', 0.821], ['themes/veg/berry-1.webp', 0.8], ['themes/veg/berry-2.webp', 0.821], ['themes/veg/berry-3.webp', 0.843]]]; // ผักสลัด · คะน้า/ผักกาด · ผักชีฝรั่ง/ขึ้นฉ่าย · ต้นสตรอว์เบอร์รี่
+    const vegCache = {};
+    function vegImg(src) { let im = vegCache[src]; if (!im) { im = new Image(); im.src = src; vegCache[src] = im; } return im.complete && im.naturalWidth ? im : null; }
     if (BED) {
       let s2 = 7; for (const ch of SKIN_NAME) s2 = (s2 * 31 + ch.charCodeAt(0)) % 2147483647;
       const r2 = () => (s2 = (s2 * 48271) % 2147483647) / 2147483647;
-      const x0 = BED[0][0], x1 = BED[BED.length - 1][0], half = Math.max(-x0, x1);
+      const x0 = BED[0][0], x1 = BED[BED.length - 1][0];
       const at = (x) => { let i = 1; while (i < BED.length - 1 && BED[i][0] < x) i++; const p = BED[i - 1], q = BED[i], k = Math.max(0, Math.min(1, (x - p[0]) / (q[0] - p[0] || 1))); return [p[1] + (q[1] - p[1]) * k, p[2] + (q[2] - p[2]) * k]; };
       const maxD = Math.max(...BED.map((c) => c[2] - c[1])), N = POT_SKIN.n || 10, minD = (x1 - x0) / N * 0.6, pts = [];
       for (let guard = 0; pts.length < N && guard < 5000; guard++) {
-        const clump = pts.length > 1 && r2() < 0.25; // กอ: งอกชิดต้นเดิม
+        const clump = pts.length > 1 && r2() < 0.25; // งอกชิดกอเดิม
         const near = clump ? pts[Math.floor(r2() * pts.length)] : null;
-        const x = near ? near.x + (r2() - .5) * 28 : x0 + 10 + r2() * (x1 - x0 - 20);
-        if (x < x0 + 6 || x > x1 - 6) continue;
+        const x = near ? near.x + (r2() - .5) * 34 : x0 + 10 + r2() * (x1 - x0 - 20);
+        if (x < x0 + 8 || x > x1 - 8) continue;
         const [t, b] = at(x), d = b - t;
         if (!near && r2() > d / maxD + 0.1) continue; // ดินตื้น (ปลายแปลงรี) ปลูกน้อยลง
-        const y = near ? near.y + (r2() - .5) * d * 0.35 : t + d * (0.18 + r2() * 0.66);
-        if (y < t + d * 0.16 || y > b - d * 0.14) continue; // ไม่ปลูกชิดขอบกระถาง
-        if (pts.some((p) => Math.hypot(p.x - x, (p.y - y) * 2) < (near ? 10 : minD * (guard > 2500 ? 0.6 : 1)))) continue;
+        const y = near ? near.y + (r2() - .5) * d * 0.35 : t + d * (0.2 + r2() * 0.62);
+        if (y < t + d * 0.18 || y > b - d * 0.12) continue; // ไม่ปลูกชิดขอบกระถาง
+        if (pts.some((p) => Math.hypot(p.x - x, (p.y - y) * 2) < (near ? 12 : minD * (guard > 2500 ? 0.6 : 1)))) continue;
         pts.push({ x, y, dep: (y - t) / d }); // dep: 0 = หลังสุด · 1 = หน้าสุด
       }
       pts.sort((p, q) => p.y - q.y);
-      stems.splice(0, stems.length, ...pts.map((p) => {
-        const xn = p.x / half, lean = Math.sign(xn) * Math.pow(Math.abs(xn), 1.5) * 0.62 + (r2() - .5) * 0.32;
-        const len = (215 + r2() * 150) * (1 - 0.2 * Math.abs(xn)) * (0.86 + 0.14 * p.dep) * 0.85 * (STEM.lenK || 1) * STEM_K;
-        const st = { a: -Math.PI / 2 + lean, len, bend: (r2() - .5) * .4, phase: r2() * 6.28, twigs: [], bx: p.x, by: p.y, wk: 0.8 + 0.25 * p.dep };
-        const nt = Math.max(2, Math.round(30 / N)) + Math.floor(r2() * 2); // แปลงเล็กต้นน้อย → แตกกิ่งย่อยมากขึ้น ดอกไม่เรียงเสียบไม้
-        for (let k = 0; k < nt; k++) st.twigs.push({ t: .3 + k * (.6 / nt) + r2() * .08, a: (r2() < .5 ? -1 : 1) * (.45 + r2() * .4), len: (42 + r2() * 58) * (0.5 + STEM_K / 2) });
-        return st;
-      }));
+      // ชนิดผัก: [ใบเข้ม, ใบอ่อน, ความกว้างใบ, ความหยัก] — ผักสลัด / คะน้า / ขึ้นฉ่าย / ผักกาดแก้ว / สมุนไพร
+      const KINDS = [['#7cc463', '#b7e48a', .5, .16], ['#4f8a5e', '#7fb08a', .34, .22], ['#5faa4a', '#9fd07a', .26, .1], ['#8fcf6a', '#d4f0a0', .56, .08], ['#6aa95a', '#a9d48e', .3, .18]];
+      const bedKinds = VEG_SPRITES.map((_, i) => i).sort(() => r2() - .5).slice(0, 3); // แปลงละ 3 ชนิดคละกัน
+      const CW = Math.max(85, Math.min(140, (x1 - x0) / N * 2.7)); // กอใหญ่พอให้ซ้อนกันคลุมดิน
+      for (const p of pts) {
+        const k = KINDS[Math.floor(r2() * KINDS.length)], sc = (0.82 + 0.18 * p.dep) * (0.85 + r2() * 0.3);
+        const kinds = VEG_SPRITES.length ? VEG_SPRITES[bedKinds[Math.floor(r2() * bedKinds.length)]] : null, spr = kinds ? kinds[Math.floor(r2() * kinds.length)] : null;
+        const cw = CW * sc, sw = cw * 1.3, sh = spr ? sw * spr[1] : 0;
+        const ch = spr ? sh * 0.82 : cw * (0.85 + r2() * 0.35) * Math.max(0.8, Math.min(1.25, STEM_K / 1.35)), nl = 7 + Math.floor(r2() * 5), leaves = [];
+        if (spr) vegImg(spr[0]);
+        for (let j = 0; j < nl; j++) { // ใบนอกเอนมาก (วาดก่อน) → ใบในตั้งตรง (วาดทีหลัง)
+          const side = j % 2 ? 1 : -1, spread = (1 - j / nl) * 1.25 + r2() * 0.15;
+          leaves.push({ a: side * spread + (r2() - .5) * 0.2, len: ch * (0.62 + r2() * 0.38) * (1 - 0.25 * spread / 1.4), w: k[2] * (0.8 + r2() * 0.4), ruf: k[3], waves: 3 + Math.floor(r2() * 3), c: r2() < 0.45 + 0.4 * j / nl ? k[1] : k[0], ph: r2() * 6.28 });
+        }
+        CLUMPS.push({ i: CLUMPS.length, bx: p.x, by: p.y + 3, cw, ch, leaves, phase: r2() * 6.28, spr: spr && spr[0], sw, sh, flip: r2() < .5 ? -1 : 1 });
+      }
     }
     // จุดติดดอก (เรียงจากโคนขึ้นไปปลาย สลับกิ่ง → ดอกกระจายทั่วต้น)
     const slots = [];
-    // แปลงผักต้นน้อย: วนรอบมากขึ้น → ดอกซ้อนบนต้นเดิมแน่นขึ้น (จำนวนช่องรวม ~132 เท่ากระถาง ของที่จำไว้ขึ้นต้นครบ)
-    const ROUNDS = BED ? Math.ceil(132 / stems.length) : 12, MAINR = BED ? Math.round(ROUNDS * (stems.length >= 11 ? .6 : .4)) : 8;
-    for (let r = 0; r < ROUNDS; r++) for (let i = 0; i < stems.length; i++) {
-      const st = stems[BED ? (i + r * 3) % stems.length : (i * 7 + r * 3) % stems.length];
-      if (r < MAINR) slots.push({ stem: st, t: .3 + r * (.72 / MAINR) + rnd() * .03, twig: null, off: (rnd() - .5) * 10 });
-      else { const tw = st.twigs[(r - MAINR) % st.twigs.length]; slots.push({ stem: st, twig: tw, t: .45 + (r - MAINR) * (.54 / (ROUNDS - MAINR - 1)) + rnd() * .05, off: (rnd() - .5) * 8 }); }
+    for (let r = 0; r < 12; r++) for (let i = 0; i < stems.length; i++) {
+      const st = stems[(i * 7 + r * 3) % stems.length];
+      if (r < 8) slots.push({ stem: st, t: .3 + r * .09 + rnd() * .03, twig: null, off: (rnd() - .5) * 10 });
+      else { const tw = st.twigs[(r - 8) % st.twigs.length]; slots.push({ stem: st, twig: tw, t: .45 + (r - 8) * .18 + rnd() * .05, off: (rnd() - .5) * 8 }); }
+    }
+    // แปลงผัก: ช่องรวม ~132 (เท่ากระถาง ของที่จำไว้ขึ้นครบ) แจกวนทีละกอ — ชิ้นแรก ๆ อยู่ยอดกอ แล้วค่อยกระจายรอบ ๆ ขอบกอ
+    if (BED && CLUMPS.length) {
+      const M = Math.ceil(132 / CLUMPS.length), out = [];
+      for (let r = 0; r < M; r++) for (let i = 0; i < CLUMPS.length; i++) {
+        const cl = CLUMPS[(i + r * 3) % CLUMPS.length], rr = Math.sqrt((r + 0.5) / M), th = r * 2.39996 + cl.phase;
+        out.push({ cl, dx: Math.cos(th) * rr * cl.cw * 0.5, dy: -cl.ch * 0.6 + Math.sin(th) * rr * cl.ch * 0.42 });
+      }
+      slots.splice(0, slots.length, ...out.slice(0, Math.max(132, CLUMPS.length)));
     }
 
-    function bedBigOrder() { // เรียงต้นซ้าย→ขวา แล้วหยิบ กลาง, ซ้าย, ขวา, ริมซ้าย, ริมขวา, ... (ต้นละครั้ง)
-      const byX = stems.map((_, i) => i).sort((p, q) => stems[p].bx - stems[q].bx), used = new Set(), out = [];
+    function bedBigSpots() { // ดอกใหญ่บนยอดกอ (ก้านสั้น ๆ) เรียงกอซ้าย→ขวา หยิบ กลาง, ซ้าย, ขวา, ริมซ้าย, ริมขวา, ... แล้วรอบสองที่ไหล่กอ
+      const byX = CLUMPS.map((_, i) => i).sort((p, q) => CLUMPS[p].bx - CLUMPS[q].bx), used = new Set(), out = [];
       for (const f of [.5, .18, .82, .02, .98, .34, .66, .1, .9, .42, .58, .26, .74]) {
         const j0 = Math.round(f * (byX.length - 1));
         for (let d = 0; d < byX.length; d++) { const j = [j0 + d, j0 - d].find((q) => q >= 0 && q < byX.length && !used.has(byX[q])); if (j != null) { used.add(byX[j]); out.push(byX[j]); break; } }
       }
-      return out.concat(byX.filter((i) => !used.has(i)));
+      const ord = out.concat(byX.filter((i) => !used.has(i))).map((i) => CLUMPS[i]);
+      return ord.map((cl) => ({ tree: true, bed: true, x: cl.bx, y: cl.by - cl.ch * 1.08, stalk: cl.by - cl.ch * 0.45 }))
+        .concat(ord.map((cl, i) => ({ tree: true, bed: true, x: cl.bx + (i % 2 ? 1 : -1) * cl.cw * 0.32, y: cl.by - cl.ch * 0.92, stalk: cl.by - cl.ch * 0.4 })));
     }
     // ช่อดอกไม้ (ห่อช่อ/แจกัน): ไม่มีกิ่ง — ของขวัญอัดเป็นโดมพอดีปากห่อ เหมือนช่อดอกไม้จริง
     const BOUQ = POT_SKIN && POT_SKIN.behind ? (() => {
@@ -235,7 +257,8 @@
     })() : null;
     const BIG_SPOTS = BOUQ ? [[0, -0.85], [-0.5, -0.6], [0.5, -0.6], [-0.78, -0.25], [0.78, -0.25], [-0.25, -0.35], [0.25, -0.35]].map(([fx2, fy]) => ({ tree: true, x: BOUQ.rx * fx2, y: BOUQ.cy + BOUQ.ry * fy, t: rnd() }))
       : TREE ? TREE.bigs.map(([x, y]) => ({ tree: true, x, y, t: rnd() }))
-      : (BED ? bedBigOrder() : [5, 4, 6, 3, 7, 2, 8, 1, 9, 0, 10]).map((i) => ({ stem: stems[i] })) // แปลงผัก: ดอกใหญ่กระจายทั้งแปลง (กลาง → ซ้าย/ขวา) ไม่กองกลาง
+      : BED ? bedBigSpots()
+      : [5, 4, 6, 3, 7, 2, 8, 1, 9, 0, 10].map((i) => ({ stem: stems[i] }))
       .concat(stems.flatMap((st) => st.twigs.map((tw) => ({ stem: st, twig: tw }))));
     if (TREE) slots.splice(0, slots.length, ...TREE.slots.map(([x, y]) => ({ tree: true, x, y, t: rnd() })));
     if (BOUQ) {
@@ -264,6 +287,7 @@
       return { x: base.x + Math.cos(a) * st.len * t, y: base.y + Math.sin(a) * st.len * t, a };
     }
     function slotPoint(sl, time) {
+      if (sl.cl) { const c = sl.cl, k = -sl.dy / c.ch; return { x: c.bx + sl.dx + Math.sin(time * 1.1 + c.phase) * 2.2 * SWAY * k, y: c.by + sl.dy }; } // แปลงผัก: ผลบนกอ ไหวตามใบ
       if (sl.tree) return { x: sl.x + Math.sin(time * 0.9 + sl.y * 0.02) * 3 * SWAY * (-sl.y / 400), y: sl.y }; // พุ่มใบไหวตามลม
       if (!sl.twig) { const p = stemPoint(sl.stem, sl.t, time); return { x: p.x + sl.off, y: p.y }; }
       const p0 = stemPoint(sl.stem, sl.twig.t, time);
@@ -470,7 +494,7 @@
         ctx.strokeStyle = STEM.stem; let prev = stemPoint(st, 0, time);
         for (let t = .05; t <= 1.001; t += .05) { // เส้นเรียวจากโคนหนาไปปลายบาง
           const p = stemPoint(st, t, time); ctx.beginPath(); ctx.moveTo(prev.x, prev.y); ctx.lineTo(p.x, p.y);
-          ctx.lineWidth = (7.5 - 5 * t) * wk * (st.wk || 1); ctx.stroke(); prev = p;
+          ctx.lineWidth = (7.5 - 5 * t) * wk; ctx.stroke(); prev = p;
         }
         if (STEM.glow) { // ไฟนีออนวิ่งตามกิ่ง
           ctx.beginPath(); let q = stemPoint(st, 0.08, time); ctx.moveTo(q.x, q.y);
@@ -497,6 +521,35 @@
       });
       if (STEM.glow) ctx.restore();
     }
+    // แปลงผัก: กอผัก (ภาพใบไม้ AI ถ้าโหลดได้ ไม่งั้นวาดใบหยักเอง) + ของขวัญที่ซุกอยู่บนกอนั้น วาดจากกอหลังไปกอหน้า
+    function drawLeaf(L, ch, time, c) {
+      const len = L.len, w = len * L.w, n = 12;
+      ctx.save(); ctx.rotate(L.a + Math.sin(time * 1.4 + c.phase + L.ph) * 0.045 * SWAY);
+      ctx.beginPath(); ctx.moveTo(0, 0);
+      for (let side = 1; side >= -1; side -= 2) for (let q = 0; q <= n; q++) {
+        const t = side > 0 ? q / n : 1 - q / n, env = Math.pow(Math.sin(Math.PI * Math.min(1, t * 1.08)), 0.8) * (1 - 0.35 * t);
+        ctx.lineTo(side * w * env * (1 + L.ruf * Math.sin(t * Math.PI * 2 * L.waves)), -len * t);
+      }
+      ctx.closePath(); ctx.fillStyle = L.c; ctx.fill();
+      ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(40,80,40,.18)'; ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -len * 0.85); ctx.lineWidth = 1.6; ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.stroke();
+      ctx.restore();
+    }
+    function drawBed(time, now) {
+      const per = CLUMPS.map(() => []);
+      for (const f of flowers) if (f.sl.cl) per[f.sl.cl.i].push(f);
+      CLUMPS.forEach((c, i) => {
+        ctx.save(); ctx.translate(c.bx, c.by);
+        ctx.beginPath(); ctx.ellipse(0, 0, c.cw * 0.42, c.cw * 0.09, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(40,25,15,.28)'; ctx.fill(); // เงาโคนกอบนดิน
+        const im = c.spr && vegImg(c.spr);
+        if (im) { // ภาพใบไม้: โคนกลางล่างอยู่ที่จุดปลูก ไหวเบา ๆ แบบใบสั่น
+          const sk = Math.sin(time * 1.2 + c.phase) * 0.025 * SWAY, W = c.sw, H = c.sh;
+          ctx.transform(1, 0, sk, 1, 0, 0); ctx.scale(c.flip, 1); ctx.drawImage(im, -W / 2, -H, W, H);
+        } else c.leaves.forEach((L) => drawLeaf(L, c.ch, time, c));
+        ctx.restore();
+        per[i].forEach((f) => drawFlower(f, time, now));
+      });
+    }
     const pop = (born, now) => { const k = Math.min(1, (now - born) / 450); return k < 1 ? 1.25 * Math.sin(k * Math.PI / 2) - 0.25 * Math.sin(k * Math.PI) : 1; };
     function drawGift(img, emoji, size) {
       const st = Juice.sticker ? Juice.sticker(img, size * S() * DPR) : null; // สติกเกอร์คมชัด ขอบขาว + เงานุ่ม
@@ -506,17 +559,30 @@
     }
     function drawFlowers(time, now) {
       for (const f of flowers) {
+        if (f.sl.cl) continue; // แปลงผัก: วาดไปพร้อมกอแล้ว (drawBed)
+        drawFlower(f, time, now);
+      }
+      drawBigs(time, now);
+    }
+    function drawFlower(f, time, now) {
+      {
         const p = slotPoint(f.sl, time), s = pop(f.born, now);
         if (!f.sparkled) { f.sparkled = true; if (f.born > 0) fx.sparkle(p.x + f.jx, p.y + f.jy, 4); }
         ctx.save(); ctx.translate(p.x + f.jx, p.y + f.jy); ctx.scale(s, s); ctx.rotate(Math.sin(time * 1.6 + f.sl.t * 9) * .12 * SWAY);
-        drawGift(f.img, f.g.e, Math.min(30 * FLOWER * (BOUQ ? 1.35 : 1) * flowerSize(f.g.d, 2.5), 75)); ctx.restore(); // ของแพงดอกใหญ่ขึ้น
+        drawGift(f.img, f.g.e, Math.min(30 * FLOWER * (BOUQ ? 1.35 : f.sl.cl ? 0.9 : 1) * flowerSize(f.g.d, 2.5), 75)); ctx.restore(); // ของแพงดอกใหญ่ขึ้น
       }
+    }
+    function drawBigs(time, now) {
       bigs.forEach((b, i) => {
         // ตำแหน่งดอกใหญ่: ยอดกิ่งหลัก (กลางก่อน) → ปลายกิ่งย่อย · เกินแล้ววนซ้ำแบบเหลื่อมนิด ๆ (ไม่ซ้อนเป็นเสา)
         const k = i % BIG_SPOTS.length, lap = Math.floor(i / BIG_SPOTS.length), sp = BIG_SPOTS[k];
         const p0 = sp.tree ? slotPoint(sp, time) : sp.twig ? slotPoint({ stem: sp.stem, twig: sp.twig, t: 1 }, time) : stemPoint(sp.stem, 1, time);
         const px = p0.x + (lap ? b.jx : 0), py = p0.y - (sp.tree ? 0 : sp.twig ? 8 : 26) + (lap ? b.jy : 0);
-        const s = pop(b.born, now), R = 46 * FLOWER * (BOUQ ? 0.55 : sp.twig ? 0.72 : sp.tree ? 0.85 : 1); // ช่อ: ดอกใหญ่เล็กลงให้กลืนกับช่อ
+        const s = pop(b.born, now), R = 46 * FLOWER * (BOUQ ? 0.55 : sp.bed ? 0.7 : sp.twig ? 0.72 : sp.tree ? 0.85 : 1); // ช่อ: ดอกใหญ่เล็กลงให้กลืนกับช่อ
+        if (sp.stalk != null) { // แปลงผัก: ก้านสั้นแข็งแรงโผล่จากกอ
+          ctx.beginPath(); ctx.moveTo(sp.x, sp.stalk); ctx.quadraticCurveTo(sp.x - 4, (sp.stalk + py) / 2, px, py + R * 0.4);
+          ctx.lineCap = 'round'; ctx.lineWidth = 6; ctx.strokeStyle = STEM.stem; ctx.stroke();
+        }
         Juice.aura(ctx, px, py, R * 0.9, b.g.d || 1000, time);
         if (!b.sparkled) { b.sparkled = true; if (b.born > 0) { fx.sparkle(px, py, 10, '#ffe08a'); fx.confetti(px, py, 30); } }
         ctx.save(); ctx.translate(px, py); ctx.scale(s, s); ctx.rotate(Math.sin(time * .7 + i) * .1 * SWAY);
@@ -537,7 +603,7 @@
       const br = Juice.breathe(time, 0.012), breathe = () => ctx.scale(1 + (1 - br) * 0.5, br);
       ctx.save(); breathe();
       // ห่อช่อ/แจกัน (behind): กิ่งอยู่หลังห่อ ดูเหมือนงอกจากด้านใน ไม่มีดิน
-      if (TREE) drawPot(); else if (BOUQ) { drawBouquetLeaves(time); drawPot(); } else if (POT_SKIN) { drawPot(); drawStems(time); drawSoilTufts(time); } else { drawStems(time); drawPot(); }
+      if (TREE) drawPot(); else if (BOUQ) { drawBouquetLeaves(time); drawPot(); } else if (BED) { drawPot(); drawBed(time, now); } else if (POT_SKIN) { drawPot(); drawStems(time); drawSoilTufts(time); } else { drawStems(time); drawPot(); }
       ctx.restore();
       tickGround();
       drawGround(time, now); // กองบนพื้นอยู่นิ่ง และอยู่หน้าเนิน/กระถาง
@@ -550,7 +616,7 @@
     const $alert = document.getElementById('alert'), $board = document.getElementById('board');
     function layoutUi() {
       const o = origin(), s = S();
-      $alert.style.left = o.x + 'px'; $alert.style.top = Math.max(4, o.y - (TREE ? 560 : 470 - 96 - POT_TOP) * s) + 'px';
+      $alert.style.left = o.x + 'px'; $alert.style.top = Math.max(4, o.y - (TREE ? 560 : (BED ? 260 : 374) - POT_TOP) * s) + 'px';
       $board.style.left = o.x + 'px'; $board.style.top = (o.y + 10) + 'px';
     }
     let alertT = null, ranking = {};

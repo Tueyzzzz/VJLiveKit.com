@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Check, Copy, ExternalLink, Lock, Plus, Settings, Trash2 } from 'lucide-react';
 import { WIDGET_LABELS } from '@/components/Pricing';
 import { Alert, Badge, Button, Card, Input, PageHeader, Spinner } from '@/components/ui';
@@ -37,6 +38,9 @@ const JAR_CARDS = [
   { g: 'fest', label: '🎡 สวนสนุก & เทศกาล', blurb: 'ม้าหมุน บอลลูน กระทง ขันสงกรานต์ ไหทองตรุษจีน และอีกเพียบ', thumbs: ['fcarousel', 'fballoon', 'fkrathong', 'fprize'] },
   { g: 'gaming', label: '🎮 สายเท่ เกมมิ่ง', blurb: 'โหลนีออน แคปซูลพลังงาน หีบสมบัติเกม สายเท่สำหรับวีเจผู้ชาย', thumbs: ['capsule', 'xtech', 'xchest', 'xcan'] },
 ];
+
+/** เมนูใหญ่ที่เปิดหน้าวิดเจ็ตแบบโชว์หมวดเดียว (?g=) */
+const GROUP_KEYS: Record<string, string> = { rank: '🥇 อันดับผู้ชม', goal: '🏆 เป้าหมายและลีก', mascot: '🧸 ตัวแทนวีเจ' };
 
 /** จัดหมวดวิดเจ็ตในแกลเลอรี (ประเภทเดียวกันอยู่ด้วยกัน) */
 const WIDGET_GROUPS: [string, string[]][] = [
@@ -178,6 +182,11 @@ function CopyButton({ text }: { text: string }) {
 }
 
 export default function WidgetsPage() {
+  return <Suspense fallback={<Spinner />}><WidgetsInner /></Suspense>;
+}
+
+function WidgetsInner() {
+  const onlyGroup = GROUP_KEYS[useSearchParams().get('g') ?? ''];
   const { user, isAdmin } = useAuth();
   const t = useT();
   const [lang] = useLang();
@@ -265,7 +274,7 @@ export default function WidgetsPage() {
         const rest = all.filter((w) => !grouped.has(w.type));
         const others = rest.filter((w) => w.type !== 'tts'); // TTS ย้ายไปเมนูข้าง (เสียงออกที่เว็บ)
         if (others.length) groups.push(['อื่น ๆ', others]);
-        return groups.filter(([, list]) => list.length).map(([title, list]) => (
+        return groups.filter(([title, list]) => list.length && (!onlyGroup || title === onlyGroup)).map(([title, list]) => (
       <section key={title} className="mb-8">
       <h3 className="mb-3 text-sm font-semibold">{t(title)}</h3>
       {title === COLLECT_GROUP && (

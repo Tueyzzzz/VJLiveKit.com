@@ -1,9 +1,12 @@
-import { Swords, LayoutDashboard, LayoutTemplate, Zap, CreditCard, Gift, BookOpen, Wallet, ScrollText, Lightbulb, Volume2, Grid3x3, Speech, MessageCircle } from 'lucide-react';
+import { Swords, LayoutDashboard, LayoutTemplate, Zap, CreditCard, Gift, BookOpen, Wallet, ScrollText, Lightbulb, Volume2, Grid3x3, Speech, MessageCircle, Smile, Medal, Trophy } from 'lucide-react';
 
 /** เมนูหลักของแดชบอร์ด — ใช้ทั้งเมนูข้าง และการ์ดใหญ่หน้าภาพรวม (img = รูป VJ ใน /menu/<img>.webp) */
 export const NAV = [
   { href: '/dashboard/', label: 'ภาพรวม', img: 'overview', desc: 'ภาพรวมบัญชีและกฎที่ตั้งไว้', icon: LayoutDashboard },
   { href: '/dashboard/widgets/', label: 'โอเวอร์เลย์', img: 'overlay', desc: 'วิดเจ็ตบนจอไลฟ์ สร้างลิงก์ใส่ OBS / TikTok Studio', icon: LayoutTemplate },
+  { href: '/dashboard/widgets/settings/?type=mascot', label: 'ตัวแทนวีเจ', img: 'mascot', desc: 'ตัวละครเดิน เต้น รับของขวัญบนจอ เลือกได้หลายสิบแบบ', icon: Smile },
+  { href: '/dashboard/widgets/?g=rank', label: 'อันดับผู้ชม', img: 'rank', desc: 'อันดับคนส่งของขวัญ คนกดหัวใจ กรอบ MVP', icon: Medal },
+  { href: '/dashboard/widgets/?g=goal', label: 'เป้าหมายและลีก', img: 'goal', desc: 'เป้าของขวัญ ลีก และตัวนับเวลา', icon: Trophy },
   { href: '/dashboard/actions/', label: 'Actions & Events', img: 'actions', desc: 'ได้ของขวัญ → เล่นเสียง เอฟเฟกต์ ป้ายไฟ', icon: Zap },
   { href: '/dashboard/pk/', label: 'PK Battle', img: 'pk', desc: 'เริ่ม PK · ชนะ/แพ้ · การ์ดนวม สายฟ้า → เอฟเฟกต์บนจอ', icon: Swords },
   { href: '/dashboard/sounds/', label: 'เสียงแจ้งเตือน', img: 'sounds', desc: 'เสียงดังที่เว็บนี้ ไม่ต้องใส่ลิงก์', icon: Volume2 },

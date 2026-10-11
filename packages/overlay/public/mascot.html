@@ -139,8 +139,12 @@
     let TURN = 0;
     for (let n = 18; n <= 24; n++) {
       const im = new Image(); im.alt = '';
-      im.onload = () => { if (TINT) return; $char.appendChild(im); imgs[n] = im; TURN++; };
-      im.src = `mascot/${C}/${n}.webp?v=${encodeURIComponent(window.VJL_VERSION || '1')}`;
+      const src = `mascot/${C}/${n}.webp?v=${encodeURIComponent(window.VJL_VERSION || '1')}`;
+      // เปลี่ยนสี (tint) ด้วย → ย้อมสีเฟรมหมุนแบบเดียวกับท่าอื่น ไม่งั้นหมุนแล้วสีเพี้ยน
+      const probe = new Image(); probe.onload = () => {
+        im.onload = () => { $char.appendChild(im); imgs[n] = im; TURN++; };
+        if (TINT) recolor(src).then((u) => { im.src = u; }); else im.src = src;
+      }; probe.src = src;
     }
     let cur = 0;
     // สลับท่าแบบไม่วูบ: ท่าใหม่จางขึ้น "ทับ" ท่าเดิม (ท่าเดิมยังทึบอยู่ข้างใต้) แล้วค่อยซ่อนท่าเดิมทันทีที่ท่าใหม่ขึ้นเต็ม

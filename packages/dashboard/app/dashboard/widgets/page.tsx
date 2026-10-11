@@ -296,8 +296,15 @@ function WidgetsInner() {
           </Card>
         ) : (
           <Card key={w.type} className={`p-3 ${title === COLLECT_GROUP && collectStyle === w.type ? 'ring-2 ring-pink' : ''}`}>
-            <WidgetPreview type={w.type} config={configs[w.type]} live={livePreview === w.type}
-              onLive={(on) => setLivePreview((cur) => (on ? w.type : cur === w.type ? null : cur))} />
+            {title === COLLECT_GROUP ? (
+              // สะสมของขวัญ: รูปตัวอย่างจริง 3 แบบ (มีของขวัญ) แบบเดียวกับการ์ดสวนสนุก/เกมมิ่ง — กดแล้วไปตั้งค่า/เลือกแบบ
+              <Link href={`/dashboard/widgets/settings/?type=${w.type}`} className="grid aspect-video place-items-center overflow-hidden rounded-xl bg-gradient-to-br from-pink-soft to-violet-soft px-3 py-4">
+                <img src={`/cards/w-${w.type}.webp`} alt="" loading="lazy" className="max-h-full max-w-full object-contain drop-shadow-sm" />
+              </Link>
+            ) : (
+              <WidgetPreview type={w.type} config={configs[w.type]} live={livePreview === w.type}
+                onLive={(on) => setLivePreview((cur) => (on ? w.type : cur === w.type ? null : cur))} />
+            )}
             <div className="mt-3 flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 text-sm font-medium">

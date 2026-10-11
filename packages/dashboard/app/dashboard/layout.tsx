@@ -73,7 +73,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
         <Suspense fallback={null}><SearchSync onChange={setSearch} /></Suspense>
         <nav className={cx('grid-cols-2 gap-1 px-3 pb-3 md:flex md:flex-col md:pb-0', menu ? 'grid' : 'hidden')}>
-          {[...NAV, ...(isAdmin ? [{ href: '/dashboard/admin/', label: 'หลังบ้าน (แอดมิน)', img: 'admin', icon: Shield }] : [])].map(({ href, label, icon: Icon, img, ...rest }) => {
+          {[...NAV, ...(isAdmin ? [{ section: 'แอดมิน', href: '/dashboard/admin/', label: 'หลังบ้าน (แอดมิน)', img: 'admin', icon: Shield }] : [])].map(({ href, label, icon: Icon, img, section, ...rest }, i, arr) => {
+            // หัวข้อหมวด (บนจอไลฟ์ · เสียง · บัญชี …) ขึ้นก่อนเมนูแรกของแต่ละหมวด
+            const head = section && section !== arr[i - 1]?.section
+              ? <div key={'h-' + section} className="col-span-2 mt-2 px-3 pb-0.5 pt-1 text-[11px] font-semibold uppercase tracking-wide text-violet/70 md:mt-3">{t(section)}</div> : null;
+            const item = (() => {
             if ('soon' in rest && rest.soon && !isAdmin) return (
               <span key={href} title={t('กำลังพัฒนา เร็ว ๆ นี้')} className="flex min-h-11 shrink-0 cursor-not-allowed flex-wrap items-center gap-x-2.5 rounded-xl px-3 py-2 text-sm text-gray-300">
                 <NavImg img={img} Icon={Icon} dim /> {t(label)} <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-400">{t('กำลังพัฒนา')}</span>
@@ -95,6 +99,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 )}
               </Link>
             );
+            })();
+            return head ? [head, item] : item;
           })}
         </nav>
         <div className={cx('px-3 pb-3 md:block md:pt-2', menu ? 'block' : 'hidden')}><Speaker /></div>

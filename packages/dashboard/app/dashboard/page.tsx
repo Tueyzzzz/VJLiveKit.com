@@ -48,9 +48,12 @@ export default function OverviewPage() {
           </div>
         } />
 
-      {/* เมนูเป็นการ์ดใหญ่ มีรูป VJ */}
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
-        {NAV.filter((n) => n.img !== 'overview').map((n) => {
+      {/* เมนูเป็นการ์ดใหญ่ มีรูป VJ · แบ่งตามหมวดเดียวกับเมนูข้าง */}
+      {[...new Set(NAV.filter((n) => n.img !== 'overview').map((n) => n.section))].map((sec) => (
+      <section key={sec} className="mb-6">
+      <h2 className="mb-2.5 text-sm font-semibold text-violet">{t(sec)}</h2>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+        {NAV.filter((n) => n.img !== 'overview' && n.section === sec).map((n) => {
           const soon = 'soon' in n && n.soon;
           const body = (
             <>
@@ -64,6 +67,8 @@ export default function OverviewPage() {
             : <Link key={n.href} href={n.href} className="group rounded-3xl border border-line bg-white p-3 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-pink/50 hover:shadow-[0_10px_30px_-10px_rgba(255,105,170,.45)]">{body}</Link>;
         })}
       </div>
+      </section>
+      ))}
 
       {/* คลิปตัวอย่างบนไลฟ์จริง → เห็นภาพว่าวิดเจ็ตหน้าตาแบบไหนก่อนตั้งค่า */}
       <Card className="mb-6">

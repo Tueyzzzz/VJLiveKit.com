@@ -139,7 +139,7 @@ function ActionsInner() {
   const [copied, setCopied] = useState(false);
   useEffect(() => {
     api<{ tokens: OverlayTokenRow[] }>('/api/overlay-tokens')
-      .then((r) => { const u = r.tokens[0]?.urls; setFxUrl(u?.find((x) => x.type === 'fx')?.url ?? null); setMenuUrl(u?.find((x) => x.type === 'fxmenu')?.url ?? null); })
+      .then((r) => { const u = r.tokens[0]?.urls; setFxUrl(u?.find((x) => x.type === 'fx')?.url ?? null); setMenuUrl(u?.find((x) => x.type === 'fxmenu')?.url ?? null); setMascotUrl(u?.find((x) => x.type === 'mascot')?.url ?? null); })
       .catch(() => setFxUrl(null));
   }, []);
   // ลิงก์ "เมนูของขวัญ" — บอกผู้ชมว่าส่งอะไรแล้วจะเกิดอะไร (ดึงจากกฎในหน้านี้)
@@ -149,6 +149,14 @@ function ActionsInner() {
     if (!menuUrl) return;
     try { await navigator.clipboard.writeText(menuUrl); } catch { window.prompt(t('คัดลอกลิงก์นี้'), menuUrl); return; }
     setMenuCopied(true); setTimeout(() => setMenuCopied(false), 1500);
+  }
+  // ลิงก์ "ตัวแทนวีเจ" — กฎแบบมาสคอตเล่นผ่านวิดเจ็ตนี้ (ไม่ใช่ FX) เลยแยกลิงก์ไว้ให้คัดลอก
+  const [mascotUrl, setMascotUrl] = useState<string | null>(null);
+  const [mascotCopied, setMascotCopied] = useState(false);
+  async function copyMascot() {
+    if (!mascotUrl) return;
+    try { await navigator.clipboard.writeText(mascotUrl); } catch { window.prompt(t('คัดลอกลิงก์นี้'), mascotUrl); return; }
+    setMascotCopied(true); setTimeout(() => setMascotCopied(false), 1500);
   }
   async function copyFx() {
     if (!fxUrl) return;
@@ -265,7 +273,7 @@ function ActionsInner() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="min-w-0 flex-1">
             <div className="font-medium">{t('✨ ลิงก์วิดเจ็ตเอฟเฟกต์ (FX)')}</div>
-            <p className="text-sm text-muted">{t('Actions ทุกกฎจะแสดงผ่านวิดเจ็ตนี้ — วางในโปรแกรมไลฟ์')} <b>{t('ให้เต็มจอ')}</b> {t('และไว้')} <b>{t('ชั้นบนสุด')}</b> {t('ครั้งเดียวพอ')}</p>
+            <p className="text-sm text-muted">{t('Actions ทุกกฎ (ยกเว้นมาสคอต) จะแสดงผ่านวิดเจ็ตนี้ — วางในโปรแกรมไลฟ์')} <b>{t('ให้เต็มจอ')}</b> {t('และไว้')} <b>{t('ชั้นบนสุด')}</b> {t('ครั้งเดียวพอ')}</p>
             {fxUrl && <code className="mt-1.5 block truncate rounded-lg bg-canvas px-3 py-1.5 text-xs text-muted">{fxUrl}</code>}
           </div>
           {fxUrl ? (
@@ -282,6 +290,16 @@ function ActionsInner() {
               <code className="mt-1.5 block truncate rounded-lg bg-canvas px-3 py-1.5 text-xs text-muted">{menuUrl}</code>
             </div>
             <Button variant="secondary" onClick={copyMenu}>{menuCopied ? <><Check className="size-4 text-mint" /> {t('คัดลอกแล้ว')}</> : <><Copy className="size-4" /> {t('คัดลอกลิงก์เมนู')}</>}</Button>
+          </div>
+        )}
+        {mascotUrl && !pkMode && (
+          <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-line pt-4">
+            <div className="min-w-0 flex-1">
+              <div className="font-medium">{t('🧸 ลิงก์ตัวแทนวีเจ (มาสคอต)')}</div>
+              <p className="text-sm text-muted">{t('กฎแบบ “มาสคอต” (เต้น · ส่งจุ๊บ ฯลฯ) เล่นผ่านลิงก์นี้ ไม่ใช่ลิงก์ FX — วางในโปรแกรมไลฟ์แยกอีกอัน · เลือกตัวละครได้ที่')} <Link href="/dashboard/widgets/settings/?type=mascot" className="text-pink underline">{t('ตั้งค่าตัวแทนวีเจ')}</Link></p>
+              <code className="mt-1.5 block truncate rounded-lg bg-canvas px-3 py-1.5 text-xs text-muted">{mascotUrl}</code>
+            </div>
+            <Button variant="secondary" onClick={copyMascot}>{mascotCopied ? <><Check className="size-4 text-mint" /> {t('คัดลอกแล้ว')}</> : <><Copy className="size-4" /> {t('คัดลอกลิงก์มาสคอต')}</>}</Button>
           </div>
         )}
       </Card>

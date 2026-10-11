@@ -171,6 +171,8 @@ export const EN_WIDGETS: Record<string, string> = {
   "โหลตุ๊กตาหิมะ": "Snowman jar",
   "โหลแก้วเทค": "Tech glass jar",
   "🎮 สายเท่ เกมมิ่ง": "🎮 Cool & gaming",
+  "สายเท่ เกมมิ่ง": "Cool & gaming",
+  "สวนสนุก & เทศกาล": "Fun fair & festivals",
   "ถังพลังงานฟ้า": "Blue energy tank",
   "ถังพลังงานชมพู": "Pink energy tank",
   "หีบสมบัติเกม": "Game treasure chest",

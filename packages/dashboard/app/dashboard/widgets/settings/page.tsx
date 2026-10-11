@@ -30,6 +30,11 @@ function groupOptions(options: Opt[]): [string, Opt[]][] {
 }
 
 const COLLECT_TYPES = ['pile', 'giftjar', 'aquarium', 'belly', 'snowglobe', 'spacedome', 'vehicle', 'tree', 'garden', 'coinjar'];
+/** แท็บใหญ่แยกหมวดของโหลของขวัญ (ใช้วิดเจ็ต giftjar ตัวเดียวกัน แค่กรองแบบโหลตามหมวด) */
+const JAR_TABS: { g: string; icon: string; label: string; group: string }[] = [
+  { g: 'fest', icon: '🎡', label: 'สวนสนุก & เทศกาล', group: '🎡 สวนสนุก & เทศกาล' },
+  { g: 'gaming', icon: '🎮', label: 'สายเท่ เกมมิ่ง', group: '🎮 สายเท่ เกมมิ่ง' },
+];
 
 function CopyLink({ url, label = 'คัดลอกลิงก์' }: { url: string; label?: string }) {
   const t = useT();
@@ -252,16 +257,21 @@ function FieldInput({ f, value, onChange }: { f: FieldDef; value: Values[string]
 }
 
 function WidgetSettings() {
-  const type = useSearchParams().get('type') ?? '';
+  const sp = useSearchParams();
+  const type = sp.get('type') ?? '';
+  const jarTab = type === 'giftjar' ? JAR_TABS.find((x) => x.g === sp.get('g')) : undefined;
   const [customMascots, setCustomMascots] = useState<{ code: string; name: string; mine?: boolean }[]>([]);
   useEffect(() => { if (type === 'mascot') api<{ mascots: { code: string; name: string; mine?: boolean }[] }>('/api/mascots/custom').then((r) => setCustomMascots(r.mascots)).catch(() => {}); }, [type]);
   // มาสคอตสั่งทำ (หน้าลูกค้าเอง) → เพิ่มเป็นตัวเลือกแรกในกลุ่ม "มาสคอตของฉัน"
   const def = useMemo(() => {
-    const base = WIDGET_SETTINGS[type];
+    const base0 = WIDGET_SETTINGS[type];
+    // โหลของขวัญ: แท็บใหญ่ (สวนสนุก/เกมมิ่ง) โชว์เฉพาะหมวดนั้น · แท็บโหลปกติไม่ซ้ำหมวดที่แยกออกไป
+    const base = base0 && type === 'giftjar' ? { ...base0, sections: base0.sections.map((s) => ({ ...s, fields: s.fields.map((f) => f.key === 'shape' && f.type === 'select'
+      ? { ...f, options: f.options.filter((o) => jarTab ? o[2] === jarTab.group : !JAR_TABS.some((x) => x.group === o[2])) } : f) })) } : base0;
     if (!base || type !== 'mascot' || !customMascots.length) return base;
     return { ...base, sections: base.sections.map((s) => ({ ...s, fields: s.fields.map((f) => f.key === 'char' && f.type === 'select'
       ? { ...f, options: [...customMascots.map((m) => [m.code, m.name, m.mine ? '⭐ มาสคอตของฉัน' : '🔒 มาสคอตสั่งทำของลูกค้า (แอดมินเห็นคนเดียว)', `/overlay/mascot/${m.code}/thumb.webp?v=${process.env.NEXT_PUBLIC_BUILD_ID ?? ''}`] as [string, string, string, string]), ...f.options] } : f) })) };
-  }, [type, customMascots]);
+  }, [type, customMascots, jarTab]);
   const t = useT();
   const [values, setValues] = useState<Values | null>(null);
   const [saved, setSaved] = useState<string>('');
@@ -366,12 +376,18 @@ function WidgetSettings() {
       {COLLECT_TYPES.includes(type) && (
         <div className="-mx-4 mb-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
           <div className="flex w-max gap-1.5 rounded-2xl border border-line bg-white p-1.5 shadow-sm">
-            {COLLECT_TYPES.map((k) => (
+            {COLLECT_TYPES.flatMap((k) => [
               <Link key={k} href={`/dashboard/widgets/settings/?type=${k}`}
-                className={`whitespace-nowrap rounded-xl px-3 py-1.5 text-sm transition ${k === type ? 'bg-pink font-medium text-white' : 'text-muted hover:bg-pink-soft hover:text-ink'}`}>
+                className={`whitespace-nowrap rounded-xl px-3 py-1.5 text-sm transition ${k === type && !jarTab ? 'bg-pink font-medium text-white' : 'text-muted hover:bg-pink-soft hover:text-ink'}`}>
                 {COLLECT_ICON[k]} {t(WIDGET_LABELS[k] ?? k)}
-              </Link>
-            ))}
+              </Link>,
+              ...(k === 'giftjar' ? JAR_TABS.map((x) => (
+                <Link key={x.g} href={`/dashboard/widgets/settings/?type=giftjar&g=${x.g}`}
+                  className={`whitespace-nowrap rounded-xl px-3 py-1.5 text-sm transition ${jarTab?.g === x.g ? 'bg-pink font-medium text-white' : 'text-muted hover:bg-pink-soft hover:text-ink'}`}>
+                  {x.icon} {t(x.label)}
+                </Link>
+              )) : []),
+            ])}
           </div>
         </div>
       )}

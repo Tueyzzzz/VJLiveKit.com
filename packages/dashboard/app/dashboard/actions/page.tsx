@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Suspense, useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { Check, Copy, Pencil, Play, Plus, Sparkles, Trash2, Upload as UploadIcon } from 'lucide-react';
+import { Check, Copy, Pencil, Play, Plus, Settings2, Sparkles, Trash2, Upload as UploadIcon } from 'lucide-react';
 import { Alert, Badge, Button, Card, Field, Input, PageHeader, Select, Spinner } from '@/components/ui';
 import { GiftCell, GiftPicker } from '@/components/GiftPicker';
 import { SoundUpload } from '@/components/SoundUpload';
@@ -288,6 +288,14 @@ function ActionsInner() {
     catch (err) { setError({ text: (err as Error).message, upgrade: err instanceof ApiError && err.upgrade }); }
     finally { setAdding(null); }
   }
+  // ⚙️ ตั้งค่าก่อนใช้: เปิดฟอร์มกฎเติมค่าจากเทมเพลต (ยังไม่บันทึกจนกดบันทึก) · เพิ่มไปแล้ว = เปิดกฎชื่อเดียวกันมาแก้
+  function customizeTemplate(tp: Template) {
+    setError(null);
+    const existing = rules?.find((r) => r.name === tp.rule.name);
+    if (existing) { setDraft(toDraft(existing)); return; }
+    const d = toDraft({ ...tp.rule, id: '', enabled: true } as Rule);
+    setDraft({ ...d, id: undefined });
+  }
   const have = new Set((rules ?? []).map((r) => r.name));
   // เทมเพลตจัดหมวด: ไพ่ทาโร่ = แอดมินเท่านั้น (เหมือนเดิม) · โชว์เฉพาะหมวดที่มีเทมเพลต
   const tplVisible = TEMPLATES.filter((tp) => isAdmin || tp.rule.action.type !== 'tarot');
@@ -549,7 +557,7 @@ function ActionsInner() {
       {!draft && rules && (
         <Card className="mb-6">
           <h2 className="mb-1 flex items-center gap-2 font-medium"><Sparkles className="size-4 text-pink" /> {t('เทมเพลตยอดนิยม')}</h2>
-          <p className="mb-4 text-sm text-muted">{t('กด “ใช้เลย” แล้วใช้ได้ทันที — แก้ข้อความหรือเงื่อนไขทีหลังได้ด้วยปุ่มดินสอ')}</p>
+          <p className="mb-4 text-sm text-muted">{t('กด “ใช้เลย” แล้วใช้ได้ทันที · กด ⚙️ ตั้งค่า เพื่อเปลี่ยนกิฟต์ ข้อความ สี ระยะเวลา ก่อนบันทึก')}</p>
           {pkMode ? (
             <>
               {fxUrl && (
@@ -570,23 +578,28 @@ function ActionsInner() {
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {PK_TEMPLATES.map((tp) => {
                 const added = have.has(tp.rule.name);
+                // จบ PK (ประกาศ MVP) ไม่มีวิดีโอของตัวเอง → ใช้ภาพตอนชนะ
+                const pk = tp.rule.trigger.pk, pkKey = pk === 'end' ? 'win' : pk;
                 return (
                   <div key={tp.rule.name} className="flex flex-col rounded-xl border border-line bg-canvas/50 p-3">
                     {/* PK: ตัวอย่างจริงที่ขึ้นจอ — เฟรมที่เห็นชัดสุดของวิดีโอการ์ด/ผล PK (public/pk-prev) · ไม่มีวิดีโอ = รูปวีเจประจำเทมเพลต */}
-                    {tp.rule.trigger.pk && PK_VID.has(tp.rule.trigger.pk)
-                      ? <div className="-mx-1 -mt-1 grid aspect-video place-items-center overflow-hidden rounded-lg bg-gradient-to-br from-pink-soft to-violet-soft">
-                          <img src={`/pk-prev/${tp.rule.trigger.pk}.webp`} alt="" loading="lazy" className="h-[88%] w-[88%] object-contain drop-shadow-md" />
-                        </div>
-                      : tp.rule.trigger.pk
-                      ? <div className="-mx-1 -mt-1 grid aspect-video place-items-center overflow-hidden rounded-lg bg-gradient-to-br from-pink-soft to-violet-soft">
-                          <img src={`/pk-tpl/${tp.rule.trigger.pk === 'end' ? 'win' : tp.rule.trigger.pk}.webp`} alt="" loading="lazy" className="h-[88%] object-contain drop-shadow-md" />
+                    {/* กล่อง relative + รูป absolute inset-2 object-contain = รูปสูง/กว้างแค่ไหนก็อยู่ครบกลางกล่อง ไม่ล้น ไม่โดนตัด */}
+                    {pkKey
+                      ? <div className="relative -mx-1 -mt-1 aspect-video overflow-hidden rounded-lg bg-gradient-to-br from-pink-soft to-violet-soft">
+                          <img src={PK_VID.has(pkKey) ? `/pk-prev/${pkKey}.webp` : `/pk-tpl/${pkKey}.webp`} alt="" loading="lazy" className="absolute inset-2 h-[calc(100%-1rem)] w-[calc(100%-1rem)] object-contain drop-shadow-md" />
+                          <span className="absolute left-1.5 top-1.5 grid size-7 place-items-center rounded-full bg-white/90 text-sm shadow-sm">{tp.icon}</span>
                         </div>
                       : <div className="text-2xl">{tp.icon}</div>}
                     <div className="mt-1 text-sm font-medium leading-snug">{t(tp.title)}</div>
                     <div className="mt-0.5 flex-1 text-xs text-muted">{t(tp.desc)}</div>
-                    <Button variant={added ? 'ghost' : 'secondary'} className="mt-3 w-full" disabled={added} loading={adding === tp.rule.name} onClick={() => applyTemplate(tp)}>
-                      {added ? <><Check className="size-4" /> {t('เพิ่มแล้ว')}</> : t('ใช้เลย')}
-                    </Button>
+                    <div className="mt-3 flex gap-2">
+                      <Button variant={added ? 'ghost' : 'secondary'} className="min-w-0 flex-1" disabled={added} loading={adding === tp.rule.name} onClick={() => applyTemplate(tp)}>
+                        {added ? <><Check className="size-4" /> {t('เพิ่มแล้ว')}</> : t('ใช้เลย')}
+                      </Button>
+                      <Button variant="ghost" className="shrink-0 px-2.5" title={t('ตั้งค่าก่อนใช้ (เปลี่ยนข้อความ สี ระยะเวลา ฯลฯ)')} aria-label={t('ตั้งค่า')} onClick={() => customizeTemplate(tp)}>
+                        <Settings2 className="size-4" /> {t('ตั้งค่า')}
+                      </Button>
+                    </div>
                   </div>
                 );
               })}
@@ -628,15 +641,20 @@ function ActionsInner() {
                       {/* ตัวอย่างจริง: อัดจากวิดเจ็ต FX ตอนเล่นเอฟเฟกต์นั้น (public/tpl/<id>.webp) · อีโมจิเป็นป้ายเล็กมุมซ้าย */}
                       <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-pink-soft to-violet-soft">
                         {tp.id && <img src={`/tpl/${tp.id}.webp`} alt={t(tp.title)} width={480} height={270} loading="lazy" decoding="async"
-                          className="size-full object-cover transition duration-300 group-hover:scale-105" />}
+                          className="size-full object-contain" />}
                         <span className="absolute left-1.5 top-1.5 grid size-7 place-items-center rounded-full bg-white/90 text-sm shadow-sm sm:size-8 sm:text-base">{tp.icon}</span>
                       </div>
                       <div className="flex flex-1 flex-col p-2.5 sm:p-3">
                         <div className="text-[13px] font-medium leading-snug sm:text-sm">{t(tp.title)}</div>
                         <div className="mt-0.5 line-clamp-3 flex-1 text-[11px] leading-snug text-muted sm:text-xs">{t(tp.desc)}</div>
-                        <Button variant={added ? 'ghost' : 'secondary'} className="mt-2.5 w-full px-2 text-sm" disabled={added} loading={adding === tp.rule.name} onClick={() => applyTemplate(tp)}>
-                          {added ? <><Check className="size-4" /> {t('เพิ่มแล้ว')}</> : t('ใช้เลย')}
-                        </Button>
+                        <div className="mt-2.5 flex gap-1.5">
+                          <Button variant={added ? 'ghost' : 'secondary'} className="min-w-0 flex-1 px-2 text-sm" disabled={added} loading={adding === tp.rule.name} onClick={() => applyTemplate(tp)}>
+                            {added ? <><Check className="size-4" /> {t('เพิ่มแล้ว')}</> : t('ใช้เลย')}
+                          </Button>
+                          <Button variant="ghost" className="shrink-0 px-2 text-sm" title={t('ตั้งค่าก่อนใช้ (เปลี่ยนข้อความ สี ระยะเวลา ฯลฯ)')} aria-label={t('ตั้งค่า')} onClick={() => customizeTemplate(tp)}>
+                            <Settings2 className="size-4" /> <span className="hidden lg:inline">{t('ตั้งค่า')}</span>
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   );

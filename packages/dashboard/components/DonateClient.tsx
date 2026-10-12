@@ -9,6 +9,7 @@ import { promptPayPayload, maskPromptPay } from '@/lib/promptpay';
 import { toDigits } from './NumberInput';
 import { TikTokAvatar } from './TikTokAvatar';
 import { bankLogo, bankOf, fmtAccount } from '@/lib/banks';
+import { OpenInBrowser } from './OpenInBrowser';
 import { translate, useLang, useT } from '@/lib/i18n';
 
 interface PageInfo { name: string; tiktok: string; promptpay: string; bank?: { code: string; account: string; holder: string } | null; min: number; title: string; autoVerify: boolean }
@@ -130,6 +131,7 @@ export function DonateClient() {
 
   return (
     <Shell>
+      <OpenInBrowser />
       {header}
       <form onSubmit={submit} className="mt-5 space-y-4">
         <Step n={1} title={t('ชื่อ & ข้อความที่จะขึ้นจอ')}>

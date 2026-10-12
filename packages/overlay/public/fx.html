@@ -644,6 +644,11 @@
       const tx=el.querySelector('.tx'); tx.textContent=fill(a.text||'✨ ขอบคุณ {user} ✨',ev);
       document.body.appendChild(el);
       if(md==='scroll') requestAnimationFrame(()=>{ el.style.setProperty('--dur',Math.max(3,Math.min(dur/1000,tx.scrollWidth/260)).toFixed(1)+'s'); });
+      // ป้ายไม่วิ่ง (นิ่ง/กะพริบ/เต้น): ข้อความยาวล้นจอ → ย่อตัวอักษรลงจนพอดี 94% ของจอ (เดิมโดนตัดหัวท้าย)
+      if(md!=='scroll') requestAnimationFrame(()=>{ const tr=el.querySelector('.tr'); const over=()=>tx.scrollWidth>tr.clientWidth+2||el.getBoundingClientRect().width>innerWidth*.96;
+        let fs=parseFloat(getComputedStyle(tx).fontSize)||40; const f0=fs;
+        for(let k=0;k<30&&over()&&fs>f0*.62;k++){ fs*=.93; tx.style.fontSize=fs+'px'; }
+        if(over()){ tx.style.whiteSpace='normal'; tx.style.display='block'; tx.style.textAlign='center'; tx.style.lineHeight='1.15'; tr.style.whiteSpace='normal'; tr.style.height='auto'; tr.style.overflow='visible'; } });
       if(st==='bulb') requestAnimationFrame(()=>{ const bl=el.querySelector('.bl'), r=bl.getBoundingClientRect(), nx=Math.max(2,Math.floor(r.width/26)), ny=Math.max(1,Math.floor(r.height/26));
         const add=(x,y)=>{ const i=document.createElement('i'); i.style.left=x+'px'; i.style.top=y+'px'; bl.appendChild(i); };
         for(let k=0;k<=nx;k++){ add(k*r.width/nx,0); add(k*r.width/nx,r.height); } for(let k=1;k<ny;k++){ add(0,k*r.height/ny); add(r.width,k*r.height/ny); } });
@@ -867,7 +872,10 @@
       else if(!mine(fire.action)) return; // หมวดนี้เล่นที่ลิงก์อื่น
       // เริ่ม PK / จบ (ชนะ แพ้ เสมอ) → วิดีโอประจำเหตุการณ์ (ใช้กติกาเดียวกับการ์ด: วิดีโออย่างเดียว เสียงยังเล่นได้)
       const pkVid=pk&&(pk.kind==='start'?'start':pk.kind==='end'?pk.result:'');
-      if(pkVid&&PK_VIDEO[pkVid]&&pkOk[pkVid]!==false){ playPk(pkVid); if(fire.action.type!=='sound') return; }
+      // เริ่ม/จบ PK: วิดีโอประจำเหตุการณ์ก่อน (เล่นครั้งเดียวแม้มีหลายกฎ) แล้วตามด้วยเทมเพลตที่วีเจเลือก (ป้ายไฟ MVP / คอนเฟตติ / ฝนดาว ...) ตอนวิดีโอจบ
+      //   เดิม return ทิ้ง → ทุกเทมเพลตชนะ/แพ้/จบ ออกจอเป็นวิดีโอเดียวกันหมด
+      let pkDelay=0;
+      if(pkVid&&PK_VIDEO[pkVid]&&pkOk[pkVid]!==false){ playPk(pkVid); if(fire.action.type!=='sound') pkDelay=Math.max(0,PK_VIDEO[pkVid]-700); }
       if(pk&&pk.kind==='card'&&pk.card&&PK_VIDEO[pk.card]){ // การ์ด PK ที่มีวิดีโอ → เล่นวิดีโออย่างเดียว
         playPk(pk.card);
         // ไม่เอาป้ายไฟ/ข้อความ/นวมพุ่งของกฎมาซ้อนวิดีโอ · กฎที่เป็นเสียงยังเล่นได้ (ไม่บังจอ)
@@ -878,7 +886,7 @@
       // ส่งคอมโบ (เช่น กุหลาบ 10 ดอก) → เล่นซ้ำตามจำนวน ไม่เกินที่วีเจตั้ง (ไพ่ทาโร่ = 1 เสมอ)
       const a=fire.action, n=a.type==='tarot'?1:Math.max(1,Math.min(20,fire.times||1));
       const gap=a.type==='sound'?700:a.type==='effect'?1400:(a.durationMs||5000)+300;
-      for(let i=0;i<n;i++) setTimeout(()=>play(a,fire.event), i*gap);
+      for(let i=0;i<n;i++) setTimeout(()=>play(a,fire.event), pkDelay+i*gap);
     });
     if(Overlay.param('debug','0')==='1') window.__play=play;
 

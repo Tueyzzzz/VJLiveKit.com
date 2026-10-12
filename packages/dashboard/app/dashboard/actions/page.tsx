@@ -143,8 +143,6 @@ function describe(r: Rule, t: typeof translate): string {
   return `${s} → ${t(ACTION_LABELS[r.action.type])}${r.action.type === 'tarot' ? ` ${t('{n} ใบ', { n: r.action.cards ?? 1 })}` : ''}${r.action.type === 'effect' ? ` ${t(effectLabel(r.action.effect, r.action.animal))}` : ''}${r.action.text ? ` “${r.action.text}”` : ''}`;
 }
 
-/** การ์ด/ผล PK ที่มีวิดีโอบนจอ (overlay/pk/<key>.webp) — ใช้เป็นตัวอย่างในเทมเพลต PK */
-const PK_VID = new Set(['top2', 'top3', 'start', 'win', 'lose', 'draw', 'glove', 'critical', 'smoke', 'extra', 'effect', 'wave']);
 
 export default function ActionsPage() {
   // ?pk=1 = เมนู PK Battle · Suspense จำเป็นกับ useSearchParams ใน static export
@@ -306,7 +304,8 @@ function ActionsInner() {
   }
   const have = new Set((rules ?? []).map((r) => r.name));
   // เทมเพลตจัดหมวด: ไพ่ทาโร่ = แอดมินเท่านั้น (เหมือนเดิม) · โชว์เฉพาะหมวดที่มีเทมเพลต
-  const tplVisible = TEMPLATES; // ไพ่ทาโร่เปิดให้ทุกคนแล้ว (เดิมแอดมินเท่านั้น)
+  const ADMIN_ONLY_TPL = new Set(['tarot-swords']); // ร่างกายต้องการดาบ: ปิดไว้ให้แอดมินเห็นคนเดียว
+  const tplVisible = TEMPLATES.filter((tp) => isAdmin || !ADMIN_ONLY_TPL.has(tp.id ?? '')); // ไพ่ทาโร่เปิดให้ทุกคนแล้ว ยกเว้นชุดดาบ
   const tplGroups = TEMPLATE_GROUPS.map(([g, l]) => [g, l, tplVisible.filter((tp) => tp.group === g).length] as const).filter(([, , n]) => n > 0);
   const [tplGroupSel, setTplGroup] = useState<TemplateGroup>('fx');
   const tplGroup = tplGroups.some(([g]) => g === tplGroupSel) ? tplGroupSel : tplGroups[0]?.[0] ?? 'fx';
@@ -604,17 +603,17 @@ function ActionsInner() {
                 </div>
               )}
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {PK_TEMPLATES.map((tp) => {
+              {PK_TEMPLATES.map((tp, ti) => {
                 const added = have.has(tp.rule.name);
                 // จบ PK (ประกาศ MVP) ไม่มีวิดีโอของตัวเอง → ใช้ภาพตอนชนะ
                 const pk = tp.rule.trigger.pk, pkKey = pk === 'end' ? 'win' : pk;
                 return (
                   <div key={tp.rule.name} className="flex flex-col rounded-xl border border-line bg-canvas/50 p-3">
-                    {/* PK: ตัวอย่างจริงที่ขึ้นจอ — เฟรมที่เห็นชัดสุดของวิดีโอการ์ด/ผล PK (public/pk-prev) · ไม่มีวิดีโอ = รูปวีเจประจำเทมเพลต */}
+                    {/* PK: ภาพจริงของเทมเพลตนี้บนจอ (ถ่ายจาก fx.html — public/pk-shot/<ลำดับใน PK_TEMPLATES>.webp) · เดิมใช้ภาพตามจังหวะ PK → ชนะ/จบ ทุกใบเป็นถ้วยเดียวกัน */}
                     {/* กล่อง relative + รูป absolute inset-2 object-contain = รูปสูง/กว้างแค่ไหนก็อยู่ครบกลางกล่อง ไม่ล้น ไม่โดนตัด */}
                     {pkKey
                       ? <div className="relative -mx-1 -mt-1 aspect-video overflow-hidden rounded-lg bg-gradient-to-br from-pink-soft to-violet-soft">
-                          <img src={PK_VID.has(pkKey) ? `/pk-prev/${pkKey}.webp` : `/pk-tpl/${pkKey}.webp`} alt="" loading="lazy" className="absolute inset-2 h-[calc(100%-1rem)] w-[calc(100%-1rem)] object-contain drop-shadow-md" />
+                          <img src={`/pk-shot/${String(ti).padStart(2, '0')}.webp`} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
                           <span className="absolute left-1.5 top-1.5 grid size-7 place-items-center rounded-full bg-white/90 text-sm shadow-sm">{tp.icon}</span>
                         </div>
                       : <div className="text-2xl">{tp.icon}</div>}

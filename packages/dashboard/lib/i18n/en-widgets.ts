@@ -55,7 +55,7 @@ export const EN_WIDGETS: Record<string, string> = {
   "คัดลอก": "Copy",
   "เพิกถอนลิงก์ชุดนี้? overlay ที่ใช้ลิงก์นี้ใน OBS จะหยุดทำงานทันที": "Revoke this link set? Overlays using these links in OBS will stop working immediately",
   "โอเวอร์เลย์": "Overlays",
-  "คัดลอกลิงก์ไปวางใน OBS → Sources → Browser (แนะนำขนาด 1920×1080) ลิงก์เป็นความลับ อย่าแชร์ให้ใคร": "Copy a link and paste it into OBS → Sources → Browser (recommended 1920×1080). Links are private — don't share them",
+  "คัดลอกลิงก์ไปวางในโปรแกรมไลฟ์ (OBS / TikTok LIVE Studio) แล้วตั้งขนาดให้เท่าจอไลฟ์: ไลฟ์แนวตั้ง 1080×1920 · แนวนอน 1920×1080 — วิดเจ็ตจัดตำแหน่งให้เอง ลิงก์เป็นความลับ อย่าแชร์ให้ใคร": "Paste a link into your live app (OBS / TikTok LIVE Studio) and set the size to match your live canvas: vertical 1080×1920 · horizontal 1920×1080 — widgets position themselves. Links are private — don't share them",
   "ยังไม่ได้ตั้งชื่อ TikTok —": "TikTok username not set —",
   "ตั้งที่หน้าภาพรวม": "set it on the Overview page",
   "ก่อนสร้างลิงก์": "before creating links",

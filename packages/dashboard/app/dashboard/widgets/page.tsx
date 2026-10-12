@@ -263,7 +263,7 @@ function WidgetsInner() {
   return (
     <div>
       <PageHeader title={t('โอเวอร์เลย์')}
-        description={t('คัดลอกลิงก์ไปวางใน OBS → Sources → Browser (แนะนำขนาด 1920×1080) ลิงก์เป็นความลับ อย่าแชร์ให้ใคร')} />
+        description={t('คัดลอกลิงก์ไปวางในโปรแกรมไลฟ์ (OBS / TikTok LIVE Studio) แล้วตั้งขนาดให้เท่าจอไลฟ์: ไลฟ์แนวตั้ง 1080×1920 · แนวนอน 1920×1080 — วิดเจ็ตจัดตำแหน่งให้เอง ลิงก์เป็นความลับ อย่าแชร์ให้ใคร')} />
 
       {!user.tiktokUsername && (
         <div className="mb-5">

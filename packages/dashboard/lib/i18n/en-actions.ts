@@ -100,6 +100,8 @@ export const EN_ACTIONS: Record<string, string> = {
   '🔗 ลิงก์เฉพาะหมวดนี้': '🔗 Link for this category only',
   'ไม่บังคับ — ใช้เมื่ออยากวางหมวดนี้แยกตำแหน่ง/ขนาดเอง (เช่น ไพ่ไว้มุมจอ) ถ้าใช้ลิงก์ FX ลิงก์เดียวก็ไม่ต้องทำอะไร': 'Optional — use it to place this category at its own position/size (e.g. tarot in a corner). If you use the single FX link, nothing to do',
   'คัดลอกลิงก์หมวดนี้': 'Copy category link',
+  '🔗 ลิงก์เฉพาะ PK': '🔗 PK-only link',
+  'คัดลอกลิงก์ PK': 'Copy PK link',
   'ลิงก์ FX หลักไม่ต้องเล่นหมวดนี้ (ติ๊กหลังจากวางลิงก์หมวดนี้ในโปรแกรมไลฟ์แล้ว ไม่งั้นหมวดนี้จะไม่ขึ้นจอ)': "Don't play this category on the main FX link (tick only after adding this category's link to your streaming software, otherwise it won't show)",
   'overlay FX (ที่เล่น Actions) ใช้ได้ในแพลน Pro — ตั้งกฎไว้ก่อนได้ แล้ว': 'The FX overlay (which plays Actions) is a Pro plan feature — you can set up rules now, then',
   'อัปเกรด': 'Upgrade',

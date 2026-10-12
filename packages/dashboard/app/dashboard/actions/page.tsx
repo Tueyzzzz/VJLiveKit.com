@@ -121,6 +121,9 @@ function describe(r: Rule, t: typeof translate): string {
   return `${s} → ${t(ACTION_LABELS[r.action.type])}${r.action.type === 'tarot' ? ` ${t('{n} ใบ', { n: r.action.cards ?? 1 })}` : ''}${r.action.type === 'effect' ? ` ${t(effectLabel(r.action.effect))}` : ''}${r.action.text ? ` “${r.action.text}”` : ''}`;
 }
 
+/** การ์ด/ผล PK ที่มีวิดีโอบนจอ (overlay/pk/<key>.webp) — ใช้เป็นตัวอย่างในเทมเพลต PK */
+const PK_VID = new Set(['top2', 'top3', 'start', 'win', 'lose', 'draw', 'glove', 'critical', 'smoke', 'extra', 'effect', 'wave']);
+
 export default function ActionsPage() {
   // ?pk=1 = เมนู PK Battle · Suspense จำเป็นกับ useSearchParams ใน static export
   return <Suspense fallback={<Spinner />}><ActionsInner /></Suspense>;
@@ -514,14 +517,36 @@ function ActionsInner() {
           <h2 className="mb-1 flex items-center gap-2 font-medium"><Sparkles className="size-4 text-pink" /> {t('เทมเพลตยอดนิยม')}</h2>
           <p className="mb-4 text-sm text-muted">{t('กด “ใช้เลย” แล้วใช้ได้ทันที — แก้ข้อความหรือเงื่อนไขทีหลังได้ด้วยปุ่มดินสอ')}</p>
           {pkMode ? (
+            <>
+              {fxUrl && (
+                <div className="mb-4 rounded-xl border border-dashed border-line bg-canvas/60 p-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="min-w-0 flex-1 text-sm">
+                      <span className="font-medium">{t('🔗 ลิงก์เฉพาะ PK')}</span>
+                      <span className="block text-xs text-muted">{t('ไม่บังคับ — ใช้เมื่ออยากวางหมวดนี้แยกตำแหน่ง/ขนาดเอง (เช่น ไพ่ไว้มุมจอ) ถ้าใช้ลิงก์ FX ลิงก์เดียวก็ไม่ต้องทำอะไร')}</span>
+                    </div>
+                    <Button variant="secondary" onClick={() => copyCat('pk')}>{catCopied === 'pk' ? <><Check className="size-4 text-mint" /> {t('คัดลอกแล้ว')}</> : <><Copy className="size-4" /> {t('คัดลอกลิงก์ PK')}</>}</Button>
+                  </div>
+                  <label className="mt-2 flex cursor-pointer items-start gap-2 text-xs text-muted">
+                    <input type="checkbox" className="mt-0.5 accent-pink" checked={split.includes('pk')} onChange={() => void toggleSplit('pk')} />
+                    <span>{t('ลิงก์ FX หลักไม่ต้องเล่นหมวดนี้ (ติ๊กหลังจากวางลิงก์หมวดนี้ในโปรแกรมไลฟ์แล้ว ไม่งั้นหมวดนี้จะไม่ขึ้นจอ)')}</span>
+                  </label>
+                </div>
+              )}
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {PK_TEMPLATES.map((tp) => {
                 const added = have.has(tp.rule.name);
                 return (
                   <div key={tp.rule.name} className="flex flex-col rounded-xl border border-line bg-canvas/50 p-3">
-                    {/* PK: รูปวีเจประจำเทมเพลต (ตามการ์ด/สถานการณ์) */}
-                    {tp.rule.trigger.pk
-                      ? <img src={`/pk-tpl/${tp.rule.trigger.pk === 'end' ? 'win' : tp.rule.trigger.pk}.webp`} alt="" width={96} height={96} loading="lazy" className="mx-auto -mt-1 size-24 object-contain drop-shadow-md" />
+                    {/* PK: ตัวอย่างจริงที่ขึ้นจอ — วิดีโอการ์ด/ผล PK (เคลื่อนไหว) · ไม่มีวิดีโอ = รูปวีเจประจำเทมเพลต */}
+                    {tp.rule.trigger.pk && PK_VID.has(tp.rule.trigger.pk)
+                      ? <div className="-mx-1 -mt-1 grid aspect-video place-items-center overflow-hidden rounded-lg bg-gradient-to-br from-pink-soft to-violet-soft">
+                          <img src={`/overlay/pk/${tp.rule.trigger.pk}.webp`} alt="" loading="lazy" className="h-full w-full object-contain" />
+                        </div>
+                      : tp.rule.trigger.pk
+                      ? <div className="-mx-1 -mt-1 grid aspect-video place-items-center overflow-hidden rounded-lg bg-gradient-to-br from-pink-soft to-violet-soft">
+                          <img src={`/pk-tpl/${tp.rule.trigger.pk === 'end' ? 'win' : tp.rule.trigger.pk}.webp`} alt="" loading="lazy" className="h-[88%] object-contain drop-shadow-md" />
+                        </div>
                       : <div className="text-2xl">{tp.icon}</div>}
                     <div className="mt-1 text-sm font-medium leading-snug">{t(tp.title)}</div>
                     <div className="mt-0.5 flex-1 text-xs text-muted">{t(tp.desc)}</div>
@@ -532,6 +557,7 @@ function ActionsInner() {
                 );
               })}
             </div>
+            </>
           ) : (
             <>
               {/* แถบหมวด (แบบเดียวกับแถบสลับแบบสะสมของขวัญ) — มือถือเลื่อนซ้ายขวาได้ */}

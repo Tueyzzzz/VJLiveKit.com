@@ -268,7 +268,7 @@ export class RoomHub {
         if (lite) this.io.to(RoomHub.ttsChannel(ownerId)).emit('tts', lite);
         void this.getRules(ownerId).then((rules) => {
           if (!rules.length) return;
-          for (const fire of evaluate(rules, e)) this.fireAction(ownerId, key, fire);
+          for (const fire of evaluate(rules, e, room.liveRoomId ?? String(entry.connectedAt ?? ''))) this.fireAction(ownerId, key, fire);
         });
       }
     });

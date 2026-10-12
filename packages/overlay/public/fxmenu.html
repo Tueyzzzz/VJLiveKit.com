@@ -148,7 +148,7 @@
     const MAX = Math.max(1, Math.min(12, parseInt(P('max', '6'), 10) || 6));
     const EVERY = Math.max(2, Math.min(30, parseFloat(P('every', '5')) || 5)) * 1000;
     const OTHER = P('other', 'true') !== 'false';
-    const EV = { follow: ['➕', 'กดติดตาม'], share: ['🔗', 'แชร์ไลฟ์'], like: ['❤️', 'กดไลก์'], chat: ['💬', 'พิมพ์'] };
+    const EV = { follow: ['➕', 'กดติดตาม'], share: ['🔗', 'แชร์ไลฟ์'], like: ['❤️', 'กดไลก์'], chat: ['💬', 'พิมพ์'], chest: ['🎁', 'ส่งกล่องสมบัติ'], superfanbox: ['💜', 'ส่งกล่องซูเปอร์แฟน'] };
     const fmt = (n) => Number(n).toLocaleString('en-US');
     // เลือกจากแดชบอร์ด: ซ่อนบางกฎ / เปลี่ยนรูปของขวัญที่แสดง
     let SEL = {}; try { SEL = JSON.parse(P('items', '') || '{}') || {}; } catch (e) { SEL = {}; }

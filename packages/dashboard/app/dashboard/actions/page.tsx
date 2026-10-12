@@ -14,7 +14,7 @@ import { useAuth } from '@/lib/auth';
 import { translate, useT } from '@/lib/i18n';
 import { EFFECTS, effectLabel, PK_TEMPLATES, TEMPLATES, TEMPLATE_GROUPS, type EffectName, type Template, type TemplateGroup } from '@/lib/actionTemplates';
 
-const EVENT_LABELS: Record<TriggerEvent, string> = { gift: '🎁 ได้รับกิฟต์', follow: '➕ มีคนติดตาม', share: '🔁 มีคนแชร์', like: '❤️ มีคนกดไลค์', chat: '💬 แชทมีคำว่า', pk: '⚔️ PK (แข่ง)' };
+const EVENT_LABELS: Record<TriggerEvent, string> = { gift: '🎁 ได้รับกิฟต์', follow: '➕ มีคนติดตาม', share: '🔁 มีคนแชร์', like: '❤️ มีคนกดไลค์', chat: '💬 แชทมีคำว่า', chest: '🎁 กล่องสมบัติ (กล่องของขวัญ)', superfanbox: '💜 กล่องซูเปอร์แฟน (ถุงม่วง)', join: '👋 มีคนเข้าห้อง', pk: '⚔️ PK (แข่ง)' };
 /** สถานการณ์ PK ที่ตั้งกฎได้ */
 const PK_LABELS: Record<string, string> = { start: '🔔 เริ่ม PK', end: '🏁 จบ PK (ทุกผล · ประกาศ MVP)', win: '🏆 ชนะ PK', lose: '💪 แพ้ PK', draw: '🤝 เสมอ', anycard: '🃏 มีคนใช้การ์ดอะไรก็ได้', glove: '🥊 การ์ดนวม', critical: '⚡ การ์ดสายฟ้า', smoke: '🌫️ การ์ดหมอก', extra: '⏱️ การ์ดต่อเวลา', potion: '🧪 การ์ดยาพลัง', wave: '🌊 การ์ดคลื่น', effect: '✨ การ์ดเอฟเฟกต์พิเศษ', top2: '🥈 เก้าอี้ที่ 2 X2 (อันดับ 2 ส่งได้คะแนนคูณ 2)', top3: '🥉 เก้าอี้ที่ 3 X2 (อันดับ 3 ส่งได้คะแนนคูณ 2)' };
 const ACTION_LABELS: Record<ActionType, string> = { sound: '🔊 เล่นเสียง', image: '🖼️ แสดงรูป/GIF', video: '🎬 เล่นวิดีโอ', text: '✏️ แสดงข้อความ', tarot: '🔮 สุ่มไพ่ทาโร่', effect: '✨ เอฟเฟกต์เต็มจอ', sign: '💡 ป้ายไฟ', glove: '🥊 ส่งนวม', mascot: '🧸 มาสคอตทำท่า' };
@@ -29,6 +29,10 @@ interface Draft {
   keyword: string;
   pk: string;
   pkSide: '' | 'us' | 'them';
+  /** มีคนเข้าห้อง: ทักครั้งเดียวต่อคนต่อไลฟ์ · เว้นระยะ (วินาที) · ทักเฉพาะใคร */
+  joinOnce: boolean;
+  cooldownSec: string;
+  joinWho: '' | 'follower' | 'fan';
   type: ActionType;
   url: string;
   /** เสียงสำเร็จรูป ('' = ใช้ลิงก์ไฟล์เอง) */
@@ -54,7 +58,7 @@ interface Draft {
   color: string;
 }
 
-const EMPTY: Draft = { name: '', enabled: true, event: 'gift', giftName: '', minDiamonds: '', keyword: '', pk: 'win', pkSide: '', type: 'sound', url: '', sound: 'chime', text: '', durationSec: '5', cards: '1', deck: 'full', topic: 'general', count: '12', effect: 'butterflies', move: 'dance', repeat: '1', tint: 'pink', signStyle: 'led', signMode: 'scroll', signPos: 'top', color: '#ff4fa3' };
+const EMPTY: Draft = { name: '', enabled: true, event: 'gift', giftName: '', minDiamonds: '', keyword: '', pk: 'win', pkSide: '', joinOnce: true, cooldownSec: '10', joinWho: '', type: 'sound', url: '', sound: 'chime', text: '', durationSec: '5', cards: '1', deck: 'full', topic: 'general', count: '12', effect: 'butterflies', move: 'dance', repeat: '1', tint: 'pink', signStyle: 'led', signMode: 'scroll', signPos: 'top', color: '#ff4fa3' };
 
 /** เสียงสำเร็จรูป — ชุดเดียวกับ overlay/js/sfx.js (ฟังตัวอย่างโดยโหลดไฟล์นั้นมาเล่น) */
 const SFX: [string, string][] = [['chime', '🔔 กริ๊ง'], ['coin', '🪙 เหรียญ'], ['levelup', '⬆️ เลเวลอัป'], ['fanfare', '🎺 ฟันแฟร์'], ['magic', '✨ เวทมนตร์'], ['pop', '🫧 ป๊อป'], ['whoosh', '💨 วู้ช'], ['drum', '🥁 ตึ่งโป๊ะ'], ['boing', '🌀 ดึ๋ง'], ['heart', '💗 หัวใจ'], ['applause', '👏 ปรบมือ'], ['alarm', '🚨 ไซเรน']];
@@ -72,7 +76,9 @@ function toDraft(r: Rule): Draft {
   return {
     id: r.id, name: r.name, enabled: r.enabled, event: r.trigger.event,
     giftName: r.trigger.giftName ?? '', minDiamonds: r.trigger.minDiamonds != null ? String(r.trigger.minDiamonds) : '',
-    keyword: r.trigger.keyword ?? '', pk: r.trigger.pk ?? 'win', pkSide: r.trigger.pkSide ?? '', type: r.action.type, url: r.action.url ?? '',
+    keyword: r.trigger.keyword ?? '', pk: r.trigger.pk ?? 'win', pkSide: r.trigger.pkSide ?? '',
+    joinOnce: r.trigger.joinOnce !== false, cooldownSec: String(r.trigger.cooldownSec ?? 10), joinWho: r.trigger.joinWho ?? '',
+    type: r.action.type, url: r.action.url ?? '',
     sound: r.action.sound ?? (r.action.url ? '' : 'chime'), text: r.action.text ?? '',
     durationSec: r.action.durationMs ? String(r.action.durationMs / 1000) : '5',
     cards: String(r.action.cards ?? 1),
@@ -94,6 +100,12 @@ function toBody(d: Draft) {
     if (!d.giftName.trim() && d.minDiamonds.trim()) trigger.minDiamonds = Math.max(0, Math.floor(Number(d.minDiamonds)));
   }
   if (d.event === 'chat' && d.keyword.trim()) trigger.keyword = d.keyword.trim();
+  if ((d.event === 'chest' || d.event === 'superfanbox') && d.minDiamonds.trim()) trigger.minDiamonds = Math.max(0, Math.floor(Number(d.minDiamonds)));
+  if (d.event === 'join') {
+    trigger.joinOnce = d.joinOnce;
+    trigger.cooldownSec = Math.max(0, Math.min(3600, Math.floor(Number(d.cooldownSec === '' ? 10 : d.cooldownSec) || 0)));
+    if (d.joinWho) trigger.joinWho = d.joinWho;
+  }
   if (d.event === 'pk') { trigger.pk = d.pk || 'win'; if (d.pkSide && !['start', 'end', 'win', 'lose', 'draw'].includes(trigger.pk)) trigger.pkSide = d.pkSide; }
   const action: Rule['action'] = { type: d.type };
   const needsFile = (d.type === 'sound' && !d.sound) || d.type === 'image' || d.type === 'video';
@@ -117,6 +129,8 @@ function describe(r: Rule, t: typeof translate): string {
   if (tr.event === 'gift') s += tr.giftName ? ` “${tr.giftName}”` : '';
   if (tr.event === 'gift' && !tr.giftName && tr.minDiamonds) s += ` ≥ ${tr.minDiamonds} 💎`;
   if (tr.event === 'chat') s += ` “${tr.keyword ?? ''}”`;
+  if ((tr.event === 'chest' || tr.event === 'superfanbox') && tr.minDiamonds) s += ` ≥ ${tr.minDiamonds} 💎`;
+  if (tr.event === 'join') s += `${tr.joinWho === 'follower' ? t(' (คนที่ติดตามแล้ว)') : tr.joinWho === 'fan' ? t(' (แฟนคลับ)') : ''}${tr.joinOnce !== false ? t(' · ครั้งเดียวต่อคน') : ''} · ${t('เว้น {n} วิ', { n: tr.cooldownSec ?? 10 })}`;
   if (tr.event === 'pk') s += ` ${t(PK_LABELS[tr.pk ?? ''] ?? '')}${tr.pkSide === 'us' ? t(' (ให้เรา)') : tr.pkSide === 'them' ? t(' (ใส่คู่แข่ง)') : ''}`;
   return `${s} → ${t(ACTION_LABELS[r.action.type])}${r.action.type === 'tarot' ? ` ${t('{n} ใบ', { n: r.action.cards ?? 1 })}` : ''}${r.action.type === 'effect' ? ` ${t(effectLabel(r.action.effect))}` : ''}${r.action.text ? ` “${r.action.text}”` : ''}`;
 }
@@ -368,6 +382,26 @@ function ActionsInner() {
               {draft.event === 'chat' && (
                 <Field label={t('คำในแชท')}><Input required value={draft.keyword} onChange={(e) => set('keyword', e.target.value)} placeholder={t('!เต้น')} /></Field>
               )}
+              {(draft.event === 'chest' || draft.event === 'superfanbox') && (
+                <Field label={t('เพชรในกล่องขั้นต่ำ')} hint={draft.event === 'chest' ? t('ขึ้นตอนมีคนส่งกล่องสมบัติให้ผู้ชมแย่งกันเปิด · เว้นว่าง = ทุกกล่อง') : t('ขึ้นตอนมีคนส่งกล่องซูเปอร์แฟน (ถุงม่วง) · เว้นว่าง = ทุกกล่อง')}>
+                  <Input type="text" inputMode="numeric" value={draft.minDiamonds} onChange={(e) => set('minDiamonds', toDigits(e.target.value))} placeholder={t('เช่น 100')} />
+                </Field>
+              )}
+              {draft.event === 'join' && (
+                <>
+                  <Field label={t('ทักเฉพาะ')} hint={t('ขึ้นตอนมีคนเข้าห้องไลฟ์ · ใช้ข้อความสั้น ๆ ไม่ใส่เสียง จะได้ไม่รก')}>
+                    <Select value={draft.joinWho} onChange={(e) => set('joinWho', e.target.value as Draft['joinWho'])}>
+                      <option value="">{t('ทุกคนที่เข้าห้อง')}</option>
+                      <option value="follower">{t('เฉพาะคนที่ติดตามแล้ว')}</option>
+                      <option value="fan">{t('เฉพาะแฟนคลับ')}</option>
+                    </Select>
+                  </Field>
+                  <Field label={t('เว้นระยะ (วินาที)')} hint={t('ทักแล้วรอกี่วินาทีถึงทักคนถัดไป · กันจอรกตอนคนเข้าเยอะ')}>
+                    <Input type="text" inputMode="numeric" value={draft.cooldownSec} onChange={(e) => set('cooldownSec', toDigits(e.target.value))} placeholder="10" />
+                  </Field>
+                  <label className="flex items-center gap-2 text-sm sm:col-span-2"><input type="checkbox" className="accent-pink" checked={draft.joinOnce} onChange={(e) => set('joinOnce', e.target.checked)} /> {t('ทักครั้งเดียวต่อคนต่อไลฟ์')}</label>
+                </>
+              )}
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label={t('ให้ทำ')}>
@@ -403,7 +437,7 @@ function ActionsInner() {
                   </div>
                 </Field>
               )}
-              <Field label={draft.type === 'text' ? t('ข้อความ') : t('ข้อความประกอบ (ไม่บังคับ)')} hint={draft.event === 'pk' && ['end', 'win', 'lose', 'draw'].includes(draft.pk) ? t('{mvp} = คนช่วยเรามากสุดใน PK · {mvpScore} = คะแนนของ MVP · {mvp2} {mvp3} = อันดับ 2–3 · {themMvp} = MVP ฝั่งคู่แข่ง · {us} {them} = คะแนน PK') : draft.type === 'sign' ? t('ข้อความบนป้าย · {user} = ชื่อคนส่ง · แนะนำแสดงนาน 5–8 วินาที') : draft.type === 'tarot' ? t('สุ่มไพ่ครบสำรับ 78 ใบ พร้อมคำทำนาย · {user} = ชื่อคนส่ง · แนะนำแสดงนาน 8 วินาที') : t('ใช้ {user} แทนชื่อคนที่ทำให้เกิดเหตุการณ์')}>
+              <Field label={draft.type === 'text' ? t('ข้อความ') : t('ข้อความประกอบ (ไม่บังคับ)')} hint={draft.event === 'chest' || draft.event === 'superfanbox' ? t('{user} = คนส่งกล่อง · {diamonds} = เพชรในกล่อง · {people} = จำนวนคนที่ได้') : draft.event === 'pk' && ['end', 'win', 'lose', 'draw'].includes(draft.pk) ?t('{mvp} = คนช่วยเรามากสุดใน PK · {mvpScore} = คะแนนของ MVP · {mvp2} {mvp3} = อันดับ 2–3 · {themMvp} = MVP ฝั่งคู่แข่ง · {us} {them} = คะแนน PK') : draft.type === 'sign' ? t('ข้อความบนป้าย · {user} = ชื่อคนส่ง · แนะนำแสดงนาน 5–8 วินาที') : draft.type === 'tarot' ? t('สุ่มไพ่ครบสำรับ 78 ใบ พร้อมคำทำนาย · {user} = ชื่อคนส่ง · แนะนำแสดงนาน 8 วินาที') : t('ใช้ {user} แทนชื่อคนที่ทำให้เกิดเหตุการณ์')}>
                 <Input maxLength={200} value={draft.text} onChange={(e) => set('text', e.target.value)} placeholder={t('ขอบคุณ {user} 💕')} />
               </Field>
               {draft.type === 'tarot' && (

@@ -129,8 +129,9 @@
 
     // แทน {user} ด้วยชื่อคนที่ทำให้เกิดเหตุการณ์
     // PK: {mvp} {mvpScore} {mvp2} {mvp3} = ผู้ช่วยฝั่งเราอันดับ 1–3 · {themMvp} = อันดับ 1 คู่แข่ง · {us} {them} = คะแนน PK
-    function fill(text,ev){ const u=ev&&ev.user?(ev.user.nickname||ev.user.uniqueId):''; const pk=(ev&&ev.pk)||{}, m=pk.mvp||[], n=(v)=>v==null?'':Number(v).toLocaleString('en-US');
-      const t=String(text||'').replace(/\{user\}/g,u); if(!ev||!ev.pk) return t;
+    // กล่องสมบัติ/ถุงม่วง: {diamonds} = เพชรในกล่อง · {people} = จำนวนคนที่ได้
+    function fill(text,ev){ const u=ev&&ev.user?(ev.user.nickname||ev.user.uniqueId):''; const pk=(ev&&ev.pk)||{}, m=pk.mvp||[], n=(v)=>v==null?'':Number(v).toLocaleString('en-US'), c=(ev&&ev.chest)||{};
+      const t=String(text||'').replace(/\{user\}/g,u).replace(/\{diamonds\}/g,n(c.diamonds||0)).replace(/\{people\}/g,n(c.people||0)); if(!ev||!ev.pk) return t;
       return t.replace(/\{mvpScore\}/g,m[0]?n(m[0].score):'').replace(/\{mvp\}/g,m[0]?m[0].name:(u||'ทุกคน')).replace(/\{mvp2\}/g,m[1]?m[1].name:'').replace(/\{mvp3\}/g,m[2]?m[2].name:'')
         .replace(/\{themMvp\}/g,pk.themMvp?pk.themMvp.name:'').replace(/\{us\}/g,n(pk.us)).replace(/\{them\}/g,n(pk.them)); }
     function showText(text,dur){ const t=document.createElement('div'); t.className='text'; t.textContent=text; fx.appendChild(t); clearLater(t,dur); }

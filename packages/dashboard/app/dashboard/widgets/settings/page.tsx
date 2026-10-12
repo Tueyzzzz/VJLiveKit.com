@@ -132,7 +132,7 @@ function MenuItemsEditor({ value, onChange }: { value: string; onChange: (v: str
       {rows.length === 0 && <p className="text-xs text-muted">{t('ยังไม่มีกฎ —')} <Link href="/dashboard/actions/" className="text-pink underline">{t('ตั้งกฎที่ Actions & Events')}</Link> {t('หรือเพิ่มของขวัญเองด้านล่าง')}</p>}
       {rows.map((r) => {
         const img = icons[r.id] || r.image;
-        const how = r.event === 'gift' ? (r.gift ? t('ส่ง {gift}', { gift: (lang === 'en' ? r.gift : r.th) || r.gift }) : r.minDiamonds ? t('กิฟต์ 💎{n}+', { n: r.minDiamonds }) : t('ทุกกิฟต์')) : r.event === 'chat' ? t('พิมพ์ “{keyword}”', { keyword: r.keyword ?? '' }) : r.event;
+        const how = r.event === 'gift' ? (r.gift ? t('ส่ง {gift}', { gift: (lang === 'en' ? r.gift : r.th) || r.gift }) : r.minDiamonds ? t('กิฟต์ 💎{n}+', { n: r.minDiamonds }) : t('ทุกกิฟต์')) : r.event === 'chat' ? t('พิมพ์ “{keyword}”', { keyword: r.keyword ?? '' }) : r.event === 'chest' ? t('ส่งกล่องสมบัติ') : r.event === 'superfanbox' ? t('ส่งกล่องซูเปอร์แฟน') : r.event;
         return (
           <div key={r.id} className={`rounded-xl border border-line p-2 ${hide.has(r.id) ? 'opacity-50' : ''}`}>
             <div className="flex items-center gap-2">

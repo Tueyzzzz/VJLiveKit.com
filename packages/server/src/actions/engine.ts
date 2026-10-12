@@ -3,14 +3,20 @@ import { giftIdOf, giftInfo } from '../tiktok/giftCatalog.js';
 
 /** กฎทริกเกอร์: ถ้าเหตุการณ์เข้าเงื่อนไข trigger ให้ทำ action */
 export interface RuleTrigger {
-  event: 'gift' | 'follow' | 'share' | 'like' | 'chat' | 'pk';
+  event: 'gift' | 'follow' | 'share' | 'like' | 'chat' | 'pk' | 'chest' | 'superfanbox' | 'join';
   /** PK: start / end (จบทุกผล) / win / lose / draw / anycard / รหัสการ์ด (glove critical smoke ...) (เฉพาะ event=pk) */
   pk?: string;
   /** PK การ์ด: ใช้กับฝั่งไหน (us = ให้เรา · them = คู่แข่ง · ไม่ระบุ = ทั้งคู่) */
   pkSide?: 'us' | 'them';
   giftName?: string;     // เจาะจงชื่อกิฟต์ (เฉพาะ event=gift)
-  minDiamonds?: number;  // มูลค่าเพชรขั้นต่ำ (เฉพาะ event=gift)
+  minDiamonds?: number;  // มูลค่าเพชรขั้นต่ำ (event=gift / chest / superfanbox)
   keyword?: string;      // คำในแชท (เฉพาะ event=chat)
+  /** join: ทักครั้งเดียวต่อคนต่อไลฟ์ (ไม่ระบุ = เปิด) */
+  joinOnce?: boolean;
+  /** join: เว้นระยะกี่วินาทีก่อนทักคนถัดไป (ทั้งกฎ · ไม่ระบุ = 10) */
+  cooldownSec?: number;
+  /** join: ทักเฉพาะ follower = คนที่ติดตามแล้ว · fan = สมาชิกแฟนคลับ */
+  joinWho?: 'follower' | 'fan';
 }
 
 export interface RuleAction {
@@ -70,7 +76,7 @@ export interface ActionFire {
 export function ruleMatches(rule: ActionRule, e: TikTokEvent): boolean {
   if (!rule.enabled) return false;
   const t = rule.trigger;
-  if (t.event !== e.type) return false;
+  if (t.event !== (e.type === 'member' ? 'join' : e.type)) return false; // join = อีเวนต์ member (มีคนเข้าห้อง)
 
   if (e.type === 'gift') {
     if (e.streaking) return false; // นับเฉพาะตอน streak จบ
@@ -82,6 +88,13 @@ export function ruleMatches(rule: ActionRule, e: TikTokEvent): boolean {
     const value = e.totalValue ?? (e.diamondCount ?? 0) * (e.repeatCount ?? 1);
     // เลือกกิฟต์เฉพาะแล้ว ไม่ใช้มูลค่าขั้นต่ำ (กฎเก่าที่ตั้งคู่กัน เช่น Heart + 99 จะไม่มีวันขึ้น)
     if (!t.giftName && t.minDiamonds != null && value < t.minDiamonds) return false;
+  }
+  if (e.type === 'chest' || e.type === 'superfanbox') { // กล่องสมบัติ / ถุงม่วง: กรองด้วยเพชรในกล่องได้
+    if (t.minDiamonds != null && (e.chest?.diamonds ?? 0) < t.minDiamonds) return false;
+  }
+  if (e.type === 'member') { // มีคนเข้าห้อง: เฉพาะคนที่ติดตาม/แฟนคลับ (ข้อมูลจาก TikTok)
+    if (t.joinWho === 'follower' && !e.fan?.follower) return false;
+    if (t.joinWho === 'fan' && !e.fan?.club) return false;
   }
   if (e.type === 'pk') { // PK: เริ่ม / ผลแพ้ชนะ / การ์ด
     const k = e.pk; if (!k || !t.pk) return false;
@@ -99,11 +112,34 @@ export function ruleMatches(rule: ActionRule, e: TikTokEvent): boolean {
   return true;
 }
 
-/** คืนรายการ action ที่ต้องยิงสำหรับเหตุการณ์นี้ */
-export function evaluate(rules: ActionRule[], e: TikTokEvent): ActionFire[] {
+/** กันสแปม "มีคนเข้าห้อง" ต่อกฎ: คนที่ทักแล้วในไลฟ์นี้ + เวลาที่ทักล่าสุด */
+interface JoinState { session: string; greeted: Set<string>; last: number }
+const joinStates = new Map<string, JoinState>();
+
+/** ผ่านด่านกันสแปมของกฎ join ไหม (ผ่าน = จดว่าทักแล้ว) · session = รหัสไลฟ์ เปลี่ยนไลฟ์ = เริ่มนับใหม่ */
+export function joinAllowed(r: ActionRule, e: TikTokEvent, session = '', now = Date.now()): boolean {
+  let st = joinStates.get(r.id);
+  if (!st || st.session !== session) {
+    st = { session, greeted: new Set(), last: 0 };
+    joinStates.delete(r.id); joinStates.set(r.id, st);
+    if (joinStates.size > 5000) joinStates.delete(joinStates.keys().next().value!);
+  }
+  const who = e.user?.userId || e.user?.uniqueId || '';
+  const once = r.trigger.joinOnce !== false;
+  if (once && who && st.greeted.has(who)) return false;
+  const cd = Math.max(0, Math.min(3600, r.trigger.cooldownSec ?? 10)) * 1000;
+  if (cd && now - st.last < cd) return false;
+  st.last = now;
+  if (once && who) { st.greeted.add(who); if (st.greeted.size > 20000) st.greeted.delete(st.greeted.values().next().value!); }
+  return true;
+}
+
+/** คืนรายการ action ที่ต้องยิงสำหรับเหตุการณ์นี้ · session = รหัสไลฟ์ (กฎ join ทักครั้งเดียวต่อคนต่อไลฟ์) */
+export function evaluate(rules: ActionRule[], e: TikTokEvent, session = ''): ActionFire[] {
   const out: ActionFire[] = [];
   for (const r of rules) {
     if (!ruleMatches(r, e)) continue;
+    if (e.type === 'member' && !joinAllowed(r, e, session)) continue;
     const limit = r.action.type === 'tarot' ? 1 : Math.max(1, Math.min(20, r.action.repeat ?? 1));
     const times = e.type === 'gift' ? Math.min(limit, Math.max(1, e.repeatCount ?? 1)) : 1;
     out.push({ ruleId: r.id, name: r.name, action: r.action, event: e, ts: Date.now(), times });
@@ -127,7 +163,7 @@ export interface MenuItem {
 }
 
 export function menuItems(rules: ActionRule[]): MenuItem[] {
-  const items = rules.filter((r) => r.enabled && r.trigger.event !== 'pk').map((r): MenuItem => { // PK ไม่ขึ้นเมนูของขวัญ
+  const items = rules.filter((r) => r.enabled && r.trigger.event !== 'pk' && r.trigger.event !== 'join').map((r): MenuItem => { // PK / มีคนเข้าห้อง ไม่ขึ้นเมนูของขวัญ
     const t = r.trigger, g = t.giftName ? giftInfo(t.giftName) : undefined;
     return {
       id: r.id, event: t.event, gift: t.giftName, th: g?.th, image: g?.image, diamonds: g?.diamonds,
@@ -136,6 +172,6 @@ export function menuItems(rules: ActionRule[]): MenuItem[] {
     };
   });
   // ของขวัญเรียงถูก → แพง แล้วตามด้วยแชท/ติดตาม/แชร์
-  const rank = (m: MenuItem) => (m.event === 'gift' ? (m.diamonds ?? m.minDiamonds ?? 0) : 1e9 + ['chat', 'follow', 'share', 'like'].indexOf(m.event));
+  const rank = (m: MenuItem) => (m.event === 'gift' ? (m.diamonds ?? m.minDiamonds ?? 0) : 1e9 + ['chat', 'follow', 'share', 'like', 'chest', 'superfanbox'].indexOf(m.event));
   return items.sort((a, b) => rank(a) - rank(b));
 }

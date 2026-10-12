@@ -204,7 +204,7 @@ export default function AdminPage() {
                 <div className="grid gap-5 md:grid-cols-2">
                   <div><h3 className="mb-2 text-sm font-semibold">วิดเจ็ตที่ปรับตั้งค่า (คน)</h3>{bars(U.widgetUse, (k) => WIDGET_LABELS[k] ?? k)}</div>
                   <div><h3 className="mb-2 text-sm font-semibold">กฎ Actions แยกตามสิ่งที่ทำ</h3>{bars(U.actionUse, (k) => ({ sound: '🔊 เล่นเสียง', tarot: '🔮 ไพ่ทาโร่', sign: '💡 ป้ายไฟ', effect: '🦋 ผีเสื้อ', text: '✏️ ข้อความ', image: '🖼️ รูป', video: '🎬 วิดีโอ' } as Record<string, string>)[k] ?? k)}</div>
-                  <div><h3 className="mb-2 text-sm font-semibold">เงื่อนไขที่ใช้</h3>{bars(U.triggerUse, (k) => ({ gift: '🎁 กิฟต์', follow: '➕ ติดตาม', share: '🔁 แชร์', like: '❤️ ไลก์', chat: '💬 แชท' } as Record<string, string>)[k] ?? k)}</div>
+                  <div><h3 className="mb-2 text-sm font-semibold">เงื่อนไขที่ใช้</h3>{bars(U.triggerUse, (k) => ({ gift: '🎁 กิฟต์', follow: '➕ ติดตาม', share: '🔁 แชร์', like: '❤️ ไลก์', chat: '💬 แชท', pk: '⚔️ PK', chest: '🎁 กล่องสมบัติ', superfanbox: '💜 ถุงม่วง', join: '👋 เข้าห้อง' } as Record<string, string>)[k] ?? k)}</div>
                   <div><h3 className="mb-2 text-sm font-semibold">กิฟต์ที่ตั้งกฎมากที่สุด</h3>{bars(Object.fromEntries(U.topGifts), (k) => k)}</div>
                 </div>
               </Card>

@@ -106,6 +106,13 @@ export const TEMPLATES: Template[] = [
     rule: { name: 'ป้ายนีออนผู้ติดตาม', trigger: { event: 'follow' }, action: { type: 'sign', signStyle: 'neon', signMode: 'pulse', signPos: 'top', color: '#ff4fa3', text: '💗 {user} ติดตามแล้ว ขอบคุณน้า', durationMs: 4000 } } },
   { id: 'thanks-galaxy', group: 'thanks', icon: '🌟', title: 'ได้ Galaxy → ข้อความพิเศษ', desc: 'ขอบคุณแบบเฉพาะกิฟต์',
     rule: { name: 'ขอบคุณ Galaxy', trigger: { event: 'gift', giftName: 'Galaxy' }, action: { type: 'text', text: '🌌 {user} ส่ง Galaxy! รักเลย 💜', durationMs: 5000 } } },
+  // กล่องสมบัติ / ถุงม่วง / คนเข้าห้อง (ยังไม่มีรูปตัวอย่าง → ไม่มี id)
+  { group: 'thanks', icon: '🎁', title: 'กล่องสมบัติ → ฝนเหรียญ + ขอบคุณ', desc: 'มีคนส่งกล่องสมบัติให้ผู้ชมแย่งกันเปิด → เหรียญทองโปรยทั้งจอ',
+    rule: { name: 'ขอบคุณกล่องสมบัติ', trigger: { event: 'chest' }, action: { type: 'effect', effect: 'coins', tint: 'gold', count: 16, text: 'ขอบคุณ {user} ที่ส่งกล่องสมบัติ 💎{diamonds}', durationMs: 7000 } } },
+  { group: 'thanks', icon: '💜', title: 'ถุงม่วง → ผีเสื้อม่วง + ขอบคุณ', desc: 'มีคนส่งกล่องซูเปอร์แฟน (ถุงม่วง) → ผีเสื้อสีม่วงเต็มจอ',
+    rule: { name: 'ขอบคุณถุงม่วง', trigger: { event: 'superfanbox' }, action: { type: 'effect', effect: 'butterflies', tint: 'purple', count: 14, text: '💜 ขอบคุณ {user} ที่ส่งกล่องซูเปอร์แฟน รักเลย!', durationMs: 7000 } } },
+  { group: 'thanks', icon: '👋', title: 'มีคนเข้าห้อง → ข้อความต้อนรับ', desc: '“ยินดีต้อนรับ {user}” ทักครั้งเดียวต่อคน เว้น 10 วิ ไม่รกจอ',
+    rule: { name: 'ต้อนรับคนเข้าห้อง', trigger: { event: 'join', joinOnce: true, cooldownSec: 10 }, action: { type: 'text', text: 'ยินดีต้อนรับ {user} 💖', durationMs: 3000 } } },
   // 🧸 มาสคอต
   { id: 'mascot-dance', group: 'mascot', icon: '💃', title: 'มาสคอตเต้น', desc: 'ได้ Finger Heart → ตัวแทนวีเจเต้นบนจอ',
     rule: { name: 'มาสคอตเต้น', trigger: { event: 'gift', giftName: 'Finger Heart' }, action: { type: 'mascot', move: 'dance', text: '💃 เต้นให้ {user} ดู!' } } },

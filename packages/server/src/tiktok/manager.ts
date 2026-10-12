@@ -123,6 +123,7 @@ export class TikTokRoom extends EventEmitter {
     this.stats = emptyStats();
     this.recentGifts = [];
     this.seenMsgIds.clear();
+    this.seenEnvelopes.clear();
     this.gifters.clear();
     this.likers.clear();
     this.peakViewers = 0;
@@ -165,6 +166,8 @@ export class TikTokRoom extends EventEmitter {
     c.on('linkMicBattle', (d: any) => this.onBattle(d));
     c.on('linkMicArmies', (d: any) => this.onArmies(d));
     c.on('linkMicBattleItemCard', (d: any) => this.onCard(d));
+    // ---- กล่องสมบัติ / ถุงม่วง (superFanBox ยิงซ้ำกับ envelope อยู่แล้ว → ฟังแค่ envelope แล้วแยกเอง) ----
+    c.on('envelope', (d: any) => this.onEnvelope(d));
     c.on('disconnected', () => { this.connected = false; this.emit('status', { type: 'disconnected', message: 'การเชื่อมต่อถูกตัด' }); });
     // v2 ส่ง error เป็น { info, exception }
     c.on('error', (err: any) => { const m = String(err?.exception?.message ?? err?.info ?? err?.message ?? err); recordError({ src: 'tiktok', msg: m, stack: err?.exception?.stack, where: 'live', user: '@' + this.username }); this.emit('status', { type: 'error', message: m }); });
@@ -283,6 +286,27 @@ export class TikTokRoom extends EventEmitter {
     this.send('pk', { user: su?.nickName ? { userId: String(su.userId ?? ''), uniqueId: String(su.displayId ?? su.nickName), nickname: su.nickName, avatar: '' } : undefined, pk: { kind: 'card', card: def[0], label: def[1], by: su?.nickName || undefined, side: !this.hostId || !anchor ? null : anchor === this.hostId ? 'us' : 'them', text: use.displayContent?.defaultPattern || undefined } });
   }
 
+  // ================= กล่องสมบัติ / ถุงม่วง =================
+  /** envelopeId ที่ยิงไปแล้ว — กล่องเดิมถูกส่งซ้ำ (เช่น ตอนเปิด/หมดเวลา display=HIDE) ให้ทริกเกอร์แค่ครั้งแรก */
+  private seenEnvelopes = new Set<string>();
+  private onEnvelope(d: any) {
+    if (this.isDuplicate(d)) return;
+    const info = d?.envelopeInfo ?? {};
+    if (Number(d?.display) === 2) return; // HIDE = กล่องถูกเปิด/หายไป ไม่ใช่กล่องใหม่
+    const id = String(info.envelopeId ?? '');
+    if (id) {
+      if (this.seenEnvelopes.has(id)) return;
+      this.seenEnvelopes.add(id);
+      if (this.seenEnvelopes.size > 500) this.seenEnvelopes.delete(this.seenEnvelopes.values().next().value!);
+    }
+    const key = String(d?.common?.displayText?.key ?? '').toLowerCase();
+    const superFan = Number(info.businessType) === 19 || key.includes('ttlive_superfanbox');
+    const name = String(info.sendUserName ?? '');
+    const av = info.sendUserAvatar;
+    const user: NormalizedUser | undefined = name || info.sendUserId ? { userId: String(info.sendUserId ?? ''), uniqueId: name || String(info.sendUserId), nickname: name || 'ผู้ชม', avatar: av?.urlList?.[0] ?? av?.url?.[0] ?? '' } : undefined;
+    this.send(superFan ? 'superfanbox' : 'chest', { user, chest: { envelopeId: id, diamonds: num(info.diamondCount), people: num(info.peopleCount) } });
+  }
+
   /** เวลาที่ได้รับอีเวนต์ล่าสุดจากไลฟ์ (คนดู/แชท/กิฟต์) — ไว้เช็กว่ายังไลฟ์อยู่จริง */
   lastActivityAt = 0;
 
@@ -343,7 +367,14 @@ export class TikTokRoom extends EventEmitter {
       }
       case 'follow': this.stats.followCount++; this.send('follow', { user }); break;
       case 'share': this.stats.shareCount++; this.send('share', { user }); break;
-      case 'member': this.send('member', { user }); break;
+      case 'member': { // followStatus 1 = ติดตาม · 2 = เพื่อน (ติดตามกัน) · แฟนคลับ ACTIVE = 1
+        const u = d.user ?? {};
+        const fs = Number(u.followInfo?.followStatus ?? u.followStatus ?? 0) || (u.isFollower ? 1 : 0);
+        const fc = u.fansClub?.data ?? {}, fcAnchor = String(fc.anchorId ?? '');
+        const club = Number(fc.userFansClubStatus ?? 0) === 1 && Number(fc.level ?? 0) > 0 && (!this.hostId || !fcAnchor || fcAnchor === '0' || fcAnchor === this.hostId); // แฟนคลับของห้องนี้
+        this.send('member', { user, fan: { follower: fs >= 1 || club, club } });
+        break;
+      }
       case 'roomUser': this.stats.viewerCount = num(d.total ?? d.viewerCount); this.peakViewers = Math.max(this.peakViewers, this.stats.viewerCount); this.send('roomUser', { viewerCount: this.stats.viewerCount }); break;
     }
   }
@@ -371,7 +402,8 @@ export class TikTokRoom extends EventEmitter {
       else if (r < 0.85) { const g = pick(gifts); const count = g.d >= 1000 ? 1 : 1 + Math.floor(Math.random() * 3); const value = g.d * count; this.stats.giftCount += count; this.stats.diamondCount += value; const u = mockUser(); this.addGifter(u, value); this.send('gift', { user: u, giftName: g.name, repeatCount: count, diamondCount: g.d, totalValue: value, streaking: false }); }
       else if (r < 0.93) { this.stats.followCount++; this.send('follow', { user: mockUser() }); }
       else if (r < 0.97) { this.stats.shareCount++; this.send('share', { user: mockUser() }); }
-      else this.send('member', { user: mockUser() });
+      else if (r < 0.975) { const sf = Math.random() < 0.4; this.send(sf ? 'superfanbox' : 'chest', { user: mockUser(), chest: { envelopeId: 'demo' + Date.now(), diamonds: sf ? 0 : pick([100, 300, 1000]), people: 10 + Math.floor(Math.random() * 40) } }); }
+      else { const club = Math.random() < 0.2; this.send('member', { user: mockUser(), fan: { follower: club || Math.random() < 0.5, club } }); }
     }, 900);
   }
 

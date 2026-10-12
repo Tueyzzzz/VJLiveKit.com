@@ -8,12 +8,16 @@ import { getHub } from '../realtime/hub.js';
 import { isAdmin } from '../admin/routes.js';
 
 const triggerSchema = z.object({
-  event: z.enum(['gift', 'follow', 'share', 'like', 'chat', 'pk']),
+  event: z.enum(['gift', 'follow', 'share', 'like', 'chat', 'pk', 'chest', 'superfanbox', 'join']),
   pk: z.enum(['start', 'end', 'win', 'lose', 'draw', 'anycard', 'glove', 'critical', 'smoke', 'extra', 'potion', 'wave', 'effect', 'top2', 'top3']).optional(),
   pkSide: z.enum(['us', 'them']).optional(),
   giftName: z.string().optional(),
   minDiamonds: z.number().int().nonnegative().optional(),
   keyword: z.string().optional(),
+  // join (มีคนเข้าห้อง): กันสแปม
+  joinOnce: z.boolean().optional(),
+  cooldownSec: z.number().int().min(0).max(3600).optional(),
+  joinWho: z.enum(['follower', 'fan']).optional(),
 });
 const actionSchema = z.object({
   type: z.enum(['sound', 'image', 'video', 'text', 'tarot', 'effect', 'sign', 'glove', 'mascot']),
@@ -113,7 +117,10 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
       : tr.pk === 'end' || tr.pk === 'win' || tr.pk === 'lose' || tr.pk === 'draw'
         ? { kind: 'end', result: tr.pk === 'end' ? 'win' : tr.pk, us: 1280, them: 960, mvp: [{ name: nick, score: 520 }, { name: 'ผู้ชม B', score: 310 }, { name: 'ผู้ชม C', score: 150 }], themMvp: { name: 'คู่แข่ง A', score: 400 } }
       : { kind: 'card', card: !tr.pk || tr.pk === 'anycard' ? 'glove' : tr.pk, side: tr.pkSide ?? 'us', by: nick };
-    const event = pk ? { type: 'pk', user: u, pk } : { type: 'gift', user: u, giftName: 'ทดสอบ', comment: 'ทดสอบ' };
+    const event = pk ? { type: 'pk', user: u, pk }
+      : tr.event === 'chest' || tr.event === 'superfanbox' ? { type: tr.event, user: u, chest: { envelopeId: 'test', diamonds: 500, people: 25 } } // {diamonds} {people} ขึ้นตัวอย่าง
+      : tr.event === 'join' ? { type: 'member', user: u }
+      : { type: 'gift', user: u, giftName: 'ทดสอบ', comment: 'ทดสอบ' };
     const screens = (await getHub()?.emitOwnerCount(claims.userId, user.tiktokUsername, 'action', { ruleId: rule.id, name: rule.name, action: rule.action, event, ts: Date.now() })) ?? 0;
     return { ok: true, screens };
   });

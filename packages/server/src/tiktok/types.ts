@@ -1,6 +1,7 @@
 /** ชนิดของอีเวนต์ที่ระบบส่งต่อให้ overlay/dashboard (normalized) */
 export type TikTokEventType =
-  | 'chat' | 'gift' | 'like' | 'follow' | 'share' | 'member' | 'roomUser' | 'pk';
+  | 'chat' | 'gift' | 'like' | 'follow' | 'share' | 'member' | 'roomUser' | 'pk'
+  | 'chest' | 'superfanbox'; // กล่องสมบัติ (กล่องของขวัญ) · กล่องซูเปอร์แฟน (ถุงม่วง)
 
 /** อีเวนต์ PK: เริ่ม/จบ · คะแนน · การ์ด (นวม สายฟ้า หมอก ต่อเวลา ฯลฯ) */
 export interface PkInfo {
@@ -52,6 +53,10 @@ export interface TikTokEvent {
   viewerCount?: number;
   // pk
   pk?: PkInfo;
+  // chest / superfanbox — แยกจาก diamondCount ของกิฟต์ (วิดเจ็ตนับเพชรจะได้ไม่นับกล่องปนกับกิฟต์)
+  chest?: { envelopeId: string; diamonds: number; people: number };
+  // member — คนเข้าห้องติดตามแล้วไหม / เป็นแฟนคลับไหม (ใช้กรองกฎ "มีคนเข้าห้อง")
+  fan?: { follower: boolean; club: boolean };
 }
 
 export interface TopGifter {

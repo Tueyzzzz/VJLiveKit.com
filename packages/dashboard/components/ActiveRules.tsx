@@ -15,7 +15,7 @@ function when(r: Rule, t: typeof translate): string {
   const tr = r.trigger;
   if (tr.event === 'gift') return tr.giftName ? t('ส่ง {gift}', { gift: tr.giftName }) : tr.minDiamonds ? t('กิฟต์ 💎{n}+', { n: tr.minDiamonds }) : t('ทุกกิฟต์');
   if (tr.event === 'chat') return t('แชท “{kw}”', { kw: tr.keyword ?? '' });
-  const ev = ({ follow: 'มีคนติดตาม', share: 'มีคนแชร์', like: 'มีคนกดไลก์' } as Record<string, string>)[tr.event];
+  const ev = ({ follow: 'มีคนติดตาม', share: 'มีคนแชร์', like: 'มีคนกดไลก์', chest: 'กล่องสมบัติ', superfanbox: 'กล่องซูเปอร์แฟน (ถุงม่วง)', join: 'มีคนเข้าห้อง' } as Record<string, string>)[tr.event];
   return ev ? t(ev) : tr.event;
 }
 

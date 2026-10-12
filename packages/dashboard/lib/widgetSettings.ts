@@ -580,14 +580,6 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
   pile: {
     resettable: 'ล้างกองของขวัญ',
     sections: [
-      { title: 'กองทับกัน', fields: [
-        { key: 'width', label: 'ความกว้างของกอง', type: 'range', min: 20, max: 100, step: 5, def: 100, unit: '%', hint: '100 = กองเต็มกรอบ · น้อยลง = กองแคบอยู่กลางจอ' },
-        { key: 'max', label: 'จำนวนสูงสุด (ชิ้น)', type: 'number', min: 60, max: 1500, def: 600, hint: 'เกินแล้วชิ้นเก่าสุดค่อย ๆ จางไป' },
-        { key: 'giftScale', label: 'ขนาดของขวัญ', type: 'range', min: 0.4, max: 3, step: 0.1, def: 1, unit: '×' },
-        { key: 'minCoins', label: 'รับเฉพาะของขวัญตั้งแต่ (เหรียญ)', type: 'number', min: 0, def: 0 },
-        { key: 'glow', label: 'ของแพงเรืองแสง', type: 'toggle', def: true },
-        { key: 'alert', label: 'แสดงชื่อคนส่ง', type: 'toggle', def: true },
-      ] },
       { title: 'วิธีส่งของขวัญลงกอง', fields: [
         { key: 'delivery', label: 'ของขวัญมาถึงกองแบบไหน', type: 'select', def: 'none', hint: 'แค่ภาพเคลื่อนไหว — ของขวัญถูกบันทึกทันทีเสมอ · คอมโบเยอะ ๆ จะส่งเร็วขึ้นเอง', options: [
           ['none', '⬇️ ตกลงมาตรง ๆ (แบบเดิม)', '', '/overlay/thumbs/pile.webp'],
@@ -613,6 +605,14 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
           ['truck', '🚚 รถดั๊มพ์เทของ', '🏗️ ฐานส่งของข้างกอง', '/overlay/pile/delivery/truck.webp'],
         ] },
         { key: 'side', label: 'ฐานส่งของอยู่ฝั่ง', type: 'select', def: 'auto', options: [['auto', 'อัตโนมัติ (ตามแบบ)'], ['left', '⬅️ ซ้าย'], ['right', '➡️ ขวา']], when: (v) => ['pipe', 'slide', 'cannon', 'conveyor', 'catapult', 'chimney', 'vending', 'truck'].includes(String(v.delivery)) },
+      ] },
+      { title: 'กองทับกัน', fields: [
+        { key: 'width', label: 'ความกว้างของกอง', type: 'range', min: 20, max: 100, step: 5, def: 100, unit: '%', hint: '100 = กองเต็มกรอบ · น้อยลง = กองแคบอยู่กลางจอ' },
+        { key: 'max', label: 'จำนวนสูงสุด (ชิ้น)', type: 'number', min: 60, max: 1500, def: 600, hint: 'เกินแล้วชิ้นเก่าสุดค่อย ๆ จางไป' },
+        { key: 'giftScale', label: 'ขนาดของขวัญ', type: 'range', min: 0.4, max: 3, step: 0.1, def: 1, unit: '×' },
+        { key: 'minCoins', label: 'รับเฉพาะของขวัญตั้งแต่ (เหรียญ)', type: 'number', min: 0, def: 0 },
+        { key: 'glow', label: 'ของแพงเรืองแสง', type: 'toggle', def: true },
+        { key: 'alert', label: 'แสดงชื่อคนส่ง', type: 'toggle', def: true },
       ] },
     ],
   },
@@ -694,11 +694,6 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
   },
   donate: {
     sections: [
-      { title: 'บัญชีรับโดเนท', fields: [
-        { key: 'promptpay', label: 'พร้อมเพย์', type: 'text', def: '', placeholder: '08xxxxxxxx', hint: 'ตั้งได้ที่เมนู “โดเนทขึ้นจอ” ด้วย' },
-        { key: 'min', label: 'โดเนทขั้นต่ำ (บาท)', type: 'number', min: 1, def: 10 },
-        { key: 'title', label: 'ข้อความบนหน้าโดเนท', type: 'text', def: '' },
-      ] },
       { title: 'แจ้งเตือนบนจอ', fields: [
         { key: 'avatar', label: 'ตัวแทนวีเจโผล่ข้างแจ้งเตือน', type: 'select', def: 'photo', options: [['', '🚫 ไม่แสดง', '', ''], ['photo', '📷 รูปโปรไฟล์ TikTok ของฉัน', '', ''], ['mine', '✨ อวตารหน้าฉัน (อัปโหลดเอง)', '', ''], ...MASCOT_CHAR_OPTS] },
         { key: 'frame', label: 'กรอบแจ้งเตือน', type: 'select', def: '', options: [['', '🎨 แบบเดิม (การ์ดไล่สี)', '', ''], ['01', '💗 ชมพูพาสเทล', '', '/overlay/donate/thumb-01.webp'], ['02', '👑 ทองหรู', '', '/overlay/donate/thumb-02.webp'], ['03', '🎮 นีออนเกมมิ่ง', '', '/overlay/donate/thumb-03.webp'], ['04', '🌸 ซากุระ', '', '/overlay/donate/thumb-04.webp'], ['05', '🍭 ขนมหวาน', '', '/overlay/donate/thumb-05.webp'], ['06', '🌌 กาแล็กซี', '', '/overlay/donate/thumb-06.webp'], ['07', '🇹🇭 ไทยลายกนก', '', '/overlay/donate/thumb-07.webp'], ['08', '🐚 ทะเล', '', '/overlay/donate/thumb-08.webp'], ['09', '🧸 หมีเท็ดดี้', '', '/overlay/donate/thumb-09.webp'], ['10', '🤍 มินิมอล', '', '/overlay/donate/thumb-10.webp']] },
@@ -708,6 +703,11 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
         { key: 'sound', label: 'เสียงกริ๊ง', type: 'toggle', def: true },
         { key: 'coins', label: 'หัวใจ/ดอกไม้โปรย', type: 'toggle', def: true },
         size(),
+      ] },
+      { title: 'บัญชีรับโดเนท', fields: [
+        { key: 'promptpay', label: 'พร้อมเพย์', type: 'text', def: '', placeholder: '08xxxxxxxx', hint: 'ตั้งได้ที่เมนู “โดเนทขึ้นจอ” ด้วย' },
+        { key: 'min', label: 'โดเนทขั้นต่ำ (บาท)', type: 'number', min: 1, def: 10 },
+        { key: 'title', label: 'ข้อความบนหน้าโดเนท', type: 'text', def: '' },
       ] },
     ],
   },

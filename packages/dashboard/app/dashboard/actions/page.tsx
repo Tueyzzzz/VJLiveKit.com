@@ -343,16 +343,7 @@ function ActionsInner() {
             <Button variant="secondary" onClick={copyMenu}>{menuCopied ? <><Check className="size-4 text-mint" /> {t('คัดลอกแล้ว')}</> : <><Copy className="size-4" /> {t('คัดลอกลิงก์เมนู')}</>}</Button>
           </div>
         )}
-        {mascotUrl && !pkMode && (
-          <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-line pt-4">
-            <div className="min-w-0 flex-1">
-              <div className="font-medium">{t('🧸 ลิงก์ตัวแทนวีเจ (มาสคอต)')}</div>
-              <p className="text-sm text-muted">{t('กฎแบบ “มาสคอต” (เต้น · ส่งจุ๊บ ฯลฯ) เล่นผ่านลิงก์นี้ ไม่ใช่ลิงก์ FX — วางในโปรแกรมไลฟ์แยกอีกอัน · เลือกตัวละครได้ที่')} <Link href="/dashboard/widgets/settings/?type=mascot" className="text-pink underline">{t('ตั้งค่าตัวแทนวีเจ')}</Link></p>
-              <code className="mt-1.5 block break-all select-all rounded-lg bg-canvas px-3 py-1.5 text-xs text-muted">{mascotUrl}</code>
-            </div>
-            <Button variant="secondary" onClick={copyMascot}>{mascotCopied ? <><Check className="size-4 text-mint" /> {t('คัดลอกแล้ว')}</> : <><Copy className="size-4" /> {t('คัดลอกลิงก์มาสคอต')}</>}</Button>
-          </div>
-        )}
+        {/* ลิงก์มาสคอต ย้ายไปอยู่ในแท็บ 🧸 มาสคอต ของเทมเพลต (ใช้กับกฎมาสคอตเท่านั้น) */}
       </Card>
 
       {fxLocked && (
@@ -652,7 +643,7 @@ function ActionsInner() {
                   <div className="flex flex-wrap items-center gap-2">
                     <div className="min-w-0 flex-1 text-sm">
                       <span className="font-medium">{t('🔗 ลิงก์ตัวแทนวีเจ (มาสคอต)')}</span>
-                      <span className="block text-xs text-muted">{t('เทมเพลตมาสคอตเล่นผ่านลิงก์นี้ — วางในโปรแกรมไลฟ์แยกจากลิงก์ FX')}</span>
+                      <span className="block text-xs text-muted">{t('เทมเพลตมาสคอตเล่นผ่านลิงก์นี้ — วางในโปรแกรมไลฟ์แยกจากลิงก์ FX')} · <Link href="/dashboard/widgets/settings/?type=mascot" className="text-pink underline">{t('เลือกตัวละคร')}</Link></span>
                       <code className="mt-1.5 block break-all select-all rounded-lg bg-white px-3 py-1.5 text-xs text-muted">{mascotUrl}</code>
                     </div>
                     <Button variant="secondary" onClick={copyMascot}>{mascotCopied ? <><Check className="size-4 text-mint" /> {t('คัดลอกแล้ว')}</> : <><Copy className="size-4" /> {t('คัดลอกลิงก์มาสคอต')}</>}</Button>

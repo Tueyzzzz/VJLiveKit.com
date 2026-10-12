@@ -1,5 +1,6 @@
 /** คำแปลภาษาอังกฤษ — คีย์ = ข้อความภาษาไทยตามที่เขียนในโค้ด (ตรงตัวอักษร) */
 export const EN_ACTIONS: Record<string, string> = {
+  'เลือกตัวละคร': 'Choose character',
   // ---------- เหตุการณ์ / การกระทำ (actions page, sounds page)
   '🎁 ได้รับกิฟต์': '🎁 Gift received',
   '➕ มีคนติดตาม': '➕ New follower',

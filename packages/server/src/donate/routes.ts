@@ -5,8 +5,8 @@ import { prisma } from '../db/prisma.js';
 import { requireUser, getUser } from '../auth/middleware.js';
 import { getEntitlements } from '../plans/index.js';
 import { getHub } from '../realtime/hub.js';
-import { config } from '../config/index.js';
 import { settings as sys } from '../settings/index.js';
+import { verifySlipV2, easyslipKey } from './easyslip.js';
 import { addDonation, listDonations, updateDonation, slipPath, isUsedRef, markRef, type Donation } from './store.js';
 
 /**
@@ -38,23 +38,6 @@ function announce(userId: string, tiktok: string, d: Donation) {
   getHub()?.emitOwner(userId, tiktok, 'donation', { id: d.id, name: d.name, message: d.message, amount: d.amount, vj: tiktok }); // vj = ชื่อ TikTok วีเจ (รูปโปรไฟล์ในแจ้งเตือน)
 }
 
-/** ตรวจสลิปกับ EasySlip — คืนผล หรือ null ถ้าเรียกไม่ได้ */
-async function verifySlip(img: Buffer): Promise<{ ok: boolean; amount?: number; ref?: string; receiver?: string; reason?: string } | null> {
-  if (!config.easyslipKey) return null;
-  try {
-    const form = new FormData();
-    form.append('file', new Blob([img], { type: 'image/jpeg' }), 'slip.jpg');
-    const r = await fetch('https://developer.easyslip.com/api/v1/verify', { method: 'POST', headers: { Authorization: `Bearer ${config.easyslipKey}` }, body: form, signal: AbortSignal.timeout(15_000) });
-    const j = await r.json().catch(() => null) as { status?: number; message?: string; data?: { transRef?: string; amount?: { amount?: number }; receiver?: { account?: { proxy?: { account?: string }; bank?: { account?: string } } } } } | null;
-    if (!j || j.status !== 200 || !j.data) return { ok: false, reason: j?.message === 'slip_not_found' ? 'ไม่พบสลิปนี้ในระบบธนาคาร' : 'อ่านสลิปไม่ได้ — ลองถ่าย/แคปให้ชัดขึ้น' };
-    const acc = j.data.receiver?.account;
-    return { ok: true, amount: Number(j.data.amount?.amount) || 0, ref: j.data.transRef, receiver: acc?.proxy?.account ?? acc?.bank?.account };
-  } catch (err) {
-    console.warn('[donate] easyslip failed', (err as Error).message);
-    return null;
-  }
-}
-
 /** เลขบัญชีปลายทางในสลิปมักถูกปิดบางหลัก (xxx-xxx-1234) → เทียบเฉพาะหลักที่เห็นจากท้าย */
 function receiverMatches(masked: string | undefined, promptpay: string): boolean | null {
   if (!masked) return null;
@@ -77,7 +60,7 @@ export async function donateRoutes(app: FastifyInstance): Promise<void> {
   app.get('/api/donate/page', async (req, reply) => {
     const o = await ownerByHandle((req.query as { u?: string }).u ?? '');
     if (!o) return reply.code(404).send({ error: 'ไม่พบหน้าโดเนทนี้ หรือวีเจยังไม่ได้เปิดรับโดเนท' });
-    return { name: o.user.displayName || o.user.tiktokUsername, tiktok: o.user.tiktokUsername, promptpay: o.settings.promptpay, bank: o.settings.bank, min: o.settings.min, title: o.settings.title, autoVerify: !!config.easyslipKey };
+    return { name: o.user.displayName || o.user.tiktokUsername, tiktok: o.user.tiktokUsername, promptpay: o.settings.promptpay, bank: o.settings.bank, min: o.settings.min, title: o.settings.title, autoVerify: !!easyslipKey() };
   });
 
   app.post('/api/donate/submit', { bodyLimit: 5_000_000, config: { rateLimit: { max: 8, timeWindow: '10 minutes' } } }, async (req, reply) => {
@@ -89,13 +72,14 @@ export async function donateRoutes(app: FastifyInstance): Promise<void> {
     if (amount < o.settings.min) return reply.code(400).send({ error: `โดเนทขั้นต่ำ ${o.settings.min} บาท` });
     const img = Buffer.from(slip.slice(slip.indexOf(',') + 1), 'base64');
 
-    const v = await verifySlip(img);
+    const v = await verifySlipV2(img);
     const base = { name, message, transRef: undefined as string | undefined };
+    if (v?.pending) { addDonation(o.user.id, { ...base, amount, status: 'pending', auto: false, note: 'สลิปกรุงเทพเพิ่งโอน (EasySlip ยังตรวจไม่ได้) — รอวีเจยืนยัน' }, img); return { ok: true, status: 'pending' }; }
     if (v && !v.ok) return reply.code(400).send({ error: v.reason ?? 'ตรวจสลิปไม่ผ่าน' });
     if (v?.ok) {
       if (v.ref && isUsedRef(v.ref)) return reply.code(400).send({ error: 'สลิปนี้ถูกใช้โดเนทไปแล้ว' });
       // เทียบปลายทางกับทั้งพร้อมเพย์และบัญชีธนาคารของวีเจ: ตรงอันใดอันหนึ่ง = ผ่าน · ไม่ตรงทั้งคู่ = ปฏิเสธ · อ่านไม่ได้ = รอวีเจ
-      const checks = [o.settings.promptpay, o.settings.bank?.account].filter((x): x is string => !!x).map((d) => receiverMatches(v.receiver, d));
+      const checks = [o.settings.promptpay, o.settings.bank?.account].filter((x): x is string => !!x).flatMap((d) => (v.receivers?.length ? v.receivers : [undefined]).map((rc) => receiverMatches(rc, d)));
       const match = checks.includes(true) ? true : checks.length && checks.every((c) => c === false) ? false : null;
       if (match === false) return reply.code(400).send({ error: 'สลิปนี้ไม่ได้โอนเข้าบัญชีของวีเจคนนี้' });
       if (v.ref) markRef(v.ref);
@@ -109,7 +93,7 @@ export async function donateRoutes(app: FastifyInstance): Promise<void> {
       return { ok: true, status: d.status };
     }
     // ยังไม่มีระบบตรวจอัตโนมัติ → รอวีเจกดยืนยัน
-    addDonation(o.user.id, { ...base, amount, status: 'pending', auto: false, note: v === null && config.easyslipKey ? 'ระบบตรวจสลิปขัดข้อง — รอวีเจยืนยัน' : undefined }, img);
+    addDonation(o.user.id, { ...base, amount, status: 'pending', auto: false, note: v === null && easyslipKey() ? 'ระบบตรวจสลิปขัดข้อง — รอวีเจยืนยัน' : undefined }, img);
     return { ok: true, status: 'pending' };
   });
 
@@ -121,7 +105,7 @@ export async function donateRoutes(app: FastifyInstance): Promise<void> {
     const ok = list.filter((d) => d.status === 'verified');
     return {
       donations: list.slice(0, 200),
-      autoVerify: !!config.easyslipKey,
+      autoVerify: !!easyslipKey(),
       totals: { today: ok.filter((d) => new Date(d.createdAt) >= today).reduce((a, d) => a + d.amount, 0), all: ok.reduce((a, d) => a + d.amount, 0), pending: list.filter((d) => d.status === 'pending').length },
     };
   });

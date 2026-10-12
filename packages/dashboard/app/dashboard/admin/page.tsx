@@ -9,6 +9,7 @@ import { AdminNotifications } from '@/components/AdminNotifications';
 import { AdminServer } from '@/components/AdminServer';
 import { AdminErrors } from '@/components/AdminErrors';
 import { AdminMail } from '@/components/AdminMail';
+import { AdminEasySlip } from '@/components/AdminEasySlip';
 import { AdminMedia } from '@/components/AdminMedia';
 import { AdminPlans } from '@/components/AdminPlans';
 import { Pager, usePaged } from '@/components/Pager';
@@ -309,7 +310,7 @@ export default function AdminPage() {
       {tab === 'notify' && <AdminNotifications />}
       {tab === 'support' && <AdminSupport />}
       {tab === 'mascots' && <AdminMascots />}
-      {tab === 'mail' && <AdminMail />}
+      {tab === 'mail' && <><AdminMail /><AdminEasySlip /></>}
       {tab === 'media' && <AdminMedia />}
       {tab === 'plans' && <AdminPlans />}
 

@@ -92,6 +92,12 @@
         hw: (y) => y > -40 ? 90 + Math.sqrt(Math.max(0, 1600 - (y + 40) ** 2)) : y > -260 ? 130 : y > -300 ? 92 + 38 * (0.5 + 0.5 * Math.cos(Math.PI * (-260 - y) / 40)) : 92,
         openY: -338, openHW: 92, rimHW: 102, topY: -362, fullY: -290, maxHW: 130,
       },
+      clear: { // โหลแก้วใสสมจริง (ภาพ GPT พื้นใส docs/clearjar/) — ขนาดคงที่เท่าโหล TikFinity (สูง ~285px ทุกจอ) · ผนังด้านในวัดจากภาพ
+        prof: [[-312, 88], [-300, 96], [-292, 104], [-285, 110], [-276, 114], [-266, 116], [-60, 116], [-54, 112], [-50, 106]],
+        hw: (y) => profileHW(SHAPES.clear.prof, y),
+        openY: -312, openHW: 88, rimHW: 98, topY: -380, fullY: -282, maxHW: 116, floor: -50, noClear: true, noShadow: true, px: 0.75,
+        image: { src: 'themes/jar-clear.webp', x: -129.6, y: -380.0, w: 259.2, h: 380.0 },
+      },
       bowl: { // โหลทรงกลมป่อง ปากกว้าง (โหลปลา)
         hw: (y) => 170 * Math.sqrt(Math.max(0, 1 - ((y + 140) / 150) ** 2)),
         openY: -262, openHW: 101, rimHW: 116, topY: -278, fullY: -235, maxHW: 170,
@@ -1070,7 +1076,8 @@
     // เว้นที่ใต้โหลไว้ให้ป้ายผู้ให้สูงสุด
     const BOARD_SPACE = SHOW_BOARD ? (TOP === 1 ? 70 : TOP * 46 + 14) : 0;
     const origin = () => ({ x: W / 2 + OX, y: H - 24 * SCALE - BOARD_SPACE + OY });
-    const S = () => SCALE * Math.min(1.6, Math.max(0.5, H / 720));
+    // SH.px: ขนาดคงที่เป็นพิกเซล (ไม่ขยายตามจอ) — โหลแก้วใสตั้งให้ตัวแก้วสูง 278px เท่าโหล TikFinity
+    const S = () => SCALE * (SH.px || Math.min(1.6, Math.max(0.5, H / 720)));
 
     // ---- ชิงช้าสวรรค์: วงล้อหมุน + กระเช้าห้อยตั้งตรง (ของขวัญในกระเช้าใช้พิกัดของกระเช้า → โยกตามกระเช้าเอง) ----
     // ?cabs=mix|pink|lilac|mint|sky|peach  สีกระเช้า · ?spin=40 วินาทีต่อรอบ (0 = หยุด)
@@ -1144,7 +1151,7 @@
     function drawJarBack() {
       if (SH.fer) return drawFerris();
       if (SH.image) {
-        ctx.beginPath(); ctx.ellipse(0, -2, SH.maxHW * 0.9, 12, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(90,70,140,.25)'; ctx.fill();
+        if (!SH.noShadow) { ctx.beginPath(); ctx.ellipse(0, -2, SH.maxHW * 0.9, 12, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(90,70,140,.25)'; ctx.fill(); } // เงาม่วงใต้โหล (โหลแก้วใสสมจริง: ไม่มี ให้แสงสีตรงแบบต้นฉบับ)
         if (SH.solid) { if (shapeImg.ready()) ctx.drawImage(shapeImg.source, SH.image.x, SH.image.y, SH.image.w, SH.image.h); return; } // รถทึบ: วาดเต็มเป็นชั้นหลัง
         if (shapeBack) { if (shapeBack.ready()) ctx.drawImage(shapeBack.source, SH.image.x, SH.image.y, SH.image.w, SH.image.h); return; } // ชั้นหลัง (บ้าน/ฐาน)
         if (shapeImg.ready()) { ctx.save(); ctx.globalAlpha = SH.genGlass ? 1 : 0.35; ctx.drawImage(shapeImg.source, SH.image.x, SH.image.y, SH.image.w, SH.image.h); ctx.restore(); } // ผนังหลัง (รูป Gen: เต็มทั้งรูป ของขวัญวาดทับ)
@@ -1161,7 +1168,7 @@
     // กระจกด้านหน้าใสขึ้น: พิกเซลขาว/ใส (สีจาง) เฉพาะช่วงในโหล ลดความทึบ → ของขวัญข้างในสีสด คมชัด ไม่โดนฝ้าขาวทับ (ทำครั้งเดียว)
     let glassCanvas = null, glassTried = false;
     function clearGlass() {
-      if (glassCanvas || glassTried || !shapeImg.ready() || SH.solid || !SH.hw) return glassCanvas;
+      if (glassCanvas || glassTried || !shapeImg.ready() || SH.solid || SH.noClear || !SH.hw) return glassCanvas;
       glassTried = true;
       try {
         const src = shapeImg.source, w = src.width || src.naturalWidth, h = src.height || src.naturalHeight;

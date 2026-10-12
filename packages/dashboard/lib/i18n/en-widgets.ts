@@ -1131,4 +1131,6 @@ export const EN_WIDGETS: Record<string, string> = {
   "🐱 หูแมวมิ้นต์": "🐱 Mint cat ears",
   "❄️ หิมะน้ำแข็ง": "❄️ Snow & ice",
   "🎃 ฮาโลวีนน่ารัก": "🎃 Cute Halloween",
+  "โหลแก้วใสสมจริง": "Realistic clear glass jar",
+  "🫙 แก้วใสเรียบหรู": "🫙 Clear & classy",
 };

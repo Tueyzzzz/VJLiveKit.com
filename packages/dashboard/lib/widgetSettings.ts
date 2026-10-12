@@ -56,6 +56,8 @@ const MVP_FRAMES: [string, string][] = [['01', '💗 ชมพูพาสเท
 const mvpThumb = (id: string) => `/overlay/mvp/thumb-${id}.webp`;
 const MVP_RANK_OPTS: [string, string, string?, string?][] = MVP_FRAMES.map(([id, l]) => ['mvp' + id, l, '🏆 แท่นกรอบรูปเต็มชุด', mvpThumb(id)]);
 // ป้ายไฟ LED: กรอบรูป 20 แบบ (overlay/public/sign/frame-XX.webp · จอดำใน sign/frames.json) + มินิมอลวาดด้วยโค้ด 6 แบบ
+const TIMER_MIN: [string, string][] = [['11', '🤍 มินิมอล ขาวกระจก'], ['12', '🖤 มินิมอล ดำขอบทอง'], ['13', '🪵 มินิมอล ไม้โอ๊ค'], ['14', '🌿 มินิมอล เขียวเสจ'], ['15', '🌷 มินิมอล ชมพูบลัช'],
+  ['16', '🌙 มินิมอล กรมท่าเงิน'], ['17', '💜 มินิมอล ลาเวนเดอร์'], ['18', '💎 มินิมอล อะคริลิกใส'], ['19', '🏺 มินิมอล ดินเผา'], ['20', '🩶 มินิมอล ปูนเปลือย']];
 const SIGN_FRAMES: [string, string][] = [['01', '💗 หัวใจชมพู โบว์'], ['02', '☁️ ก้อนเมฆลาเวนเดอร์'], ['03', '🎭 ไฟหลอดทอง บรอดเวย์'], ['04', '🎮 นีออนเกมมิ่ง'], ['05', '🍭 อมยิ้มแคนดี้'],
   ['06', '🌸 ซากุระไม้'], ['07', '🪷 ลายกนกทองไทย'], ['08', '🐚 ไข่มุกใต้ทะเล'], ['09', '🧸 หมีเท็ดดี้'], ['10', '👑 แชมป์ ดำทอง'],
   ['11', '🌈 รุ้งพาสเทล ก้อนเมฆ'], ['12', '🪐 กาแล็กซี ดาวเคราะห์'], ['13', '🍓 สตรอว์เบอร์รีครีม'], ['14', '🐱 หูแมว อุ้งเท้า'], ['15', '🐰 กระต่าย แครอท'],
@@ -732,6 +734,8 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
         { key: 'frame', label: 'เทมเพลต', type: 'select', def: '', options: [
           ['', '🎨 แบบเดิม', '', '/overlay/timer/thumb-classic.webp'],
           ...MVP_FRAMES.map(([id, l]): [string, string, string, string] => [id, l, '', `/overlay/timer/thumb-${id}.webp`]),
+          // มินิมอล 10 แบบ (GPT · timer/frame-11..20)
+          ...TIMER_MIN.map(([id, l]): [string, string, string, string] => [id, l, '', `/overlay/timer/thumb-${id}.webp`]),
         ] },
       ] },
       { title: 'เวลา', fields: [

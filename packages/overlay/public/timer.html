@@ -92,6 +92,9 @@
       galaxy: ['#ffffff', (k) => OUT('#1b1050', 2 * k) + `,0 0 ${10 * k}px #b58cff,0 0 ${24 * k}px #6d8bff`, '#ffe48a'],
       ocean: ['#ffffff', (k) => OUT('#0a4a63', 2.2 * k) + `,0 ${4 * k}px 0 #0e6f8c,0 0 ${16 * k}px rgba(0,60,90,.55)`, '#fff36a'],
       boxing: ['#ffd76a', (k) => OUT('#1a1206', 2 * k) + `,0 ${4 * k}px 0 #8a5a12,0 0 ${20 * k}px rgba(255,200,80,.7)`, '#ff4d4d'],
+      // มินิมอล (11–20): ตัวเลขเรียบ คม ไม่มีขอบหนา · สีตัวเลขมาจาก frames.json (digit)
+      mlight: ['#3a3f4a', (k) => `0 ${1.5 * k}px ${2 * k}px rgba(0,0,0,.12)`, '#e0567a'],
+      mdark: ['#ffffff', (k) => `0 ${1.5 * k}px ${3 * k}px rgba(0,0,0,.5)`, '#ff8a8a'],
     };
     const $fr = document.getElementById('fr'), $ft = document.getElementById('ftitle'), $fn = document.getElementById('ftime');
     let fit = () => {};
@@ -107,7 +110,7 @@
         place($ft, F.title); place($fn, F.screen);
         const H = W / F.aspect, k = W / 630, ink = INK[F.theme] || INK.pink;
         $fr.style.setProperty('--ink', F.titleInk || '#5a2a3a');
-        $fr.style.setProperty('--dc', ink[0]); $fr.style.setProperty('--ds', ink[1](k)); $fr.style.setProperty('--blink', ink[2]);
+        $fr.style.setProperty('--dc', F.digit || ink[0]); $fr.style.setProperty('--ds', ink[1](k)); $fr.style.setProperty('--blink', ink[2]);
         if (F.titleOnScreen) $ft.style.textShadow = `0 ${2 * k}px 0 #3a2400,0 0 ${10 * k}px rgba(255,200,80,.5)`;
         else if (/^#f/i.test(F.titleInk || '')) $ft.style.textShadow = `0 ${2 * k}px 0 rgba(20,0,40,.8),0 0 ${8 * k}px rgba(140,90,255,.8)`;
         $ft.textContent = LABEL;

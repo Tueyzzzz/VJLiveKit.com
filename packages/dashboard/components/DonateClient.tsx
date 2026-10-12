@@ -7,6 +7,7 @@ import { Alert, Button, Card, Field, Input, Spinner } from './ui';
 import { api, ApiError } from '@/lib/api';
 import { promptPayPayload, maskPromptPay } from '@/lib/promptpay';
 import { toDigits } from './NumberInput';
+import { TikTokAvatar } from './TikTokAvatar';
 import { translate, useLang, useT } from '@/lib/i18n';
 
 interface PageInfo { name: string; tiktok: string; promptpay: string; min: number; title: string; autoVerify: boolean }
@@ -71,7 +72,7 @@ export function DonateClient() {
   if (!info) return <div className="grid min-h-dvh place-items-center"><Spinner /></div>;
   if (done) return (
     <div className="mx-auto max-w-md px-4 py-16 text-center">
-      <div className="text-6xl">💖</div>
+      <div className="relative mx-auto inline-block"><TikTokAvatar username={info.tiktok} size={88} className="shadow-md ring-4" /><span className="absolute -bottom-1 -right-1 grid size-8 place-items-center rounded-full bg-white text-lg shadow">💖</span></div>
       <h1 className="mt-4 font-display text-2xl">{t('ขอบคุณที่โดเนทให้ {name}!', { name: info.name })}</h1>
       <p className="mt-3 text-muted">{done.status === 'verified' ? t('ตรวจสลิปผ่านแล้ว ฿{amount} — ชื่อและข้อความของคุณกำลังขึ้นจอไลฟ์ ✨', { amount: (done.amount ?? amt).toLocaleString(loc) }) : t('ส่งสลิปแล้ว — รอวีเจตรวจสอบสักครู่ แล้วชื่อของคุณจะขึ้นจอไลฟ์ ✨')}</p>
       <Button className="mt-6" variant="secondary" onClick={() => { setDone(null); setSlip(null); setMsg(''); }}>{t('โดเนทอีกครั้ง')}</Button>
@@ -80,10 +81,15 @@ export function DonateClient() {
 
   return (
     <div className="mx-auto max-w-md px-4 py-8">
-      <div className="text-center">
-        <div className="text-5xl">💸</div>
-        <h1 className="mt-2 font-display text-2xl">{t('โดเนทให้ {name}', { name: info.name })}</h1>
-        <p className="text-sm text-muted">@{info.tiktok}{info.title ? ` · ${info.title}` : ''}</p>
+      {/* หัวหน้า: รูปโปรไฟล์ TikTok ของวีเจ บนแถบไล่สี (คนดูมั่นใจว่าโดเนทถูกคน) */}
+      <div className="overflow-hidden rounded-3xl bg-white text-center shadow-sm ring-1 ring-line">
+        <div className="h-20 bg-gradient-to-r from-pink-soft via-[#ffd9ec] to-violet-soft" />
+        <div className="relative -mt-12 inline-block">
+          <TikTokAvatar username={info.tiktok} size={96} className="shadow-md ring-4" />
+          <span className="absolute -bottom-1 -right-1 grid size-8 place-items-center rounded-full bg-white text-lg shadow">💸</span>
+        </div>
+        <h1 className="mt-2 px-4 font-display text-2xl">{t('โดเนทให้ {name}', { name: info.name })}</h1>
+        <p className="px-4 pb-4 text-sm text-muted">@{info.tiktok}{info.title ? ` · ${info.title}` : ''}</p>
       </div>
       <Card className="mt-6">
         <form onSubmit={submit} className="space-y-4">

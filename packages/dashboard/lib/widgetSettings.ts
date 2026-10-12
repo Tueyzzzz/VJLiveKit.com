@@ -699,7 +699,6 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
         { key: 'pos', label: 'มุมจอ', type: 'select', def: 'tr', options: [['tr', 'บนขวา'], ['tl', 'บนซ้าย'], ['tc', 'บนกลาง'], ['br', 'ล่างขวา'], ['bl', 'ล่างซ้าย']] },
         { key: 'bar', label: 'แถบคะแนนเรา vs คู่แข่ง', type: 'toggle', def: true },
         { key: 'them', label: 'โชว์ MVP ฝั่งคู่แข่ง', type: 'toggle', def: true },
-        { key: 'idle', label: 'ตอนไม่มี PK', type: 'select', def: 'wait', options: [['wait', 'โชว์ “รอ PK…”'], ['hide', 'ซ่อนวิดเจ็ต']] },
         { key: 'hold', label: 'จบ PK แล้วโชว์ MVP ค้างไว้', type: 'range', min: 5, max: 120, step: 5, def: 20, unit: ' วิ' },
         size(), { ...bg(45), when: (v) => v.frame === 'css' },
       ] },

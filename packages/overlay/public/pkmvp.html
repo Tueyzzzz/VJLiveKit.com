@@ -76,7 +76,7 @@
     const TITLE = P('title', '👑 MVP ของ PK').trim() || '👑 MVP ของ PK';
     const SHOW_THEM = !['0', 'false'].includes(String(P('them', '1')));
     const SHOW_BAR = !['0', 'false'].includes(String(P('bar', '1')));
-    const IDLE = P('idle', 'wait') === 'hide' ? 'hide' : 'wait';
+    const IDLE = 'hide'; // ตอนไม่มี PK ซ่อนวิดเจ็ตเสมอ (ผู้ใช้สั่ง 2026-10-12 · เลิกใช้ ?idle=wait)
     const HOLD = Math.max(3, Math.min(300, parseFloat(P('hold', '20')) || 20)) * 1000;
     const FRAME = MvpFrame.has(P('frame', '01')) ? P('frame', '01') : 'css';
     const stage = document.getElementById('stage'), extra = document.getElementById('extra');

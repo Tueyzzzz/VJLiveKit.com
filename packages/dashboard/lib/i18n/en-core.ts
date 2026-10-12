@@ -665,7 +665,7 @@ export const EN_CORE: Record<string, string> = {
   'อยากเปลี่ยนเป็นแพลน {plan} ค่ะ/ครับ': "I'd like to switch to the {plan} plan",
   'ราคาต่อเดือน (บาท) · ยกเลิกได้ทุกเมื่อ · มีคำถามกดแชทมุมขวาล่างได้เลย': "Monthly prices (THB) · cancel anytime · questions? use the chat at the bottom right",
   'ตอนนี้สมัครแพลนผ่านแชทกับทีมงาน — กด “เลือกแพลนนี้” แล้วทีมงานจะส่งช่องทางชำระเงินให้': "Plans are currently purchased via chat with our team — tap “Choose this plan” and we will send you payment details",
-  '🎁 คุณอยู่ในช่วงทดลองฟรี เหลือ {n} วัน (ถึง {date}) — ใช้ได้ทุกฟีเจอร์ เลือกแพลนไว้ล่วงหน้าได้เลย': "🎁 You are on the free trial — {n} days left (until {date}). Every feature is unlocked; you can pick a plan in advance (paid plans have no vjlivekit.com badge).",
+  '🎁 คุณอยู่ในช่วงทดลองฟรี เหลือ {n} วัน (ถึง {date}) — ใช้ได้ทุกฟีเจอร์ เลือกแพลนไว้ล่วงหน้าได้เลย': "🎁 You are on the free trial — {n} days left (until {date}). Every feature is unlocked; you can pick a plan in advance.",
   'ทดลองฟรีนับต่อ TikTok: @{tiktok} ใช้ทดลองไปแล้ว {used}/{total} วัน': "Free trial is counted per TikTok: @{tiktok} has used {used}/{total} days",
   'ช่วงทดลองฟรีหมดแล้ว — ตอนนี้ใช้ได้เฉพาะวิดเจ็ตพื้นฐาน เลือกแพลนด้านล่างเพื่อปลดล็อกเพิ่ม': "Your free trial has ended — only basic widgets are available now. Pick a plan below to unlock more.",
   'TikTok @{tiktok} ใช้ทดลองฟรีครบ {total} วันแล้ว (นับต่อ TikTok ไม่ใช่ต่อบัญชี)': "TikTok @{tiktok} has already used its full {total}-day trial (counted per TikTok, not per account)",

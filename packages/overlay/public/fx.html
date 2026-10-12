@@ -363,22 +363,26 @@
         if(a.style==='code') el.innerHTML=butterflySVG(c);
         else { el.classList.add('img'); el.innerHTML='<div class="bfi"><img class="il" src="fx/bfly-l.webp" alt=""><img class="ir" src="fx/bfly-r.webp" alt=""><img src="fx/bfly-b.webp" alt=""></div>';
           const TINT={pink:0,blue:190,purple:280,mint:120,gold:330}; const hue=a.tint==='rainbow'?[0,190,280,120,330][i%5]:(TINT[a.tint]||0); if(hue) el.querySelector('.bfi').style.filter=`hue-rotate(${hue}deg) saturate(1.15)`; }
-        el.style.setProperty('--g',c[3]); el.style.setProperty('--fs',(0.22+Math.random()*0.16)+'s');
-        const size=0.45+Math.random()*0.75; fx.appendChild(el);
+        const fs=0.22+Math.random()*0.16; el.style.setProperty('--g',c[3]); el.style.setProperty('--fs',fs+'s');
+        const z=Math.random(), size=0.45+z*0.75; fx.appendChild(el); // z = ไกล-ใกล้ (ไกล: เล็ก จาง เบลอนิด ๆ บินช้ากว่า)
+        el.style.opacity='0'; if(z<.3) el.style.filter=`blur(1.2px) drop-shadow(0 0 8px ${c[3]})`;
         // บินจากขอบล่าง/ด้านข้าง วนเป็นเส้นโค้งสุ่ม แล้วลอยออกนอกจอ
         const fromLeft=Math.random()<.5, sx=fromLeft?-80:W+80, sy=H*(.45+Math.random()*.55);
-        const ex=fromLeft?W+120:-120, ey=-120-Math.random()*H*.3, delay=Math.random()*dur*.35, life=dur*.65;
-        const wob=40+Math.random()*90, freq=1+Math.random()*2, ph=Math.random()*6.28;
-        let lastDust=0;
+        const ex=fromLeft?W+120:-120, ey=-120-Math.random()*H*.3, delay=Math.random()*dur*.35, life=dur*(.55+.25*(1-z));
+        const wob=40+Math.random()*90, freq=1+Math.random()*2, ph=Math.random()*6.28, f2=2.3+Math.random(), op=.55+.45*z;
+        let lastDust=0, ang=fromLeft?12:-12;
         function step(now){
           const k=(now-t0-delay)/life;
-          if(k<0){ el.style.opacity='0'; return requestAnimationFrame(step); }
+          if(k<0) return requestAnimationFrame(step);
           if(k>1){ el.remove(); return; }
-          el.style.opacity='1';
-          const e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
-          const x=sx+(ex-sx)*e+Math.sin(k*6.28*freq+ph)*wob, y=sy+(ey-sy)*e+Math.cos(k*6.28*freq*1.3+ph)*wob*.6;
-          const dx=Math.cos(k*6.28*freq+ph)*wob*freq, ang=Math.max(-35,Math.min(35,dx*.15))+(fromLeft?12:-12);
-          el.style.transform=a.style==='code'?`translate(${x-50}px,${y-50}px) rotate(${ang}deg) scale(${size})`:`translate(${x-75}px,${y-50}px) rotate(${ang}deg) scale(${size*1.15})`;
+          el.style.opacity=String(op*Math.min(1,k/.07,(1-k)/.08)); // ค่อย ๆ ปรากฏ/จาง
+          const e=k*.35+.65*(k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2), ts=(now-t0)/1000;
+          // ทางบิน: คลื่นหลัก + คลื่นย่อย · กระพือปีก = ตัวเด้งขึ้นลงตามจังหวะปีก
+          const x=sx+(ex-sx)*e+Math.sin(k*6.28*freq+ph)*wob+Math.sin(k*6.28*f2*freq+ph*2)*wob*.18;
+          const y=sy+(ey-sy)*e+Math.cos(k*6.28*freq*1.3+ph)*wob*.6+Math.sin(ts*6.28/fs)*5*size;
+          const dx=Math.cos(k*6.28*freq+ph)*wob*freq, tgt=Math.max(-35,Math.min(35,dx*.15))+(fromLeft?12:-12); ang+=(tgt-ang)*.12; // เอียงแบบมีแรงหน่วง
+          const fl=.9+.1*Math.cos(k*6.28*freq+ph); // หันข้างนิด ๆ ตอนเลี้ยว (หลอกตา 3 มิติ)
+          el.style.transform=a.style==='code'?`translate(${x-50}px,${y-50}px) rotate(${ang}deg) scale(${size*fl},${size})`:`translate(${x-75}px,${y-50}px) rotate(${ang}deg) scale(${size*1.15*fl},${size*1.15})`;
           if(now-lastDust>70){ lastDust=now; const d=document.createElement('span'); d.className='dust'; d.style.setProperty('--c',c[1]);
             d.style.setProperty('--x',(x+(Math.random()-.5)*16)+'px'); d.style.setProperty('--y',(y+12)+'px'); fx.appendChild(d); setTimeout(()=>d.remove(),1450); }
           requestAnimationFrame(step);
@@ -472,25 +476,40 @@
     // ประกายเล็ก ๆ (ใช้ร่วม: หางดาว · เหรียญวิบวับ · หัวใจ)
     function glint(x,y,c,U,s){ addP({img:sprTwinkle(c),x,y,r:Math.random()*.8,s:s||rnd(.25,.5),life:rnd(.4,.7),fi:.08,fo:.35,add:true,upd:(p,dt)=>{ p.r+=dt*1.5; }},0); }
 
-    const L={ cv:null, g:null, parts:[], em:[], raf:0, last:0, dpr:1, W:0, H:0, U:1 }, MAXP=420;
-    function pfSize(){ L.dpr=Math.min(2,window.devicePixelRatio||1); L.W=innerWidth; L.H=innerHeight; L.U=Math.max(.6,Math.min(L.W,L.H)/720); if(L.cv){ L.cv.width=L.W*L.dpr|0; L.cv.height=L.H*L.dpr|0; } }
+    const L={ cv:null, g:null, parts:[], em:[], raf:0, last:0, dpr:1, W:0, H:0, U:1, RY:1, wind:0 }, MAXP=420;
+    function pfSize(){ L.dpr=Math.min(2,window.devicePixelRatio||1); L.W=innerWidth; L.H=innerHeight; L.U=Math.max(.6,Math.min(L.W,L.H)/720); L.RY=Math.min(1.7,Math.max(1,L.H/(720*L.U))); /* จอแนวตั้ง (TikTok 9:16): ความเร็วแนวดิ่งตามความสูงจอ → ลอย/ร่วงข้ามจอในเวลาเท่าเดิม */ if(L.cv){ L.cv.width=L.W*L.dpr|0; L.cv.height=L.H*L.dpr|0; } }
     addEventListener('resize',pfSize);
     function addP(p,kill){ if(L.parts.length>=MAXP) return; p.t=0; p.kill=kill||Infinity; L.parts.push(p); }
+    // มิติใกล้-ไกล (parallax): z 0=ไกล → เล็ก ช้า จาง เบลอนิด ๆ · 1=ใกล้ → ใหญ่ เร็ว ชัด
+    function depth(p,lo){ const z=p.z=rnd(lo==null?0:lo,1), k=.5+.6*z;
+      if(p.s0!=null) p.s0*=.6+.5*z; else p.s*=.6+.5*z;
+      for(const f of DEPTH_V) if(p[f]!=null) p[f]*=k;
+      p.da=.5+.5*z; if(z<.25) p.soft=true; return p; }
+    const DEPTH_V=['vx','vy','vt','amp','term'];
+    // sprite เบลอ (ไว้ใช้กับชิ้นที่อยู่ไกล) — ทำครั้งเดียวต่อ sprite
+    function blurOf(sp){ if(sp.b) return sp.b; const c=document.createElement('canvas'), pad=8; c.width=sp.c.width+pad*2; c.height=sp.c.height+pad*2;
+      const g=c.getContext('2d'); g.filter='blur(3px)'; g.drawImage(sp.c,pad,pad); return sp.b={c,w:sp.w+pad,h:sp.h+pad}; }
+    const ease=(v,target,k,dt)=>v+(target-v)*Math.min(1,k*dt); // ค่อย ๆ เข้าหาเป้า (มีแรงหน่วง ไม่กระตุก)
     function pfLoop(now){
       const dt=Math.min(.05,(now-L.last)/1000); L.last=now; const W=L.W, H=L.H, U=L.U, g=L.g, dpr=L.dpr;
+      L.wind=Math.sin(now/1000*.35)*.6+Math.sin(now/1000*.13+1.7)*.4; // ลมรวมทั้งจอ เปลี่ยนช้า ๆ
       for(let i=L.em.length-1;i>=0;i--){ const e=L.em[i]; if(now>=e.end){ L.em.splice(i,1); continue; }
         e.acc+=e.rate*dt; while(e.acc>=1){ e.acc--; addP(e.fx.spawn(e.a,e.n++,W,H,U,false),e.kill); } }
       g.setTransform(1,0,0,1,0,0); g.clearRect(0,0,L.cv.width,L.cv.height);
       let w=0;
       for(let i=0;i<L.parts.length;i++){ const p=L.parts[i];
+        if(p.dl>0){ if(now>p.kill) continue; p.dl-=dt; L.parts[w++]=p; continue; } // เกิดแบบทยอย ไม่โผล่พร้อมกัน
         p.t+=dt; if(now>p.kill && p.life>p.t+.6) p.life=p.t+.6; // หมดเวลา → จางออกพร้อมกัน
         if(p.t>=p.life || p.upd(p,dt,W,H,U)===false) continue;
         L.parts[w++]=p;
-        const al=Math.min(1,p.t/(p.fi||.35),(p.life-p.t)/(p.fo||.6))*(p.al==null?1:p.al); if(al<=.01) continue;
-        const s=p.s*U, sx=s*(p.sx==null?1:p.sx), sy=s*(p.sy==null?1:p.sy), co=Math.cos(p.r||0), si=Math.sin(p.r||0), sp=p.img;
+        const fi=p.fi||.35, fo=p.fo||.6, ein=Math.min(1,p.t/fi), eout=Math.min(1,(p.life-p.t)/fo);
+        const al=Math.min(ein,eout)*(p.al==null?1:p.al)*(p.da||1); if(al<=.01) continue;
+        // ค่อย ๆ ขยายตอนเกิด (ease-out) และหดนิด ๆ ตอนจาง → ไม่ "โผล่/หาย" แบบกระตุก
+        const gi=Math.min(1,p.t/(fi*1.6)), pop=p.noPop?1:(.6+.4*(1-Math.pow(1-gi,3)))*(.85+.15*eout);
+        const s=p.s*U*pop, sx=s*(p.sx==null?1:p.sx), sy=s*(p.sy==null?1:p.sy), co=Math.cos(p.r||0), si=Math.sin(p.r||0), kx=p.kx||0, sp=p.soft?blurOf(p.img):p.img;
         g.globalAlpha=al; g.globalCompositeOperation=p.add?'lighter':'source-over';
-        g.setTransform(co*sx*dpr,si*sx*dpr,-si*sy*dpr,co*sy*dpr,p.x*dpr,p.y*dpr);
-        g.drawImage(sp.c,-sp.w/2,-sp.h/2,sp.w,sp.h);
+        g.setTransform(co*sx*dpr,si*sx*dpr,(co*sx*kx-si*sy)*dpr,(si*sx*kx+co*sy)*dpr,p.x*dpr,p.y*dpr);
+        g.drawImage(sp.c,-sp.w/2,-sp.h*(p.oy==null?.5:p.oy),sp.w,sp.h);
       }
       L.parts.length=w;
       if(!L.parts.length && !L.em.length){ L.cv.remove(); L.cv=null; L.raf=0; return; }
@@ -498,60 +517,97 @@
     }
     const flip=(v)=>Math.abs(v)<.12?(v<0?-.12:.12):v; // พลิก 3 มิติ (ไม่ให้บางจนหาย)
     const PFX={
-      // 🌸 ซากุระร่วง: กลีบปลิวตามลม พลิกไปมา
-      sakura:{ def:'pink', rate:(n)=>n*1.1, burst:(n)=>n*2, spawn(a,i,W,H,U,b){ return { img:sprPetal(palOf(a,i,'pink')), x:rnd(0,W*1.25), y:b?rnd(-.1,.7)*H:-30*U,
-        vx:-rnd(15,55)*U, vy:rnd(45,100)*U, r:rnd(0,6.3), vr:rnd(-1.2,1.2), s:rnd(.7,1.45), ph:rnd(0,6.3), fl:rnd(2,4.5), life:40,
-        upd(p,dt,W,H,U){ p.ph+=dt; p.x+=(p.vx+Math.sin(p.ph*1.3)*30*U)*dt; p.y+=p.vy*dt; p.r+=p.vr*dt; p.sx=flip(Math.cos(p.ph*p.fl)); return p.y<H+40*U && p.x>-60*U; } }; } },
-      // 💗 หัวใจลอยขึ้น: ส่ายเบา ๆ เต้นตุบ ๆ มีประกายตามหลัง
-      hearts:{ def:'pink', rate:(n)=>n*.85, spawn(a,i,W,H,U){ const c=palOf(a,i,'pink'), vy=-rnd(80,170)*U, x=W*rnd(.04,.96);
-        return { img:sprHeart(c), c, x, x0:x, y:H+40*U, vy, s0:rnd(.45,1.25), s:1, ph:rnd(0,6.3), fq:rnd(1,2), amp:rnd(20,55), life:H*rnd(.55,1.05)/-vy, fo:1.1, gl:0,
-          upd(p,dt,W,H,U){ p.ph+=dt; p.y+=p.vy*dt; const sw=Math.sin(p.ph*p.fq); p.x=p.x0+sw*p.amp*U; p.r=sw*.22; p.s=p.s0*(1+Math.max(0,Math.sin(p.ph*7))*.07);
-            if((p.gl+=dt)>.35){ p.gl=0; glint(p.x+rnd(-15,15)*U,p.y+22*U*p.s0,p.c,U); } } }; } },
-      // 🪙 ฝนเหรียญทอง: หมุนแวววับ ร่วงเร็วขึ้นเรื่อย ๆ (สีทองเสมอ)
-      coins:{ def:'gold', rate:(n)=>n*1.3, burst:(n)=>n, spawn(a,i,W,H,U,b){ return { img:sprCoin(), x:rnd(0,W), y:b?-rnd(30,H*.6):-40*U, vx:rnd(-20,20)*U, vy:rnd(120,260)*U,
-        r:rnd(-.3,.3), s:rnd(.55,1.15), ph:rnd(0,6.3), spin:rnd(5,11), life:30, fi:.1,
-        upd(p,dt,W,H,U){ p.vy=Math.min(760*U,p.vy+380*U*dt); p.y+=p.vy*dt; p.x+=p.vx*dt; p.ph+=p.spin*dt; p.sx=flip(Math.cos(p.ph));
-          if(Math.random()<dt*1.4) glint(p.x+rnd(-10,10)*U*p.s,p.y-8*U*p.s,PAL.gold,U,rnd(.35,.6)); return p.y<H+50*U; } }; } },
-      // ⭐ ฝนดาววิบวับ: ดาวตกเฉียงมีหางประกาย + ประกายกะพริบทั่วจอ
+      // 🌸 ซากุระร่วง: กลีบร่อนซ้าย-ขวาแบบใบไม้ร่วง (ช้าลงตอนกลับทิศ) ลมพัดเป็นระลอก พลิก 3 มิติ
+      sakura:{ def:'pink', rate:(n)=>n*1.1, burst:(n)=>n*2, spawn(a,i,W,H,U,b){ const p={ img:sprPetal(palOf(a,i,'pink')), x:rnd(-.05,1.25)*W, y:b?rnd(-.1,.7)*H:-30*U,
+        vx:-rnd(15,50)*U, vy:rnd(55,100)*U*L.RY, rb:rnd(0,6.3), vr:rnd(-.7,.7), s:rnd(.7,1.45), ph:rnd(0,6.3), f1:rnd(.7,1.2), f2:rnd(1.7,2.6), amp:rnd(30,60), fl:rnd(1.4,2.8), fp:rnd(0,6.3), life:40, fi:.5, dl:b?rnd(0,1.4):0 };
+        depth(p,.1); p.bx=p.vx; p.by=p.vy; p.vy*=.5;
+        p.upd=(p,dt,W,H,U)=>{ const t=p.t+p.ph, sw=Math.sin(t*p.f1), cw=Math.cos(t*p.f1);
+          p.vx=ease(p.vx,p.bx+(sw*p.amp+Math.sin(t*p.f2)*p.amp*.3)*U+L.wind*28*U*(p.z+.3),2.4,dt);
+          p.vy=ease(p.vy,p.by*(.6+.6*Math.abs(cw)),2.4,dt);
+          p.x+=p.vx*dt; p.y+=p.vy*dt; p.rb+=p.vr*dt; p.r=p.rb+sw*.6;
+          p.sx=flip(Math.cos(t*p.fl+p.fp)); p.sy=.82+.18*Math.sin(t*p.fl*.63+p.fp); return p.y<H+40*U && p.x>-60*U; };
+        return p; } },
+      // 💗 หัวใจลอยขึ้น: แรงลอยค่อย ๆ เร่ง ส่ายสองจังหวะ เอียงตามทิศ เต้นตุบ ๆ แบบหัวใจจริง มีประกายตามหลัง
+      hearts:{ def:'pink', rate:(n)=>n*.85, spawn(a,i,W,H,U){ const c=palOf(a,i,'pink'), x=W*rnd(.04,.96);
+        const p={ img:sprHeart(c), c, x, x0:x, y:H+40*U, vt:-rnd(80,170)*U*L.RY, s0:rnd(.45,1.25), s:1, ph:rnd(0,6.3), f1:rnd(.7,1.2), f2:rnd(1.6,2.5), amp:rnd(20,55), beat:rnd(0,6.3), bf:rnd(5,7), fo:1.1, gl:0, r:0 };
+        depth(p,.15); p.vy=p.vt*.3; p.life=H*rnd(.6,1.1)/-p.vt+.8;
+        p.upd=(p,dt,W,H,U)=>{ const t=p.t+p.ph; p.vy=ease(p.vy,p.vt,1.2,dt); p.y+=p.vy*dt; p.x0+=L.wind*10*U*dt;
+          const sw=Math.sin(t*p.f1)*.78+Math.sin(t*p.f2)*.22, d=Math.cos(t*p.f1); p.x=p.x0+sw*p.amp*U; p.r=ease(p.r,d*.22,3,dt);
+          const bt=Math.max(0,Math.sin(p.t*p.bf+p.beat)); p.s=p.s0*(1+Math.pow(bt,8)*.12);
+          if(p.z>.4 && (p.gl+=dt)>.35){ p.gl=0; glint(p.x+rnd(-15,15)*U,p.y+22*U*p.s0,p.c,U); } };
+        return p; } },
+      // 🪙 ฝนเหรียญทอง: หมุนพลิกแวววับ แรงโน้มถ่วง + แรงต้านอากาศ (ความเร็วปลายทาง) ส่ายเบา ๆ (สีทองเสมอ)
+      coins:{ def:'gold', rate:(n)=>n*1.3, burst:(n)=>n, spawn(a,i,W,H,U,b){ const p={ img:sprCoin(), x:rnd(0,W), y:b?-rnd(30,H*.5):-40*U, vx:rnd(-25,25)*U, vy:rnd(60,140)*U*L.RY, term:rnd(520,760)*U*L.RY,
+        r0:rnd(-.3,.3), s:rnd(.55,1.15), ph:rnd(0,6.3), spin:rnd(4,9), wf:rnd(1,2), life:30, fi:.15, dl:b?rnd(0,.9):0 };
+        depth(p,.2);
+        p.upd=(p,dt,W,H,U)=>{ p.vy+=(900*U*L.RY-p.vy*900*U*L.RY/p.term)*dt; p.y+=p.vy*dt; p.x+=(p.vx+L.wind*20*U)*dt; p.ph+=p.spin*dt;
+          p.sx=flip(Math.cos(p.ph)); p.r=p.r0+Math.sin(p.t*p.wf)*.18;
+          if(p.z>.5 && Math.random()<dt*1.4) glint(p.x+rnd(-10,10)*U*p.s,p.y-8*U*p.s,PAL.gold,U,rnd(.35,.6)); return p.y<H+50*U; };
+        return p; } },
+      // ⭐ ฝนดาววิบวับ: ดาวตกเฉียงมีหางประกาย (ไกล-ใกล้) + ประกายกะพริบทั่วจอ
       stars:{ def:'gold', rate:(n)=>n*1.2, spawn(a,i,W,H,U){ const c=palOf(a,i,'gold');
-        if(i%3===0){ const pk=rnd(.5,1.1); return { img:sprTwinkle(c), x:rnd(0,W), y:rnd(0,H*.9), r:rnd(0,1), s:0, life:rnd(.9,1.6), fi:.05, fo:.2, add:true,
-          upd(p,dt){ p.s=pk*Math.sin(Math.PI*Math.min(1,p.t/p.life)); p.r+=dt*1.2; } }; }
-        return { img:sprStar(c), c, x:rnd(-.2,.95)*W, y:-40*U, vx:rnd(60,140)*U, vy:rnd(140,260)*U, r:rnd(0,6.3), vr:rnd(-1.6,1.6), s:rnd(.4,.95), ph:rnd(0,6.3), life:30, tr:0,
-          upd(p,dt,W,H,U){ p.x+=p.vx*dt; p.y+=p.vy*dt; p.r+=p.vr*dt; p.al=.7+.3*Math.sin(p.t*9+p.ph);
-            if((p.tr+=dt)>.12){ p.tr=0; glint(p.x-p.vx*.05,p.y-p.vy*.05,p.c,U,p.s*.55); } return p.y<H+40*U && p.x<W+60*U; } }; } },
-      // ❄️ หิมะโปรย: เกล็ดหิมะ 6 แฉก + ปุยหิมะ ใกล้-ไกลมีมิติ
-      snow:{ def:'blue', rate:(n)=>n*1.2, burst:(n)=>n*2, spawn(a,i,W,H,U,b){ const c=palOf(a,i,'blue'), d=Math.random(), fk=d>.45, x=rnd(-.05,1.05)*W;
-        return { img:fk?sprFlake(c):sprDot(c), x, x0:x, y:b?rnd(-.1,.6)*H:-30*U, vy:(25+d*60)*U, s:fk?.35+d*.6:.45+d*.7, al:.55+d*.45, ph:rnd(0,6.3), fq:rnd(.5,1.2), amp:10+d*30, vr:rnd(-.6,.6), r:rnd(0,6.3), life:60, fi:.6,
-          upd(p,dt,W,H,U){ p.ph+=dt*p.fq; p.y+=p.vy*dt; p.x=p.x0+Math.sin(p.ph)*p.amp*U; p.r+=p.vr*dt; return p.y<H+30*U; } }; } },
-      // 🫧 ฟองสบู่: ลอยขึ้นช้า ๆ สีรุ้งเหลือบ บุ๋ม ๆ แล้วแตกป๊อบ
-      bubbles:{ def:'blue', rate:(n)=>n*.55, burst:(n)=>Math.ceil(n*.6), spawn(a,i,W,H,U,b){ const c=palOf(a,i,'blue'), vy=-rnd(50,120)*U, x=W*rnd(.04,.96), y=b?H*rnd(.5,1):H+60*U;
-        return { img:sprBubble(), c, x, x0:x, y, vy, s:rnd(.4,1.3), ph:rnd(0,6.3), amp:rnd(15,45), life:(y-H*rnd(-.05,.45))/-vy, fo:.12, popped:false,
-          upd(p,dt,W,H,U){ p.ph+=dt; p.y+=p.vy*dt; p.x=p.x0+Math.sin(p.ph*1.4)*p.amp*U; const q=Math.sin(p.ph*5)*.05; p.sx=1+q; p.sy=1-q;
-            if(!p.popped && p.t>p.life-.12){ p.popped=true; for(let k=0;k<7;k++){ const an=k/7*6.28, sp=rnd(90,160)*U;
-              addP({img:sprDot(p.c),x:p.x+Math.cos(an)*30*U*p.s,y:p.y+Math.sin(an)*30*U*p.s,vx:Math.cos(an)*sp,vy:Math.sin(an)*sp,s:rnd(.25,.45),life:.4,fi:.02,fo:.3,upd(d,dt){ d.x+=d.vx*dt; d.y+=d.vy*dt; d.vx*=.9; d.vy*=.9; }},0); } } } }; } },
-      // 🎈 ลูกโป่งลอย: หลากสี มีเชือก แกว่งเบา ๆ
+        if(i%3===0){ const pk=rnd(.5,1.1), tw=rnd(.9,1.6); return { img:sprTwinkle(c), x:rnd(0,W), y:rnd(0,H*.9), r:rnd(0,1), s:0, life:tw, fi:.05, fo:.2, add:true, noPop:true,
+          upd(p,dt){ const k=Math.min(1,p.t/p.life); p.s=pk*Math.pow(Math.sin(Math.PI*k),1.5); p.r+=dt*1.2; } }; }
+        const p={ img:sprStar(c), c, x:rnd(-.2,.95)*W, y:-40*U, vx:rnd(60,140)*U, vy:rnd(140,260)*U, r:rnd(0,6.3), vr:rnd(-1.6,1.6), s:rnd(.4,.95), ph:rnd(0,6.3), life:30, tr:0, wf:rnd(1,2) };
+        depth(p,.1);
+        p.upd=(p,dt,W,H,U)=>{ const k=1+Math.sin(p.t*p.wf+p.ph)*.08; p.x+=p.vx*k*dt; p.y+=p.vy*k*dt; p.r+=p.vr*dt; p.al=.72+.28*Math.sin(p.t*9+p.ph);
+          if((p.tr+=dt)>.1){ p.tr=0; glint(p.x-p.vx*.05,p.y-p.vy*.05,p.c,U,p.s*.55); } return p.y<H+40*U && p.x<W+60*U; };
+        return p; } },
+      // ❄️ หิมะโปรย: เกล็ด 6 แฉก + ปุยหิมะ ลมพัดเป็นระลอก ใกล้ = ใหญ่/เร็ว · ไกล = เล็ก/ช้า/เบลอ (โบเก้)
+      snow:{ def:'blue', rate:(n)=>n*1.2, burst:(n)=>n*2, spawn(a,i,W,H,U,b){ const c=palOf(a,i,'blue'), fk=Math.random()>.45, x=rnd(-.1,1.1)*W;
+        const p={ img:fk?sprFlake(c):sprDot(c), x, y:b?rnd(-.1,.6)*H:-30*U, vy:rnd(45,80)*U*L.RY, vx:0, s:fk?rnd(.55,.95):rnd(.7,1.15), ph:rnd(0,6.3), f1:rnd(.5,1), f2:rnd(1.3,2), amp:rnd(18,40), vr:rnd(-.6,.6), r:rnd(0,6.3), life:60, fi:.8, dl:b?rnd(0,1.5):0 };
+        depth(p,0); p.vt=p.vy;
+        p.upd=(p,dt,W,H,U)=>{ const t=p.t+p.ph; p.vx=ease(p.vx,(Math.cos(t*p.f1)*.8+Math.cos(t*p.f2)*.25)*p.amp*U*p.f1+L.wind*35*U*(.3+p.z),1.8,dt);
+          p.x+=p.vx*dt; p.y+=p.vt*(1+Math.sin(t*p.f2)*.15)*dt; p.r+=p.vr*dt; p.sx=.85+.15*Math.cos(t*p.f1*1.7); return p.y<H+30*U; };
+        return p; } },
+      // 🫧 ฟองสบู่: ลอยขึ้นแบบมีแรงลอยตัว โยกนุ่ม ๆ ผิวสั่นบุ๋ม ๆ แล้วแตกป๊อบ
+      bubbles:{ def:'blue', rate:(n)=>n*.55, burst:(n)=>Math.ceil(n*.6), spawn(a,i,W,H,U,b){ const c=palOf(a,i,'blue'), x=W*rnd(.04,.96), y=b?H*rnd(.5,1):H+60*U;
+        const p={ img:sprBubble(), c, x, x0:x, y, vt:-rnd(50,120)*U*L.RY, s:rnd(.4,1.3), ph:rnd(0,6.3), f1:rnd(.9,1.6), f2:rnd(.35,.6), amp:rnd(15,45), wq:rnd(4,6), fo:.12, fi:.5, popped:false, dl:b?rnd(0,1.2):0, noPop:false };
+        depth(p,.2); p.vy=p.vt*.2; p.life=(y-H*rnd(-.05,.45))/-p.vt+.5;
+        p.upd=(p,dt,W,H,U)=>{ const t=p.t+p.ph; p.vy=ease(p.vy,p.vt*(1+Math.sin(t*p.f2)*.2),1,dt); p.y+=p.vy*dt; p.x0+=L.wind*14*U*dt;
+          p.x=p.x0+(Math.sin(t*p.f1)*.75+Math.sin(t*p.f1*2.3)*.25)*p.amp*U; const q=Math.sin(t*p.wq)*.05; p.sx=1+q; p.sy=1-q; p.r=Math.sin(t*.7)*.15;
+          if(!p.popped && p.t>p.life-.12){ p.popped=true; for(let k=0;k<7;k++){ const an=k/7*6.28, sp=rnd(90,160)*U;
+            addP({img:sprDot(p.c),x:p.x+Math.cos(an)*30*U*p.s,y:p.y+Math.sin(an)*30*U*p.s,vx:Math.cos(an)*sp,vy:Math.sin(an)*sp,s:rnd(.25,.45),life:.4,fi:.02,fo:.3,noPop:true,upd(d,dt){ d.x+=d.vx*dt; d.y+=d.vy*dt; d.vx*=.9; d.vy*=.9; }},0); } } };
+        return p; } },
+      // 🎈 ลูกโป่งลอย: แรงลอยค่อย ๆ เร่ง โยกแบบลูกตุ้ม (หมุนรอบตัวลูกโป่ง) เชือกแกว่งตามหลัง
       balloons:{ def:'rainbow', rate:(n)=>n*.42, burst:(n)=>Math.ceil(n*.35), spawn(a,i,W,H,U,b){ const c=palOf(a,i,'rainbow'), x=W*rnd(.05,.95);
-        return { img:sprBalloon(c), x, x0:x, y:b?H*rnd(.6,1.1):H+100*U, vy:-rnd(85,160)*U, s:rnd(.6,1.15), ph:rnd(0,6.3), fq:rnd(.8,1.5), amp:rnd(12,35), life:40,
-          upd(p,dt,W,H,U){ p.ph+=dt*p.fq; p.y+=p.vy*dt; const sw=Math.sin(p.ph); p.x=p.x0+sw*p.amp*U; p.r=-Math.cos(p.ph)*.12; return p.y>-130*U; } }; } },
-      // 🌹 กลีบกุหลาบหมุนวน: บานออกจากกลางจอเป็นเกลียว + กลีบโปรยจากฟ้า
+        const p={ img:sprBalloon(c), x, x0:x, y:b?H*rnd(.6,1.1):H+100*U, vt:-rnd(85,160)*U*L.RY, s:rnd(.6,1.15), ph:rnd(0,6.3), f1:rnd(.55,.95), f2:rnd(1.4,2.1), amp:rnd(14,34), life:40, fi:.6, oy:.3, r:0, kx:0, lx:null, dl:b?rnd(0,1):0 };
+        depth(p,.25); p.vy=p.vt*.3;
+        p.upd=(p,dt,W,H,U)=>{ const t=p.t+p.ph; p.vy=ease(p.vy,p.vt*(1+Math.sin(t*p.f2*.5)*.12),.9,dt); p.y+=p.vy*dt; p.x0+=L.wind*12*U*dt;
+          p.x=p.x0+(Math.sin(t*p.f1)*.8+Math.sin(t*p.f2)*.2)*p.amp*U; const vx=p.lx==null||dt<=0?0:(p.x-p.lx)/dt; p.lx=p.x;
+          p.r=ease(p.r,-vx/U*.006+Math.sin(t*p.f2*1.3)*.04,2.5,dt); // เอียงตามแรงลาก + โยกเบา ๆ
+          p.kx=ease(p.kx,Math.max(-.35,Math.min(.35,-vx/U*.008)),1.6,dt); // เชือกเฉียงตามหลัง (แกว่งช้ากว่าตัวลูกโป่ง)
+          p.sx=1+Math.sin(t*3.1)*.015; p.sy=1-Math.sin(t*3.1)*.015; return p.y>-130*U; };
+        return p; } },
+      // 🌹 กลีบกุหลาบหมุนวน: บานออกจากกลางจอเป็นเกลียว + กลีบโปรยจากฟ้า (พลิ้ว ร่อน)
       roses:{ def:'pink', rate:(n)=>n*1.6, burst:(n)=>n*2, spawn(a,i,W,H,U,b){ const k=a.tint||'pink', c=k==='pink'?ROSE.pink:palOf(a,i,'pink');
-        if(i%4===3 && !b) return { img:sprRose(c), x:rnd(0,W), y:-30*U, vy:rnd(60,110)*U, r:rnd(0,6.3), vr:rnd(-1.5,1.5), s:rnd(.5,1), ph:rnd(0,6.3), fl:rnd(2,4), life:30,
-          upd(p,dt,W,H,U){ p.ph+=dt; p.y+=p.vy*dt; p.x+=Math.sin(p.ph*1.5)*40*U*dt; p.r+=p.vr*dt; p.sx=flip(Math.cos(p.ph*p.fl)); return p.y<H+40*U; } };
-        return { img:sprRose(c), cx:W/2, cy:H*.45, th:rnd(0,6.3), rad:rnd(5,b?40:70)*U, w:rnd(1.4,2.6), vrad:rnd(70,150)*U, vy:rnd(10,35)*U, s:rnd(.5,1.05), fl:rnd(2.5,5), x:0, y:0, life:14,
-          upd(p,dt,W,H,U){ p.th+=p.w*dt*Math.max(.3,1-p.rad/(Math.max(W,H)*.7)); p.rad+=p.vrad*dt; p.cy+=p.vy*dt;
-            p.x=p.cx+Math.cos(p.th)*p.rad; p.y=p.cy+Math.sin(p.th)*p.rad*.62; p.r=p.th+1.57+Math.sin(p.t*3)*.4; p.sx=flip(Math.cos(p.t*p.fl)); return p.rad<Math.max(W,H)*.85; } }; } },
-      // ✨ หิ่งห้อยเรืองแสง: ล่องลอยช้า ๆ กะพริบนุ่ม ๆ
-      fireflies:{ def:'gold', rate:(n)=>n*.9, burst:(n)=>Math.ceil(n*1.3), spawn(a,i,W,H,U){ const c=palOf(a,i,'gold'), x=rnd(0,W), y=H*rnd(.15,.98);
-        return { img:sprFly(c), x, y, x0:x, y0:y, s:rnd(.5,1.25), life:rnd(3.5,7), fi:.9, fo:1.2, a1:rnd(.3,.8), a2:rnd(.9,1.6), a3:rnd(.3,.7), a4:rnd(.8,1.5), p1:rnd(0,6.3), p2:rnd(0,6.3), p3:rnd(0,6.3), pf:rnd(2,4), vy:-rnd(4,16),
-          upd(p,dt,W,H,U){ const t=p.t; p.x=p.x0+(Math.sin(t*p.a1+p.p1)*45+Math.sin(t*p.a2+p.p2)*18)*U; p.y=p.y0+(Math.cos(t*p.a3+p.p3)*35+Math.sin(t*p.a4)*14+p.vy*t)*U;
-            p.al=.3+.7*Math.pow(.5+.5*Math.sin(t*p.pf+p.p2),2); } }; } },
-      // 🎊 คอนเฟตติ: ปืนยิงจากมุมล่างสองข้าง แล้วโปรยลงมาพลิ้ว ๆ
+        if(i%4===3 && !b){ const p={ img:sprRose(c), x:rnd(0,W), y:-30*U, vy:rnd(60,110)*U*L.RY, vx:0, rb:rnd(0,6.3), vr:rnd(-1,1), s:rnd(.5,1), ph:rnd(0,6.3), f1:rnd(.8,1.4), amp:rnd(30,55), fl:rnd(1.6,3), life:30, fi:.5 };
+          depth(p,.1); p.by=p.vy;
+          p.upd=(p,dt,W,H,U)=>{ const t=p.t+p.ph, sw=Math.sin(t*p.f1); p.vx=ease(p.vx,sw*p.amp*U+L.wind*25*U,2.2,dt); p.vy=ease(p.vy,p.by*(.6+.6*Math.abs(Math.cos(t*p.f1))),2.2,dt);
+            p.x+=p.vx*dt; p.y+=p.vy*dt; p.rb+=p.vr*dt; p.r=p.rb+sw*.5; p.sx=flip(Math.cos(t*p.fl)); p.sy=.8+.2*Math.sin(t*p.fl*.7); return p.y<H+40*U; };
+          return p; }
+        const p={ img:sprRose(c), cx:W/2, cy:H*.45, th:rnd(0,6.3), rad:rnd(5,b?40:70)*U, w:rnd(1.4,2.6), vrad:rnd(70,150)*U, vy:rnd(10,35)*U, s:rnd(.5,1.05), fl:rnd(2.5,5), fp:rnd(0,6.3), x:0, y:0, life:14, fi:.45, dl:b?rnd(0,.8):0 };
+        depth(p,.3);
+        p.upd=(p,dt,W,H,U)=>{ const R=Math.max(W,H); p.th+=p.w*dt*Math.max(.3,1-p.rad/(R*.7)); p.vrad*=1-.15*dt; p.rad+=p.vrad*dt*(.6+.4*Math.min(1,p.t/.8)); p.cy+=p.vy*dt;
+          p.x=p.cx+Math.cos(p.th)*p.rad; p.y=p.cy+Math.sin(p.th)*p.rad*.62; p.r=p.th+1.57+Math.sin(p.t*3+p.fp)*.4; p.sx=flip(Math.cos(p.t*p.fl+p.fp)); p.sy=.85+.15*Math.sin(p.t*p.fl*.6); return p.rad<R*.85; };
+        return p; } },
+      // ✨ หิ่งห้อยเรืองแสง: ล่องลอยช้า ๆ (คลื่นหลายชั้น) กะพริบนุ่ม ๆ ไกล-ใกล้
+      fireflies:{ def:'gold', rate:(n)=>n*.9, burst:(n)=>Math.ceil(n*1.3), spawn(a,i,W,H,U,b){ const c=palOf(a,i,'gold'), x=rnd(0,W), y=H*rnd(.15,.98);
+        const p={ img:sprFly(c), x, y, x0:x, y0:y, s:rnd(.5,1.25), life:rnd(3.5,7), fi:.9, fo:1.2, a1:rnd(.3,.8), a2:rnd(.9,1.6), a3:rnd(.3,.7), a4:rnd(.8,1.5), p1:rnd(0,6.3), p2:rnd(0,6.3), p3:rnd(0,6.3), pf:rnd(2,4), vy:-rnd(4,16), amp:1, dl:b?rnd(0,1.5):0 };
+        depth(p,.2);
+        p.upd=(p,dt,W,H,U)=>{ const t=p.t, A=p.amp; p.x=p.x0+(Math.sin(t*p.a1+p.p1)*45+Math.sin(t*p.a2+p.p2)*18)*A*U; p.y=p.y0+(Math.cos(t*p.a3+p.p3)*35+Math.sin(t*p.a4)*14+p.vy*t)*A*U;
+          p.al=.3+.7*Math.pow(.5+.5*Math.sin(t*p.pf+p.p2),2); };
+        return p; } },
+      // 🎊 คอนเฟตติ: ปืนยิงจากมุมล่างสองข้าง แล้วโปรยลงมาพลิ้ว ๆ (พลิกหน้า-หลัง + ร่อน)
       confetti:{ def:'rainbow', rate:(n)=>n*1.3, burst:(n)=>Math.min(160,50+n*5), emit:.6, spawn(a,i,W,H,U,b){
         const k=a.tint&&a.tint!=='rainbow'?a.tint:null, cs=k?[PAL[k][1],PAL[k][2],PAL[k][3],'#ffffff',PAL.gold[2]]:TINTS.map((t)=>PAL[t][2]).concat(TINTS.map((t)=>PAL[t][1]));
-        const col=cs[i%cs.length], side=i%2, p={ img:sprConf(col,i%4), s:rnd(1,1.7), r:rnd(0,6.3), vr:rnd(-6,6), ph:rnd(0,6.3), fl:rnd(5,11), life:30, fi:.05, term:rnd(110,190)*U,
-          upd(p,dt,W,H,U){ p.vy=Math.min(p.term,p.vy+900*U*dt); p.vx*=1-Math.min(.9,2.4*dt); p.ph+=dt; p.x+=(p.vx+Math.sin(p.ph*2)*25*U)*dt; p.y+=p.vy*dt; p.r+=p.vr*dt; p.sx=flip(Math.cos(p.ph*p.fl)); return p.y<H+30*U; } };
-        if(b){ const gv=900*U, v=Math.sqrt(2*gv*H*rnd(.45,.95)); p.x=side?W+10*U:-10*U; p.y=H*.9; p.vy=-v; p.vx=(side?-1:1)*rnd(.25,1)*W*gv/v*1.3; p.term=rnd(110,190)*U; }
-        else { p.x=rnd(0,W); p.y=-20*U; p.vx=rnd(-30,30)*U; p.vy=rnd(60,140)*U; }
+        const col=cs[i%cs.length], side=i%2, p={ img:sprConf(col,i%4), s:rnd(1,1.7), r:rnd(0,6.3), vr:rnd(-6,6), ph:rnd(0,6.3), fl:rnd(5,11), f2:rnd(3,6), sw:rnd(20,40), life:30, fi:.05, term:rnd(110,190)*U*L.RY, noPop:b,
+          upd(p,dt,W,H,U){ p.vy=Math.min(p.term,p.vy+900*U*dt); p.vx*=1-Math.min(.9,2.4*dt); p.ph+=dt; const fall=p.vy>0?Math.min(1,p.vy/p.term):0;
+            p.x+=(p.vx+(Math.sin(p.ph*2)*p.sw+L.wind*30)*U*fall)*dt; p.y+=p.vy*dt; p.vr=ease(p.vr,p.vr0*(1-.6*fall),2,dt); p.r+=p.vr*dt;
+            p.sx=flip(Math.cos(p.ph*p.fl)); p.sy=.75+.25*Math.sin(p.ph*p.f2); return p.y<H+30*U; } };
+        depth(p,.35); p.vr0=p.vr;
+        if(b){ const gv=900*U, v=Math.sqrt(2*gv*H*rnd(.45,.95)); p.x=side?W+10*U:-10*U; p.y=H*.9; p.vy=-v; p.vx=(side?-1:1)*rnd(.25,1)*W*gv/v*1.3; p.dl=rnd(0,.35); }
+        else { p.x=rnd(0,W); p.y=-20*U; p.vx=rnd(-30,30)*U; p.vy=rnd(60,140)*U*L.RY; }
         return p; } },
     };
     // เอฟเฟกต์วิดีโอเต็มจอ (WebP เคลื่อนไหวพื้นใส แนวนอน 16:9) — fx/v-<ชื่อ>.webp

@@ -299,7 +299,7 @@ function ActionsInner() {
   }
   const have = new Set((rules ?? []).map((r) => r.name));
   // เทมเพลตจัดหมวด: ไพ่ทาโร่ = แอดมินเท่านั้น (เหมือนเดิม) · โชว์เฉพาะหมวดที่มีเทมเพลต
-  const tplVisible = TEMPLATES.filter((tp) => isAdmin || tp.rule.action.type !== 'tarot');
+  const tplVisible = TEMPLATES; // ไพ่ทาโร่เปิดให้ทุกคนแล้ว (เดิมแอดมินเท่านั้น)
   const tplGroups = TEMPLATE_GROUPS.map(([g, l]) => [g, l, tplVisible.filter((tp) => tp.group === g).length] as const).filter(([, , n]) => n > 0);
   const [tplGroupSel, setTplGroup] = useState<TemplateGroup>('fx');
   const tplGroup = tplGroups.some(([g]) => g === tplGroupSel) ? tplGroupSel : tplGroups[0]?.[0] ?? 'fx';
@@ -415,7 +415,7 @@ function ActionsInner() {
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label={t('ให้ทำ')}>
                 <Select value={draft.type} onChange={(e) => set('type', e.target.value as ActionType)}>
-                  {Object.entries(ACTION_LABELS).filter(([k]) => k !== 'tarot' || isAdmin || draft.type === 'tarot').map(([k, v]) => <option key={k} value={k}>{t(v)}</option>)}
+                  {Object.entries(ACTION_LABELS).map(([k, v]) => <option key={k} value={k}>{t(v)}</option>)}
                 </Select>
               </Field>
               {draft.type === 'sound' && (

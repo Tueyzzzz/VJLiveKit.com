@@ -38,14 +38,19 @@ export function TemplatePreview({ tp }: { tp: Template }) {
     const io = new IntersectionObserver(([e]) => setSeen(e.isIntersecting), { threshold: 0.6 });
     io.observe(el); return () => io.disconnect();
   }, [tp.id]);
-  const play = !!tp.id && (seen || hover);
+  const play = !!tp.id && (seen || hover) && !tp.thumb;
   const badge = tp.id && HOT.has(tp.id) ? 'hot' : tp.id && NEW.has(tp.id) ? 'new' : null;
   return (
     <div ref={ref} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
       className="relative flex justify-center overflow-hidden bg-gradient-to-br from-pink-soft via-white to-violet-soft px-3 pb-2.5 pt-3">
       {/* กรอบมือถือ */}
       <div className="relative aspect-[9/16] w-full max-w-[168px] overflow-hidden rounded-[18px] bg-violet-soft shadow-[0_8px_22px_-8px_rgba(120,60,160,.45)] ring-[3px] ring-ink/85 transition-transform duration-300 group-hover:-translate-y-0.5">
-        {tp.id ? (
+        {tp.thumb ? (
+          // รูปย่อ (เช่น มุกแกล้งวีเจ) แทนตัวอย่างอัดจอ
+          <div className="absolute inset-0 grid place-items-center bg-gradient-to-b from-[#c9b8e8] via-[#e7d6ee] to-[#f6c9da]">
+            <img src={tp.thumb} alt={t(tp.title)} width={192} height={192} loading="lazy" decoding="async" className={`w-[78%] object-contain drop-shadow-[0_6px_10px_rgba(80,40,110,.35)]`} />
+          </div>
+        ) : tp.id ? (
           <>
             <img src={`/tpl/${tp.id}.webp`} alt={t(tp.title)} width={270} height={480} loading="lazy" decoding="async" className="absolute inset-0 size-full object-cover" />
             {play && <img src={`/tpl/${tp.id}.anim.webp`} alt="" aria-hidden width={270} height={480} decoding="async" className="absolute inset-0 size-full object-cover" />}

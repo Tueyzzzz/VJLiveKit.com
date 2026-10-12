@@ -1,13 +1,13 @@
-import type { AnimalName, Rule } from './api';
+import type { AnimalName, PrankName, Rule } from './api';
 
 /** เทมเพลตยอดนิยม — กดครั้งเดียวสร้างกฎได้เลย (ไม่ต้องหาไฟล์เสียง/รูปเอง)
  *  id = ชื่อรูปตัวอย่างจริง /tpl/<id>.webp (อัดจากวิดเจ็ต FX ด้วย scripts/capture-templates.mjs) · group = หมวดในแถบเลือก */
-export type TemplateGroup = 'tarot' | 'fx' | 'thanks' | 'mascot' | 'fun' | 'real';
-export interface Template { id?: string; group?: TemplateGroup; icon: string; title: string; desc: string; rule: { name: string; trigger: Rule['trigger']; action: Rule['action'] } }
+export type TemplateGroup = 'tarot' | 'fx' | 'thanks' | 'mascot' | 'fun' | 'real' | 'prank';
+export interface Template { id?: string; group?: TemplateGroup; /** รูปย่อแทนตัวอย่างอัดจอ (ไม่มี /tpl/<id>.webp) */ thumb?: string; icon: string; title: string; desc: string; rule: { name: string; trigger: Rule['trigger']; action: Rule['action'] } }
 
 /** หมวดเทมเพลต (เรียงตามแถบ) — แบบเดียวกับแถบสลับแบบสะสมของขวัญ */
 export const TEMPLATE_GROUPS: [TemplateGroup, string][] = [
-  ['fx', '🦋 เอฟเฟกต์เต็มจอ'], ['tarot', '🔮 ดูดวง & ไพ่'], ['thanks', '💖 ขอบคุณ & ป้ายไฟ'], ['mascot', '🧸 มาสคอต'], ['fun', '🥊 สนุก ๆ'], ['real', '🐾 สัตว์จริง'],
+  ['fx', '🦋 เอฟเฟกต์เต็มจอ'], ['tarot', '🔮 ดูดวง & ไพ่'], ['thanks', '💖 ขอบคุณ & ป้ายไฟ'], ['mascot', '🧸 มาสคอต'], ['fun', '🥊 สนุก ๆ'], ['prank', '😈 แกล้ง'], ['real', '🐾 สัตว์จริง'],
 ];
 
 /** เอฟเฟกต์เต็มจอ (action.type = effect) — ต้องตรงกับ PFX ใน overlay/public/fx.html + zod ฝั่งเซิร์ฟเวอร์ · [ค่า, ชื่อ, สีเริ่มต้น] */
@@ -17,7 +17,7 @@ export const EFFECTS: [EffectName, string, NonNullable<Rule['action']['tint']>][
   ['stars', '⭐ ฝนดาววิบวับ', 'gold'], ['snow', '❄️ หิมะโปรย', 'blue'], ['bubbles', '🫧 ฟองสบู่ลอย', 'blue'], ['balloons', '🎈 ลูกโป่งลอย', 'rainbow'],
   ['roses', '🌹 กลีบกุหลาบหมุนวน', 'pink'], ['fireflies', '✨ หิ่งห้อยเรืองแสง', 'gold'], ['confetti', '🎊 คอนเฟตติฉลอง', 'rainbow'],
   ['vcake', '🎬 เค้กปาหน้า (วิดีโอ)', 'pink'], ['vcat', '🎬 แมวร่มชูชีพ (วิดีโอ)', 'pink'],
-  ['animal', '🐾 สัตว์น่ารักออกมาเต้น', 'pink'],
+  ['animal', '🐾 สัตว์น่ารักออกมาเต้น', 'pink'], ['prank', '😈 แกล้งวีเจ (30 มุก)', 'pink'],
   ['chest', '🎁 กล่องสมบัติเด้งเปิด', 'gold'], ['bag', '💜 ถุงซูเปอร์แฟนเด้งเปิด', 'purple'],
 ];
 /** แบบกล่องสมบัติ/ถุงซูเปอร์แฟน (effect=chest|bag, action.style) — 10 ธีม ลำดับเดียวกันทั้งกล่องและถุง · รูปย่อ /fxthumbs/<chest|bag>-NN.webp */
@@ -41,7 +41,17 @@ export const ANIMALS: [AnimalName, string][] = [
   ['real-raccoon', '🦝 แรคคูนถูมือ (สัตว์จริง)'], ['real-redpanda', '🦊 แพนด้าแดงชูแขน (สัตว์จริง)'], ['real-shibatilt', '🐕 ชิบะเอียงคอ (สัตว์จริง)'],
 ];
 export const animalLabel = (a?: string) => ANIMALS.find(([k]) => k === a)?.[1] ?? ANIMALS[2][1];
-export const effectLabel = (e?: string, animal?: string) => (e === 'animal' ? animalLabel(animal) : EFFECTS.find(([k]) => k === (e ?? 'butterflies'))?.[1] ?? EFFECTS[0][1]);
+/** มุกแกล้งวีเจ (effect=prank) — ต้องตรงกับ P ใน overlay/public/js/prank.js · [ค่า, ชื่อ] · รูปย่อ /fxthumbs/prank-<ค่า>.webp */
+export const PRANKS: [PrankName, string][] = [
+  ['crack', '🪟 กระจกร้าว'], ['tomato', '🍅 ปามะเขือเทศ'], ['egg', '🥚 ปาไข่'], ['pie', '🥧 ปาพายครีม'], ['slime', '🟢 สไลม์ไหลเยิ้ม'],
+  ['ink', '🟣 สาดหมึกม่วง'], ['paint', '🎨 สาดสีฟ้า'], ['bugs', '🪳 แมลงสาบวิ่งพล่าน'], ['spider', '🕷️ แมงมุมห้อยหัว'], ['mosquito', '🦟 ยุงบินวน'],
+  ['bomb', '💣 ระเบิดการ์ตูน'], ['chicken', '🐔 ไก่ยางร้องลั่น'], ['hammer', '🔨 ค้อนยางโป๊กหัว'], ['slap', '✋ ฝ่ามือตบจอ'], ['nose', '🔴 จมูกตัวตลก'],
+  ['water', '🪣 สาดน้ำทั้งถัง'], ['pigeon', '🐦 นกพิราบอึใส่'], ['snowball', '❄️ ปาหิมะ'], ['kiss', '💋 รอยจูบเต็มจอ'], ['notes', '📝 แปะโน้ตเต็มจอ'],
+  ['tape', '🩹 เทปกาวปิดจอ'], ['balloon', '🎈 ลูกโป่งแตก'], ['alarm', '⏰ นาฬิกาปลุก'], ['fart', '💨 เบาะผายลม'], ['ghost', '👻 ผีน้อยหลอก'],
+  ['banana', '🍌 เหยียบเปลือกกล้วย'], ['duck', '🦆 ฝนเป็ดยาง'], ['pan', '🍳 กระทะฟาดโป๊ง'], ['jail', '🚔 ติดคุก'], ['quake', '🌋 แผ่นดินไหว'],
+];
+export const prankLabel = (p?: string) => PRANKS.find(([k]) => k === p)?.[1] ?? PRANKS[1][1];
+export const effectLabel = (e?: string, animal?: string, prank?: string) => (e === 'animal' ? animalLabel(animal) : e === 'prank' ? prankLabel(prank) : EFFECTS.find(([k]) => k === (e ?? 'butterflies'))?.[1] ?? EFFECTS[0][1]);
 
 /** เทมเพลต PK — โชว์ในเมนู ⚔️ PK Battle */
 export const PK_TEMPLATES: Template[] = [
@@ -321,4 +331,65 @@ export const TEMPLATES: Template[] = [
     rule: { name: 'แพนด้าแดงชูแขน', trigger: { event: 'gift', giftName: 'Confetti' }, action: { type: 'effect', effect: 'animal', animal: 'real-redpanda', text: '🙌 เฮ! {user} มาแล้ว', durationMs: 6000 } } },
   { id: 'real-shibatilt', group: 'real', icon: '🤔', title: 'พิมพ์ “งง” → ชิบะเอียงคอ', desc: 'ลูกชิบะตัวจริงเอียงคอซ้ายขวา งงไปกับแชท',
     rule: { name: 'ชิบะเอียงคอ', trigger: { event: 'chat', keyword: 'งง' }, action: { type: 'effect', effect: 'animal', animal: 'real-shibatilt', text: '🐕 {user} งงเหรอ… ชิบะก็งง', durationMs: 6000 } } },
+  // 😈 แกล้งวีเจ 30 มุก (effect=prank · overlay/public/js/prank.js · ภาพ fx/prank/ · เสียง CC0 fx/sfx-prank/)
+  { id: 'prank-crack', group: 'prank', thumb: '/fxthumbs/prank-crack.webp', icon: '🪟', title: 'ได้ Rose → กระจกร้าว', desc: 'จอแตกเป๊าะตรงจุดสุ่ม พร้อมเสียงกระจกร้าว แล้วค่อย ๆ จางหาย',
+    rule: { name: 'แกล้ง: กระจกร้าว', trigger: { event: 'gift', giftName: 'Rose' }, action: { type: 'effect', effect: 'prank', prank: 'crack', text: '💥 {user} ปากุหลาบใส่จอจนร้าว!' } } },
+  { id: 'prank-tomato', group: 'prank', thumb: '/fxthumbs/prank-tomato.webp', icon: '🍅', title: 'ได้ TikTok → ปามะเขือเทศ', desc: 'มะเขือเทศลอยมาแปะจอดังแป๊ะ แล้วไหลเยิ้มลงช้า ๆ',
+    rule: { name: 'แกล้ง: ปามะเขือเทศ', trigger: { event: 'gift', giftName: 'TikTok' }, action: { type: 'effect', effect: 'prank', prank: 'tomato', text: '🍅 {user} ปามะเขือเทศใส่วีเจ!' } } },
+  { id: 'prank-egg', group: 'prank', thumb: '/fxthumbs/prank-egg.webp', icon: '🥚', title: 'ได้ GG → ปาไข่', desc: 'ไข่ลอยมาแตกเปรี้ยะ ไข่แดงเยิ้มบนจอ',
+    rule: { name: 'แกล้ง: ปาไข่', trigger: { event: 'gift', giftName: 'GG' }, action: { type: 'effect', effect: 'prank', prank: 'egg', text: '🥚 {user} ปาไข่ใส่จอ!' } } },
+  { id: 'prank-pie', group: 'prank', thumb: '/fxthumbs/prank-pie.webp', icon: '🥧', title: 'ได้ Ice Cream Cone → ปาพายครีม', desc: 'พายครีมพุ่งเข้าหน้ากล้อง แปะเต็ม ๆ กลางจอ',
+    rule: { name: 'แกล้ง: ปาพายครีม', trigger: { event: 'gift', giftName: 'Ice Cream Cone' }, action: { type: 'effect', effect: 'prank', prank: 'pie', text: '🥧 {user} ปาพายครีมเต็มหน้า!' } } },
+  { id: 'prank-slime', group: 'prank', thumb: '/fxthumbs/prank-slime.webp', icon: '🟢', title: 'พิมพ์ “แกล้ง” ในแชท → สไลม์ไหลเยิ้ม', desc: 'สไลม์เขียวมะนาวไหลเยิ้มลงจากขอบจอบน',
+    rule: { name: 'แกล้ง: สไลม์ไหลเยิ้ม', trigger: { event: 'chat', keyword: 'แกล้ง' }, action: { type: 'effect', effect: 'prank', prank: 'slime', text: '🟢 {user} เทสไลม์ใส่วีเจ!' } } },
+  { id: 'prank-ink', group: 'prank', thumb: '/fxthumbs/prank-ink.webp', icon: '🟣', title: 'ได้ Finger Heart → สาดหมึกม่วง', desc: 'หมึกม่วงสาดกระจายหลายจุดทั่วจอ',
+    rule: { name: 'แกล้ง: สาดหมึกม่วง', trigger: { event: 'gift', giftName: 'Finger Heart' }, action: { type: 'effect', effect: 'prank', prank: 'ink', text: '🟣 {user} สาดหมึกใส่จอ!' } } },
+  { id: 'prank-paint', group: 'prank', thumb: '/fxthumbs/prank-paint.webp', icon: '🎨', title: 'ได้ Heart Me → สาดสีฟ้า', desc: 'สีฟ้าสาดแปะจอ เยิ้มลงนิด ๆ',
+    rule: { name: 'แกล้ง: สาดสีฟ้า', trigger: { event: 'gift', giftName: 'Heart Me' }, action: { type: 'effect', effect: 'prank', prank: 'paint', text: '🎨 {user} สาดสีฟ้าใส่จอ!' } } },
+  { id: 'prank-bugs', group: 'prank', thumb: '/fxthumbs/prank-bugs.webp', icon: '🪳', title: 'ได้ Perfume → แมลงสาบวิ่งพล่าน', desc: 'แมลงสาบการ์ตูนตาโตวิ่งพล่านข้ามจอ',
+    rule: { name: 'แกล้ง: แมลงสาบวิ่งพล่าน', trigger: { event: 'gift', giftName: 'Perfume' }, action: { type: 'effect', effect: 'prank', prank: 'bugs', text: '🪳 {user} ปล่อยแมลงสาบ!' } } },
+  { id: 'prank-spider', group: 'prank', thumb: '/fxthumbs/prank-spider.webp', icon: '🕷️', title: 'ได้ Doughnut → แมงมุมห้อยหัว', desc: 'แมงมุมขนปุยไต่ใยลงมาโยกเยก แล้วไต่กลับขึ้นไป',
+    rule: { name: 'แกล้ง: แมงมุมห้อยหัว', trigger: { event: 'gift', giftName: 'Doughnut' }, action: { type: 'effect', effect: 'prank', prank: 'spider', text: '🕷️ {user} ส่งแมงมุมมาห้อยหัว' } } },
+  { id: 'prank-mosquito', group: 'prank', thumb: '/fxthumbs/prank-mosquito.webp', icon: '🦟', title: 'พิมพ์ “ยุง” ในแชท → ยุงบินวน', desc: 'ยุงบินวนส่ายไปมา เสียงหึ่ง ๆ',
+    rule: { name: 'แกล้ง: ยุงบินวน', trigger: { event: 'chat', keyword: 'ยุง' }, action: { type: 'effect', effect: 'prank', prank: 'mosquito', text: '🦟 {user} ปล่อยยุงมากวนวีเจ!' } } },
+  { id: 'prank-bomb', group: 'prank', thumb: '/fxthumbs/prank-bomb.webp', icon: '💣', title: 'ได้ Hand Hearts → ระเบิดการ์ตูน', desc: 'ระเบิดสั่นลุ้น ชนวนฟู่ แล้วตู้ม! จอสั่น',
+    rule: { name: 'แกล้ง: ระเบิดการ์ตูน', trigger: { event: 'gift', giftName: 'Hand Hearts' }, action: { type: 'effect', effect: 'prank', prank: 'bomb', text: '💣 {user} โยนระเบิด!' } } },
+  { id: 'prank-chicken', group: 'prank', thumb: '/fxthumbs/prank-chicken.webp', icon: '🐔', title: 'ได้ Confetti → ไก่ยางร้องลั่น', desc: 'ไก่ยางเด้งขึ้นมาร้องก๊าาก!',
+    rule: { name: 'แกล้ง: ไก่ยางร้องลั่น', trigger: { event: 'gift', giftName: 'Confetti' }, action: { type: 'effect', effect: 'prank', prank: 'chicken', text: '🐔 {user} บีบไก่ยาง!' } } },
+  { id: 'prank-hammer', group: 'prank', thumb: '/fxthumbs/prank-hammer.webp', icon: '🔨', title: 'ได้ Sunglasses → ค้อนยางโป๊กหัว', desc: 'ค้อนยางชมพูฟาดโป๊ก ดาวหมุนติ้ว',
+    rule: { name: 'แกล้ง: ค้อนยางโป๊กหัว', trigger: { event: 'gift', giftName: 'Sunglasses' }, action: { type: 'effect', effect: 'prank', prank: 'hammer', text: '🔨 {user} เอาค้อนยางโป๊กหัววีเจ!' } } },
+  { id: 'prank-slap', group: 'prank', thumb: '/fxthumbs/prank-slap.webp', icon: '✋', title: 'ได้ Corgi → ฝ่ามือตบจอ', desc: 'ฝ่ามือยักษ์พุ่งมาตบจอ จอสั่น',
+    rule: { name: 'แกล้ง: ฝ่ามือตบจอ', trigger: { event: 'gift', giftName: 'Corgi' }, action: { type: 'effect', effect: 'prank', prank: 'slap', text: '✋ {user} ตบจอเพี้ยะ!' } } },
+  { id: 'prank-nose', group: 'prank', thumb: '/fxthumbs/prank-nose.webp', icon: '🔴', title: 'ได้ Hat and Mustache → จมูกตัวตลก', desc: 'จมูกแดงเด้งดึ๋งมากลางจอ บีบดังปู๊น',
+    rule: { name: 'แกล้ง: จมูกตัวตลก', trigger: { event: 'gift', giftName: 'Hat and Mustache' }, action: { type: 'effect', effect: 'prank', prank: 'nose', text: '🤡 {user} แปะจมูกตัวตลกให้วีเจ!' } } },
+  { id: 'prank-water', group: 'prank', thumb: '/fxthumbs/prank-water.webp', icon: '🪣', title: 'ได้ Love you so much → สาดน้ำทั้งถัง', desc: 'ถังน้ำคว่ำจากขอบบน น้ำสาดลงทั้งจอ',
+    rule: { name: 'แกล้ง: สาดน้ำทั้งถัง', trigger: { event: 'gift', giftName: 'Love you so much' }, action: { type: 'effect', effect: 'prank', prank: 'water', text: '🪣 {user} สาดน้ำใส่วีเจทั้งถัง!' } } },
+  { id: 'prank-pigeon', group: 'prank', thumb: '/fxthumbs/prank-pigeon.webp', icon: '🐦', title: 'ได้ Rosa → นกพิราบอึใส่', desc: 'นกพิราบบินผ่าน ปล่อยระเบิดขาวน่ารัก ปุ๊!',
+    rule: { name: 'แกล้ง: นกพิราบอึใส่', trigger: { event: 'gift', giftName: 'Rosa' }, action: { type: 'effect', effect: 'prank', prank: 'pigeon', text: '🐦 {user} ส่งนกพิราบมาอึใส่!' } } },
+  { id: 'prank-snowball', group: 'prank', thumb: '/fxthumbs/prank-snowball.webp', icon: '❄️', title: 'ได้ Friendship Necklace → ปาหิมะ', desc: 'ก้อนหิมะลอยมาแปะจอ 3 ลูกติด',
+    rule: { name: 'แกล้ง: ปาหิมะ', trigger: { event: 'gift', giftName: 'Friendship Necklace' }, action: { type: 'effect', effect: 'prank', prank: 'snowball', text: '❄️ {user} ปาหิมะใส่วีเจ!' } } },
+  { id: 'prank-kiss', group: 'prank', thumb: '/fxthumbs/prank-kiss.webp', icon: '💋', title: 'พิมพ์ “จุ๊บ” ในแชท → รอยจูบเต็มจอ', desc: 'รอยลิปสติกจุ๊บเด้งขึ้นทีละรอย',
+    rule: { name: 'แกล้ง: รอยจูบเต็มจอ', trigger: { event: 'chat', keyword: 'จุ๊บ' }, action: { type: 'effect', effect: 'prank', prank: 'kiss', text: '💋 {user} จุ๊บจอรัว ๆ' } } },
+  { id: 'prank-notes', group: 'prank', thumb: '/fxthumbs/prank-notes.webp', icon: '📝', title: 'ได้ Cake Slice → แปะโน้ตเต็มจอ', desc: 'โพสต์อิทเหลือง-ชมพูแปะปิดจอ แล้วร่วงหล่น',
+    rule: { name: 'แกล้ง: แปะโน้ตเต็มจอ', trigger: { event: 'gift', giftName: 'Cake Slice' }, action: { type: 'effect', effect: 'prank', prank: 'notes', text: '📝 {user} แปะโน้ตเต็มจอ!' } } },
+  { id: 'prank-tape', group: 'prank', thumb: '/fxthumbs/prank-tape.webp', icon: '🩹', title: 'พิมพ์ “เงียบ” ในแชท → เทปกาวปิดจอ', desc: 'เทปกาวแปะกากบาทกลางจอ แล้วลอกออก',
+    rule: { name: 'แกล้ง: เทปกาวปิดจอ', trigger: { event: 'chat', keyword: 'เงียบ' }, action: { type: 'effect', effect: 'prank', prank: 'tape', text: '🤐 {user} เอาเทปปิดปากวีเจ!' } } },
+  { id: 'prank-balloon', group: 'prank', thumb: '/fxthumbs/prank-balloon.webp', icon: '🎈', title: 'ได้ Mic → ลูกโป่งแตก', desc: 'ลูกโป่งพองขึ้นเรื่อย ๆ แล้วแตกปั้ง!',
+    rule: { name: 'แกล้ง: ลูกโป่งแตก', trigger: { event: 'gift', giftName: 'Mic' }, action: { type: 'effect', effect: 'prank', prank: 'balloon', text: '🎈 {user} เป่าลูกโป่งจนแตก!' } } },
+  { id: 'prank-alarm', group: 'prank', thumb: '/fxthumbs/prank-alarm.webp', icon: '⏰', title: 'พิมพ์ “ตื่น” ในแชท → นาฬิกาปลุก', desc: 'นาฬิกาปลุกสั่นกริ๊งงง',
+    rule: { name: 'แกล้ง: นาฬิกาปลุก', trigger: { event: 'chat', keyword: 'ตื่น' }, action: { type: 'effect', effect: 'prank', prank: 'alarm', text: '⏰ {user} ปลุกวีเจ!' } } },
+  { id: 'prank-fart', group: 'prank', thumb: '/fxthumbs/prank-fart.webp', icon: '💨', title: 'ได้ Hi Bear → เบาะผายลม', desc: 'เบาะผายลมโดนนั่งทับ ปู้ด~ ควันเขียวลอยฟุ้ง',
+    rule: { name: 'แกล้ง: เบาะผายลม', trigger: { event: 'gift', giftName: 'Hi Bear' }, action: { type: 'effect', effect: 'prank', prank: 'fart', text: '💨 {user} วางเบาะผายลมให้วีเจ!' } } },
+  { id: 'prank-ghost', group: 'prank', thumb: '/fxthumbs/prank-ghost.webp', icon: '👻', title: 'พิมพ์ “ผี” ในแชท → ผีน้อยหลอก', desc: 'ผีน้อยเด้งขึ้นมา BOO! แล้วลอยหายไป',
+    rule: { name: 'แกล้ง: ผีน้อยหลอก', trigger: { event: 'chat', keyword: 'ผี' }, action: { type: 'effect', effect: 'prank', prank: 'ghost', text: '👻 {user} ส่งผีน้อยมาหลอก!' } } },
+  { id: 'prank-banana', group: 'prank', thumb: '/fxthumbs/prank-banana.webp', icon: '🍌', title: 'ได้ Paper Crane → เหยียบเปลือกกล้วย', desc: 'เปลือกกล้วยไถลมา แล้วลื่นหมุนติ้ว',
+    rule: { name: 'แกล้ง: เหยียบเปลือกกล้วย', trigger: { event: 'gift', giftName: 'Paper Crane' }, action: { type: 'effect', effect: 'prank', prank: 'banana', text: '🍌 {user} วางเปลือกกล้วยดักวีเจ!' } } },
+  { id: 'prank-duck', group: 'prank', thumb: '/fxthumbs/prank-duck.webp', icon: '🦆', title: 'ได้ Little Crown → ฝนเป็ดยาง', desc: 'เป็ดยางร่วงลงมาเต็มจอ ดังแป๊ะ ๆ',
+    rule: { name: 'แกล้ง: ฝนเป็ดยาง', trigger: { event: 'gift', giftName: 'Little Crown' }, action: { type: 'effect', effect: 'prank', prank: 'duck', text: '🦆 {user} ปล่อยฝนเป็ดยาง!' } } },
+  { id: 'prank-pan', group: 'prank', thumb: '/fxthumbs/prank-pan.webp', icon: '🍳', title: 'ได้ Cap → กระทะฟาดโป๊ง', desc: 'กระทะเหวี่ยงมาฟาดโป๊ง ดาวกระจาย',
+    rule: { name: 'แกล้ง: กระทะฟาดโป๊ง', trigger: { event: 'gift', giftName: 'Cap' }, action: { type: 'effect', effect: 'prank', prank: 'pan', text: '🍳 {user} ฟาดกระทะโป๊ง!' } } },
+  { id: 'prank-jail', group: 'prank', thumb: '/fxthumbs/prank-jail.webp', icon: '🚔', title: 'ส่ง 99💎 ขึ้นไป → ติดคุก', desc: 'ลูกกรงหล่นลงมาปิดจอ แล้วยกขึ้น',
+    rule: { name: 'แกล้ง: ติดคุก', trigger: { event: 'gift', minDiamonds: 99 }, action: { type: 'effect', effect: 'prank', prank: 'jail', text: '🚔 {user} จับวีเจเข้าคุก!' } } },
+  { id: 'prank-quake', group: 'prank', thumb: '/fxthumbs/prank-quake.webp', icon: '🌋', title: 'ส่ง 299💎 ขึ้นไป → แผ่นดินไหว', desc: 'ทั้งจอสั่นแรง 2 วิ หินร่วง ฝุ่นฟุ้ง',
+    rule: { name: 'แกล้ง: แผ่นดินไหว', trigger: { event: 'gift', minDiamonds: 299 }, action: { type: 'effect', effect: 'prank', prank: 'quake', text: '🌋 {user} เขย่าไลฟ์จนแผ่นดินไหว!' } } },
 ];

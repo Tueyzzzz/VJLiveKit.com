@@ -10,10 +10,10 @@ import { TemplatePreview, triggerChip } from '@/components/TemplatePreview';
 import { SoundUpload } from '@/components/SoundUpload';
 import { toDigits } from '@/components/NumberInput';
 import { toAudioDataUrl } from '@/lib/sounds';
-import { api, ApiError, type OverlayTokenRow, type ActionType, type AnimalName, type Rule, type TarotDeck, type TarotTopic, type TriggerEvent } from '@/lib/api';
+import { api, ApiError, type OverlayTokenRow, type ActionType, type AnimalName, type PrankName, type Rule, type TarotDeck, type TarotTopic, type TriggerEvent } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { translate, useT } from '@/lib/i18n';
-import { ANIMALS, CHEST_STYLES, EFFECTS, effectLabel, PK_TEMPLATES, TEMPLATES, TEMPLATE_GROUPS, type EffectName, type Template, type TemplateGroup } from '@/lib/actionTemplates';
+import { ANIMALS, CHEST_STYLES, EFFECTS, effectLabel, PK_TEMPLATES, PRANKS, prankLabel, TEMPLATES, TEMPLATE_GROUPS, type EffectName, type Template, type TemplateGroup } from '@/lib/actionTemplates';
 
 const EVENT_LABELS: Record<TriggerEvent, string> = { gift: '🎁 ได้รับกิฟต์', follow: '➕ มีคนติดตาม', share: '🔁 มีคนแชร์', like: '❤️ มีคนกดไลค์', chat: '💬 แชทมีคำว่า', chest: '🎁 กล่องสมบัติ (กล่องของขวัญ)', superfanbox: '💜 กล่องซูเปอร์แฟน (ถุงม่วง)', join: '👋 มีคนเข้าห้อง', pk: '⚔️ PK (แข่ง)' };
 /** สถานการณ์ PK ที่ตั้งกฎได้ */
@@ -51,6 +51,8 @@ interface Draft {
   /** เอฟเฟกต์เต็มจอ: แบบ */
   effect: EffectName;
   animal: AnimalName;
+  /** แกล้งวีเจ (effect=prank): มุก */
+  prank: PrankName;
   /** กล่องสมบัติ/ถุงซูเปอร์แฟน (effect=chest|bag): แบบ 01–10 */
   style: string;
   /** สีผีเสื้อ/อนุภาค */
@@ -62,7 +64,7 @@ interface Draft {
   color: string;
 }
 
-const EMPTY: Draft = { name: '', enabled: true, event: 'gift', giftName: '', minDiamonds: '', keyword: '', pk: 'win', pkSide: '', joinOnce: true, cooldownSec: '10', joinWho: '', type: 'sound', url: '', sound: 'chime', text: '', durationSec: '5', cards: '1', deck: 'full', topic: 'general', count: '12', effect: 'butterflies', animal: 'catdance', style: '01', move: 'dance', repeat: '1', tint: 'pink', signStyle: 'led', signMode: 'scroll', signPos: 'top', color: '#ff4fa3' };
+const EMPTY: Draft = { name: '', enabled: true, event: 'gift', giftName: '', minDiamonds: '', keyword: '', pk: 'win', pkSide: '', joinOnce: true, cooldownSec: '10', joinWho: '', type: 'sound', url: '', sound: 'chime', text: '', durationSec: '5', cards: '1', deck: 'full', topic: 'general', count: '12', effect: 'butterflies', animal: 'catdance', prank: 'tomato', style: '01', move: 'dance', repeat: '1', tint: 'pink', signStyle: 'led', signMode: 'scroll', signPos: 'top', color: '#ff4fa3' };
 
 /** เสียงสำเร็จรูป — ชุดเดียวกับ overlay/js/sfx.js (ฟังตัวอย่างโดยโหลดไฟล์นั้นมาเล่น) */
 const SFX: [string, string][] = [['chime', '🔔 กริ๊ง'], ['coin', '🪙 เหรียญ'], ['levelup', '⬆️ เลเวลอัป'], ['fanfare', '🎺 ฟันแฟร์'], ['magic', '✨ เวทมนตร์'], ['pop', '🫧 ป๊อป'], ['whoosh', '💨 วู้ช'], ['drum', '🥁 ตึ่งโป๊ะ'], ['boing', '🌀 ดึ๋ง'], ['heart', '💗 หัวใจ'], ['applause', '👏 ปรบมือ'], ['alarm', '🚨 ไซเรน']];
@@ -91,6 +93,7 @@ function toDraft(r: Rule): Draft {
     count: String(r.action.count ?? 12),
     effect: r.action.effect ?? 'butterflies',
     animal: r.action.animal ?? 'catdance',
+    prank: r.action.prank ?? 'tomato',
     style: r.action.style ?? '01',
     move: r.action.move ?? 'dance',
     repeat: String(r.action.repeat ?? 1),
@@ -120,6 +123,7 @@ function toBody(d: Draft) {
   if (d.type === 'mascot') action.move = d.move;
   if (d.type === 'glove') action.count = Math.max(1, Math.min(5, Number(d.count) || 1));
   if (d.type === 'effect' && d.effect === 'animal') { action.effect = 'animal'; action.animal = d.animal; }
+  else if (d.type === 'effect' && d.effect === 'prank') { action.effect = 'prank'; action.prank = d.prank; }
   else if (d.type === 'effect' && (d.effect === 'chest' || d.effect === 'bag')) { action.effect = d.effect; action.style = d.style; }
   else if (d.type === 'effect') { action.tint = d.tint; action.effect = d.effect; action.count = Math.max(1, Math.min(30, Number(d.count) || 12)); }
   if (d.text.trim()) action.text = d.text.trim();
@@ -140,7 +144,7 @@ function describe(r: Rule, t: typeof translate): string {
   if ((tr.event === 'chest' || tr.event === 'superfanbox') && tr.minDiamonds) s += ` ≥ ${tr.minDiamonds} 💎`;
   if (tr.event === 'join') s += `${tr.joinWho === 'follower' ? t(' (คนที่ติดตามแล้ว)') : tr.joinWho === 'fan' ? t(' (แฟนคลับ)') : ''}${tr.joinOnce !== false ? t(' · ครั้งเดียวต่อคน') : ''} · ${t('เว้น {n} วิ', { n: tr.cooldownSec ?? 10 })}`;
   if (tr.event === 'pk') s += ` ${t(PK_LABELS[tr.pk ?? ''] ?? '')}${tr.pkSide === 'us' ? t(' (ให้เรา)') : tr.pkSide === 'them' ? t(' (ใส่คู่แข่ง)') : ''}`;
-  return `${s} → ${t(ACTION_LABELS[r.action.type])}${r.action.type === 'tarot' ? ` ${t('{n} ใบ', { n: r.action.cards ?? 1 })}` : ''}${r.action.type === 'effect' ? ` ${t(effectLabel(r.action.effect, r.action.animal))}` : ''}${r.action.text ? ` “${r.action.text}”` : ''}`;
+  return `${s} → ${t(ACTION_LABELS[r.action.type])}${r.action.type === 'tarot' ? ` ${t('{n} ใบ', { n: r.action.cards ?? 1 })}` : ''}${r.action.type === 'effect' ? ` ${t(effectLabel(r.action.effect, r.action.animal, r.action.prank))}` : ''}${r.action.text ? ` “${r.action.text}”` : ''}`;
 }
 
 
@@ -310,6 +314,7 @@ function ActionsInner() {
   const [tplGroupSel, setTplGroup] = useState<TemplateGroup>('fx');
   const tplGroup = tplGroups.some(([g]) => g === tplGroupSel) ? tplGroupSel : tplGroups[0]?.[0] ?? 'fx';
   const tplShown = tplVisible.filter((tp) => tp.group === tplGroup);
+  const tplCat = tplGroup === 'prank' ? 'fun' : tplGroup; // แกล้งวีเจเล่นในหมวด fun ของ fx.html (ลิงก์ ?only=fun เดียวกับสนุก ๆ)
   // เมนู ⚔️ PK Battle (/dashboard/actions/?pk=1): โชว์เฉพาะกฎ/เทมเพลต PK
   const sp = useSearchParams(), path = usePathname();
   const pkMode = path.includes('/dashboard/pk') || sp.get('pk') === '1'; // เปลี่ยนเมนู Actions ↔ PK แล้วหน้าเปลี่ยนตามทันที (เดิมอ่านครั้งเดียวตอนเปิด → กดจากหน้า Actions แล้วค้าง)
@@ -483,6 +488,19 @@ function ActionsInner() {
                   </Select>
                 </Field>
               )}
+              {draft.type === 'effect' && draft.effect === 'prank' && (
+                <Field label={t('เลือกมุกแกล้ง')} hint={t('เล่นสั้น ๆ 2–4 วิ มีเสียงในตัว · ข้อความประกอบขึ้นด้านบน · ดูตัวอย่างได้ที่เทมเพลต “😈 แกล้ง”')}>
+                  <div role="radiogroup" className="grid max-h-64 grid-cols-5 gap-1.5 overflow-y-auto sm:grid-cols-6">
+                    {PRANKS.map(([k, l]) => (
+                      <button key={k} type="button" role="radio" aria-checked={draft.prank === k} title={t(l)} onClick={() => set('prank', k)}
+                        className={`flex aspect-square items-center justify-center rounded-xl border-2 p-0.5 transition ${draft.prank === k ? 'border-pink-400 bg-pink-50 shadow-sm' : 'border-transparent bg-black/[.03] hover:bg-pink-50/60'}`}>
+                        <img src={`/fxthumbs/prank-${k}.webp`} alt={t(l)} width={96} height={96} loading="lazy" decoding="async" className="size-full object-contain" />
+                      </button>
+                    ))}
+                  </div>
+                  <p className="mt-1 text-xs text-muted">{t(prankLabel(draft.prank))}</p>
+                </Field>
+              )}
               {draft.type === 'effect' && (draft.effect === 'chest' || draft.effect === 'bag') && (
                 <Field label={t(draft.effect === 'bag' ? 'แบบถุงซูเปอร์แฟน' : 'แบบกล่องสมบัติ')} hint={t(draft.effect === 'bag' ? 'หล่นลงกลางล่างจอ สั่นลุ้น แล้วเด้งเปิด (~6 วิ) · ข้อความว่าง = “💜 {user} ส่งถุงซูเปอร์แฟน”' : 'หล่นลงกลางล่างจอ สั่นลุ้น แล้วเด้งเปิด (~6 วิ) · ข้อความว่าง = “🎁 {user} ส่งกล่องสมบัติ 💎{diamonds}”')}>
                   <div role="radiogroup" className="grid grid-cols-5 gap-1.5">
@@ -496,7 +514,7 @@ function ActionsInner() {
                   <p className="mt-1 text-xs text-muted">{t(CHEST_STYLES.find(([k]) => k === draft.style)?.[1] ?? CHEST_STYLES[0][1])}</p>
                 </Field>
               )}
-              {draft.type === 'effect' && draft.effect !== 'coins' && draft.effect !== 'animal' && draft.effect !== 'chest' && draft.effect !== 'bag' && !draft.effect.startsWith('v') && (
+              {draft.type === 'effect' && draft.effect !== 'coins' && draft.effect !== 'animal' && draft.effect !== 'prank' && draft.effect !== 'chest' && draft.effect !== 'bag' && !draft.effect.startsWith('v') && (
                 <Field label={t(draft.effect === 'butterflies' ? 'สีผีเสื้อ' : 'โทนสี')}>
                   <Select value={draft.tint} onChange={(e) => set('tint', e.target.value as Draft['tint'])}>
                     <option value="pink">{t('🩷 ชมพู (ค่าเริ่มต้น)')}</option><option value="purple">{t('💜 ม่วง')}</option><option value="blue">{t('💙 ฟ้า')}</option>
@@ -504,7 +522,7 @@ function ActionsInner() {
                   </Select>
                 </Field>
               )}
-              {draft.type === 'effect' && draft.effect !== 'animal' && draft.effect !== 'chest' && draft.effect !== 'bag' && !draft.effect.startsWith('v') && (
+              {draft.type === 'effect' && draft.effect !== 'animal' && draft.effect !== 'prank' && draft.effect !== 'chest' && draft.effect !== 'bag' && !draft.effect.startsWith('v') && (
                 <Field label={t(draft.effect === 'butterflies' ? 'จำนวนผีเสื้อ' : 'ความหนาแน่น')} hint={t(draft.effect === 'butterflies' ? '1–30 ตัว · ข้อความประกอบจะขึ้นเป็นหัวเรื่องกลางจอ' : '1–30 (มาก = อนุภาคเยอะขึ้น) · ข้อความประกอบจะขึ้นเป็นหัวเรื่องกลางจอ')}>
                   <Input type="text" inputMode="numeric" value={draft.count} onChange={(e) => set('count', toDigits(e.target.value))} />
                 </Field>
@@ -650,18 +668,18 @@ function ActionsInner() {
                   </div>
                 </div>
               )}
-              {fxUrl && ['fx', 'tarot', 'thanks', 'fun'].includes(tplGroup) && (
+              {fxUrl && ['fx', 'tarot', 'thanks', 'fun'].includes(tplCat) && (
                 <div className="mb-4 rounded-xl border border-dashed border-line bg-canvas/60 p-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <div className="min-w-0 flex-1 text-sm">
                       <span className="font-medium">{t('🔗 ลิงก์เฉพาะหมวดนี้')}</span>
                       <span className="block text-xs text-muted">{t('ไม่บังคับ — ใช้เมื่ออยากวางหมวดนี้แยกตำแหน่ง/ขนาดเอง (เช่น ไพ่ไว้มุมจอ) ถ้าใช้ลิงก์ FX ลิงก์เดียวก็ไม่ต้องทำอะไร')}</span>
-                      <code className="mt-1.5 block break-all select-all rounded-lg bg-white px-3 py-1.5 text-xs text-muted">{`${fxUrl}&only=${tplGroup}`}</code>
+                      <code className="mt-1.5 block break-all select-all rounded-lg bg-white px-3 py-1.5 text-xs text-muted">{`${fxUrl}&only=${tplCat}`}</code>
                     </div>
-                    <Button variant="secondary" onClick={() => copyCat(tplGroup)}>{catCopied === tplGroup ? <><Check className="size-4 text-mint" /> {t('คัดลอกแล้ว')}</> : <><Copy className="size-4" /> {t('คัดลอกลิงก์หมวดนี้')}</>}</Button>
+                    <Button variant="secondary" onClick={() => copyCat(tplCat)}>{catCopied === tplCat ? <><Check className="size-4 text-mint" /> {t('คัดลอกแล้ว')}</> : <><Copy className="size-4" /> {t('คัดลอกลิงก์หมวดนี้')}</>}</Button>
                   </div>
                   <label className="mt-2 flex cursor-pointer items-start gap-2 text-xs text-muted">
-                    <input type="checkbox" className="mt-0.5 accent-pink" checked={split.includes(tplGroup)} onChange={() => void toggleSplit(tplGroup)} />
+                    <input type="checkbox" className="mt-0.5 accent-pink" checked={split.includes(tplCat)} onChange={() => void toggleSplit(tplCat)} />
                     <span>{t('ลิงก์ FX หลักไม่ต้องเล่นหมวดนี้ (ติ๊กหลังจากวางลิงก์หมวดนี้ในโปรแกรมไลฟ์แล้ว ไม่งั้นหมวดนี้จะไม่ขึ้นจอ)')}</span>
                   </label>
                 </div>

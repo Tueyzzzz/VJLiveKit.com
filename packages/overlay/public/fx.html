@@ -729,6 +729,31 @@
       'real-puppywave':{real:1,n:12,fd:125,sw:.7,ws:.004}, 'real-raccoon':{real:1,n:12,fd:115,sw:.6,ws:.004},
       'real-redpanda':{real:1,n:12,fd:130,sw:.7,ws:.004}, 'real-shibatilt':{real:1,n:12,fd:135,sw:.6,ws:.004},
     };
+    // 🔊 เสียงสัตว์จริง (CC0/สาธารณสมบัติ · ที่มา fx/sfx-animals/LICENSES.md) — หลายตัวใช้ไฟล์เดียวกันได้
+    const ANIMAL_SND={
+      catshake:'kitten-mew', catdance:'kitten-mew', catpunch:'kitten-mew', catshock:'cat-hiss',
+      dogshake:'small-bark', dogdance:'small-bark', dogspin:'small-bark', dogwag:'dog-bark', corgiwiggle:'small-bark',
+      bunnyhop:'bunny-squeak', pandawave:'panda-bleat', hamsterspin:'hamster-squeak', penguinslide:'penguin',
+      capybara:'cavy-wheek', duckwalk:'duck-quack', frogjump:'frog-croak', bearhug:'bear-growl', owlblink:'owl-hoot',
+      pigdance:'pig-oink', foxtail:'fox-yip',
+      'real-budgie':'budgie-chirp', 'real-bunny':'bunny-squeak', 'real-capybara':'cavy-wheek', 'real-catshake':'kitten-meow',
+      'real-catstretch':'kitten-meow', 'real-corgiwiggle':'small-bark', 'real-foxyawn':'fox-yip', 'real-hamster':'hamster-squeak',
+      'real-hedgehog':'hedgehog-huff', 'real-kittenswat':'kitten-meow', 'real-lamb':'lamb-baa', 'real-owl':'owl-hoot',
+      'real-panda':'panda-bleat', 'real-penguin':'penguin', 'real-puppywave':'dog-bark', 'real-raccoon':'raccoon-chitter',
+      'real-redpanda':'red-panda', 'real-shibatilt':'puppy-whine',
+    };
+    const sndCache={};
+    function animalSnd(name){ // โหลดล่วงหน้า (ครั้งแรกที่สัตว์ตัวนั้นถูกเรียก) · โหลดไม่ได้ = null → เหลือแค่เสียงป๊อปเดิม
+      const f=ANIMAL_SND[name]; if(!f) return null;
+      if(!sndCache[f]){ const au=new Audio('fx/sfx-animals/'+f+'.mp3'+(window.VJL_VERSION?'?v='+window.VJL_VERSION:'')); au.preload='auto';
+        au.onerror=()=>{ sndCache[f].bad=true; }; try{ au.load(); }catch(e){} sndCache[f]={au,bad:false}; }
+      return sndCache[f].bad?null:sndCache[f].au;
+    }
+    function playAnimalSnd(name,vol){
+      const base=animalSnd(name); if(!base||vol<=0) return;
+      try{ const au=base.cloneNode(); au.volume=Math.max(0,Math.min(1,vol)); // HTMLAudio รับได้แค่ 0..1
+        const p=au.play(); if(p&&p.catch) p.catch((e)=>{ if(e&&e.name==='NotAllowedError'&&!audioArmed) armBtn.style.display='block'; }); }catch(e){}
+    }
     const animCache={};
     function animalFrames(name){
       if(animCache[name]) return animCache[name];
@@ -748,6 +773,7 @@
     function animal(a,ev){
       const name=ANIMALS[a.animal]?a.animal:'catdance', cfg=ANIMALS[name];
       const slot=animLive++; // ตัวที่ซ้อนกันอยู่ → ขยับไปซ้าย/ขวาสลับกัน
+      animalSnd(name); // เริ่มโหลดเสียงพร้อมกับโหลดเฟรม
       animalFrames(name).then((fr)=>runAnimal(a,ev,name,cfg,fr,slot)).catch(()=>{ animLive--; particles({...a,effect:'hearts'},ev); });
     }
     function runAnimal(a,ev,name,cfg,fr,slot){
@@ -768,6 +794,7 @@
         if(capEl) capEl.style.top=(by-h*(1.14+(cfg.bo||0)))+'px', capEl.style.left=bx+'px'; };
       size(); addEventListener('resize',size);
       if(window.VJLSfx){ try{ VJLSfx.play('pop',(a.volume==null?1:a.volume)*.7); }catch(e){} }
+      if(window.__animalHold==null) setTimeout(()=>playAnimalSnd(name,a.volume==null?1:a.volume),ENTER*.4); // เสียงสัตว์จริงตามหลังป๊อปนิดนึง (ตอนตัวเด้งขึ้นมา)
       const t0=performance.now();
       const XF=cfg.xf||(R?.4:.45); // สัดส่วนช่วงซ้อนภาพของแต่ละเฟรม
       function draw(now){

@@ -30,8 +30,9 @@ export interface RuleAction {
   color?: string;
   /** เอฟเฟกต์เต็มจอ (type=effect) — ผีเสื้อ + อนุภาค 10 แบบ (ซากุระ หัวใจ เหรียญ ดาว หิมะ ฟองสบู่ ลูกโป่ง กลีบกุหลาบ หิ่งห้อย คอนเฟตติ) */
   effect?: 'butterflies' | 'sakura' | 'hearts' | 'coins' | 'stars' | 'snow' | 'bubbles' | 'balloons' | 'roses' | 'fireflies' | 'confetti' | 'vcake' | 'vcat' | 'vchicks' | 'animal' | 'chest' | 'bag';
-  /** effect=animal: ตัวสัตว์น่ารัก (สไปรต์ 6 เฟรม overlay/public/fx/animals/<ชื่อ>/) */
-  animal?: 'catshake' | 'dogshake' | 'catdance' | 'dogdance' | 'bunnyhop' | 'pandawave' | 'hamsterspin' | 'penguinslide' | 'capybara' | 'duckwalk' | 'frogjump' | 'bearhug' | 'catpunch' | 'dogspin' | 'catshock' | 'dogwag' | 'owlblink' | 'pigdance' | 'foxtail' | 'corgiwiggle';
+  /** effect=animal: ตัวสัตว์น่ารัก (สไปรต์ overlay/public/fx/animals/<ชื่อ>/ · การ์ตูน 6 เฟรม · real-* = ภาพถ่ายสัตว์จริง 12 เฟรม) */
+  animal?: 'catshake' | 'dogshake' | 'catdance' | 'dogdance' | 'bunnyhop' | 'pandawave' | 'hamsterspin' | 'penguinslide' | 'capybara' | 'duckwalk' | 'frogjump' | 'bearhug' | 'catpunch' | 'dogspin' | 'catshock' | 'dogwag' | 'owlblink' | 'pigdance' | 'foxtail' | 'corgiwiggle'
+    | 'real-budgie' | 'real-bunny' | 'real-capybara' | 'real-catshake' | 'real-catstretch' | 'real-corgiwiggle' | 'real-foxyawn' | 'real-hamster' | 'real-hedgehog' | 'real-kittenswat' | 'real-lamb' | 'real-owl' | 'real-panda' | 'real-penguin' | 'real-puppywave' | 'real-raccoon' | 'real-redpanda' | 'real-shibatilt';
   /** effect=chest|bag: แบบกล่องสมบัติ/ถุงซูเปอร์แฟน '01'..'10' (overlay/public/js/chestfx.js) */
   style?: string;
   /** สีผีเสื้อ (ค่าเริ่มต้น ชมพูสีเดียว) */

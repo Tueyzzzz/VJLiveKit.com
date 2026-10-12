@@ -68,9 +68,13 @@ const HOOK = `(() => { let o; Object.defineProperty(window, 'Overlay', { configu
   try { Object.defineProperty(v, 'connected', { configurable: true, get: () => true, set() {} }); } catch (e) {}
   const on = v.on.bind(v); window.__h = []; v.on = (k, fn) => { if (k === 'action') window.__h.push(fn); return on(k, fn); }; } }); })();`;
 
-// 🐾 สัตว์น่ารัก: ภาพนิ่ง = เฟรมที่น่ารักที่สุด (ลำดับ 0–5) · ลูปอัด = 2 รอบท่าพอดี (ท่าวนเป๊ะ → ต่อปลาย-ต้นไม่สะดุด)
+// 🐾 สัตว์น่ารัก: ภาพนิ่ง = เฟรมที่น่ารักที่สุด (ลำดับ 0–5 · สัตว์จริง 0–11) · ลูปอัด = 2 รอบท่าพอดี (ท่าวนเป๊ะ → ต่อปลาย-ต้นไม่สะดุด)
 const ANIMAL_POSTER = { catshake: 1, dogshake: 1, catdance: 3, dogdance: 3, bunnyhop: 2, pandawave: 3, hamsterspin: 0, penguinslide: 2, capybara: 1, duckwalk: 4,
-  frogjump: 3, bearhug: 5, catpunch: 1, dogspin: 2, catshock: 3, dogwag: 5, owlblink: 2, pigdance: 3, foxtail: 1, corgiwiggle: 2 };
+  frogjump: 3, bearhug: 5, catpunch: 1, dogspin: 2, catshock: 3, dogwag: 5, owlblink: 2, pigdance: 3, foxtail: 1, corgiwiggle: 2,
+  // 🐾 สัตว์จริง 12 เฟรม (catstretch 10)
+  'real-budgie': 4, 'real-bunny': 0, 'real-capybara': 0, 'real-catshake': 0, 'real-catstretch': 0, 'real-corgiwiggle': 0, 'real-foxyawn': 3,
+  'real-hamster': 0, 'real-hedgehog': 0, 'real-kittenswat': 1, 'real-lamb': 3, 'real-owl': 0, 'real-panda': 2, 'real-penguin': 2,
+  'real-puppywave': 4, 'real-raccoon': 0, 'real-redpanda': 3, 'real-shibatilt': 1 };
 const evalv = async (S, expression) => (await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }, S)).result?.result?.value;
 
 const toRaw = (jpg) => sharp(jpg).resize(OW, OH, { kernel: 'lanczos3' }).removeAlpha().raw().toBuffer();
@@ -95,8 +99,9 @@ for (const tp of list) {
   await sleep(a.type === 'mascot' ? 1500 : 300);
   if (pl.animal) { // โหลดเฟรมไว้ก่อน → เริ่มเล่นทันทีที่สั่ง · ภาพนิ่ง = เฟรมเต็ม ๆ หลังวนครบ 1 รอบ
     const cyc = (await evalv(S, `window.__animalCycle(${JSON.stringify(pl.animal)})`)) / 1000;
+    const nfr = (await evalv(S, `window.__animalCount ? window.__animalCount(${JSON.stringify(pl.animal)}) : 6`)) || 6; // การ์ตูน 6 · สัตว์จริง 12
     await evalv(S, `window.__animalPreload(${JSON.stringify(pl.animal)})`);
-    loop = 2 * cyc; pl.holdMs = Math.round((2 * cyc + ((ANIMAL_POSTER[pl.animal] ?? 0) + 0.25) * (cyc / 6)) * 1000); // กลางช่วงเฟรมนิ่ง (ไม่ติดช่วงซ้อนภาพ)
+    loop = 2 * cyc; pl.holdMs = Math.round((2 * cyc + ((ANIMAL_POSTER[pl.animal] ?? 0) + 0.25) * (cyc / nfr)) * 1000); // กลางช่วงเฟรมนิ่ง (ไม่ติดช่วงซ้อนภาพ)
   }
 
   // screencast: เก็บทุกเฟรมพร้อมเวลา (วินาที) นับจากตอนสั่งเล่น
@@ -127,6 +132,7 @@ for (const tp of list) {
   // เลือกเฟรมล่าสุด ณ เวลา t (หน้านิ่ง = ไม่มีเฟรมใหม่ → ใช้เฟรมเดิม)
   const at = (t) => { let f = frames[0]; for (const x of frames) { if (x.t <= t) f = x; else break; } return Buffer.from(f.data, 'base64'); };
   const N = Math.round(loop * FPS), F = Math.round(XF * FPS), cache = new Map();
+  const HQ = String(pl.animal ?? '').startsWith('real-'); // สัตว์จริง = ภาพถ่ายขนละเอียด → webp คุณภาพสูง (q≥90) ไม่งั้นขนเละ
   const raw = async (t) => { const k = Math.round(t * 1000); if (!cache.has(k)) cache.set(k, await toRaw(at(t))); return cache.get(k); };
   const out = [];
   for (let k = 0; k < N; k++) {
@@ -138,8 +144,8 @@ for (const tp of list) {
     out.push(mix);
   }
   const anim = await sharp(Buffer.concat(out), { raw: { width: OW, height: OH * N, channels: 3, pageHeight: OH } })
-    .webp({ quality: 58, effort: 6, loop: 0, delay: Array(N).fill(Math.round(1000 / FPS)), smartSubsample: true, minSize: true, mixed: true }).toBuffer();
-  const poster = await sharp(still ?? at(pl.poster)).resize(OW, OH, { kernel: 'lanczos3' }).webp({ quality: 72, effort: 6 }).toBuffer();
+    .webp({ quality: HQ ? 90 : 58, effort: 6, loop: 0, delay: Array(N).fill(Math.round(1000 / FPS)), smartSubsample: true, minSize: true, mixed: true }).toBuffer();
+  const poster = await sharp(still ?? at(pl.poster)).resize(OW, OH, { kernel: 'lanczos3' }).webp({ quality: HQ ? 92 : 72, effort: 6 }).toBuffer();
   writeFileSync(new URL(`${tp.id}.anim.webp`, OUT), anim);
   writeFileSync(new URL(`${tp.id}.webp`, OUT), poster);
   console.log(tp.id, `${frames.length} เฟรมดิบ → ${N} เฟรม`, Math.round(anim.length / 1024) + 'KB anim', Math.round(poster.length / 1024) + 'KB poster');

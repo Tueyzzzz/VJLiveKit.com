@@ -121,7 +121,8 @@ export type ActionType = 'sound' | 'image' | 'video' | 'text' | 'tarot' | 'effec
 export type TarotTopic = 'general' | 'love' | 'self' | 'money' | 'daily';
 export type TarotDeck = 'full' | 'major' | 'wands' | 'cups' | 'swords' | 'pentacles' | 'lakshmi';
 /** สัตว์น่ารัก (effect=animal) — ต้องตรงกับ ANIMALS ใน overlay/public/fx.html + zod ฝั่งเซิร์ฟเวอร์ */
-export type AnimalName = 'catshake' | 'dogshake' | 'catdance' | 'dogdance' | 'bunnyhop' | 'pandawave' | 'hamsterspin' | 'penguinslide' | 'capybara' | 'duckwalk' | 'frogjump' | 'bearhug' | 'catpunch' | 'dogspin' | 'catshock' | 'dogwag' | 'owlblink' | 'pigdance' | 'foxtail' | 'corgiwiggle';
+export type AnimalName = 'catshake' | 'dogshake' | 'catdance' | 'dogdance' | 'bunnyhop' | 'pandawave' | 'hamsterspin' | 'penguinslide' | 'capybara' | 'duckwalk' | 'frogjump' | 'bearhug' | 'catpunch' | 'dogspin' | 'catshock' | 'dogwag' | 'owlblink' | 'pigdance' | 'foxtail' | 'corgiwiggle'
+  | 'real-budgie' | 'real-bunny' | 'real-capybara' | 'real-catshake' | 'real-catstretch' | 'real-corgiwiggle' | 'real-foxyawn' | 'real-hamster' | 'real-hedgehog' | 'real-kittenswat' | 'real-lamb' | 'real-owl' | 'real-panda' | 'real-penguin' | 'real-puppywave' | 'real-raccoon' | 'real-redpanda' | 'real-shibatilt';
 export interface Rule {
   id: string;
   name: string;

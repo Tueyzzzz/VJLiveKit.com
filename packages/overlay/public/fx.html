@@ -698,10 +698,11 @@
       }, k*1100);
     }
 
-    // 🐾 สัตว์น่ารัก (effect=animal): สไปรต์ 6 เฟรม fx/animals/<ชื่อ>/0..5.webp (ตัดจากชีต + จัดเท้าให้ตรงกันแล้ว)
+    // 🐾 สัตว์น่ารัก (effect=animal): สไปรต์ N เฟรม fx/animals/<ชื่อ>/0..N-1.webp (ตัดจากชีต + จัดเท้าให้ตรงกันแล้ว) · การ์ตูน 6 เฟรม / สัตว์จริง (real-*) 12 เฟรม
     // เล่นแบบเนียน: crossfade เฟรมติดกัน (ซ้อน ~45%) + ท่าทางเสริมแบบคำนวณ (หายใจ ยืด-ยุบ เด้ง โยก) ผูกกับเฟส 6 เฟรม → วนลูปต่อเนื่อง
     // เข้า = เด้งขยายจาก 0.6 · ออก = จาง+ย่อ · ทุกอย่างคิดตามเวลา (rAF + dt) ไม่ใช่ตามจำนวนเฟรม
     // z = ขยายเพิ่ม (ชีตที่มีท่ากระโดดสูง ตัวจะเล็กกว่าตัวอื่น) · fd = ms ต่อเฟรม · sw = องศาโยก (nS รอบ/ลูป) · bo = เด้ง (สัดส่วนความสูง, nB ครั้ง/ลูป) · dx = เดินซ้าย-ขวา (สัดส่วนความสูง) · sq = ยืด-ยุบตอนแตะพื้น
+    // n = จำนวนเฟรม (ค่าเริ่มต้น 6) · xf = สัดส่วนซ้อนภาพ · real = ภาพถ่ายสัตว์จริง → ขยับแบบเนียนสมจริง (ถ่ายน้ำหนักเบา ๆ ไม่ยืด-ยุบ/ไม่เด้ง) · ws = ถ่ายน้ำหนักซ้าย-ขวา (สัดส่วนความสูง) · sh = เงาเสริมใต้เท้า (สัดส่วน · ภาพจริงมีเงาในตัวแล้ว)
     const ANIMALS={
       catshake:{fd:210,sw:2.5,nS:2,bo:0,nB:2,sq:.02}, dogshake:{fd:210,sw:2.5,nS:2,bo:0,nB:2,sq:.02},
       catdance:{fd:230,sw:5,nS:3,bo:.03,nB:3,sq:.05}, dogdance:{fd:230,sw:5,nS:3,bo:.03,nB:3,sq:.05}, pigdance:{fd:230,sw:5,nS:3,bo:.03,nB:3,sq:.05},
@@ -712,12 +713,23 @@
       catpunch:{fd:190,sw:1.5,nS:3,bo:.02,nB:3,sq:.04}, catshock:{z:1.08,fd:240,sw:1,nS:2,bo:.015,nB:2,sq:.03},
       dogwag:{fd:200,sw:3,nS:3,bo:.02,nB:3,sq:.04}, owlblink:{fd:260,sw:2,nS:1,bo:.008,nB:2,sq:.02},
       foxtail:{fd:240,sw:2.5,nS:1,bo:.01,nB:2,sq:.02}, corgiwiggle:{fd:200,sw:4,nS:3,bo:.015,nB:3,sq:.04},
+      // 🐾 สัตว์จริง 12 เฟรม (ตัดจาก docs/real ด้วย overlay/scripts/slice-real-animals.py)
+      'real-budgie':{real:1,n:12,fd:120,sw:.4,ws:0,sh:0}, 'real-owl':{real:1,n:12,fd:140,sw:.3,ws:0,sh:0},
+      'real-bunny':{real:1,n:12,fd:130,sw:.6,ws:.004}, 'real-capybara':{real:1,n:12,fd:135,sw:.5,ws:.003},
+      'real-catshake':{real:1,n:12,fd:115,sw:.6,ws:.004}, 'real-catstretch':{real:1,n:10,fd:140,sw:.4,ws:.003},
+      'real-corgiwiggle':{real:1,n:12,fd:110,sw:1.2,ws:.008}, 'real-foxyawn':{real:1,n:12,fd:140,sw:.5,ws:.003},
+      'real-hamster':{real:1,n:12,fd:115,sw:.6,ws:.004}, 'real-hedgehog':{real:1,n:12,fd:130,sw:.6,ws:.004},
+      'real-kittenswat':{real:1,n:12,fd:115,sw:.8,ws:.003,sh:0}, 'real-lamb':{real:1,n:12,fd:120,sw:.5,ws:.003},
+      'real-panda':{real:1,n:12,fd:125,sw:.9,ws:.005}, 'real-penguin':{real:1,n:12,fd:120,sw:1.4,ws:.007},
+      'real-puppywave':{real:1,n:12,fd:125,sw:.7,ws:.004}, 'real-raccoon':{real:1,n:12,fd:115,sw:.6,ws:.004},
+      'real-redpanda':{real:1,n:12,fd:130,sw:.7,ws:.004}, 'real-shibatilt':{real:1,n:12,fd:135,sw:.6,ws:.004},
     };
     const animCache={};
     function animalFrames(name){
       if(animCache[name]) return animCache[name];
       const v=window.VJL_VERSION?'?v='+window.VJL_VERSION:'';
-      return animCache[name]=Promise.all([0,1,2,3,4,5].map((i)=>new Promise((ok,no)=>{ const im=new Image(); im.decoding='async'; im.onload=()=>(im.decode?im.decode().catch(()=>{}):Promise.resolve()).then(()=>ok(im)); im.onerror=no; im.src='fx/animals/'+name+'/'+i+'.webp'+v; })))
+      const n=(ANIMALS[name]&&ANIMALS[name].n)||6;
+      return animCache[name]=Promise.all(Array.from({length:n},(_,i)=>i).map((i)=>new Promise((ok,no)=>{ const im=new Image(); im.decoding='async'; im.onload=()=>(im.decode?im.decode().catch(()=>{}):Promise.resolve()).then(()=>ok(im)); im.onerror=no; im.src='fx/animals/'+name+'/'+i+'.webp'+v; })))
         .catch((e)=>{ delete animCache[name]; throw e; });
     }
     const animStyle=document.createElement('style'); animStyle.textContent=
@@ -734,7 +746,7 @@
       animalFrames(name).then((fr)=>runAnimal(a,ev,name,cfg,fr,slot)).catch(()=>{ animLive--; particles({...a,effect:'hearts'},ev); });
     }
     function runAnimal(a,ev,name,cfg,fr,slot){
-      const cyc=cfg.fd*6, ENTER=520, EXIT=480;
+      const N=fr.length, R=!!cfg.real, cyc=cfg.fd*N, ENTER=R?600:520, EXIT=480;
       const loops=Math.max(2,Math.min(8,Math.round(((a.durationMs||5000)-ENTER-EXIT)/cyc)));
       const total=ENTER+loops*cyc+EXIT;
       const cv=document.createElement('canvas'); cv.className='anim'; document.body.appendChild(cv);
@@ -752,35 +764,43 @@
       size(); addEventListener('resize',size);
       if(window.VJLSfx){ try{ VJLSfx.play('pop',(a.volume==null?1:a.volume)*.7); }catch(e){} }
       const t0=performance.now();
-      const XF=.45; // สัดส่วนช่วงซ้อนภาพของแต่ละเฟรม
+      const XF=cfg.xf||(R?.4:.45); // สัดส่วนช่วงซ้อนภาพของแต่ละเฟรม
       function draw(now){
         const t=window.__animalHold!=null?window.__animalHold:now-t0; // __animalHold = หยุดเวลาไว้ (อัดภาพนิ่งตัวอย่างเทมเพลต)
         if(t>=total){ cv.remove(); if(capEl) capEl.remove(); removeEventListener('resize',size); animLive=Math.max(0,animLive-1); return; }
         // ซองเข้า/ออก
         let s=1, al=1, lift=0;
-        if(t<ENTER){ const x=t/ENTER; s=.6+.4*easeOutBack(x); al=smooth(x*2.2); }
+        if(t<ENTER){ const x=t/ENTER; s=R?.86+.14*easeOutBack(x):.6+.4*easeOutBack(x); al=smooth(x*(R?1.8:2.2)); } // สัตว์จริง: โผล่นุ่ม ๆ ไม่เด้งแรง
         else if(t>total-EXIT){ const x=(t-(total-EXIT))/EXIT, e=easeInOut(x); s=1-.22*e; al=1-e; lift=e*.05; }
         // เฟรม + crossfade
-        const ft=(t%cyc)/cfg.fd, i=Math.floor(ft)%6, u=ft-Math.floor(ft), j=(i+1)%6;
+        const ft=(t%cyc)/cfg.fd, i=Math.floor(ft)%N, u=ft-Math.floor(ft), j=(i+1)%N;
         const k=u<1-XF?0:smooth((u-(1-XF))/XF);
         // ท่าทางเสริม ผูกกับเฟสลูป p (0..1) → ทุกอย่างวนตรงกันพอดี
         const p=(t%cyc)/cyc, TAU=Math.PI*2;
-        const rot=(cfg.sw||0)*Math.sin(TAU*p*cfg.nS)*Math.PI/180;
-        const hop=cfg.bo?(.5-.5*Math.cos(TAU*p*cfg.nB)):0; // 0 = พื้น · 1 = สูงสุด
-        const contact=cfg.bo?Math.pow(1-hop,6):0;            // ใกล้พื้น → ยุบ
-        const breathe=.012*Math.sin(TAU*p*2);
-        const sy=1+breathe-(cfg.sq||0)*contact+(cfg.sq||0)*.5*hop*hop, sx=1-breathe*.6+(cfg.sq||0)*contact*.8;
-        const dx=(cfg.dx||0)*h*Math.sin(TAU*p);
+        let rot, hop, sy, sx, dx;
+        if(R){ // สัตว์จริง: ถ่ายน้ำหนักซ้าย-ขวาช้า ๆ (เอียงรอบเท้า + เลื่อนนิดเดียว) + หายใจเบา ๆ — ไม่มียืด-ยุบ/เด้งแบบการ์ตูน
+          const sway=Math.sin(TAU*p), br=Math.sin(TAU*p*2+.6);
+          rot=(cfg.sw||0)*sway*Math.PI/180; hop=0; dx=(cfg.ws==null?.004:cfg.ws)*h*sway;
+          sy=1+.005*br; sx=1-.002*br;
+        }else{
+          rot=(cfg.sw||0)*Math.sin(TAU*p*cfg.nS)*Math.PI/180;
+          hop=cfg.bo?(.5-.5*Math.cos(TAU*p*cfg.nB)):0; // 0 = พื้น · 1 = สูงสุด
+          const contact=cfg.bo?Math.pow(1-hop,6):0;            // ใกล้พื้น → ยุบ
+          const breathe=.012*Math.sin(TAU*p*2);
+          sy=1+breathe-(cfg.sq||0)*contact+(cfg.sq||0)*.5*hop*hop; sx=1-breathe*.6+(cfg.sq||0)*contact*.8;
+          dx=(cfg.dx||0)*h*Math.sin(TAU*p);
+        }
         const pw=cv.width/dpr, ph=cv.height/dpr;
         g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,pw,ph);
         g.globalAlpha=1;
         // เงานุ่มใต้เท้า (เล็กลงตอนลอย)
         const gx=pw/2+dx, gy=ph-h*.08;
-        g.save(); g.globalAlpha=al*.22*(1-hop*.5); g.translate(gx,gy); g.scale(1,.18); g.beginPath(); g.arc(0,0,w*.32*s*(1-hop*.25),0,TAU);
-        const rg=g.createRadialGradient(0,0,0,0,0,w*.32*s); rg.addColorStop(0,'rgba(40,20,50,1)'); rg.addColorStop(1,'rgba(40,20,50,0)'); g.fillStyle=rg; g.fill(); g.restore();
+        const shA=cfg.sh==null?(R?.12:.22):cfg.sh*.22;
+        if(shA>0){ g.save(); g.globalAlpha=al*shA*(1-hop*.5); g.translate(gx,gy); g.scale(1,.18); g.beginPath(); g.arc(0,0,w*.32*s*(1-hop*.25),0,TAU);
+        const rg=g.createRadialGradient(0,0,0,0,0,w*.32*s); rg.addColorStop(0,'rgba(40,20,50,1)'); rg.addColorStop(1,'rgba(40,20,50,0)'); g.fillStyle=rg; g.fill(); g.restore(); }
         g.save();
         g.translate(gx,gy-hop*(cfg.bo||0)*h-lift*h); g.rotate(rot); g.scale(s*sx,s*sy);
-        g.imageSmoothingQuality='high';
+        g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high';
         // ภาพปัจจุบันเต็ม → ภาพถัดไปค่อย ๆ ซ้อนทับ แล้วภาพเดิมค่อยจาง (ไม่มีช่วงโปร่งใสวูบ)
         const aCur=al*(1-smooth((k-.5)/.5)), aNext=al*k;
         if(aCur>0.003){ g.globalAlpha=aCur; g.drawImage(fr[i],-w/2,-h,w,h); }
@@ -792,7 +812,7 @@
       }
       requestAnimationFrame(draw);
     }
-    if(Overlay.param('debug','0')==='1'){ window.__animalCycle=(n)=>ANIMALS[n]?ANIMALS[n].fd*6:0; window.__animalPreload=(n)=>animalFrames(n).then(()=>true); } // ใช้ตอนอัดตัวอย่างเทมเพลต
+    if(Overlay.param('debug','0')==='1'){ window.__animalCycle=(n)=>ANIMALS[n]?ANIMALS[n].fd*(ANIMALS[n].n||6):0; window.__animalCount=(n)=>ANIMALS[n]?(ANIMALS[n].n||6):0; window.__animalPreload=(n)=>animalFrames(n).then(()=>true); } // ใช้ตอนอัดตัวอย่างเทมเพลต
 
     function play(a,ev){
       if(a.type==='mascot') return; // ท่าของมาสคอต → วิดเจ็ตมาสคอตทำเอง

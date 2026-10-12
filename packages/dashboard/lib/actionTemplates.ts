@@ -2,12 +2,12 @@ import type { AnimalName, Rule } from './api';
 
 /** เทมเพลตยอดนิยม — กดครั้งเดียวสร้างกฎได้เลย (ไม่ต้องหาไฟล์เสียง/รูปเอง)
  *  id = ชื่อรูปตัวอย่างจริง /tpl/<id>.webp (อัดจากวิดเจ็ต FX ด้วย scripts/capture-templates.mjs) · group = หมวดในแถบเลือก */
-export type TemplateGroup = 'tarot' | 'fx' | 'thanks' | 'mascot' | 'fun';
+export type TemplateGroup = 'tarot' | 'fx' | 'thanks' | 'mascot' | 'fun' | 'real';
 export interface Template { id?: string; group?: TemplateGroup; icon: string; title: string; desc: string; rule: { name: string; trigger: Rule['trigger']; action: Rule['action'] } }
 
 /** หมวดเทมเพลต (เรียงตามแถบ) — แบบเดียวกับแถบสลับแบบสะสมของขวัญ */
 export const TEMPLATE_GROUPS: [TemplateGroup, string][] = [
-  ['fx', '🦋 เอฟเฟกต์เต็มจอ'], ['tarot', '🔮 ดูดวง & ไพ่'], ['thanks', '💖 ขอบคุณ & ป้ายไฟ'], ['mascot', '🧸 มาสคอต'], ['fun', '🥊 สนุก ๆ'],
+  ['fx', '🦋 เอฟเฟกต์เต็มจอ'], ['tarot', '🔮 ดูดวง & ไพ่'], ['thanks', '💖 ขอบคุณ & ป้ายไฟ'], ['mascot', '🧸 มาสคอต'], ['fun', '🥊 สนุก ๆ'], ['real', '🐾 สัตว์จริง'],
 ];
 
 /** เอฟเฟกต์เต็มจอ (action.type = effect) — ต้องตรงกับ PFX ใน overlay/public/fx.html + zod ฝั่งเซิร์ฟเวอร์ · [ค่า, ชื่อ, สีเริ่มต้น] */
@@ -32,6 +32,13 @@ export const ANIMALS: [AnimalName, string][] = [
   ['capybara', '🦫 คาปิบาราโยกหัว'], ['duckwalk', '🐥 เป็ดเดินเตาะแตะ'], ['frogjump', '🐸 กบกระโดด'], ['bearhug', '🐻 หมีกอด'],
   ['catpunch', '🐱 แมวชกลม'], ['dogspin', '🐶 ชิบะหมุนตัว'], ['catshock', '🙀 แมวตกใจ'], ['dogwag', '🐶 ชิบะกระดิกหาง'],
   ['owlblink', '🦉 นกฮูกกะพริบตา'], ['pigdance', '🐷 หมูน้อยเต้น'], ['foxtail', '🦊 จิ้งจอกสะบัดหาง'], ['corgiwiggle', '🐕 คอร์กี้ส่ายก้น'],
+  // 🐾 สัตว์จริง (ภาพถ่าย 12 เฟรม · fx/animals/real-<ชื่อ>/)
+  ['real-budgie', '🦜 นกหงส์หยกโยกหัว (สัตว์จริง)'], ['real-bunny', '🐰 กระต่ายขยับจมูก (สัตว์จริง)'], ['real-capybara', '🦫 คาปิบาราเคี้ยวตุ้ย (สัตว์จริง)'],
+  ['real-catshake', '🐱 ลูกแมวส่ายหัว (สัตว์จริง)'], ['real-catstretch', '🐈 ลูกแมวบิดขี้เกียจ (สัตว์จริง)'], ['real-corgiwiggle', '🐕 คอร์กี้ตัวจริงส่ายก้น (สัตว์จริง)'],
+  ['real-foxyawn', '🦊 จิ้งจอกหาว (สัตว์จริง)'], ['real-hamster', '🐹 แฮมสเตอร์แทะเมล็ด (สัตว์จริง)'], ['real-hedgehog', '🦔 เม่นแคระดมกลิ่น (สัตว์จริง)'],
+  ['real-kittenswat', '🐾 ลูกแมวนอนหงายตะปบ (สัตว์จริง)'], ['real-lamb', '🐑 ลูกแกะกระโดด (สัตว์จริง)'], ['real-owl', '🦉 นกฮูกหันคอ (สัตว์จริง)'],
+  ['real-panda', '🐼 ลูกแพนด้าโบกมือ (สัตว์จริง)'], ['real-penguin', '🐧 ลูกเพนกวินเดินเตาะแตะ (สัตว์จริง)'], ['real-puppywave', '🐶 ลูกโกลเด้นโบกมือ (สัตว์จริง)'],
+  ['real-raccoon', '🦝 แรคคูนถูมือ (สัตว์จริง)'], ['real-redpanda', '🦊 แพนด้าแดงชูแขน (สัตว์จริง)'], ['real-shibatilt', '🐕 ชิบะเอียงคอ (สัตว์จริง)'],
 ];
 export const animalLabel = (a?: string) => ANIMALS.find(([k]) => k === a)?.[1] ?? ANIMALS[2][1];
 export const effectLabel = (e?: string, animal?: string) => (e === 'animal' ? animalLabel(animal) : EFFECTS.find(([k]) => k === (e ?? 'butterflies'))?.[1] ?? EFFECTS[0][1]);
@@ -216,4 +223,41 @@ export const TEMPLATES: Template[] = [
     rule: { name: 'จิ้งจอกสะบัดหาง', trigger: { event: 'gift', giftName: 'Hand Hearts' }, action: { type: 'effect', effect: 'animal', animal: 'foxtail', text: '🦊 ขยิบตาให้ {user} 😉', durationMs: 5500 } } },
   { id: 'fun-corgiwiggle', group: 'fun', icon: '🍑', title: 'ได้ Corgi → คอร์กี้ส่ายก้น', desc: 'คอร์กี้หันก้นกลมส่ายดุ๊กดิ๊ก ฮาทั้งห้อง',
     rule: { name: 'คอร์กี้ส่ายก้น', trigger: { event: 'gift', giftName: 'Corgi' }, action: { type: 'effect', effect: 'animal', animal: 'corgiwiggle', text: '🐕 คอร์กี้ส่ายก้นให้ {user}!', durationMs: 5500 } } },
+  // 🐾 สัตว์จริง — ภาพถ่ายสัตว์จริง 12 เฟรม ขยับเนียนแบบธรรมชาติ (effect=animal · animal=real-<ชื่อ>)
+  { id: 'real-budgie', group: 'real', icon: '🦜', title: 'พิมพ์ “555” → นกหงส์หยกโยกหัว', desc: 'นกหงส์หยกตัวจริงเกาะกิ่ง โยกหัวขึ้นลงตามจังหวะหัวเราะ',
+    rule: { name: 'นกหงส์หยกโยกหัว', trigger: { event: 'chat', keyword: '555' }, action: { type: 'effect', effect: 'animal', animal: 'real-budgie', text: '🦜 {user} ขำจนนกโยกหัวตาม 555', durationMs: 6000 } } },
+  { id: 'real-bunny', group: 'real', icon: '🐰', title: 'ได้ Heart Me → กระต่ายขยับจมูก', desc: 'กระต่ายขาวขนฟูตัวจริง ขยับจมูกฟุดฟิด หูกระดิก',
+    rule: { name: 'กระต่ายขยับจมูก', trigger: { event: 'gift', giftName: 'Heart Me' }, action: { type: 'effect', effect: 'animal', animal: 'real-bunny', text: '🐰 {user} ส่งใจมา กระต่ายฟุดฟิดเลย 💗', durationMs: 6000 } } },
+  { id: 'real-capybara', group: 'real', icon: '🍊', title: 'ได้ Cake Slice → คาปิบาราเคี้ยวตุ้ย', desc: 'คาปิบาราตัวจริงส้มบนหัว เคี้ยวหงุบหงิบแบบชิลสุด ๆ',
+    rule: { name: 'คาปิบาราเคี้ยวตุ้ย', trigger: { event: 'gift', giftName: 'Cake Slice' }, action: { type: 'effect', effect: 'animal', animal: 'real-capybara', text: '🦫 อร่อยจัง ขอบคุณ {user} ที่เลี้ยงเค้ก', durationMs: 6000 } } },
+  { id: 'real-catshake', group: 'real', icon: '🙅', title: 'พิมพ์ “ไม่เอา” → ลูกแมวส่ายหัว', desc: 'ลูกแมวส้มตัวจริงส่ายหัวดุ๊กดิ๊ก “ไม่เอาาา”',
+    rule: { name: 'ลูกแมวส่ายหัว', trigger: { event: 'chat', keyword: 'ไม่เอา' }, action: { type: 'effect', effect: 'animal', animal: 'real-catshake', text: '🐱 {user} ไม่เอา… น้องแมวก็ไม่เอา!', durationMs: 6000 } } },
+  { id: 'real-catstretch', group: 'real', icon: '🙆', title: 'พิมพ์ “ยืดเส้น” → ลูกแมวบิดขี้เกียจ', desc: 'ลูกแมวเทาตัวจริงก้มยืดตัว หาวหวอด แล้วเลียปาก',
+    rule: { name: 'ลูกแมวบิดขี้เกียจ', trigger: { event: 'chat', keyword: 'ยืดเส้น' }, action: { type: 'effect', effect: 'animal', animal: 'real-catstretch', text: '🐈 ยืดเส้นยืดสายกับ {user} หน่อย~', durationMs: 6000 } } },
+  { id: 'real-corgiwiggle', group: 'real', icon: '🍑', title: 'ได้ Brown Paw → คอร์กี้ตัวจริงส่ายก้น', desc: 'คอร์กี้ตัวจริงหันมามองแล้วส่ายก้นกลมดุ๊กดิ๊ก',
+    rule: { name: 'คอร์กี้ตัวจริงส่ายก้น', trigger: { event: 'gift', giftName: 'Brown Paw' }, action: { type: 'effect', effect: 'animal', animal: 'real-corgiwiggle', text: '🐕 ก้นนี้ส่ายให้ {user} คนเดียว!', durationMs: 6000 } } },
+  { id: 'real-foxyawn', group: 'real', icon: '🥱', title: 'พิมพ์ “หาว” → ลูกจิ้งจอกหาว', desc: 'ลูกจิ้งจอกตัวจริงหาวปากกว้าง แล้วยิ้มหยีตา',
+    rule: { name: 'ลูกจิ้งจอกหาว', trigger: { event: 'chat', keyword: 'หาว' }, action: { type: 'effect', effect: 'animal', animal: 'real-foxyawn', text: '🦊 {user} หาวแล้ว จิ้งจอกก็หาวตาม~', durationMs: 6000 } } },
+  { id: 'real-hamster', group: 'real', icon: '🌻', title: 'พิมพ์ “หิว” → แฮมสเตอร์แทะเมล็ด', desc: 'แฮมสเตอร์แก้มป่องตัวจริงถือเมล็ดทานตะวันแทะกุบกิบ',
+    rule: { name: 'แฮมสเตอร์แทะเมล็ด', trigger: { event: 'chat', keyword: 'หิว' }, action: { type: 'effect', effect: 'animal', animal: 'real-hamster', text: '🐹 {user} หิวเหรอ แบ่งเมล็ดให้น้า', durationMs: 6000 } } },
+  { id: 'real-hedgehog', group: 'real', icon: '👃', title: 'ได้ Love in Scent → เม่นแคระดมกลิ่น', desc: 'เม่นแคระตัวจริงเชิดจมูกฟุดฟิด หันซ้ายขวาดมกลิ่นหอม',
+    rule: { name: 'เม่นแคระดมกลิ่น', trigger: { event: 'gift', giftName: 'Love in Scent' }, action: { type: 'effect', effect: 'animal', animal: 'real-hedgehog', text: '🦔 หอมจัง! ขอบคุณ {user}', durationMs: 6000 } } },
+  { id: 'real-kittenswat', group: 'real', icon: '🐾', title: 'พิมพ์ “แกล้ง” → ลูกแมวนอนหงายตะปบ', desc: 'ลูกแมวลายตัวจริงนอนหงายท้อง ตะปบมือเล่นซ้ายขวา',
+    rule: { name: 'ลูกแมวนอนหงายตะปบ', trigger: { event: 'chat', keyword: 'แกล้ง' }, action: { type: 'effect', effect: 'animal', animal: 'real-kittenswat', text: '🐾 {user} แกล้งน้องแมว โดนตะปบแน่!', durationMs: 6000 } } },
+  { id: 'real-lamb', group: 'real', icon: '🐑', title: 'มีคนแชร์ → ลูกแกะกระโดดดีใจ', desc: 'ลูกแกะขนปุยตัวจริงกระโดดดึ๋งสี่ขาลอย',
+    rule: { name: 'ลูกแกะกระโดดดีใจ', trigger: { event: 'share' }, action: { type: 'effect', effect: 'animal', animal: 'real-lamb', text: '🐑 ขอบคุณ {user} ที่แชร์ไลฟ์!', durationMs: 6000 } } },
+  { id: 'real-owl', group: 'real', icon: '🦉', title: 'พิมพ์ “ฮูก” → นกฮูกหันคอกะพริบตา', desc: 'นกฮูกหิมะตัวจริงเกาะกิ่ง หันคอซ้ายขวาแล้วหลับตาพริ้ม',
+    rule: { name: 'นกฮูกหันคอ', trigger: { event: 'chat', keyword: 'ฮูก' }, action: { type: 'effect', effect: 'animal', animal: 'real-owl', text: '🦉 ฮู้ก~ ใครเรียก {user} หรือเปล่า', durationMs: 6000 } } },
+  { id: 'real-panda', group: 'real', icon: '👋', title: 'พิมพ์ “หวัดดี” → ลูกแพนด้าโบกมือ', desc: 'ลูกแพนด้าตัวจริงนั่งโยกตัว โบกมือทักทายยิ้มแก้มปริ',
+    rule: { name: 'ลูกแพนด้าโบกมือ', trigger: { event: 'chat', keyword: 'หวัดดี' }, action: { type: 'effect', effect: 'animal', animal: 'real-panda', text: '🐼 หวัดดี {user}~ ยินดีต้อนรับ', durationMs: 6000 } } },
+  { id: 'real-penguin', group: 'real', icon: '🐧', title: 'ได้ coldy → ลูกเพนกวินเดินเตาะแตะ', desc: 'ลูกเพนกวินขนปุยตัวจริงกางปีกเดินเตาะแตะ',
+    rule: { name: 'ลูกเพนกวินเดินเตาะแตะ', trigger: { event: 'gift', giftName: 'coldy' }, action: { type: 'effect', effect: 'animal', animal: 'real-penguin', text: '🐧 หนาวจัง! ขอบคุณ {user}', durationMs: 6000 } } },
+  { id: 'real-puppywave', group: 'real', icon: '💛', title: 'มีคนติดตาม → ลูกโกลเด้นโบกมือ', desc: 'ลูกโกลเด้นตัวจริงยกอุ้งเท้าโบกมือขอบคุณ ยิ้มลิ้นห้อย',
+    rule: { name: 'ลูกโกลเด้นโบกมือ', trigger: { event: 'follow' }, action: { type: 'effect', effect: 'animal', animal: 'real-puppywave', text: '🐶 ขอบคุณ {user} ที่กดติดตามน้า', durationMs: 6000 } } },
+  { id: 'real-raccoon', group: 'real', icon: '🤑', title: 'กิฟต์ 199 เพชรขึ้นไป → แรคคูนถูมือ', desc: 'แรคคูนตัวจริงถูมือรัว ๆ ตาเป็นประกาย “รวยแล้ว!”',
+    rule: { name: 'แรคคูนถูมือ', trigger: { event: 'gift', minDiamonds: 199 }, action: { type: 'effect', effect: 'animal', animal: 'real-raccoon', text: '🦝 {user} ใจป้ำ! แรคคูนถูมือรอเลย', durationMs: 6000 } } },
+  { id: 'real-redpanda', group: 'real', icon: '🙌', title: 'ได้ Confetti → แพนด้าแดงชูแขนเฮ', desc: 'แพนด้าแดงตัวจริงยืนสองขา ชูแขนเฮสุดตัว',
+    rule: { name: 'แพนด้าแดงชูแขน', trigger: { event: 'gift', giftName: 'Confetti' }, action: { type: 'effect', effect: 'animal', animal: 'real-redpanda', text: '🙌 เฮ! {user} มาแล้ว', durationMs: 6000 } } },
+  { id: 'real-shibatilt', group: 'real', icon: '🤔', title: 'พิมพ์ “งง” → ชิบะเอียงคอ', desc: 'ลูกชิบะตัวจริงเอียงคอซ้ายขวา งงไปกับแชท',
+    rule: { name: 'ชิบะเอียงคอ', trigger: { event: 'chat', keyword: 'งง' }, action: { type: 'effect', effect: 'animal', animal: 'real-shibatilt', text: '🐕 {user} งงเหรอ… ชิบะก็งง', durationMs: 6000 } } },
 ];

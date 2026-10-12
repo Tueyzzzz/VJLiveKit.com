@@ -9,9 +9,9 @@ import { useT } from '@/lib/i18n';
 export function RightRail() {
   const t = useT();
   const [link, setLink] = useState<string | null>(null);
-  const [days, setDays] = useState<number>(0);
+  const [ref, setRef] = useState<{ perReward: number; rewardDays: number; qualified: number; toNext: number } | null>(null);
   const [copied, setCopied] = useState(false);
-  useEffect(() => { api<{ link: string; rewardDays: number }>('/api/referrals/me').then((r) => { setLink(r.link); setDays(r.rewardDays); }).catch(() => {}); }, []);
+  useEffect(() => { api<{ link: string; perReward: number; rewardDays: number; qualified: number; toNext: number }>('/api/referrals/me').then((r) => { setLink(r.link); setRef(r); }).catch(() => {}); }, []);
   const copy = async () => {
     if (!link) return;
     try { await navigator.clipboard.writeText(link); } catch { window.prompt(t('คัดลอกลิงก์นี้'), link); return; }
@@ -22,7 +22,14 @@ export function RightRail() {
       {link && (
         <div className="rounded-2xl border border-pink/30 bg-gradient-to-br from-pink-soft to-violet-soft p-4 shadow-sm">
           <div className="text-sm font-semibold text-ink">{t('🎁 ชวนเพื่อนมาใช้ ได้ใช้ฟรี')}</div>
-          <p className="mt-1 text-xs text-muted">{days ? t('เพื่อนสมัครผ่านลิงก์นี้ คุณได้ใช้ฟรีเพิ่ม {n} วัน', { n: days }) : t('แชร์ลิงก์นี้ให้เพื่อน VJ')}</p>
+          {ref ? (<>
+            {/* กติกาจริง: ครบทุก perReward คน (สมัคร+ตั้งชื่อ TikTok) → Pro ฟรี rewardDays วัน */}
+            <p className="mt-1 text-xs text-muted">{t('ชวนเพื่อนครบ {p} คน ได้ Pro ฟรี {n} วัน (เพื่อนต้องสมัครผ่านลิงก์และตั้งชื่อ TikTok)', { p: ref.perReward, n: ref.rewardDays })}</p>
+            <div className="mt-2 flex items-center gap-2 text-[11px] text-muted">
+              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/80"><div className="h-full rounded-full bg-pink" style={{ width: `${((ref.perReward - ref.toNext) / ref.perReward) * 100}%` }} /></div>
+              <span className="shrink-0 font-semibold text-pink">{ref.perReward - ref.toNext}/{ref.perReward}</span>
+            </div>
+          </>) : <p className="mt-1 text-xs text-muted">{t('แชร์ลิงก์นี้ให้เพื่อน VJ')}</p>}
           <code className="mt-2 block break-all select-all rounded-lg bg-white/80 px-2.5 py-1.5 text-[11px] text-muted">{link}</code>
           <button onClick={copy} className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl bg-white px-3 py-2 text-sm font-medium text-pink shadow-sm transition hover:shadow-md">
             {copied ? <><Check className="size-4" /> {t('คัดลอกแล้ว')}</> : <><Copy className="size-4" /> {t('คัดลอกลิงก์แนะนำ')}</>}

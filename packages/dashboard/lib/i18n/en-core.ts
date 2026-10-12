@@ -675,6 +675,7 @@ export const EN_CORE: Record<string, string> = {
   'บัญชีของคุณเป็นแพลน {plan} แล้ว 🎉': "Your account is now on the {plan} plan 🎉",
   '🎁 ชวนเพื่อนมาใช้ ได้ใช้ฟรี': '🎁 Invite friends, get free days',
   'เพื่อนสมัครผ่านลิงก์นี้ คุณได้ใช้ฟรีเพิ่ม {n} วัน': 'When a friend signs up with this link you get {n} free days',
+  'ชวนเพื่อนครบ {p} คน ได้ Pro ฟรี {n} วัน (เพื่อนต้องสมัครผ่านลิงก์และตั้งชื่อ TikTok)': 'Invite {p} friends to get {n} days of Pro free (friends must sign up via your link and set their TikTok username)',
   'แชร์ลิงก์นี้ให้เพื่อน VJ': 'Share this link with VJ friends',
   'คัดลอกลิงก์แนะนำ': 'Copy referral link',
   '✨ ใหม่': '✨ New',

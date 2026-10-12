@@ -1,5 +1,6 @@
 'use client';
 
+import { PlanCompare } from '@/components/PlanCompare';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -128,6 +129,7 @@ export default function Home() {
             )}
           />
         )}
+        {plans && <PlanCompare plans={plans} />}
       </section>
 
       <section id="faq" className="mx-auto max-w-3xl px-4 pb-24">

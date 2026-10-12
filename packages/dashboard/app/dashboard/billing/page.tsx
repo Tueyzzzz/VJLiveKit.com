@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Pager, usePaged } from '@/components/Pager';
 import { ExternalLink } from 'lucide-react';
 import { PlanCards, askForPlan, usePlans } from '@/components/Pricing';
+import { PlanCompare } from '@/components/PlanCompare';
 import { Alert, Badge, Button, Card, PageHeader, Spinner } from '@/components/ui';
 import { api, formatMoney, isPaidPlan, trialDaysLeft, type PaymentRow } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -109,6 +110,7 @@ export default function BillingPage() {
         />
       )}
       <p className="mt-3 text-center text-xs text-muted">{t('ราคาต่อเดือน (บาท) · ยกเลิกได้ทุกเมื่อ · มีคำถามกดแชทมุมขวาล่างได้เลย')}</p>
+      {plans && <PlanCompare plans={plans} />}
 
       <h2 className="mb-3 mt-10 font-medium">{t('ประวัติการชำระเงิน')}</h2>
       {!payments ? <Spinner /> : payments.length === 0 ? (

@@ -318,7 +318,7 @@ function ActionsInner() {
           <div className="min-w-0 flex-1">
             <div className="font-medium">{t('✨ ลิงก์วิดเจ็ตเอฟเฟกต์ (FX)')}</div>
             <p className="text-sm text-muted">{t('Actions ทุกกฎ (ยกเว้นมาสคอต) จะแสดงผ่านวิดเจ็ตนี้ — วางในโปรแกรมไลฟ์')} <b>{t('ให้เต็มจอ')}</b> {t('และไว้')} <b>{t('ชั้นบนสุด')}</b> {t('ครั้งเดียวพอ')}</p>
-            {fxUrl && <code className="mt-1.5 block truncate rounded-lg bg-canvas px-3 py-1.5 text-xs text-muted">{fxUrl}</code>}
+            {fxUrl && <code className="mt-1.5 block break-all select-all rounded-lg bg-canvas px-3 py-1.5 text-xs text-muted">{fxUrl}</code>}
           </div>
           {fxUrl ? (
             <Button variant="secondary" onClick={copyFx}>{copied ? <><Check className="size-4 text-mint" /> {t('คัดลอกแล้ว')}</> : <><Copy className="size-4" /> {t('คัดลอกลิงก์ FX')}</>}</Button>
@@ -331,7 +331,7 @@ function ActionsInner() {
             <div className="min-w-0 flex-1">
               <div className="font-medium">{t('📜 เมนูของขวัญ (ให้ผู้ชมรู้ว่าต้องส่งอะไร)')}</div>
               <p className="text-sm text-muted">{t('โชว์รูปกิฟต์ + สิ่งที่จะเกิดบนจอ จากกฎด้านล่างอัตโนมัติ แก้กฎแล้วเมนูบนจอเปลี่ยนทันที · ปรับหน้าตาได้ที่')} <Link href="/dashboard/widgets/settings/?type=fxmenu" className="text-pink underline">{t('ตั้งค่าเมนู')}</Link></p>
-              <code className="mt-1.5 block truncate rounded-lg bg-canvas px-3 py-1.5 text-xs text-muted">{menuUrl}</code>
+              <code className="mt-1.5 block break-all select-all rounded-lg bg-canvas px-3 py-1.5 text-xs text-muted">{menuUrl}</code>
             </div>
             <Button variant="secondary" onClick={copyMenu}>{menuCopied ? <><Check className="size-4 text-mint" /> {t('คัดลอกแล้ว')}</> : <><Copy className="size-4" /> {t('คัดลอกลิงก์เมนู')}</>}</Button>
           </div>
@@ -341,7 +341,7 @@ function ActionsInner() {
             <div className="min-w-0 flex-1">
               <div className="font-medium">{t('🧸 ลิงก์ตัวแทนวีเจ (มาสคอต)')}</div>
               <p className="text-sm text-muted">{t('กฎแบบ “มาสคอต” (เต้น · ส่งจุ๊บ ฯลฯ) เล่นผ่านลิงก์นี้ ไม่ใช่ลิงก์ FX — วางในโปรแกรมไลฟ์แยกอีกอัน · เลือกตัวละครได้ที่')} <Link href="/dashboard/widgets/settings/?type=mascot" className="text-pink underline">{t('ตั้งค่าตัวแทนวีเจ')}</Link></p>
-              <code className="mt-1.5 block truncate rounded-lg bg-canvas px-3 py-1.5 text-xs text-muted">{mascotUrl}</code>
+              <code className="mt-1.5 block break-all select-all rounded-lg bg-canvas px-3 py-1.5 text-xs text-muted">{mascotUrl}</code>
             </div>
             <Button variant="secondary" onClick={copyMascot}>{mascotCopied ? <><Check className="size-4 text-mint" /> {t('คัดลอกแล้ว')}</> : <><Copy className="size-4" /> {t('คัดลอกลิงก์มาสคอต')}</>}</Button>
           </div>

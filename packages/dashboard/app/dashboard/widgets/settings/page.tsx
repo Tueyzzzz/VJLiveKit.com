@@ -41,7 +41,7 @@ function CopyLink({ url, label = 'คัดลอกลิงก์' }: { url: s
   const [copied, setCopied] = useState(false);
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <code className="min-w-0 flex-1 truncate rounded-lg bg-canvas px-3 py-2 text-xs text-muted">{url}</code>
+      <code className="min-w-0 flex-1 break-all select-all rounded-lg bg-canvas px-3 py-2 text-xs text-muted">{url}</code>
       <Button variant="secondary" onClick={() => { void navigator.clipboard?.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 1500); }}>
         {copied ? <><Check className="size-4" /> {t('คัดลอกแล้ว')}</> : <><Copy className="size-4" /> {t(label)}</>}
       </Button>

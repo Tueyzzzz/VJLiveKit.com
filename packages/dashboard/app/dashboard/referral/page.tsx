@@ -26,7 +26,7 @@ export default function ReferralPage() {
       <Card className="mb-6">
         <div className="mb-2 text-sm font-semibold text-violet">{t('ลิงก์แนะนำของคุณ')}</div>
         <div className="flex flex-wrap items-center gap-2">
-          <code className="min-w-0 flex-1 truncate rounded-lg bg-canvas px-3 py-2 text-sm">{d.link}</code>
+          <code className="min-w-0 flex-1 break-all select-all rounded-lg bg-canvas px-3 py-2 text-sm">{d.link}</code>
           <Button onClick={() => { void navigator.clipboard?.writeText(d.link); setCopied(true); setTimeout(() => setCopied(false), 1500); }}>
             {copied ? <><Check className="size-4" /> {t('คัดลอกแล้ว')}</> : <><Copy className="size-4" /> {t('คัดลอกลิงก์')}</>}
           </Button>

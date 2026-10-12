@@ -289,7 +289,7 @@ function WidgetsInner() {
             <div className="text-sm font-medium">{t('🔗 ลิงก์เดียวใช้ได้ทุกแบบ — ตอนนี้ใช้:')} <b className="text-pink">{t(WIDGET_LABELS[collectStyle] ?? collectStyle)}</b></div>
             <p className="text-xs text-muted">{t('วางลิงก์นี้ใน OBS / LIVE Studio ครั้งเดียว แล้วกด “ใช้แบบนี้” ที่การ์ดด้านล่าง จอเปลี่ยนแบบเองทันที ไม่ต้องเปลี่ยนลิงก์')}</p>
           </div>
-          {collectUrl && <code className="block truncate rounded-lg bg-canvas px-3 py-2 text-xs text-muted sm:max-w-md">{collectUrl}</code>}
+          {collectUrl && <code className="block break-all select-all rounded-lg bg-canvas px-3 py-2 text-xs text-muted">{collectUrl}</code>}
           {collectUrl ? <CopyButton text={collectUrl} /> : <span className="text-xs text-muted">{t('ตั้งชื่อ TikTok ที่หน้าภาพรวมก่อน')}</span>}
         </Card>
       )}
@@ -394,7 +394,7 @@ function WidgetsInner() {
                       <Link href="/dashboard/billing/" className="text-sm text-pink hover:underline">{t('อัปเกรดเป็น Pro เพื่อใช้วิดเจ็ตนี้')}</Link>
                     ) : (
                       <>
-                        <code className="min-w-0 flex-1 truncate rounded-lg bg-canvas px-3 py-2 text-xs text-muted">{w.url}</code>
+                        <code className="min-w-0 flex-1 break-all select-all rounded-lg bg-canvas px-3 py-2 text-xs text-muted">{w.url}</code>
                         <CopyButton text={w.url} />
                         <Link href={`/dashboard/widgets/settings/?type=${w.type}`} aria-label={t('ตั้งค่าวิดเจ็ต')}>
                           <Button variant="secondary" className="px-3"><Settings className="size-4" /><span className="hidden sm:inline">{t('ตั้งค่า')}</span></Button>

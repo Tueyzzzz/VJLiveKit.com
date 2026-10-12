@@ -6,6 +6,7 @@ import { Check, Copy, Eye, Play, RefreshCw, Settings, X } from 'lucide-react';
 import { Alert, Badge, Button, Card, Field, Input, PageHeader, Spinner } from '@/components/ui';
 import { NumberInput } from '@/components/NumberInput';
 import { api, getToken, type OverlayTokenRow } from '@/lib/api';
+import { BANKS } from '@/lib/banks';
 import { useAuth } from '@/lib/auth';
 import { maskPromptPay } from '@/lib/promptpay';
 import { useLang, useT } from '@/lib/i18n';
@@ -33,6 +34,7 @@ export default function DonateDashboard() {
   const [pp, setPp] = useState('');
   const [min, setMin] = useState(10);
   const [title, setTitle] = useState('');
+  const [bank, setBank] = useState(''); const [bankAcc, setBankAcc] = useState(''); const [bankHolder, setBankHolder] = useState('');
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
   const [overlayUrl, setOverlayUrl] = useState<string | null | undefined>(undefined);
@@ -41,7 +43,7 @@ export default function DonateDashboard() {
 
   useEffect(() => {
     api<{ config: Record<string, unknown> }>('/api/widgets/donate/config').then((r) => {
-      const c = r.config ?? {}; setCfg(c); setPp(String(c.promptpay ?? '')); setMin(Number(c.min ?? 10) || 10); setTitle(String(c.title ?? ''));
+      const c = r.config ?? {}; setCfg(c); setPp(String(c.promptpay ?? '')); setMin(Number(c.min ?? 10) || 10); setTitle(String(c.title ?? '')); setBank(String(c.bank ?? '')); setBankAcc(String(c.bankAccount ?? '')); setBankHolder(String(c.bankHolder ?? ''));
     }).catch(() => setCfg({}));
     api<{ tokens: OverlayTokenRow[] }>('/api/overlay-tokens').then((r) => setOverlayUrl(r.tokens[0]?.urls.find((u) => u.type === 'donate')?.url ?? null)).catch(() => setOverlayUrl(null));
   }, []);
@@ -49,12 +51,15 @@ export default function DonateDashboard() {
   useEffect(() => { load(); const t = setInterval(load, 15_000); return () => clearInterval(t); }, [load]); // รายการใหม่เข้ามาเอง
 
   async function save() {
-    const d = pp.replace(/\D/g, '');
-    if (d.length !== 10 && d.length !== 13 && d.length !== 15) { setMsg({ tone: 'error', text: t('พร้อมเพย์ต้องเป็นเบอร์มือถือ 10 หลัก เลขบัตรประชาชน 13 หลัก หรือ e-Wallet 15 หลัก') }); return; }
+    const d = pp.replace(/\D/g, ''), ba = bankAcc.replace(/\D/g, '');
+    if (!d && !ba) { setMsg({ tone: 'error', text: t('ใส่พร้อมเพย์ หรือ บัญชีธนาคาร อย่างน้อย 1 อย่าง') }); return; }
+    if (d && d.length !== 10 && d.length !== 13 && d.length !== 15) { setMsg({ tone: 'error', text: t('พร้อมเพย์ต้องเป็นเบอร์มือถือ 10 หลัก เลขบัตรประชาชน 13 หลัก หรือ e-Wallet 15 หลัก') }); return; }
+    if (ba && (!bank || ba.length < 10 || ba.length > 15)) { setMsg({ tone: 'error', text: t('เลือกธนาคาร และใส่เลขบัญชี 10–15 หลัก') }); return; }
     setSaving(true); setMsg(null);
     try {
-      await api('/api/widgets/donate/config', { method: 'PUT', body: { ...(cfg ?? {}), promptpay: d, min: Math.max(1, min), title: title.trim() } });
-      setCfg({ ...(cfg ?? {}), promptpay: d, min, title }); setMsg({ tone: 'success', text: t('บันทึกแล้ว ✓ หน้าโดเนทพร้อมใช้') });
+      const next = { ...(cfg ?? {}), promptpay: d, min: Math.max(1, min), title: title.trim(), bank: ba ? bank : '', bankAccount: ba, bankHolder: ba ? bankHolder.trim().slice(0, 60) : '' };
+      await api('/api/widgets/donate/config', { method: 'PUT', body: next });
+      setCfg(next); setMsg({ tone: 'success', text: t('บันทึกแล้ว ✓ หน้าโดเนทพร้อมใช้') });
     } catch (e) { setMsg({ tone: 'error', text: (e as Error).message }); } finally { setSaving(false); }
   }
   async function act(id: string, a: 'approve' | 'reject' | 'replay') { try { await api(`/api/donations/${id}/${a}`, { method: 'POST' }); load(); } catch (e) { setMsg({ tone: 'error', text: (e as Error).message }); } }
@@ -66,7 +71,7 @@ export default function DonateDashboard() {
   if (!user) return null;
   const locked = entitlements ? !entitlements.widgets.includes('donate') : false;
   const donateUrl = user.tiktokUsername ? `${typeof window !== 'undefined' ? window.location.origin : ''}/donate/?u=${user.tiktokUsername}` : '';
-  const ready = !!String(cfg?.promptpay ?? '');
+  const ready = !!String(cfg?.promptpay ?? '') || !!String(cfg?.bankAccount ?? '');
 
   return (
     <div>
@@ -81,6 +86,17 @@ export default function DonateDashboard() {
             <div className="space-y-4">
               <Field label={t('พร้อมเพย์ของคุณ')} hint={t('เบอร์มือถือ / เลขบัตรประชาชน / e-Wallet — QR จะสร้างจากเลขนี้ เงินเข้าบัญชีคุณโดยตรง')}>
                 <Input inputMode="numeric" value={pp} onChange={(e) => setPp(e.target.value)} placeholder="08xxxxxxxx" />
+              </Field>
+              {/* บัญชีธนาคาร (ไม่บังคับ) — คนดูกดคัดลอกเลขบัญชีไปโอนได้ · มีอย่างใดอย่างหนึ่งก็เปิดหน้าโดเนทได้ */}
+              <Field label={t('บัญชีธนาคาร (ไม่บังคับ)')} hint={t('คนดูเลือกโอนเข้าบัญชีนี้แทนสแกน QR ได้ · ตรวจสลิปอัตโนมัติเทียบเลขบัญชีให้ด้วย')}>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <select value={bank} onChange={(e) => setBank(e.target.value)} className="h-11 rounded-xl border border-line bg-white px-3 text-sm">
+                    <option value="">{t('— เลือกธนาคาร —')}</option>
+                    {BANKS.map((b) => <option key={b.code} value={b.code}>{b.name}</option>)}
+                  </select>
+                  <Input inputMode="numeric" value={bankAcc} onChange={(e) => setBankAcc(e.target.value)} placeholder={t('เลขบัญชี')} />
+                </div>
+                <Input className="mt-2" maxLength={60} value={bankHolder} onChange={(e) => setBankHolder(e.target.value)} placeholder={t('ชื่อบัญชี (ให้คนดูเช็กก่อนโอน)')} />
               </Field>
               <Field label={t('โดเนทขั้นต่ำ (บาท)')}><NumberInput min={1} value={min} onChange={setMin} /></Field>
               <Field label={t('ข้อความบนหน้าโดเนท (ไม่บังคับ)')}><Input maxLength={80} value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t('เช่น ขอบคุณทุกกำลังใจนะคะ 💕')} /></Field>

@@ -14,7 +14,7 @@ import { addDonation, listDonations, updateDonation, slipPath, isUsedRef, markRe
  * - มี EASYSLIP_API_KEY → ตรวจสลิปอัตโนมัติ (ยอดจริง · เข้าบัญชีวีเจ · ไม่ซ้ำ) ผ่านแล้วขึ้นจอทันที
  * - ไม่มีคีย์ / ตรวจไม่ชัด → รอวีเจกดยืนยันในแดชบอร์ด
  */
-interface DonateSettings { promptpay?: string; min?: number; title?: string }
+interface DonateSettings { promptpay?: string; min?: number; title?: string; bank?: string; bankAccount?: string; bankHolder?: string }
 
 const digits = (s: string) => String(s ?? '').replace(/\D/g, '');
 
@@ -27,8 +27,11 @@ async function ownerByHandle(handle: string) {
   if (!ent.widgets.includes('donate')) return null; // สิทธิ์ Pro/ทดลอง
   const cfg = await prisma.widgetConfig.findUnique({ where: { userId_type: { userId: user.id, type: 'donate' } }, select: { settings: true } });
   const s = (cfg?.settings ?? {}) as DonateSettings;
-  if (!s.promptpay || digits(s.promptpay).length < 10) return null;
-  return { user, settings: { promptpay: digits(s.promptpay), min: Math.max(1, Number(s.min) || sys().donateDefaultMin), title: s.title || '' } };
+  // รับโดเนทได้ถ้ามีพร้อมเพย์ หรือ บัญชีธนาคาร อย่างใดอย่างหนึ่ง
+  const pp = s.promptpay && digits(s.promptpay).length >= 10 ? digits(s.promptpay) : '';
+  const acc = s.bank && s.bankAccount && digits(s.bankAccount).length >= 10 ? digits(s.bankAccount) : '';
+  if (!pp && !acc) return null;
+  return { user, settings: { promptpay: pp, bank: acc ? { code: String(s.bank).slice(0, 12), account: acc, holder: String(s.bankHolder ?? '').slice(0, 60) } : null, min: Math.max(1, Number(s.min) || sys().donateDefaultMin), title: s.title || '' } };
 }
 
 function announce(userId: string, tiktok: string, d: Donation) {
@@ -74,7 +77,7 @@ export async function donateRoutes(app: FastifyInstance): Promise<void> {
   app.get('/api/donate/page', async (req, reply) => {
     const o = await ownerByHandle((req.query as { u?: string }).u ?? '');
     if (!o) return reply.code(404).send({ error: 'ไม่พบหน้าโดเนทนี้ หรือวีเจยังไม่ได้เปิดรับโดเนท' });
-    return { name: o.user.displayName || o.user.tiktokUsername, tiktok: o.user.tiktokUsername, promptpay: o.settings.promptpay, min: o.settings.min, title: o.settings.title, autoVerify: !!config.easyslipKey };
+    return { name: o.user.displayName || o.user.tiktokUsername, tiktok: o.user.tiktokUsername, promptpay: o.settings.promptpay, bank: o.settings.bank, min: o.settings.min, title: o.settings.title, autoVerify: !!config.easyslipKey };
   });
 
   app.post('/api/donate/submit', { bodyLimit: 5_000_000, config: { rateLimit: { max: 8, timeWindow: '10 minutes' } } }, async (req, reply) => {
@@ -91,7 +94,9 @@ export async function donateRoutes(app: FastifyInstance): Promise<void> {
     if (v && !v.ok) return reply.code(400).send({ error: v.reason ?? 'ตรวจสลิปไม่ผ่าน' });
     if (v?.ok) {
       if (v.ref && isUsedRef(v.ref)) return reply.code(400).send({ error: 'สลิปนี้ถูกใช้โดเนทไปแล้ว' });
-      const match = receiverMatches(v.receiver, o.settings.promptpay);
+      // เทียบปลายทางกับทั้งพร้อมเพย์และบัญชีธนาคารของวีเจ: ตรงอันใดอันหนึ่ง = ผ่าน · ไม่ตรงทั้งคู่ = ปฏิเสธ · อ่านไม่ได้ = รอวีเจ
+      const checks = [o.settings.promptpay, o.settings.bank?.account].filter((x): x is string => !!x).map((d) => receiverMatches(v.receiver, d));
+      const match = checks.includes(true) ? true : checks.length && checks.every((c) => c === false) ? false : null;
       if (match === false) return reply.code(400).send({ error: 'สลิปนี้ไม่ได้โอนเข้าบัญชีของวีเจคนนี้' });
       if (v.ref) markRef(v.ref);
       const real = v.amount || amount;

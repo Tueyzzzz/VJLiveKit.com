@@ -67,7 +67,7 @@
     // พรีวิว/เดโม (ไม่มีลิงก์จริง) วนโชว์ตลอด → ปิดเสียง ไม่งั้นกริ๊งไม่หยุดตอนเปิดหน้าแดชบอร์ด
     const SOUND = P('sound', 'true') !== 'false' && (Overlay.connected || new URLSearchParams(location.search).get('sound') === '1'), COINS = P('coins', 'true') !== 'false';
     const fmt = (n) => Number(n).toLocaleString('th-TH', { maximumFractionDigits: 2 });
-    // กรอบรูป GPT 10 ธีม (?frame=01..10) · เหรียญ/แบงก์ 3D (donate/coin-*.webp) แทนอีโมจิ ถ้ามีไฟล์
+    // กรอบรูป GPT 10 ธีม (?frame=01..10) · หัวใจ/ดอกไม้/ประกาย 3D (donate/fx-*.webp) แทนอีโมจิ ถ้ามีไฟล์
     let FR = null; const FRAME = String(P('frame', '') || '');
     let frDone = !/^\d{2}$/.test(FRAME);
     if (!frDone) fetch('donate/frames.json').then((r) => r.json()).then((m) => { if (m[FRAME]) { FR = m[FRAME]; new Image().src = 'donate/frame-' + FR.id + '.webp'; } }).catch(() => {}).finally(() => { frDone = true; });
@@ -87,6 +87,16 @@
     function makeAvatar(d) {
       if (!AV) return null;
       const el = document.createElement('div');
+      if (AV === 'mine') { // อวตารส่วนตัว (GPT วาดจากรูปวีเจ · vjav/<ชื่อ TikTok>/1..3.webp) — ไม่มีไฟล์ → ใช้รูปโปรไฟล์แทน
+        const vj = String(d.vj || (Overlay.connected ? '' : 'boto6818')).toLowerCase();
+        if (vj) {
+          el.className = 'vjav masc'; el.innerHTML = [1, 2, 3].map((n) => `<img data-n="${n}" src="/api/vjav/${encodeURIComponent(vj)}/${n}" alt="" onerror="this.remove()">`).join('');
+          let k = 0; const show = (n) => { const ims = [...el.querySelectorAll('img')]; if (!ims.length) return; ims.forEach((im, i) => im.classList.toggle('on', i === n % ims.length)); el.classList.remove('hop'); void el.offsetWidth; el.classList.add('hop'); };
+          show(0); el._t = setInterval(() => show(++k), 1500);
+          setTimeout(() => { if (!el.querySelector('img')) { el.className = 'vjav photo'; el.innerHTML = `<img src="/api/tiktok/avatar/${encodeURIComponent(vj)}" alt="">`; } }, 1500);
+          return el;
+        }
+      }
       if (MASC) {
         el.className = 'vjav masc'; el.innerHTML = [1, 6, 7, 8].map((n) => `<img data-n="${n}" src="${MSRC[n] || 'mascot/' + MASC + '/' + n + '.webp'}" alt="">`).join('');
         let k = 0; const show = (n) => { el.querySelectorAll('img').forEach((im) => { const m = MSRC[+im.dataset.n]; if (m && im.src !== m) im.src = m; im.classList.toggle('on', +im.dataset.n === n); }); el.classList.remove('hop'); void el.offsetWidth; el.classList.add('hop'); };
@@ -98,7 +108,7 @@
       }
       return el;
     }
-    const COIN_IMG = []; fetch('donate/coins.json').then((r) => r.json()).then((l) => l.forEach((n) => { const im = new Image(); im.src = 'donate/' + n; im.onload = () => COIN_IMG.push(im.src); })).catch(() => {});
+    const COIN_IMG = []; fetch('donate/sprites.json').then((r) => r.json()).then((l) => l.forEach((n) => { const im = new Image(); im.src = 'donate/' + n; im.onload = () => COIN_IMG.push(im.src); })).catch(() => {});
 
     let ac = null;
     function chime() {
@@ -117,7 +127,7 @@
       const n = Math.min(40, 8 + Math.round(Math.log10(Math.max(1, amount)) * 10));
       for (let i = 0; i < n; i++) setTimeout(() => {
         const c = document.createElement('div'); c.className = 'coin';
-        if (COIN_IMG.length) { const im = document.createElement('img'); im.src = COIN_IMG[i % COIN_IMG.length]; c.appendChild(im); } else c.textContent = i % 4 ? '🪙' : (i % 8 ? '💖' : '💸');
+        if (COIN_IMG.length) { const im = document.createElement('img'); im.src = COIN_IMG[i % COIN_IMG.length]; c.appendChild(im); } else c.textContent = ['💖', '🌸', '✨', '💗', '🎀', '💕'][i % 6]; // ไม่ใช้เหรียญ/เงิน (สื่อถึงเงินเกินไป)
         c.style.left = Math.random() * 100 + 'vw'; c.style.setProperty('--x', (Math.random() - .5) * 120 + 'px'); c.style.setProperty('--r', (Math.random() * 720 - 360) + 'deg');
         c.style.setProperty('--d', (2 + Math.random() * 1.6) + 's'); c.style.fontSize = (COIN_IMG.length ? 34 + Math.random() * 26 : 20 + Math.random() * 18) + 'px';
         document.body.appendChild(c); setTimeout(() => c.remove(), 4000);

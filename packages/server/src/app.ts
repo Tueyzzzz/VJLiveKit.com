@@ -13,6 +13,7 @@ import { referralRoutes } from './referrals/routes.js';
 import { adminRoutes } from './admin/routes.js';
 import { donateRoutes } from './donate/routes.js';
 import { mediaRoutes } from './media/routes.js';
+import { vjavRoutes } from './media/vjav.js';
 import { avatarRoutes } from './tiktok/avatar.js';
 import { notificationRoutes } from './admin/notifications.js';
 import { supportRoutes } from './support/routes.js';
@@ -121,6 +122,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(mailRoutes);
   await app.register(donateRoutes);
   await app.register(mediaRoutes);
+  await app.register(vjavRoutes);
   await app.register(avatarRoutes);
   await app.register(notificationRoutes);
   await app.register(supportRoutes);

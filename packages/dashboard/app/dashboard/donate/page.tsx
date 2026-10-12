@@ -7,6 +7,7 @@ import { Alert, Badge, Button, Card, Field, Input, PageHeader, Spinner } from '@
 import { NumberInput } from '@/components/NumberInput';
 import { api, getToken, type OverlayTokenRow } from '@/lib/api';
 import { BANKS } from '@/lib/banks';
+import { VjAvatarUpload } from '@/components/VjAvatarUpload';
 import { useAuth } from '@/lib/auth';
 import { maskPromptPay } from '@/lib/promptpay';
 import { useLang, useT } from '@/lib/i18n';
@@ -128,6 +129,8 @@ export default function DonateDashboard() {
           </div>
         </Card>
       </div>
+
+      <VjAvatarUpload />
 
       <Card className="mt-6 p-0">
         <div className="flex flex-wrap items-center gap-4 border-b border-line px-5 py-3 text-sm">

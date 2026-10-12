@@ -284,13 +284,16 @@ function WidgetsInner() {
       <section key={title} className="mb-8">
       <h3 className="mb-3 text-sm font-semibold">{t(title)}</h3>
       {title === COLLECT_GROUP && (
-        <Card className="mb-4 flex flex-col gap-3 ring-2 ring-pink/30 sm:flex-row sm:items-center">
-          <div className="min-w-0 flex-1">
+        <Card className="mb-4 flex flex-col gap-3 ring-2 ring-pink/30">
+          <div className="min-w-0">
             <div className="text-sm font-medium">{t('🔗 ลิงก์เดียวใช้ได้ทุกแบบ — ตอนนี้ใช้:')} <b className="text-pink">{t(WIDGET_LABELS[collectStyle] ?? collectStyle)}</b></div>
             <p className="text-xs text-muted">{t('วางลิงก์นี้ใน OBS / LIVE Studio ครั้งเดียว แล้วกด “ใช้แบบนี้” ที่การ์ดด้านล่าง จอเปลี่ยนแบบเองทันที ไม่ต้องเปลี่ยนลิงก์')}</p>
           </div>
-          {collectUrl && <code className="block break-all select-all rounded-lg bg-canvas px-3 py-2 text-xs text-muted">{collectUrl}</code>}
-          {collectUrl ? <CopyButton text={collectUrl} /> : <span className="text-xs text-muted">{t('ตั้งชื่อ TikTok ที่หน้าภาพรวมก่อน')}</span>}
+          {/* ลิงก์ยาวอยู่แถวของตัวเอง — ถ้าวางข้างข้อความ code จะดันข้อความจนเหลือคอลัมน์แคบๆ */}
+          <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
+            {collectUrl && <code className="block min-w-0 flex-1 break-all select-all rounded-lg bg-canvas px-3 py-2 text-xs text-muted">{collectUrl}</code>}
+            {collectUrl ? <div className="shrink-0"><CopyButton text={collectUrl} /></div> : <span className="text-xs text-muted">{t('ตั้งชื่อ TikTok ที่หน้าภาพรวมก่อน')}</span>}
+          </div>
         </Card>
       )}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">

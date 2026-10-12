@@ -119,6 +119,7 @@
   <script src="js/overlay-client.js"></script>
   <script src="js/sfx.js"></script>
   <script src="js/chestfx.js"></script>
+  <script src="js/pkbanner.js"></script>
   <script src="js/prank.js"></script>
   <script>
   (function(){
@@ -852,6 +853,7 @@
       if(a.type==='effect'&&a.effect==='animal') return animal(a,ev);
       if(a.type==='effect'&&(a.effect==='chest'||a.effect==='bag')&&window.VJLChestFx) return VJLChestFx.play({kind:a.effect,style:a.style,volume:a.volume,caption:fill(a.text||(a.effect==='bag'?'💜 {user} ส่งถุงซูเปอร์แฟน':'🎁 {user} ส่งกล่องสมบัติ 💎{diamonds}'),ev)}).catch(()=>particles({...a,effect:'coins'},ev)); // 🎁 กล่องสมบัติ/💜 ถุงม่วง (js/chestfx.js)
       if(a.type==='effect'&&a.effect==='prank'&&window.VJLPrank) return VJLPrank.play({key:a.prank,volume:a.volume,caption:fill(a.text,ev),onBlocked:()=>{ if(!audioArmed) armBtn.style.display='block'; }}).catch(()=>particles({...a,effect:'confetti'},ev)); // 😈 แกล้งวีเจ 30 มุก (js/prank.js)
+      if(a.type==='effect'&&a.effect==='pkbanner'&&window.VJLPkBanner) return VJLPkBanner.play({style:a.style,volume:a.volume,durationMs:a.durationMs,caption:fill(a.text,ev)}).catch(()=>particles({...a,effect:'confetti'},ev)); // ⚔️ ป้าย PK สไตล์ GPT (js/pkbanner.js)
       if(a.type==='tarot') return tarot(a,ev);
       if(a.type==='glove') return glove(a,ev);
       if(a.type==='sign') return sign(a,ev);
@@ -904,8 +906,9 @@
       // เริ่ม/จบ PK: วิดีโอประจำเหตุการณ์ก่อน (เล่นครั้งเดียวแม้มีหลายกฎ) แล้วตามด้วยเทมเพลตที่วีเจเลือก (ป้ายไฟ MVP / คอนเฟตติ / ฝนดาว ...) ตอนวิดีโอจบ
       //   เดิม return ทิ้ง → ทุกเทมเพลตชนะ/แพ้/จบ ออกจอเป็นวิดีโอเดียวกันหมด
       let pkDelay=0;
-      if(pkVid&&PK_VIDEO[pkVid]&&pkOk[pkVid]!==false){ playPk(pkVid); if(fire.action.type!=='sound') pkDelay=Math.max(0,PK_VIDEO[pkVid]-700); }
-      if(pk&&pk.kind==='card'&&pk.card&&PK_VIDEO[pk.card]){ // การ์ด PK ที่มีวิดีโอ → เล่นวิดีโออย่างเดียว
+      const ownBanner=fire.action.type==='effect'&&fire.action.effect==='pkbanner'; // ป้าย GPT = ภาพหลักของเหตุการณ์นี้แล้ว → ไม่เล่นวิดีโอ PK ซ้อน
+      if(!ownBanner&&pkVid&&PK_VIDEO[pkVid]&&pkOk[pkVid]!==false){ playPk(pkVid); if(fire.action.type!=='sound') pkDelay=Math.max(0,PK_VIDEO[pkVid]-700); }
+      if(!ownBanner&&pk&&pk.kind==='card'&&pk.card&&PK_VIDEO[pk.card]){ // การ์ด PK ที่มีวิดีโอ → เล่นวิดีโออย่างเดียว
         playPk(pk.card);
         // ไม่เอาป้ายไฟ/ข้อความ/นวมพุ่งของกฎมาซ้อนวิดีโอ · กฎที่เป็นเสียงยังเล่นได้ (ไม่บังจอ)
         if(fire.action.type!=='sound') return;

@@ -52,6 +52,18 @@
   #iheart .ip { position:absolute; left:0; right:0; text-align:center; font-family:'Itim',sans-serif; font-size:calc(30px * var(--hs,1)); color:#fff; text-shadow:0 2px 4px rgba(80,20,60,.8), 0 0 10px rgba(255,255,255,.4); }
   #iheart .hn { margin-top:-8%; font-family:'Itim',sans-serif; font-size:calc(20px * var(--hs,1)); color:#ffe9a8; text-shadow:0 2px 4px rgba(0,0,0,.75); font-variant-numeric:tabular-nums; position:relative; }
   #iheart.done .box { animation:hSoft 1.6s ease-in-out infinite; filter:drop-shadow(0 0 22px rgba(255,200,120,.9)); }
+  /* ---- แถบเป้าหมายแบบกรอบรูป GPT (style=f-01..20 · ตำแหน่งป้าย/แถบใน goal/frames.json) ---- */
+  #fgoal { position:fixed; top:16px; left:50%; transform:translateX(-50%); width:min(calc(620px * var(--hs,1)),94vw); display:none; filter:drop-shadow(0 8px 16px rgba(40,10,50,.35)); }
+  #fgoal.on { display:block; }
+  #fgoal img.fr { display:block; width:100%; height:auto; position:relative; z-index:2; pointer-events:none; }
+  #fgoal .ft, #fgoal .ftr { position:absolute; z-index:3; display:flex; align-items:center; justify-content:center; }
+  #fgoal .ft { font-family:'Itim',sans-serif; color:var(--ink,#5a2a3a); white-space:nowrap; overflow:hidden; }
+  #fgoal .ftr { z-index:1; overflow:hidden; border-radius:999px; background:rgba(255,255,255,.28); }
+  #fgoal .ffill { position:absolute; left:0; top:0; bottom:0; width:0%; border-radius:999px; transition:width .6s cubic-bezier(.3,.8,.4,1); overflow:hidden; }
+  #fgoal .ffill::after { content:''; position:absolute; inset:0; background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.55) 50%,transparent 70%); animation:shine 2.2s linear infinite; }
+  #fgoal .fnum { position:absolute; z-index:4; font-family:'Itim',sans-serif; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.75), 0 0 2px rgba(0,0,0,.6); font-variant-numeric:tabular-nums; white-space:nowrap; display:flex; align-items:center; justify-content:center; }
+  #fgoal.done { animation:glow2 1.2s ease-in-out infinite alternate; }
+  @keyframes glow2 { to { filter:drop-shadow(0 0 22px rgba(255,215,106,.9)); } }
 </style>
 </head>
 <body>
@@ -59,6 +71,7 @@
     <div class="hd"><span class="tt" id="title">เป้าหมาย</span><span class="nm"><span id="cur">0</span> / <span id="target">0</span></span></div>
     <div class="track"><div class="fill" id="fill"></div><div class="pct" id="pct">0%</div></div>
   </div>
+  <div id="fgoal"><div class="ftr" id="ftr"><div class="ffill" id="ffill"></div></div><img class="fr" id="ffr" alt="" /><div class="ft" id="ftitle"></div><div class="fnum" id="fnum"></div></div>
   <div id="heart">
     <div class="ht" id="htitle"></div>
     <svg viewBox="-6 -6 212 202" aria-hidden="true">
@@ -185,12 +198,29 @@
         sp.style.fontSize=(12+Math.random()*12)+'px'; IHE.appendChild(sp); setTimeout(()=>sp.remove(),1700); } }
       ilast=pct;
     }
+    // แบบกรอบรูป GPT: แถบเติมอยู่หลังรูป (ช่องแถบในรูปใส) · ป้ายหัวข้อ + ตัวเลขทับบนรูป
+    const FST=/^f-\d\d$/.test(STYLE)?STYLE.slice(2):'', FG=document.getElementById('fgoal'); let FOK=false;
+    if(FST){
+      document.getElementById('goal').style.display='none'; FG.classList.add('on');
+      FG.style.setProperty('--hs', String(Math.max(.4,Math.min(3,parseFloat(Overlay.param('size','1'))||1))));
+      document.getElementById('ffill').style.background=`linear-gradient(90deg,${liquid[0]},${liquid[1]})`;
+      fetch('goal/frames.json').then(r=>r.json()).then(all=>{ const F=all[FST]; if(!F) return;
+        const place=(el,b)=>{ el.style.left=b[0]*100+'%'; el.style.top=b[1]*100+'%'; el.style.width=(b[2]-b[0])*100+'%'; el.style.height=(b[3]-b[1])*100+'%'; };
+        document.getElementById('ffr').src='goal/frame-'+F.id+'.webp'; FG.style.setProperty('--ink',F.ink||'#5a2a3a');
+        const t=document.getElementById('ftitle'); place(t,F.title); t.textContent=Overlay.param('label',labels[type]||'เป้าหมาย');
+        place(document.getElementById('ftr'),F.track); place(document.getElementById('fnum'),F.track);
+        const fit=()=>{ const h=t.clientHeight, n=document.getElementById('fnum'); t.style.fontSize=Math.max(10,h*0.62)+'px'; n.style.fontSize=Math.max(10,n.clientHeight*0.5)+'px';
+          let fs=parseFloat(t.style.fontSize); for(let k=0;k<20&&t.scrollWidth>t.clientWidth&&fs>10;k++){ fs*=.92; t.style.fontSize=fs+'px'; } };
+        document.getElementById('ffr').onload=fit; addEventListener('resize',fit); FOK=true; fit(); });
+    }
+    function renderFrame(v,pct){ document.getElementById('ffill').style.width=pct+'%'; document.getElementById('fnum').textContent=`${Overlay.fmt(v)} / ${Overlay.fmt(target)} · ${Math.floor(pct)}%`; FG.classList.toggle('done',pct>=100); }
     function render(v){ if(NEXT>0) while(v>=target) target+=NEXT; document.getElementById('target').textContent=Overlay.fmt(target);
       const pct=Math.min(100,v/target*100); document.getElementById('cur').textContent=Overlay.fmt(v);
       document.getElementById('fill').style.width=pct+'%'; document.getElementById('pct').textContent=pct.toFixed(1)+'%';
       document.getElementById('goal').classList.toggle('done',pct>=100);
       if(STYLE==='heart') renderHeart(v,pct);
-      if(ISTY) renderImg(v,pct); }
+      if(ISTY) renderImg(v,pct);
+      if(FST) renderFrame(v,pct); }
 
     Overlay.on('stats',(s)=>render(s[key]||0));
     Overlay.on('state',(s)=>render((s.stats&&s.stats[key])||0));

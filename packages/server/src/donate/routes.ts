@@ -7,6 +7,7 @@ import { getEntitlements } from '../plans/index.js';
 import { getHub } from '../realtime/hub.js';
 import { settings as sys } from '../settings/index.js';
 import { verifySlipV2, easyslipKey } from './easyslip.js';
+import { verifyOverlayToken } from '../widgets/tokens.js';
 import { addDonation, listDonations, updateDonation, slipPath, isUsedRef, markRef, type Donation } from './store.js';
 
 /**
@@ -102,6 +103,18 @@ export async function donateRoutes(app: FastifyInstance): Promise<void> {
     // ยังไม่มีระบบตรวจอัตโนมัติ → รอวีเจกดยืนยัน
     addDonation(o.user.id, { ...base, amount, status: 'pending', auto: false, note: v === null && easyslipKey() ? 'ระบบตรวจสลิปขัดข้อง — รอวีเจยืนยัน' : undefined }, img);
     return { ok: true, status: 'pending' };
+  });
+
+  // 🎯 เป้าหมายโดเนท (วิดเจ็ตโดเนทขึ้นจอ): ยอดที่ยืนยันแล้วตั้งแต่ since (ms · ปุ่ม "เริ่มนับใหม่" = resetAt) — ยืนยันตัวด้วย overlay token
+  app.get('/api/donate/goal', { config: { rateLimit: { max: 60, timeWindow: '1 minute' } } }, async (req, reply) => {
+    const q = req.query as { t?: string; since?: string };
+    const payload = verifyOverlayToken(String(q.t ?? ''));
+    if (!payload?.tid) return reply.code(401).send({ error: 'token ไม่ถูกต้อง' });
+    const token = await prisma.overlayToken.findUnique({ where: { id: payload.tid }, select: { revoked: true, userId: true } });
+    if (!token || token.revoked || token.userId !== payload.userId) return reply.code(401).send({ error: 'token ถูกเพิกถอนแล้ว' });
+    const since = Math.max(0, Number(q.since) || 0);
+    const total = listDonations(token.userId).filter((d) => d.status === 'verified' && new Date(d.createdAt).getTime() >= since).reduce((a, d) => a + d.amount, 0);
+    return reply.header('cache-control', 'no-store').send({ total });
   });
 
   // ---- ของวีเจ ----

@@ -13,7 +13,7 @@ import { toAudioDataUrl } from '@/lib/sounds';
 import { api, ApiError, type OverlayTokenRow, type ActionType, type AnimalName, type PrankName, type Rule, type TarotDeck, type TarotTopic, type TriggerEvent } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { translate, useT } from '@/lib/i18n';
-import { ANIMALS, CHEST_STYLES, EFFECTS, effectLabel, PK_TEMPLATES, PRANKS, prankLabel, TEMPLATES, TEMPLATE_GROUPS, type EffectName, type Template, type TemplateGroup } from '@/lib/actionTemplates';
+import { ANIMALS, CHEST_STYLES, EFFECTS, effectLabel, PK_TEMPLATES, PKB_CATS, PKB_READY, PKB_STYLES, pkBannerRule, PRANKS, prankLabel, TEMPLATES, type PkBannerCat, TEMPLATE_GROUPS, type EffectName, type Template, type TemplateGroup } from '@/lib/actionTemplates';
 
 const EVENT_LABELS: Record<TriggerEvent, string> = { gift: '🎁 ได้รับกิฟต์', follow: '➕ มีคนติดตาม', share: '🔁 มีคนแชร์', like: '❤️ มีคนกดไลค์', chat: '💬 แชทมีคำว่า', chest: '🎁 กล่องสมบัติ (กล่องของขวัญ)', superfanbox: '💜 กล่องซูเปอร์แฟน (ถุงม่วง)', join: '👋 มีคนเข้าห้อง', pk: '⚔️ PK (แข่ง)' };
 /** สถานการณ์ PK ที่ตั้งกฎได้ */
@@ -125,6 +125,7 @@ function toBody(d: Draft) {
   if (d.type === 'effect' && d.effect === 'animal') { action.effect = 'animal'; action.animal = d.animal; }
   else if (d.type === 'effect' && d.effect === 'prank') { action.effect = 'prank'; action.prank = d.prank; }
   else if (d.type === 'effect' && (d.effect === 'chest' || d.effect === 'bag')) { action.effect = d.effect; action.style = d.style; }
+  else if (d.type === 'effect' && d.effect === 'pkbanner') { action.effect = 'pkbanner'; action.style = /^[a-z0-9]+-\d\d$/.test(d.style) ? d.style : 'win-01'; }
   else if (d.type === 'effect') { action.tint = d.tint; action.effect = d.effect; action.count = Math.max(1, Math.min(30, Number(d.count) || 12)); }
   if (d.text.trim()) action.text = d.text.trim();
   if (d.type === 'tarot') { action.cards = Number(d.cards) || 1; if (d.deck !== 'full') action.deck = d.deck; if (d.topic !== 'general') action.topic = d.topic; }
@@ -307,6 +308,8 @@ function ActionsInner() {
     setDraft({ ...d, id: undefined });
   }
   const have = new Set((rules ?? []).map((r) => r.name));
+  // ป้าย PK สไตล์ GPT: แบบที่เลือกไว้ต่อจังหวะ (เริ่มต้น = แบบที่สวยสุดของหมวด)
+  const [pkbPick, setPkbPick] = useState<Record<string, string>>(() => Object.fromEntries(PKB_CATS.map(([k, , , , , , best]) => [k, best])));
   // เทมเพลตจัดหมวด: ไพ่ทาโร่ = แอดมินเท่านั้น (เหมือนเดิม) · โชว์เฉพาะหมวดที่มีเทมเพลต
   const ADMIN_ONLY_TPL = new Set(['tarot-swords']); // ร่างกายต้องการดาบ: ปิดไว้ให้แอดมินเห็นคนเดียว
   const tplVisible = TEMPLATES.filter((tp) => isAdmin || !ADMIN_ONLY_TPL.has(tp.id ?? '')); // ไพ่ทาโร่เปิดให้ทุกคนแล้ว ยกเว้นชุดดาบ
@@ -476,7 +479,7 @@ function ActionsInner() {
               {draft.type === 'effect' && (
                 <Field label={t('แบบเอฟเฟกต์')} hint={t('ดูตัวอย่างจริงทุกแบบได้ที่เทมเพลต “🦋 เอฟเฟกต์เต็มจอ” ด้านล่าง')}>
                   {/* เปลี่ยนแบบ → ตั้งสีเริ่มต้นที่เข้ากับแบบนั้นให้ด้วย (เช่น เหรียญ = ทอง หิมะ = ฟ้า) */}
-                  <Select value={draft.effect} onChange={(e) => { const v = e.target.value as EffectName; setDraft((d) => (d ? { ...d, effect: v, tint: EFFECTS.find(([k]) => k === v)?.[2] ?? d.tint } : d)); }}>
+                  <Select value={draft.effect} onChange={(e) => { const v = e.target.value as EffectName; setDraft((d) => (d ? { ...d, effect: v, tint: EFFECTS.find(([k]) => k === v)?.[2] ?? d.tint, style: v === 'pkbanner' ? (d.style.includes('-') ? d.style : `${PKB_CATS.find(([, , , pk]) => pk === d.pk)?.[0] ?? 'win'}-01`) : d.style.includes('-') ? '01' : d.style } : d)); }}>
                     {EFFECTS.map(([k, l]) => <option key={k} value={k}>{t(l)}</option>)}
                   </Select>
                 </Field>
@@ -514,7 +517,26 @@ function ActionsInner() {
                   <p className="mt-1 text-xs text-muted">{t(CHEST_STYLES.find(([k]) => k === draft.style)?.[1] ?? CHEST_STYLES[0][1])}</p>
                 </Field>
               )}
-              {draft.type === 'effect' && draft.effect !== 'coins' && draft.effect !== 'animal' && draft.effect !== 'prank' && draft.effect !== 'chest' && draft.effect !== 'bag' && !draft.effect.startsWith('v') && (
+              {draft.type === 'effect' && draft.effect === 'pkbanner' && (() => {
+                const [cat, st] = /^[a-z0-9]+-\d\d$/.test(draft.style) ? draft.style.split('-') : ['win', '01'];
+                return (
+                  <Field label={t('ป้าย PK — จังหวะ + แบบ')} hint={t('ป้ายเด้งกลางจอ มีเสียง + ประกายในตัว (แทนวิดีโอ PK ของจังหวะนั้น) · ข้อความประกอบขึ้นใต้ป้าย')}>
+                    <Select value={cat} onChange={(e) => set('style', `${e.target.value}-${st}`)}>
+                      {PKB_CATS.filter(([k]) => PKB_READY.has(k) || k === cat).map(([k, l]) => <option key={k} value={k}>{t(l)}</option>)}
+                    </Select>
+                    <div role="radiogroup" className="mt-2 grid grid-cols-5 gap-1.5">
+                      {PKB_STYLES.map(([k, l]) => (
+                        <button key={k} type="button" role="radio" aria-checked={st === k} title={t(l)} onClick={() => set('style', `${cat}-${k}`)}
+                          className={`flex aspect-[3/2] items-center justify-center rounded-xl border-2 p-0.5 transition ${st === k ? 'border-pink-400 bg-pink-50 shadow-sm' : 'border-transparent bg-black/[.03] hover:bg-pink-50/60'}`}>
+                          <img src={`/pkb/${cat}-${k}.webp`} alt={t(l)} width={120} height={80} loading="lazy" decoding="async" className="size-full object-contain" />
+                        </button>
+                      ))}
+                    </div>
+                    <p className="mt-1 text-xs text-muted">{t(PKB_STYLES.find(([k]) => k === st)?.[1] ?? '')}</p>
+                  </Field>
+                );
+              })()}
+              {draft.type === 'effect' && draft.effect !== 'coins' && draft.effect !== 'animal' && draft.effect !== 'prank' && draft.effect !== 'chest' && draft.effect !== 'bag' && draft.effect !== 'pkbanner' && !draft.effect.startsWith('v') && (
                 <Field label={t(draft.effect === 'butterflies' ? 'สีผีเสื้อ' : 'โทนสี')}>
                   <Select value={draft.tint} onChange={(e) => set('tint', e.target.value as Draft['tint'])}>
                     <option value="pink">{t('🩷 ชมพู (ค่าเริ่มต้น)')}</option><option value="purple">{t('💜 ม่วง')}</option><option value="blue">{t('💙 ฟ้า')}</option>
@@ -522,7 +544,7 @@ function ActionsInner() {
                   </Select>
                 </Field>
               )}
-              {draft.type === 'effect' && draft.effect !== 'animal' && draft.effect !== 'prank' && draft.effect !== 'chest' && draft.effect !== 'bag' && !draft.effect.startsWith('v') && (
+              {draft.type === 'effect' && draft.effect !== 'animal' && draft.effect !== 'prank' && draft.effect !== 'chest' && draft.effect !== 'bag' && draft.effect !== 'pkbanner' && !draft.effect.startsWith('v') && (
                 <Field label={t(draft.effect === 'butterflies' ? 'จำนวนผีเสื้อ' : 'ความหนาแน่น')} hint={t(draft.effect === 'butterflies' ? '1–30 ตัว · ข้อความประกอบจะขึ้นเป็นหัวเรื่องกลางจอ' : '1–30 (มาก = อนุภาคเยอะขึ้น) · ข้อความประกอบจะขึ้นเป็นหัวเรื่องกลางจอ')}>
                   <Input type="text" inputMode="numeric" value={draft.count} onChange={(e) => set('count', toDigits(e.target.value))} />
                 </Field>
@@ -612,6 +634,40 @@ function ActionsInner() {
                   </label>
                 </div>
               )}
+            {/* ✨ ป้าย PK สไตล์ GPT — 11 จังหวะ × 10 แบบ · กดรูปย่อเพื่อเปลี่ยนแบบ แล้ว "ใช้เลย" */}
+            <h3 className="mb-1 text-sm font-semibold">{t('✨ ป้าย PK สไตล์ GPT — เลือกแบบได้ 10 แบบทุกจังหวะ')}</h3>
+            <p className="mb-3 text-xs text-muted">{t('ป้ายเด้งกลางจอพร้อมเสียงและประกาย แทนวิดีโอ PK ของจังหวะนั้น · กดรูปเล็กเพื่อเปลี่ยนแบบ')}</p>
+            <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {PKB_CATS.filter(([k]) => PKB_READY.has(k)).map(([cat, label]) => {
+                const st = pkbPick[cat] ?? '01', rule = pkBannerRule(cat as PkBannerCat, st), added = have.has(rule.name);
+                const tp: Template = { icon: '⚔️', title: label, desc: '', rule };
+                return (
+                  <div key={cat} className="flex flex-col rounded-xl border border-line bg-canvas/50 p-3">
+                    <div className="relative -mx-1 -mt-1 aspect-[3/2] overflow-hidden rounded-lg bg-[radial-gradient(circle_at_50%_40%,#5b3a8c,#241634)]">
+                      <img src={`/pkb/${cat}-${st}.webp`} alt="" loading="lazy" className="absolute inset-2 h-[calc(100%-1rem)] w-[calc(100%-1rem)] object-contain" />
+                    </div>
+                    <div className="mt-1.5 text-sm font-medium leading-snug">{t(label)} <span className="text-xs font-normal text-muted">· {t(PKB_STYLES.find(([k]) => k === st)?.[1] ?? '')}</span></div>
+                    <div role="radiogroup" className="mt-1.5 grid grid-cols-5 gap-1">
+                      {PKB_STYLES.map(([k, l]) => (
+                        <button key={k} type="button" role="radio" aria-checked={st === k} title={t(l)} onClick={() => setPkbPick((p) => ({ ...p, [cat]: k }))}
+                          className={`flex aspect-[3/2] items-center justify-center rounded-lg border-2 transition ${st === k ? 'border-pink-400 bg-pink-50' : 'border-transparent bg-black/[.04] hover:bg-pink-50/60'}`}>
+                          <img src={`/pkb/${cat}-${k}.webp`} alt={t(l)} width={60} height={40} loading="lazy" decoding="async" className="size-full object-contain" />
+                        </button>
+                      ))}
+                    </div>
+                    <div className="mt-3 flex gap-2">
+                      <Button variant={added ? 'ghost' : 'secondary'} className="min-w-0 flex-1" disabled={added} loading={adding === rule.name} onClick={() => applyTemplate(tp)}>
+                        {added ? <><Check className="size-4" /> {t('เพิ่มแล้ว')}</> : t('ใช้เลย')}
+                      </Button>
+                      <Button variant="ghost" className="shrink-0 px-2.5" title={t('ตั้งค่าก่อนใช้ (เปลี่ยนข้อความ สี ระยะเวลา ฯลฯ)')} aria-label={t('ตั้งค่า')} onClick={() => customizeTemplate(tp)}>
+                        <Settings2 className="size-4" /> {t('ตั้งค่า')}
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <h3 className="mb-3 text-sm font-semibold">{t('📋 เทมเพลต PK อื่น ๆ')}</h3>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {PK_TEMPLATES.map((tp, ti) => {
                 const added = have.has(tp.rule.name);

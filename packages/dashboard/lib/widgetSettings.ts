@@ -3,6 +3,10 @@
  * ค่าที่บันทึกถูกส่งให้ overlay ผ่าน socket → จอเปลี่ยนทันทีโดยไม่ต้องเปลี่ยนลิงก์
  */
 
+/** แถบเป้าหมายกรอบ GPT 20 แบบ (overlay/public/goal/frame-NN.webp) — ใช้ทั้งวิดเจ็ตแถบเป้าหมาย และเป้าหมายโดเนท */
+const GOAL_FRAME_NAMES = ['💗 ริบบิ้นหัวใจชมพู', '👑 มงกุฎทองเพชร', '🎮 นีออนไซเบอร์', '🌙 กาแล็กซี่', '🌸 ซากุระ', '🍭 ลูกกวาด', '🏯 ทองไทย', '🐚 ทะเลเปลือกหอย', '🧸 หมีเท็ดดี้', '🔥 ไฟสายฟ้าอนิเมะ', '👼 ปีกนางฟ้า', '🎤 K-POP แท่งไฟ', '🍓 นมสตรอว์เบอร์รี', '🦄 ยูนิคอร์นสายรุ้ง', '🐱 หูแมวมิ้นต์', '❄️ หิมะน้ำแข็ง', '🎄 คริสต์มาส', '🎃 ฮาโลวีนน่ารัก', '🤍 มินิมอลขาวทอง', '🖤 มินิมอลดำเงิน'];
+const GOAL_FRAME_OPTS: [string, string, string, string][] = GOAL_FRAME_NAMES.map((n, i) => { const k = String(i + 1).padStart(2, '0'); return [`f-${k}`, n, '🖼️ แถบกรอบ GPT', `/overlay/goal/thumb-${k}.webp`]; });
+
 export type FieldDef =
   | { key: string; label: string; type: 'range'; min: number; max: number; step: number; def: number; unit?: string; hint?: string; when?: (v: Values) => boolean }
   | { key: string; label: string; type: 'number'; min?: number; max?: number; def: number; hint?: string; when?: (v: Values) => boolean }
@@ -56,7 +60,7 @@ const MVP_FRAMES: [string, string][] = [['01', '💗 ชมพูพาสเท
 const mvpThumb = (id: string) => `/overlay/mvp/thumb-${id}.webp`;
 const MVP_RANK_OPTS: [string, string, string?, string?][] = MVP_FRAMES.map(([id, l]) => ['mvp' + id, l, '🏆 แท่นกรอบรูปเต็มชุด', mvpThumb(id)]);
 // ป้ายไฟ LED: กรอบรูป 20 แบบ (overlay/public/sign/frame-XX.webp · จอดำใน sign/frames.json) + มินิมอลวาดด้วยโค้ด 6 แบบ
-const LEAGUE_MORE: [string, string][] = [['12', '💗 พาสเทลปีกนางฟ้า'], ['13', '⚽ สปอร์ตฟ้าขาว'], ['14', '🍭 ขนมหวาน'], ['15', '🧸 หมีเท็ดดี้'], ['16', '❄️ คริสตัลน้ำแข็ง'], ['17', '🐉 มังกรไฟ'], ['18', '👼 ปีกนางฟ้าทอง'], ['19', '🎤 เวที K-pop'], ['20', '🛕 วัดไทยทอง'], ['21', '🧜‍♀️ นางเงือก'], ['22', '🚀 นักบินอวกาศ'], ['23', '🏮 ซากุระยามค่ำ'], ['24', '🦄 ยูนิคอร์นสายรุ้ง'], ['25', '🍓 นมสตรอว์เบอร์รี่'], ['26', '🎮 เกมเมอร์ RGB'], ['27', '🐱 แมวกวัก'], ['28', '🤍 มินิมอลขาวทอง'], ['29', '🖤 มินิมอลดำเงิน']];
+const LEAGUE_MORE: [string, string][] = [['12', '💗 พาสเทลปีกนางฟ้า'], ['13', '⚽ สปอร์ตฟ้าขาว'], ['14', '🍭 ขนมหวาน'], ['15', '🧸 หมีเท็ดดี้'], ['16', '❄️ คริสตัลน้ำแข็ง'], ['17', '🐉 มังกรไฟ'], ['18', '👼 ปีกนางฟ้าทอง'], ['19', '🎤 เวที K-pop'], ['20', '🛕 วัดไทยทอง'], ['21', '🧜‍♀️ นางเงือก'], ['22', '🚀 นักบินอวกาศ'], ['23', '🏮 ซากุระยามค่ำ'], ['24', '🦄 ยูนิคอร์นสายรุ้ง'], ['25', '🍓 นมสตรอว์เบอร์รี่'], ['26', '🎮 เกมเมอร์ RGB'], ['27', '🐱 แมวกวัก'], ['28', '🤍 มินิมอลขาวทอง'], ['29', '🖤 มินิมอลดำเงิน'], ['30', '🏆 ถ้วยแชมป์']];
 const TIMER_SHAPES: [string, string][] = [['21', '⭕ วงกลมชมพู'], ['22', '💗 หัวใจ'], ['23', '☁️ ก้อนเมฆสายรุ้ง'], ['24', '⭐ ดาวทอง'], ['25', '🐱 หัวแมว'], ['26', '🧸 หัวหมี'], ['27', '⏰ นาฬิกาปลุก'], ['28', '📺 ทีวีย้อนยุค'], ['30', '👑 มงกุฎ'], ['31', '🎀 ริบบิ้น'], ['32', '💬 กล่องข้อความ'], ['33', '🎮 หกเหลี่ยมเกมมิ่ง'], ['34', '🛡️ โล่อีสปอร์ต'], ['35', '🌸 ดอกไม้'], ['36', '🌙 พระจันทร์'], ['37', '🎂 เค้กวันเกิด'], ['38', '🎁 กล่องของขวัญ'], ['39', '🎟️ ตั๋วทอง'], ['40', '🏮 โคมจีน']];
 const TIMER_MIN: [string, string][] = [['11', '🤍 มินิมอล ขาวกระจก'], ['12', '🖤 มินิมอล ดำขอบทอง'], ['13', '🪵 มินิมอล ไม้โอ๊ค'], ['14', '🌿 มินิมอล เขียวเสจ'], ['15', '🌷 มินิมอล ชมพูบลัช'],
   ['16', '🌙 มินิมอล กรมท่าเงิน'], ['17', '💜 มินิมอล ลาเวนเดอร์'], ['18', '💎 มินิมอล อะคริลิกใส'], ['19', '🏺 มินิมอล ดินเผา'], ['20', '🩶 มินิมอล ปูนเปลือย']];
@@ -578,7 +582,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
   goal: {
     sections: [
       { title: 'เป้าหมาย', fields: [
-        { key: 'style', label: 'รูปแบบ', type: 'select', def: 'bar', options: [['bar', '▬ แถบเปอร์เซ็นต์'], ['heart', '💖 หัวใจแก้วเรียบ ๆ', 'หัวใจแก้ว', '/overlay/hearts/thumb-heart.webp'], ['h-angel', '👼 หัวใจปีกนางฟ้า', 'หัวใจแก้ว', '/overlay/hearts/thumb-angel.webp'], ['h-potion', '🧪 ขวดยาเวทมนตร์', 'หัวใจแก้ว', '/overlay/hearts/thumb-potion.webp'], ['h-bowjar', '🎀 โหลโบว์ชมพู', 'หัวใจแก้ว', '/overlay/hearts/thumb-bowjar.webp'], ['h-piggy', '🐷 กระปุกของเล่น', 'หัวใจแก้ว', '/overlay/hearts/thumb-piggy.webp'], ['h-cyber', '🎮 หัวใจไซเบอร์', 'หัวใจแก้ว', '/overlay/hearts/thumb-cyber.webp'], ['h-melody', '🎤 หัวใจโน้ตดนตรี', 'หัวใจแก้ว', '/overlay/hearts/thumb-melody.webp']] },
+        { key: 'style', label: 'รูปแบบ', type: 'select', def: 'bar', options: [['bar', '▬ แถบเปอร์เซ็นต์'], ['heart', '💖 หัวใจแก้วเรียบ ๆ', 'หัวใจแก้ว', '/overlay/hearts/thumb-heart.webp'], ['h-angel', '👼 หัวใจปีกนางฟ้า', 'หัวใจแก้ว', '/overlay/hearts/thumb-angel.webp'], ['h-potion', '🧪 ขวดยาเวทมนตร์', 'หัวใจแก้ว', '/overlay/hearts/thumb-potion.webp'], ['h-bowjar', '🎀 โหลโบว์ชมพู', 'หัวใจแก้ว', '/overlay/hearts/thumb-bowjar.webp'], ['h-piggy', '🐷 กระปุกของเล่น', 'หัวใจแก้ว', '/overlay/hearts/thumb-piggy.webp'], ['h-cyber', '🎮 หัวใจไซเบอร์', 'หัวใจแก้ว', '/overlay/hearts/thumb-cyber.webp'], ['h-melody', '🎤 หัวใจโน้ตดนตรี', 'หัวใจแก้ว', '/overlay/hearts/thumb-melody.webp'], ...GOAL_FRAME_OPTS] },
         { key: 'type', label: 'นับจาก', type: 'select', def: 'like', options: [['like', '❤️ ไลค์'], ['follow', '➕ ผู้ติดตาม'], ['share', '🔁 แชร์'], ['diamond', '💎 เพชร'], ['gift', '🎁 จำนวนของขวัญ']] },
         { key: 'target', label: 'เป้าหมาย', type: 'number', min: 1, def: 10000 },
         { key: 'next', label: 'ถึงเป้าแล้วเพิ่มเป้าถัดไปอีก', type: 'number', min: 0, def: 0, hint: '0 = ไม่เพิ่ม' },
@@ -714,6 +718,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
     ],
   },
   donate: {
+    resettable: 'เริ่มนับยอดเป้าหมายโดเนทใหม่',
     sections: [
       { title: 'แจ้งเตือนบนจอ', fields: [
         { key: 'avatar', label: 'ตัวแทนวีเจโผล่ข้างแจ้งเตือน', type: 'select', def: 'photo', options: [['', '🚫 ไม่แสดง', '', ''], ['photo', '📷 รูปโปรไฟล์ TikTok ของฉัน', '', ''], ['mine', '✨ อวตารหน้าฉัน (อัปโหลดเอง)', '', ''], ...MASCOT_CHAR_OPTS] },
@@ -729,6 +734,14 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
         { key: 'promptpay', label: 'พร้อมเพย์', type: 'text', def: '', placeholder: '08xxxxxxxx', hint: 'ตั้งได้ที่เมนู “โดเนทขึ้นจอ” ด้วย' },
         { key: 'min', label: 'โดเนทขั้นต่ำ (บาท)', type: 'number', min: 1, def: 10 },
         { key: 'title', label: 'ข้อความบนหน้าโดเนท', type: 'text', def: '' },
+      ] },
+      { title: '🎯 เป้าหมายโดเนท', fields: [
+        { key: 'goal', label: 'แสดงแถบเป้าหมายโดเนท', type: 'toggle', def: false, hint: 'อยู่ในลิงก์โดเนทขึ้นจอเดิม ไม่ต้องวางลิงก์ใหม่ · นับเฉพาะโดเนทที่ยืนยันแล้ว · กดปุ่ม “เริ่มนับยอดเป้าหมายโดเนทใหม่” ด้านล่างเพื่อเริ่มจาก 0' },
+        { key: 'goalTarget', label: 'เป้าหมาย (บาท)', type: 'number', min: 1, def: 5000, when: (v) => !!v.goal },
+        { key: 'goalTitle', label: 'หัวข้อ', type: 'text', def: '🎯 เป้าหมายโดเนท', when: (v) => !!v.goal },
+        { key: 'goalStyle', label: 'แบบแถบ', type: 'select', def: 'f-01', when: (v) => !!v.goal, options: [['bar', '▬ แถบพาสเทลเรียบ ๆ', '', ''], ...GOAL_FRAME_OPTS] },
+        { key: 'goalPos', label: 'ตำแหน่งแถบ', type: 'select', def: 'auto', when: (v) => !!v.goal, options: [['auto', '✨ อัตโนมัติ (ฝั่งตรงข้ามแจ้งเตือน)'], ['top', 'บน'], ['bottom', 'ล่าง']] },
+        { key: 'goalSize', label: 'ขนาดแถบ', type: 'range', min: 0.5, max: 2, step: 0.1, def: 1, unit: '×', when: (v) => !!v.goal },
       ] },
     ],
   },

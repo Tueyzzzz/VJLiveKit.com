@@ -19,7 +19,39 @@ export const EFFECTS: [EffectName, string, NonNullable<Rule['action']['tint']>][
   ['vcake', '🎬 เค้กปาหน้า (วิดีโอ)', 'pink'], ['vcat', '🎬 แมวร่มชูชีพ (วิดีโอ)', 'pink'],
   ['animal', '🐾 สัตว์น่ารักออกมาเต้น', 'pink'], ['prank', '😈 แกล้งวีเจ (30 มุก)', 'pink'],
   ['chest', '🎁 กล่องสมบัติเด้งเปิด', 'gold'], ['bag', '💜 ถุงซูเปอร์แฟนเด้งเปิด', 'purple'],
+  ['pkbanner', '⚔️ ป้าย PK สไตล์ GPT', 'gold'],
 ];
+/** ป้าย PK สไตล์ GPT (effect=pkbanner, action.style = <หมวด>-NN) — รูป overlay/public/pkb/<หมวด>-NN.webp · รูปย่อ /pkb/<หมวด>-NN.webp (dashboard) */
+export type PkBannerCat = 'start' | 'win' | 'lose' | 'draw' | 'mvp' | 'top2' | 'top3' | 'glove' | 'critical' | 'smoke' | 'extra';
+/** [หมวด, ชื่อ, คำบนป้าย, ทริกเกอร์ PK, ฝั่ง, ข้อความประกอบเริ่มต้น, แบบที่สวยสุด (ใช้เป็นรูปการ์ด)] */
+export const PKB_CATS: [PkBannerCat, string, string, string, '' | 'us' | 'them', string, string][] = [
+  ['start', '⚔️ เริ่ม PK', 'PK START!', 'start', '', '⚔️ PK เริ่มแล้ว! ช่วยกันส่งของขวัญนะ 💖', '01'],
+  ['win', '🏆 ชนะ PK', 'WIN!', 'win', '', '🏆 ชนะแล้ว! {us} : {them} ขอบคุณทุกคนนะ 💖', '02'],
+  ['lose', '💪 แพ้ PK', 'GOOD GAME', 'lose', '', '💖 สู้เต็มที่แล้ว ขอบคุณทุกคนมาก ๆ นะ', '01'],
+  ['draw', '🤝 เสมอ', 'DRAW', 'draw', '', '🤝 เสมอกัน {us} : {them} สนุกมาก ขอบคุณทุกคน', '01'],
+  ['mvp', '👑 ประกาศ MVP', 'MVP', 'end', '', '👑 MVP ของ PK นี้คือ {mvp} ({mvpScore} คะแนน) ขอบคุณมากก 💖', '02'],
+  ['top2', '🥈 เก้าอี้ที่ 2 X2', 'TOP 2 X2', 'top2', 'us', '🥈 อันดับ 2 ส่งตอนนี้คะแนนคูณ 2 รีบเลย 💨', '01'],
+  ['top3', '🥉 เก้าอี้ที่ 3 X2', 'TOP 3 X2', 'top3', 'us', '🥉 อันดับ 3 ส่งตอนนี้คะแนนคูณ 2 รีบเลย 💨', '01'],
+  ['glove', '🥊 นวมช่วยเรา', 'BOOST!', 'glove', 'us', '🥊 {user} ใช้นวมช่วยเรา! ขอบคุณน้า', '10'],
+  ['critical', '⚡ สายฟ้า x2', 'CRITICAL!', 'critical', 'us', '⚡ {user} ปล่อยสายฟ้า x2! ขอบคุณ', '10'],
+  ['smoke', '🌫️ โดนหมอก', 'SMOKE!', 'smoke', 'them', '🌫️ โดนหมอกแล้ว! ส่งต่อเลยทุกคน อย่าหยุดนะ', '03'],
+  ['extra', '⏱️ ต่อเวลา', 'EXTRA TIME', 'extra', '', '⏱️ ต่อเวลาแล้ว! ยังมีลุ้น ช่วยกันอีกนิด', '01'],
+];
+/** หมวดที่มีรูปครบ 10 แบบแล้ว (GPT ยังทยอยทำหมวดที่เหลือ) — หมวดอื่นยังไม่โชว์ */
+export const PKB_READY = new Set<string>(['start', 'win']);
+/** 10 ธีมของป้าย PK (ลำดับเดียวกันทุกหมวด) */
+export const PKB_STYLES: [string, string][] = [
+  ['01', '🩷 พาสเทลคาวาอี้'], ['02', '👑 ทองทับทิมรอยัล'], ['03', '🎮 นีออนอีสปอร์ต'], ['04', '🌙 กาแล็กซี่'], ['05', '🌸 ซากุระ'],
+  ['06', '🍭 ลูกกวาด'], ['07', '🏯 ทองไทย'], ['08', '🐚 นางเงือก'], ['09', '🧸 หมีเท็ดดี้'], ['10', '🔥 ไฟสายฟ้าอนิเมะ'],
+];
+/** กฎจากป้าย PK หมวด + แบบ */
+export function pkBannerRule(cat: PkBannerCat, style: string): Template['rule'] {
+  const c = PKB_CATS.find(([k]) => k === cat)!;
+  const trigger: Rule['trigger'] = { event: 'pk', pk: c[3] };
+  if (c[4]) trigger.pkSide = c[4];
+  const st = PKB_STYLES.find(([k]) => k === style)?.[1].replace(/^\S+\s/, '') ?? style;
+  return { name: `ป้าย PK: ${c[1].replace(/^\S+\s/, '')} (${st})`, trigger, action: { type: 'effect', effect: 'pkbanner', style: `${cat}-${style}`, text: c[5], durationMs: cat === 'mvp' ? 8000 : 6000 } };
+}
 /** แบบกล่องสมบัติ/ถุงซูเปอร์แฟน (effect=chest|bag, action.style) — 10 ธีม ลำดับเดียวกันทั้งกล่องและถุง · รูปย่อ /fxthumbs/<chest|bag>-NN.webp */
 export const CHEST_STYLES: [string, string][] = [
   ['01', '🩷 พาสเทลคาวาอี้'], ['02', '👑 ทองทับทิมรอยัล'], ['03', '🎮 นีออนเกมมิ่ง'], ['04', '🌙 กาแล็กซี่'], ['05', '🌸 ซากุระ'],

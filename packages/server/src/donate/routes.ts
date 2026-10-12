@@ -35,7 +35,7 @@ async function ownerByHandle(handle: string) {
 }
 
 function announce(userId: string, tiktok: string, d: Donation) {
-  getHub()?.emitOwner(userId, tiktok, 'donation', { id: d.id, name: d.name, message: d.message, amount: d.amount });
+  getHub()?.emitOwner(userId, tiktok, 'donation', { id: d.id, name: d.name, message: d.message, amount: d.amount, vj: tiktok }); // vj = ชื่อ TikTok วีเจ (รูปโปรไฟล์ในแจ้งเตือน)
 }
 
 /** ตรวจสลิปกับ EasySlip — คืนผล หรือ null ถ้าเรียกไม่ได้ */

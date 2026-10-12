@@ -7,7 +7,7 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Itim&family=Mali:wght@500;700&display=swap');
   html,body { margin:0; width:100%; height:100%; background:transparent; overflow:hidden; font-family:'Mali','Itim',sans-serif; }
-  #wrap { position:fixed; left:50%; transform:translateX(-50%); display:flex; justify-content:center; width:min(620px,92vw); }
+  #wrap { position:fixed; left:50%; transform:translateX(-50%); display:flex; justify-content:center; width:min(1000px,96vw); }
   #wrap.top { top:6vh } #wrap.center { top:50%; transform:translate(-50%,-50%) } #wrap.bottom { bottom:7vh }
   .card { position:relative; width:100%; padding:18px 22px 20px; border-radius:26px; text-align:center; color:#fff; box-sizing:border-box;
     background:linear-gradient(135deg,rgba(255,111,170,.92),rgba(150,110,240,.92)); border:2px solid rgba(255,255,255,.7);
@@ -34,6 +34,22 @@
   .fcard .amt { font-size:calc(var(--ph) * .40); margin:0; color:var(--amt,#ff4f9a); text-shadow:0 2px 0 rgba(255,255,255,.7), 0 0 14px rgba(255,200,120,.55); }
   .fcard .msg { font-size:calc(var(--ph) * .15); margin-top:2px; padding:2px 10px; background:transparent; color:var(--ink,#5a2a3a); max-width:96%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .coin img { width:1em; height:1em; object-fit:contain; display:block; }
+  /* ตัวแทนวีเจข้างแจ้งเตือน (?avatar=photo | รหัสมาสคอต เช่น G1) */
+  .drow .card { flex:1 1 auto; max-width:620px; min-width:0; } .drow .fcard { width:min(720px,calc(96vw - 220px)); }
+  .drow { display:flex; align-items:flex-end; justify-content:center; gap:min(14px,2vw); }
+  .vjav { flex:0 0 auto; position:relative; animation:avIn .7s cubic-bezier(.2,1.6,.4,1) both; }
+  .vjav.out { animation:out .5s ease-in forwards; }
+  .vjav.photo { width:calc(150px * var(--s,1)); height:calc(150px * var(--s,1)); border-radius:24%; overflow:hidden; border:5px solid #fff; box-shadow:0 10px 26px rgba(80,20,90,.5), 0 0 0 4px rgba(255,111,170,.75); background:#ffd6ea; align-self:center; }
+  .vjav.photo img { width:100%; height:100%; object-fit:cover; display:block; animation:bob 1.3s ease-in-out infinite; }
+  .vjav.masc { width:calc(170px * var(--s,1)); height:calc(170px * var(--s,1)); border-radius:24%; overflow:hidden; border:5px solid #fff; align-self:center;
+    background:radial-gradient(circle at 50% 35%,#fff6fb,#ffd3e8 60%,#d9c6ff); box-shadow:0 10px 26px rgba(80,20,90,.5), 0 0 0 4px rgba(255,111,170,.75); }
+  .vjav.masc img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:50% 0; opacity:0; transition:opacity .12s; }
+  .vjav.masc img.on { opacity:1; }
+  .vjav.masc.hop img.on { animation:hop .45s cubic-bezier(.3,1.6,.5,1); }
+  .vjav .tag { position:absolute; left:50%; bottom:-6px; transform:translateX(-50%); white-space:nowrap; font-family:'Itim',sans-serif; font-size:calc(17px * var(--s,1)); color:#fff; padding:2px 12px; border-radius:999px; background:linear-gradient(90deg,#ff6faa,#9b6ef0); box-shadow:0 4px 10px rgba(80,20,90,.4); }
+  @keyframes avIn { from { opacity:0; transform:translateY(40px) scale(.5) } to { opacity:1; transform:none } }
+  @keyframes bob { 50% { transform:translateY(-4px) scale(1.04) } }
+  @keyframes hop { 40% { transform:translateY(-6%) scale(1.04) } }
 </style>
 </head>
 <body>
@@ -55,6 +71,33 @@
     let FR = null; const FRAME = String(P('frame', '') || '');
     let frDone = !/^\d{2}$/.test(FRAME);
     if (!frDone) fetch('donate/frames.json').then((r) => r.json()).then((m) => { if (m[FRAME]) { FR = m[FRAME]; new Image().src = 'donate/frame-' + FR.id + '.webp'; } }).catch(() => {}).finally(() => { frDone = true; });
+    // ตัวแทนวีเจ: รูปโปรไฟล์ TikTok (ชื่อมาจากเหตุการณ์โดเนท) หรือมาสคอต (ท่า 1 ยืน · 6 ขอบคุณ · 7 ดีใจ · 8 ส่งหัวใจ)
+    const AV = String(P('avatar', 'photo') || ''), MASC = /^[A-Z][A-Za-z0-9]{1,8}$/.test(AV) ? AV : '';
+    const MPOSE = [7, 8, 6, 7, 8], MSRC = {};
+    // ตัดขอบใสรอบตัวมาสคอตทีละท่า → ตัวละครเต็มกล่อง ไม่จิ๋ว (ยืนชิดล่าง)
+    if (MASC) [1, 6, 7, 8].forEach((n) => { const im = new Image(); im.onload = () => {
+      const W0 = 200, k = W0 / im.naturalWidth, c = document.createElement('canvas'); c.width = W0; c.height = Math.round(im.naturalHeight * k); const x = c.getContext('2d'); x.drawImage(im, 0, 0, c.width, c.height);
+      const a = x.getImageData(0, 0, c.width, c.height).data; let x0 = 1e9, y0 = 1e9, x1 = 0, y1 = 0;
+      for (let y = 0; y < c.height; y++) for (let xx = 0; xx < c.width; xx++) if (a[(y * c.width + xx) * 4 + 3] > 200) { if (xx < x0) x0 = xx; if (xx > x1) x1 = xx; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+      if (x1 <= x0) return;
+      // ครึ่งตัวบน (หัว→เอว ≈ 52% ของความสูงตัว) เป็นสี่เหลี่ยมจัตุรัส กึ่งกลางตามแนวตัว
+      const fh = (y1 - y0 + 1) / k, side = Math.max(fh * 0.52, (x1 - x0 + 1) / k * 0.9), cx = (x0 + x1) / 2 / k, top = y0 / k - side * 0.04;
+      const o = document.createElement('canvas'); o.width = o.height = 640; const g = o.getContext('2d'); g.imageSmoothingQuality = 'high';
+      g.drawImage(im, cx - side / 2, top, side, side, 0, 0, 640, 640); MSRC[n] = o.toDataURL('image/webp', .92); }; im.src = 'mascot/' + MASC + '/' + n + '.webp'; });
+    function makeAvatar(d) {
+      if (!AV) return null;
+      const el = document.createElement('div');
+      if (MASC) {
+        el.className = 'vjav masc'; el.innerHTML = [1, 6, 7, 8].map((n) => `<img data-n="${n}" src="${MSRC[n] || 'mascot/' + MASC + '/' + n + '.webp'}" alt="">`).join('');
+        let k = 0; const show = (n) => { el.querySelectorAll('img').forEach((im) => { const m = MSRC[+im.dataset.n]; if (m && im.src !== m) im.src = m; im.classList.toggle('on', +im.dataset.n === n); }); el.classList.remove('hop'); void el.offsetWidth; el.classList.add('hop'); };
+        show(7); el._t = setInterval(() => show(MPOSE[++k % MPOSE.length]), 1100); setTimeout(() => show(7), 300); // รูปครอปเสร็จทีหลัง → เปลี่ยนทันที
+      } else {
+        const src = d.vj ? '/api/tiktok/avatar/' + encodeURIComponent(String(d.vj).toLowerCase()) : (Overlay.connected ? '' : 'avatars/demo1.webp');
+        if (!src) return null;
+        el.className = 'vjav photo'; el.innerHTML = `<img src="${src}" alt="" onerror="this.parentNode.remove()">`;
+      }
+      return el;
+    }
     const COIN_IMG = []; fetch('donate/coins.json').then((r) => r.json()).then((l) => l.forEach((n) => { const im = new Image(); im.src = 'donate/' + n; im.onload = () => COIN_IMG.push(im.src); })).catch(() => {});
 
     let ac = null;
@@ -100,8 +143,10 @@
       card.querySelector('.who').textContent = `${d.name} ${P('label', 'โดเนท')}`;
       card.querySelector('.amt').textContent = `฿${fmt(d.amount)}`;
       if (d.message) card.querySelector('.msg').textContent = d.message;
-      wrap.appendChild(card); chime(); rain(d.amount);
-      setTimeout(() => { card.classList.add('out'); setTimeout(() => { card.remove(); next(); }, 500); }, DUR);
+      const av = makeAvatar(d), row = document.createElement('div'); row.className = 'drow'; row.style.setProperty('--s', SCALE);
+      if (av) row.appendChild(av); row.appendChild(card); wrap.appendChild(row); chime(); rain(d.amount);
+      if (av) { const fit = () => { const h = Math.max(130, Math.min(260, card.offsetHeight * 0.92)); av.style.height = av.style.width = h + 'px'; }; fit(); if (window.ResizeObserver) new ResizeObserver(fit).observe(card); } // มาสคอตสูงตามป้าย (รอรูปกรอบโหลด)
+      setTimeout(() => { card.classList.add('out'); if (av) av.classList.add('out'); setTimeout(() => { if (av && av._t) clearInterval(av._t); row.remove(); next(); }, 500); }, DUR);
     }
     Overlay.on('donation', (d) => { q.push(d); if (!busy) next(); });
 

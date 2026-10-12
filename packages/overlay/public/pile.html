@@ -26,11 +26,15 @@
   <script src="js/overlay-client.js"></script>
   <script src="js/collect-store.js"></script>
   <script src="js/juice.js"></script>
+  <script src="js/pile-delivery.js"></script>
   <script>
   /*
    * กองทับกัน — ไม่มีโหล ของขวัญจริงตกลงมาจากด้านบน แล้วกองซ้อนกันเป็นภูเขาที่ขอบล่างของกรอบ
    * ใช้กองกลางร่วมกับแบบอื่น (เปลี่ยนแบบแล้วของไม่หาย)
    *   width=100 (% ความกว้างกอง) · max=600 · giftScale=1 · alert=1 · minCoins=0 · glow=1 · reset=1
+ *   delivery=none|pipe|parachute|balloons|claw|ufo|stork|rocket|hotair|drone|wand|cloud|slide|cannon|conveyor|catapult|chimney|pinata|vending|rainbow|truck
+ *   side=auto|left|right (ฐานส่งของอยู่ฝั่งไหน) · pipe=1 (ย่อของ delivery=pipe)
+ *   วิธีส่งของเป็นแค่ภาพ — บันทึกของขวัญทันทีเหมือนเดิม · ของที่จำไว้ตอนรีโหลดโผล่บนกองทันที
    */
   (function () {
     const P = (k, d) => Overlay.param(k, d);
@@ -52,13 +56,22 @@
     const radiusFor = (d) => Math.min(80, 16 * GIFT_SCALE * sizeFor(d || 1, 3.6));
 
     const bodies = [], fx = new Juice.Particles();
+    const makeBody = (g) => ({ x: 0, y: 0, px: 0, py: 0, r: radiusFor(g.d), rot: Math.random() * 6.28, vr: (Math.random() - .5) * .2, img: giftImg(g.u), e: g.e || '🎁', d: g.d || 1, src: g, life: 1 });
     function addBody(g, restore) {
-      const r = radiusFor(g.d);
-      const x = left() + r + Math.random() * Math.max(1, right() - left() - 2 * r);
-      const b = { x, y: restore ? floor() - r - Math.random() * H * 0.6 : -r - Math.random() * 80, r, rot: Math.random() * 6.28, vr: (Math.random() - .5) * .2,
-        img: giftImg(g.u), e: g.e || '🎁', d: g.d || 1, src: g, life: 1 };
+      const b = makeBody(g), r = b.r;
+      b.x = left() + r + Math.random() * Math.max(1, right() - left() - 2 * r);
+      b.y = restore ? floor() - r - Math.random() * H * 0.6 : -r - Math.random() * 80;
       b.px = b.x + (Math.random() - .5) * 2; b.py = b.y - (restore ? 0 : 2);
-      bodies.push(b);
+      pushBody(b);
+    }
+    /** ปล่อยของขวัญลงฟิสิกส์ที่ตำแหน่ง/ความเร็ว (px ต่อเฟรม 60Hz) — ใช้กับวิธีส่งของ · born = เด้งขยายตอนโผล่ */
+    function launch(b, x, y, vx, vy, born) {
+      if (b.__in) return; b.__in = true;
+      b.x = x; b.y = y; b.px = x - (vx || 0); b.py = y - (vy || 0); if (born) b.born = performance.now();
+      pushBody(b);
+    }
+    function pushBody(b) {
+      b.__in = true; bodies.push(b);
       const alive = bodies.filter((k) => !k.dying);
       if (alive.length > MAX) ((window.VJLCollect && VJLCollect.victims) ? VJLCollect.victims(bodies, 1) : [alive[0]]).forEach((k) => { k.dying = true; }); // เกิน → ถูกสุด-เก่าสุดจางออก
     }
@@ -104,21 +117,41 @@
       else if (b.img && b.img.complete && b.img.naturalWidth) ctx.drawImage(b.img, -size / 2, -size / 2, size, size);
       else { ctx.font = Math.round(size * .85) + 'px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(b.e, 0, 2); }
     }
+    // ---- วิธีส่งของ (ท่อ ร่มชูชีพ ลูกโป่ง ฯลฯ) ----
+    const pipeOld = String(P('pipe', '') || '').toLowerCase();
+    let DELIVERY = String(P('delivery', '') || '').toLowerCase();
+    if (!DELIVERY) DELIVERY = pipeOld && pipeOld !== 'none' && pipeOld !== '0' ? 'pipe' : 'none';
+    function surface(x, r) { // ยอดกองแถว ๆ x (นับเฉพาะชิ้นที่นิ่งแล้ว)
+      let s = floor();
+      for (const b of bodies) if (!b.dying && Math.abs(b.x - x) < b.r + r * 0.8 && Math.abs(b.y - b.py) < 1.5 && b.y - b.r < s) s = b.y - b.r;
+      return s;
+    }
+    function drawGiftAt(b, x, y, rot, scale, alpha) {
+      ctx.save(); ctx.globalAlpha = alpha == null ? 1 : alpha; ctx.translate(x, y); ctx.rotate(rot || 0); if (scale != null && scale !== 1) ctx.scale(scale, scale); drawGift(b); ctx.restore();
+    }
+    const delivery = window.PileDelivery ? PileDelivery.create({ ctx, fx, mode: DELIVERY, side: P('side', 'auto'), bounds: () => ({ W, H, L: left(), R: right(), F: floor() }), launch, drawGift: drawGiftAt, surface })
+      : { deliver: (b) => launch(b, left() + Math.random() * (right() - left()), -b.r, 0, 0), update() {}, drawBack() {}, drawFront() {} };
+    if (!window.PileDelivery || delivery.mode === 'none') delivery.deliver = (b) => { const g = b.src; addBody(g, false); };
+
     let t0 = performance.now(), last = t0, acc = 0;
     function frame(now) {
       const t = (now - t0) / 1000;
       // ฟิสิกส์คงที่ 60 ครั้ง/วินาที ไม่ขึ้นกับเฟรมเรต (จอ 144Hz ไม่เร็วเกิน · เครื่องช้า/แท็บถูกพักก็ยังตกถึงพื้น)
       acc = Math.min(acc + (now - last), 250); last = now;
       while (acc >= 1000 / 60) { step(); fx.step(); acc -= 1000 / 60; }
-      ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.imageSmoothingQuality = 'high';
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+      delivery.update(now); delivery.drawBack(now);
       // ชิ้นถูกวาดก่อน ชิ้นแพงวาดทีหลัง = อยู่บนสุด
       const list = bodies.slice().sort((a, c) => a.d - c.d);
       for (const b of list) {
         if (b.dying) b.life -= 0.02;
         if (GLOW && b.d >= 100 && b.life > 0.5) Juice.aura(ctx, b.x, b.y, b.r, b.d, t);
-        ctx.save(); ctx.globalAlpha = Math.max(0, b.life); ctx.translate(b.x, b.y); ctx.rotate(b.rot); drawGift(b); ctx.restore();
+        ctx.save(); ctx.globalAlpha = Math.max(0, b.life); ctx.translate(b.x, b.y); ctx.rotate(b.rot);
+        if (b.born) { const k = (now - b.born) / 240; if (k >= 1) b.born = 0; else { const s = 0.35 + 0.65 * Juice.easeOutBack(Math.max(0, k)); ctx.scale(s, s); } }
+        drawGift(b); ctx.restore();
       }
       for (let i = bodies.length - 1; i >= 0; i--) if (bodies[i].life <= 0) bodies.splice(i, 1);
+      delivery.drawFront(now);
       fx.draw(ctx);
       requestAnimationFrame(frame);
     }
@@ -143,7 +176,7 @@
       const g = { u: (e.giftImage || (window.VJLCollect ? VJLCollect.imgFor(e.giftName) : '')), e: VJLCollect.emoji(e.giftName, '🎁'), d: unit };
       const n = Math.min(count, 150); // ส่ง 100 ดอก = ตก 100 ชิ้น
       const k = e.__add != null ? Math.min(e.__add, n) : n; // คอมโบ: ตกทันทีทีละชุดระหว่างกด
-      for (let i = 0; i < k; i++) setTimeout(() => addBody(g, false), i * (k > 30 ? 45 : 110));
+      for (let i = 0; i < k; i++) setTimeout(() => delivery.deliver(makeBody(g)), i * (k > 30 ? 45 : 110));
       if (e.__partial) return; // ยังกดคอมโบอยู่ → แจ้งเตือน/บันทึก ทำตอนจบครั้งเดียว
       if (window.VJLCollect) VJLCollect.record(e, n);
       if (unit >= 1000) fx.confetti(W / 2, H * 0.3, 50);

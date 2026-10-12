@@ -27,10 +27,10 @@
 
   /* ของขวัญในมือ (ท่ารับของขวัญ) */
   #gift { position:absolute; left:50%; top:var(--gy,58%); width:92px; height:92px; margin:-46px 0 0 -46px; object-fit:contain; opacity:0; pointer-events:none;
-    filter:drop-shadow(0 4px 8px rgba(255,180,220,.8)) drop-shadow(0 0 14px rgba(255,255,255,.9)); }
-  #gift.on { animation:giftIn .55s cubic-bezier(.3,1.6,.5,1) forwards, giftBob 1.6s ease-in-out .55s infinite; }
-  @keyframes giftIn { from { opacity:0; transform:translateY(-120px) scale(.3) rotate(-25deg) } to { opacity:1; transform:none } }
-  @keyframes giftBob { 0%,100% { opacity:1; transform:translateY(0) } 50% { opacity:1; transform:translateY(-5px) } }
+    filter:drop-shadow(0 4px 8px rgba(255,180,220,.8)) drop-shadow(0 0 14px rgba(255,255,255,.9)); transition:opacity .18s ease-out; }
+  #gift.on { opacity:1; } /* ตำแหน่ง/แกว่ง/ตกลงมือ = วัตถุติดสปริงแยกจากตัว (JS) */
+  /* ชั้นของตกแต่ง (ประกาย/หัวใจ/คอนเฟตติ): ตามตัวแบบมีความเฉื่อย (สปริงอ่อน) */
+  #deco { position:absolute; inset:0; pointer-events:none; }
 
   /* กล่องคำพูด */
   #bubble { position:absolute; left:50%; bottom:430px; transform:translateX(-50%) scale(.6); opacity:0; max-width:360px; width:max-content;
@@ -65,6 +65,7 @@
     <div id="shadow"></div>
     <div id="body"><div id="char"></div><img id="gift" alt="" /></div>
     <div id="name" hidden></div>
+    <div id="deco"></div>
   </div></div></div>
   <script src="/socket.io/socket.io.js"></script>
   <script src="js/overlay-client.js"></script>
@@ -138,17 +139,17 @@
         if (TINT) recolor(src).then((u) => { im.src = u; }); else im.src = src;
       }; probe.src = src;
     }
-    // ---- เครื่องยนต์การเคลื่อนไหว: ทุกอย่างคุมด้วย requestAnimationFrame + เวลาจริง (dt) ----
-    const $body = document.getElementById('body'), $shadow = document.getElementById('shadow');
+    // ---- เครื่องยนต์ฟิสิกส์: ตัวละครมีมวล — สปริง (หน่วงวิกฤต/เด้งเล็กน้อย) + แรงโน้มถ่วง ----
+    // อินทิเกรตแบบ semi-implicit Euler ที่ 120Hz คงที่ (สะสมเวลาจริง) แล้ววาดแบบประมาณค่าระหว่างสเต็ป → ลื่นทุกจอ ไม่สั่น
+    const $body = document.getElementById('body'), $shadow = document.getElementById('shadow'), $deco = document.getElementById('deco');
     const RM = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : null;
-    let DECO = RM && RM.matches ? 0 : 1; // ลดการเคลื่อนไหว → ปิดเฉพาะของตกแต่ง (โยก/บีบยืด/เด้งเล็ก ๆ/บีบตอนหมุน)
+    let DECO = RM && RM.matches ? 0 : 1; // ลดการเคลื่อนไหว → ปิดของตกแต่ง (เอียง/บีบยืด/แกว่ง/ความเฉื่อยของประกาย)
     if (RM && RM.addEventListener) RM.addEventListener('change', () => { DECO = RM.matches ? 0 : 1; });
-    const SWAY = (() => { const v = parseFloat(P('sway', '1')); return isNaN(v) ? 1 : Math.max(0, Math.min(3, v)); })(); // ?sway=0 ปิดการโยกตัว
+    const SWAY = (() => { const v = parseFloat(P('sway', '1')); return isNaN(v) ? 1 : Math.max(0, Math.min(3, v)); })(); // ?sway=0 ปิดการเอียง/โยกตัว
     const now = () => performance.now();
     const c01 = (t) => (t < 0 ? 0 : t > 1 ? 1 : t);
+    const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
     const eQuad = (t) => (t < .5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);
-    const eCubic = (t) => (t < .5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
-    const eSine = (t) => -(Math.cos(Math.PI * t) - 1) / 2;
     const DPR = () => window.devicePixelRatio || 1;
     const snap = (v) => Math.round(v * DPR()) / DPR(); // ปัดให้ตรงพิกเซลจอ → ภาพไม่เบลอจากการเลื่อนครึ่งพิกเซล
     const FADE = 150;
@@ -176,63 +177,131 @@
         const st = imgs[k].style; st.opacity = String(o); st.zIndex = String(w[1]); imgs[k].classList.toggle('vis', o > 0); shown[k] = [o, w[1]];
       }
     }
-    // เอฟเฟกต์ตามเวลา: keys = [[t(0..1), y(px), scaleY], ...] ต่อกันด้วยเส้นโค้ง Hermite (จุดยอดไม่พุ่งเกิน)
-    const FX = [];
-    function fx(d, keys) { FX.push({ t0: now(), d, keys }); }
-    function spl(K, p, j) {
-      let i = 0; while (i < K.length - 2 && p > K[i + 1][0]) i++;
-      const A = K[i], B = K[i + 1], h = (B[0] - A[0]) || 1, s = c01((p - A[0]) / h);
-      const tan = (k) => { if (k <= 0 || k >= K.length - 1) return 0; const d1 = K[k][j] - K[k - 1][j], d2 = K[k + 1][j] - K[k][j]; return d1 * d2 <= 0 ? 0 : (K[k + 1][j] - K[k - 1][j]) / (K[k + 1][0] - K[k - 1][0]); };
-      const m0 = tan(i) * h, m1 = tan(i + 1) * h, s2 = s * s, s3 = s2 * s;
-      return (2 * s3 - 3 * s2 + 1) * A[j] + (s3 - 2 * s2 + s) * m0 + (-2 * s3 + 3 * s2) * B[j] + (s3 - s2) * m1;
+
+    const H = 1 / 120, GRAV = 3000, TAU = Math.PI * 2; // แรงโน้มถ่วง px/s² (กระโดดสูง 110px ลอย ~0.54 วิ)
+    // แรงสปริง: ความถี่ธรรมชาติ f (Hz) · อัตราหน่วง z (1 = หน่วงวิกฤต ไม่เด้ง · <1 = เลยเป้านิดแล้วกลับ)
+    const spr = (x, v, target, f, z) => { const w = TAU * f; return -w * w * (x - target) - 2 * z * w * v; };
+    const gauss = () => { let u = 0; while (!u) u = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(TAU * Math.random()); };
+    // B = ตัวละคร (y: + = ลง, sq = บีบ(-)/ยืด(+) แกนตั้ง, rot องศา) · WK = ตำแหน่งเดิน · GF = ของขวัญในมือ · DC = ชั้นประกาย · ID = ยืนว่าง
+    const B = { y: 0, vy: 0, ay: 0, air: false, sq: 0, vsq: 0, rot: 0, vrot: 0, arot: 0 };
+    const WK = { x: 0, vx: 0, ax: 0, s: 1, fx: 0, fs: 1, tx: 0, ts: 1, D: 1, u: 0, vu: 0, vmax: 1, amax: 300, ramp: 1, on: false };
+    const GF = { x: 0, vx: 0, y: 0, vy: 0, a: 0, va: 0, s: 1, vs: 0 };
+    const DC = { x: 0, vx: 0, y: 0, vy: 0 };
+    const ID = { r: 0, vr: 0, sh: 0, vsh: 0, shT: 0, next: 5 };
+    let JMP = null, calm = 1, busy = false;
+    function kick(vy, vsq) { B.vy += vy; B.vsq += vsq; } // แรงกระแทกสั้น ๆ (ก้าวเท้า/เด้งเล็ก)
+    function jump(h, prep, dip) { JMP = { h, prep, dip, t: 0 }; } // ย่อตัว prep วิ → พุ่งขึ้นสูง h px (วิถีโค้งตามแรงโน้มถ่วง)
+    function hop() { jump(14, .07, .035); }
+    function beat() { jump(8, .1, .045); }
+    // เดิน: เร่ง → ความเร็วคงที่ → ผ่อน ตามแรง (ไม่ใช่เส้นโค้งเวลา) · คำนวณความเร็วสูงสุดให้ถึงที่หมายราว ๆ ms
+    function moveWalker(x, s, ms) {
+      const dx = x - WK.x, D = Math.max(Math.abs(dx), 80), T = Math.max(.3, ms / 1000 - .06), a = WK.amax, kk = 1 / (2 * a) + 1 / (1.6 * a); // เร่ง a · เบรก .8a
+      const disc = T * T - 4 * kk * D;
+      Object.assign(WK, { fx: WK.x, fs: WK.s, tx: x, ts: s, D, u: 0, vu: dx ? Math.max(0, WK.vx * D / dx) : 0, ramp: 0, on: true,
+        vmax: disc > 0 ? (T - Math.sqrt(disc)) / (2 * kk) : T / (2 * kk) });
+      $walker.classList.add('moving');
     }
-    const HOP = [[0, 0, 1], [.12, 3, .97], [.45, -14, 1.025], [.8, 0, 1], [.9, 1.5, .985], [1, 0, 1]];
-    const BEAT = [[0, 0, 1], [.3, 5, .97], [.6, -8, 1.025], [1, 0, 1]];   // ย่อเข่า (บีบ) → เด้ง (ยืด) ตามจังหวะ
-    const STEP = [[0, 0, 1], [.5, -5, 1.01], [1, 0, 1]];                // ก้าวเดิน: ลอยขึ้นกลางก้าว
-    const MICRO = [[0, 0, 1], [.35, -3, 1.008], [1, 0, 1]];
-    const JUMP = [[0, 0, 1], [.18, 8, .95], [.3, -45, 1.05], [.45, -110, 1.01], [.62, -110, 1], [.8, -25, 1.03], [.88, 6, .95], [1, 0, 1]];
-    // ตำแหน่งเดิน (walker): easeInOutCubic
-    const W = { x: 0, s: 1, fx: 0, fs: 1, tx: 0, ts: 1, t0: 0, d: 0 };
-    function moveWalker(x, s, ms) { Object.assign(W, { fx: W.x, fs: W.s, tx: x, ts: s, t0: now(), d: ms }); $walker.classList.add('moving'); }
     const SPIN_SEQ = [1, 18, 19, 20, 21, 22, 23, 24, 1];
-    let calm = 1, lastT = now(), lastBody = '', lastShadow = '', lastWalker = '';
+    function tick(h) {
+      calm += ((SPIN || WALKING ? 0 : busy ? .35 : 1) - calm) * (1 - Math.exp(-h / .3));
+      // 1) เดิน: แรงขับจำกัด (เร่ง/เบรก) → ความเร่งแนวนอน ax ใช้เอียงตัว + เหวี่ยงของในมือ
+      let ax = 0;
+      if (WK.on) {
+        WK.ramp = Math.min(1, WK.ramp + h / .12); // แรงค่อย ๆ ขึ้น (ไม่กระชาก)
+        const rem = Math.max(1e-3, WK.D - WK.u);
+        // ใกล้ถึง → เบรกด้วยแรงคงที่ให้หยุดพอดีจุด (v²/2s) · ไม่งั้นเร่งไปหาความเร็วเดิน
+        const au = WK.vu * WK.vu >= 2 * WK.amax * .8 * rem ? -WK.vu * WK.vu / (2 * rem) : clamp((WK.vmax - WK.vu) * 10, -WK.amax, WK.amax * WK.ramp);
+        WK.vu = Math.max(0, WK.vu + au * h); WK.u = Math.min(WK.D, WK.u + WK.vu * h);
+        const k = (WK.tx - WK.fx) / WK.D; ax = au * k;
+        if (WK.D - WK.u < .05 || (WK.vu < 1 && au <= 0)) { WK.u = WK.D; WK.vu = 0; WK.on = false; }
+        WK.vx = WK.vu * k; WK.x = WK.fx + (WK.tx - WK.fx) * WK.u / WK.D; WK.s = WK.fs + (WK.ts - WK.fs) * WK.u / WK.D;
+      } else WK.vx = 0;
+      WK.ax = ax;
+      // 2) หมุนรอบตัว: แรงบิดเร่ง → ความเร็วเชิงมุม → เบรกเข้าที่ 360°
+      if (SPIN && !SPIN.done) {
+        const S = SPIN; S.t += h;
+        const rem = Math.max(1e-3, 360 - S.th);
+        S.al = S.om * S.om >= 2 * S.amax * .8 * rem ? -S.om * S.om / (2 * rem) : clamp((S.wmax - S.om) * 14, -S.amax, S.amax * Math.min(1, S.t / .12)); // แรงบิด → แรงต้านเบรกหยุดตรงหน้า
+        S.om = Math.max(0, S.om + S.al * h); S.th = Math.min(360, S.th + S.om * h);
+        if (360 - S.th < .05 || (S.om < 1 && S.al <= 0) || S.t > 2.4) { S.th = 360; S.om = 0; S.al = 0; S.done = true; }
+      }
+      // 3) แนวตั้ง: ย่อตัวก่อนกระโดด → วิถีโค้ง (แรงโน้มถ่วง) → ลงพื้นบีบตามความเร็วกระแทก → เด้งคืน
+      let sqT = 0;
+      if (JMP && !B.air) {
+        JMP.t += h; const p = c01(JMP.t / JMP.prep);
+        sqT -= JMP.dip * p * p * (3 - 2 * p);
+        if (JMP.t >= JMP.prep) { B.air = true; B.vy = -Math.sqrt(2 * GRAV * JMP.h); B.vsq += Math.sqrt(JMP.h) * .09; JMP = null; }
+      }
+      const vy0 = B.vy;
+      if (B.air) {
+        B.vy += GRAV * h; B.y += B.vy * h;
+        sqT += Math.min(.07, Math.abs(B.vy) * 7e-5); // ยืดตามความเร็วตอนลอย
+        if (B.y >= 0 && B.vy > 0) { const imp = B.vy; B.air = false; B.y = 0; B.vy = -imp * .1; B.vsq -= imp * .0034; }
+      } else {
+        const yT = SPIN ? -9 * (SPIN.om / SPIN.wmax) * DECO : 0; // หมุนเร็ว = เขย่งขึ้นนิด
+        B.vy += spr(B.y, B.vy, yT, 3, .42) * h; B.y += B.vy * h;
+      }
+      B.ay = (B.vy - vy0) / h;
+      B.vsq += spr(B.sq, B.vsq, sqT, 4, .3) * h; B.sq = clamp(B.sq + B.vsq * h, -.16, .12);
+      // 4) ยืนว่าง: โยกแบบสุ่มที่ถูกหน่วง (random walk ผ่านตัวกรองมวล-สปริง ไม่ใช่ sine) + ถ่ายน้ำหนักเป็นครั้งคราว
+      ID.vr += (-1.6 * ID.vr - .9 * ID.r) * h + 1.5 * Math.sqrt(h) * gauss(); ID.r = clamp(ID.r + ID.vr * h, -2.5, 2.5);
+      if ((ID.next -= h) <= 0) {
+        ID.next = 4 + Math.random() * 6;
+        if (calm > .8 && !VIDMODE) { ID.shT = (ID.shT > 0 ? -1 : 1) * (.5 + Math.random() * .6); kick(10, -.12); } else ID.shT = 0;
+      }
+      if (calm < .5) ID.shT = 0;
+      ID.vsh += spr(ID.sh, ID.vsh, ID.shT, .7, .85) * h; ID.sh += ID.vsh * h;
+      // 5) เอียงตัว: เอียงเข้าหาความเร่ง · หมุนเร็วเอียงออก (หนีศูนย์) · ปล่อยแล้วสปริงเด้งเข้าที่
+      const lean = Math.min(1, SWAY);
+      let rotT = VIDMODE ? 0 : (ID.r * .55 * calm + ID.sh) * SWAY;
+      rotT += lean * ax * .007;
+      if (SPIN) rotT += lean * (2.4 * (SPIN.om / SPIN.wmax) ** 2 - 1.6 * SPIN.al / SPIN.amax);
+      const vr0 = B.vrot; B.vrot += spr(B.rot, B.vrot, rotT, 2.2, .4) * h; B.rot += B.vrot * h; B.arot = (B.vrot - vr0) / h;
+      // 6) ของขวัญในมือ = วัตถุแยก ติดสปริงกับมือ: ตามช้ากว่าตัวนิด ๆ + แกว่งแบบลูกตุ้ม (หน่วง)
+      GF.vx += (spr(GF.x, GF.vx, 0, 1.6, .35) - ax) * h; GF.x = clamp(GF.x + GF.vx * h, -30, 30);
+      GF.vy += (spr(GF.y, GF.vy, 0, 2.6, .45) - B.ay * .3) * h; GF.y = clamp(GF.y + GF.vy * h, -140, 40);
+      GF.va += (spr(GF.a, GF.va, 0, 1.7, .22) - ax * .95 - B.arot * .6) * h; GF.a = clamp(GF.a + GF.va * h, -35, 35);
+      GF.vs += spr(GF.s, GF.vs, 1, 3, .45) * h; GF.s += GF.vs * h;
+      // 7) ประกาย/หัวใจ: ตามตัวแบบเฉื่อย (สปริงอ่อน)
+      DC.vx += (spr(DC.x, DC.vx, 0, 1.1, .55) - ax) * h; DC.x = clamp(DC.x + DC.vx * h, -40, 40);
+      DC.vy += (spr(DC.y, DC.vy, 0, 1.4, .55) - B.ay * .12) * h; DC.y = clamp(DC.y + DC.vy * h, -40, 40);
+    }
+    // สถานะที่ใช้วาด (เก็บค่าก่อน/หลังสเต็ป → ประมาณค่าระหว่างกลางตามเวลาจริง)
+    const snapState = () => [WK.x, WK.s, B.y, B.sq, B.rot, SPIN ? SPIN.th : 0, GF.x, GF.y, GF.a, GF.s, DC.x, DC.y];
+    let prevS = snapState(), curS = prevS, acc = 0, lastT = now(), lastBody = '', lastShadow = '', lastWalker = '', lastGift = '', lastDeco = '';
+    const REC = P('debug', '0') === '1' ? [] : null;
     function frame(t) {
-      const dt = Math.min(100, Math.max(0, t - lastT)); lastT = t;
-      calm += ((SPIN || WALKING ? 0 : busy ? .35 : 1) - calm) * (1 - Math.exp(-dt / 300));
-      let y = 0, sq = 0, sx = 0, rot = 0;
-      for (let i = FX.length - 1; i >= 0; i--) { const f = FX[i], p = (t - f.t0) / f.d; if (p >= 1) { FX.splice(i, 1); continue; } y += spl(f.keys, p, 1); sq += spl(f.keys, p, 2) - 1; }
-      sq *= DECO;
-      if (SPIN) { // หมุนรอบตัว: มุมเร่ง-ผ่อน (ease-in-out) · จางต่อเนื่องระหว่างเฟรม 8 ทิศ · บีบแนวนอนตอนหันข้าง (หลอกตาเป็น 3D) · เด้งเบา ๆ
-        const p = c01((t - SPIN.t0) / SPIN.d), th = eSine(p) * 360, f = th / 45, i = Math.min(7, Math.floor(f)), fr = f - i;
-        if (p >= 1) { Object.assign(L, { under: [], top: 1, a0: 1, d: 0 }); const r = SPIN.res; SPIN = null; r(); }
+      acc += Math.min(.1, Math.max(0, t - lastT) / 1000); lastT = t;
+      while (acc >= H) { prevS = curS; tick(H); curS = snapState(); acc -= H; }
+      const al = acc / H, S = curS.map((v, i) => prevS[i] + (v - prevS[i]) * al);
+      const [wx, ws, y, sqP, rotP, th, gx, gy, ga, gs, dx, dy] = S;
+      let sq = sqP * DECO, sx = 0, rot = rotP * DECO;
+      if (SPIN) { // หมุนรอบตัว: มุมจากฟิสิกส์ → จางต่อเนื่องระหว่างเฟรม 8 ทิศ · บีบแนวนอนตอนหันข้าง (หลอกตาเป็น 3D)
+        if (SPIN.done) { Object.assign(L, { under: [], top: 1, a0: 1, d: 0 }); const r = SPIN.res; SPIN = null; r(); }
         else {
-          const a = fr * fr * (3 - 2 * fr); // smoothstep: ช่วงซ้อนสั้น → ไม่เห็นเงาเบลอค้าง
+          const f = clamp(th, 0, 359.99) / 45, i = Math.min(7, Math.floor(f)), fr = f - i, a = fr * fr * (3 - 2 * fr); // smoothstep: ช่วงซ้อนสั้น ไม่เห็นเงาเบลอค้าง
           Object.assign(L, { under: [{ n: SPIN_SEQ[i], a: 1 }], top: SPIN_SEQ[i + 1], a0: a, d: 0 });
           sx -= .07 * Math.abs(Math.sin(th * Math.PI / 180)) * DECO;
-          y -= 12 * Math.sin(Math.PI * p) * DECO;
         }
       }
       let b = 0;
-      if (!VIDMODE) { // หายใจ (scaleY 1→1.015 ทุก ~3 วิ) + โยกตัวเบา ๆ ±1.2°
-        b = .5 - .5 * Math.cos(2 * Math.PI * t / 3000);
-        sq += .015 * b; sx += .004 * b;
-        rot = 1.2 * SWAY * DECO * calm * Math.sin(2 * Math.PI * t / 5200);
-      }
-      const sy = 1 + sq, sxx = 1 + sx - (sq - .015 * b) * .6; // บีบ-ยืดคงปริมาตร (ไม่นับหายใจ)
+      if (!VIDMODE) { b = .5 - .5 * Math.cos(2 * Math.PI * t / 3000); sx += .004 * b; } // หายใจ (scaleY 1→1.015 ทุก ~3 วิ)
+      const sy = 1 + sq + .015 * b, sxx = 1 + sx - sq * .6; // บีบ-ยืดคงปริมาตร
       const bt = `translate3d(0,${snap(y)}px,0) rotate(${rot.toFixed(3)}deg) scale(${sxx.toFixed(4)},${sy.toFixed(4)})`;
       if (bt !== lastBody) { $body.style.transform = bt; lastBody = bt; }
-      const lift = Math.max(0, -y), st = `scale(${(1 + .02 * b - lift / 300).toFixed(3)},1)`, so = Math.max(.35, 1 - lift / 200).toFixed(2);
+      const lift = Math.max(0, -y), st = `scale(${Math.max(.45, 1 + .02 * b - lift / 260).toFixed(3)},${Math.max(.6, 1 - lift / 400).toFixed(3)})`, so = Math.max(.3, 1 - lift / 180).toFixed(2); // เงาเล็ก/จางลงตามความสูง
       if (st + so !== lastShadow) { $shadow.style.transform = st; $shadow.style.opacity = so; lastShadow = st + so; }
-      if (W.d > 0) {
-        const p = c01((t - W.t0) / W.d), e = eCubic(p); W.x = W.fx + (W.tx - W.fx) * e; W.s = W.fs + (W.ts - W.fs) * e;
-        if (p >= 1) { W.d = 0; $walker.classList.remove('moving'); } // หยุดแล้ว → ถอด will-change ให้วาดใหม่คมชัด
-      }
-      const wt = W.x === 0 && W.s === 1 ? '' : `translate3d(${snap(W.x)}px,0,0) scale(${W.s.toFixed(4)})`;
+      if (!WK.on && $walker.classList.contains('moving')) $walker.classList.remove('moving'); // หยุดแล้ว → ถอด will-change ให้วาดใหม่คมชัด
+      const wt = Math.abs(wx) < .01 && Math.abs(ws - 1) < 1e-4 ? '' : `translate3d(${snap(wx)}px,0,0) scale(${ws.toFixed(4)})`;
       if (wt !== lastWalker) { $walker.style.transform = wt; lastWalker = wt; }
+      const gt = `translate(${snap(gx)}px,${snap(gy)}px) rotate(${(ga * DECO * Math.min(1, SWAY)).toFixed(2)}deg) scale(${gs.toFixed(3)})`;
+      if (gt !== lastGift) { $gift.style.transform = gt; lastGift = gt; }
+      const ddx = snap(dx * DECO), ddy = snap(dy * DECO), dt2 = ddx || ddy ? `translate(${ddx}px,${ddy}px)` : '';
+      if (dt2 !== lastDeco) { $deco.style.transform = dt2; lastDeco = dt2; }
+      if (REC) { REC.push([Math.round(t), +wx.toFixed(2), +y.toFixed(2), +rot.toFixed(3), +sq.toFixed(4), +th.toFixed(2), +gx.toFixed(2), +gy.toFixed(2), +ga.toFixed(2)]); if (REC.length > 20000) REC.splice(0, 5000); }
       drawLayers(t);
       requestAnimationFrame(frame);
     }
-    let busy = false;
     pose(1, 0);
     requestAnimationFrame(frame);
 
@@ -273,13 +342,12 @@
     const fillText = (t, e) => esc(t).replace(/\{user\}/g, `<b>${esc(e.user ? (e.user.nickname || e.user.uniqueId) : 'ทุกคน')}</b>`).replace(/\{gift\}/g, `<b>${esc(e.giftName || 'ของขวัญ')}</b>`);
     let bubbleT = null;
     function say(html, ms = 3200) { $bubble.innerHTML = html; $bubble.classList.add('on'); clearTimeout(bubbleT); bubbleT = setTimeout(() => $bubble.classList.remove('on'), ms); }
-    function hop() { fx(500, HOP); }
     function particles(chars, n = 10, d = 1.8) {
       for (let i = 0; i < n; i++) setTimeout(() => {
         const p = document.createElement('div'); p.className = 'p'; p.textContent = chars[i % chars.length];
         p.style.left = (150 + Math.random() * 120) + 'px'; p.style.bottom = (180 + Math.random() * 80) + 'px';
         p.style.setProperty('--x', (Math.random() * 160 - 80) + 'px'); p.style.setProperty('--r', (Math.random() * 60 - 30) + 'deg'); p.style.setProperty('--d', d + 's');
-        $walker.appendChild(p); setTimeout(() => p.remove(), d * 1000 + 100);
+        $deco.appendChild(p); setTimeout(() => p.remove(), d * 1000 + 100);
       }, i * 90);
     }
     function confetti(n = 40) {
@@ -289,7 +357,7 @@
         c.style.left = '210px'; c.style.bottom = '300px';
         const a = Math.random() * Math.PI - Math.PI, v = 140 + Math.random() * 220;
         c.style.setProperty('--x', Math.cos(a) * v + 'px'); c.style.setProperty('--y', (Math.sin(a) * v + 260) + 'px'); c.style.setProperty('--r', (Math.random() * 720 - 360) + 'deg'); c.style.setProperty('--d', (1.2 + Math.random() * .8) + 's');
-        $walker.appendChild(c); setTimeout(() => c.remove(), 2200);
+        $deco.appendChild(c); setTimeout(() => c.remove(), 2200);
       }
     }
 
@@ -302,16 +370,16 @@
         t.style.left = (210 + Math.cos(a) * r * 0.8 - 8) + 'px'; t.style.bottom = (210 + Math.sin(a) * r - 8) + 'px';
         t.style.setProperty('--z', (16 + Math.random() * 22) + 'px'); t.style.setProperty('--c', TW_COLORS[(Math.random() * TW_COLORS.length) | 0]);
         t.style.setProperty('--d', (1 + Math.random() * 0.9) + 's');
-        $walker.appendChild(t); setTimeout(() => t.remove(), 2000);
+        $deco.appendChild(t); setTimeout(() => t.remove(), 2000);
       }, i * 70);
     }
     if (SPARK !== 'off') setInterval(() => { if (!document.hidden) twinkle(SPARK === 'lots' ? 3 : 2); }, SPARK === 'lots' ? 240 : 520);
 
     // ---- ท่าทางเวลาว่าง: กะพริบตา · ผมปลิว · ทำท่าเล่นเองเป็นระยะ (ไม่ยืนนิ่ง) ----
     (function blink() { // กะพริบตา (จางเร็ว) + บางครั้งเด้งตัวเบา ๆ
-      setTimeout(async () => { if (!busy) { if (DECO && Math.random() < .35) fx(420, MICRO); pose(2, 45); await wait(110); if (!busy) pose(1, 70); } blink(); }, 2200 + Math.random() * 2400);
+      setTimeout(async () => { if (!busy) { if (DECO && Math.random() < .35) kick(-40, .07); pose(2, 45); await wait(110); if (!busy) pose(1, 70); } blink(); }, 2200 + Math.random() * 2400);
     })();
-    const step = (n, ms) => { pose(n, 120); fx(ms, STEP); return wait(ms); }; // ก้าว: จางเฟรมก้าว + ลอยขึ้นกลางก้าว (ซิงก์กับเฟรม)
+    const step = (n, ms) => { pose(n, 120); kick(-55, -.3); return wait(ms); }; // ก้าว: เท้าลงพื้น (บีบนิด) แล้วดันตัวขึ้น → ตัวกระเพื่อมตามแรงก้าว
     // เดินไปด้านข้างแล้วเดินกลับ (สลับท่าก้าวซ้าย-ขวา)
     async function walk(dist) {
       const dir = POS === 'br' ? -1 : POS === 'bl' ? 1 : (Math.random() < .5 ? -1 : 1), dx = dir * (dist || 150);
@@ -327,20 +395,20 @@
       if (TURN === 7) { // หมุนรอบตัวจริง 8 ทิศ (โหมดวิดีโอ: ซ่อนคลิปชั่วคราวแล้วใช้รูป)
         const vid = VIDEO.on; if (vid) { clearTimeout(VIDEO.t); setVideo(false); pose(1, 0); }
         if (L.top !== 1) { pose(1, 120); await wait(130); }
-        await new Promise((res) => { SPIN = { t0: now(), d: 1150, res }; }); // ~1.15 วิ/รอบ เหมือนคนหมุนจริง
+        await new Promise((res) => { SPIN = { th: 0, om: 0, al: 0, t: 0, wmax: 450, amax: 1300, done: false, res }; }); // แรงบิดเร่ง 1300°/s² ความเร็วสูงสุด 450°/s → ~1.15 วิ/รอบ เหมือนคนหมุนจริง
         if (vid) { setVideo(true); playClip('joy'); particles(['✨', '⭐', '💫'], 8, 1.6); await wait(1200); return; }
         pose(7); hop(); particles(['✨', '⭐', '💫'], 8, 1.6); if (SPARK !== 'off') twinkle(12, 1); await wait(700); return;
       }
       pose(16, 180); await wait(480); pose(7); hop(); particles(['✨', '⭐', '💫'], 8, 1.6); if (SPARK !== 'off') twinkle(12, 1); await wait(700); }
-    async function bigJump() { pose(1); fx(950, JUMP); await wait(230); pose(7, 120); particles(['🎉', '✨'], 8, 1.6); await wait(560); pose(1); await wait(200); }
-    if (P('debug', '0') === '1') window.__mascot = { spin: () => enqueue(spin), dance: () => enqueue(() => dance(2)), walk: () => enqueue(() => walk()), kiss: () => enqueue(() => kiss(null)), jump: () => enqueue(bigJump) };
+    async function bigJump() { pose(1); jump(110, .18, .07); await wait(230); pose(7, 120); particles(['🎉', '✨'], 8, 1.6); await wait(560); pose(1); await wait(200); }
+    if (P('debug', '0') === '1') window.__mascot = { spin: () => enqueue(spin), dance: () => enqueue(() => dance(2)), walk: () => enqueue(() => walk()), kiss: () => enqueue(() => kiss(null)), jump: () => enqueue(bigJump), gift: () => enqueue(() => receive(window.VJLCollect ? VJLCollect.demoGift() : { giftName: 'Rose' })), trace: REC }; // trace: [t, walkerX, y, rot, sq, spinθ, giftX, giftY, giftAngle]
     const IDLE = [
       () => walk(),
       async () => { if (TURN === 7) await spin(); else pose(3), await wait(900); }, // หมุนโชว์ (เฉพาะตัวที่มีท่าหันรอบตัว)
-      async () => { for (let i = 0; i < 6; i++) { pose(i % 2 ? 5 : 4, 110); fx(230, [[0, 0, 1], [.4, -2, 1.01], [1, 0, 1]]); await wait(230); } },                   // สะบัดผม
+      async () => { for (let i = 0; i < 6; i++) { pose(i % 2 ? 5 : 4, 110); kick(-30, .06); await wait(230); } },                   // สะบัดผม
       async () => { pose(8); hop(); particles(['💗', '💕'], 4, 1.6); await wait(1100); },                      // ส่งหัวใจเล่น ๆ
       async () => { pose(3); await wait(1200); },                                                              // ยิ้มเฉย ๆ (ไม่โยกตัว)
-      async () => { for (const n of [9, 10, 9, 10]) { pose(n, 160); fx(330, BEAT); await wait(330); } }, // เต้นสั้น ๆ
+      async () => { for (const n of [9, 10, 9, 10]) { pose(n, 160); beat(); await wait(330); } }, // เต้นสั้น ๆ
       async () => { pose(7); hop(); particles(['✨', '⭐'], 4, 1.4); await wait(900); },                        // ดีใจเบา ๆ
     ];
     (function idleAct() {
@@ -355,7 +423,10 @@
     async function receive(e) {
       const img = e.giftImage || (window.VJLCollect ? VJLCollect.imgFor(e.giftName) : '');
       if (VIDEO.on && VIDEO.clips.thanks) playClip('thanks'); else { pose(6); hop(); }
-      if (img) { $gift.src = img; $gift.classList.remove('on'); void $gift.offsetWidth; $gift.classList.add('on'); }
+      if (img) { // ของขวัญตกลงมือ: เริ่มสูง เล็ก เอียง → สปริงดึงเข้ามือ เด้งแล้วนิ่ง · ถือชิ้นเดิมอยู่แล้ว → เด้งในมือแทน (ไม่วาร์ป)
+        if ($gift.classList.contains('on')) { GF.vy -= 320; GF.vs += 2.2; GF.va += 90; $gift.src = img; }
+        else { $gift.src = img; Object.assign(GF, { x: 0, vx: 0, y: -115, vy: -180, a: -25, va: 0, s: .3, vs: 0 }); $gift.classList.add('on'); }
+      }
       if (THANKS) say(fillText(THANK_TEXT, e), 3000);
       particles(['✨', '💖', '⭐'], 6);
       if (SPARK !== 'off') twinkle(SPARK === 'lots' ? 14 : 8, 0.8);
@@ -369,7 +440,7 @@
     }
     async function dance(times = 3) {
       if (await clip('dance', times <= 2 ? 3600 : 5200)) return;
-      for (let i = 0; i < times; i++) for (const n of [9, 10, 11]) { pose(n, 160); fx(380, BEAT); await wait(380); }
+      for (let i = 0; i < times; i++) for (const n of [9, 10, 11]) { pose(n, 160); beat(); await wait(380); }
     }
     async function heart(e) {
       if (VIDEO.on && VIDEO.clips.heart) { particles(['💗', '💕', '💖', '🩷'], 12, 2); if (e) say(fillText(FOLLOW_TEXT, e), 3000); await clip('heart', 4200); return; }
@@ -384,8 +455,8 @@
       WALKING = true; moveWalker(toward, 1.35, 1620);
       for (let i = 0; i < 6; i++) await step(i % 2 ? 13 : 12, 270);
       WALKING = false;
-      pose(14); fx(500, [[0, 0, 1], [.4, -3, 1.015], [1, 0, 1]]); await wait(650);
-      pose(15, 120); fx(600, [[0, 0, 1], [.3, 2, .985], [.6, -5, 1.02], [1, 0, 1]]); particles(['💋', '💗', '💕'], 14, 2.2);
+      pose(14); kick(-45, .1); await wait(650);
+      pose(15, 120); kick(30, -.2); setTimeout(() => kick(-70, .25), 180); particles(['💋', '💗', '💕'], 14, 2.2);
       if (e) say(fillText('จุ๊บ ๆ ให้ {user} 💋', e), 2600);
       await wait(1300);
       WALKING = true; moveWalker(0, 1, 1620);

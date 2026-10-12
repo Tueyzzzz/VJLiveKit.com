@@ -6,6 +6,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { Check, Copy, Pencil, Play, Plus, Settings2, Sparkles, Trash2, Upload as UploadIcon } from 'lucide-react';
 import { Alert, Badge, Button, Card, Field, Input, PageHeader, Select, Spinner } from '@/components/ui';
 import { GiftCell, GiftPicker } from '@/components/GiftPicker';
+import { TemplatePreview, triggerChip } from '@/components/TemplatePreview';
 import { SoundUpload } from '@/components/SoundUpload';
 import { toDigits } from '@/components/NumberInput';
 import { toAudioDataUrl } from '@/lib/sounds';
@@ -651,13 +652,10 @@ function ActionsInner() {
                   const added = have.has(tp.rule.name);
                   return (
                     <div key={tp.rule.name} className={`group flex flex-col overflow-hidden rounded-xl border bg-white transition ${added ? 'border-pink/40' : 'border-line hover:border-pink/40 hover:shadow-md'}`}>
-                      {/* ตัวอย่างจริง: อัดจากวิดเจ็ต FX ตอนเล่นเอฟเฟกต์นั้น (public/tpl/<id>.webp) · อีโมจิเป็นป้ายเล็กมุมซ้าย */}
-                      <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-pink-soft to-violet-soft">
-                        {tp.id && <img src={`/tpl/${tp.id}.webp`} alt={t(tp.title)} width={480} height={270} loading="lazy" decoding="async"
-                          className="size-full object-contain" />}
-                        <span className="absolute left-1.5 top-1.5 grid size-7 place-items-center rounded-full bg-white/90 text-sm shadow-sm sm:size-8 sm:text-base">{tp.icon}</span>
-                      </div>
+                      {/* ตัวอย่างจริงในกรอบมือถือ 9:16 (public/tpl/<id>.webp + .anim.webp อัดด้วย scripts/capture-templates.mjs) */}
+                      <TemplatePreview tp={tp} />
                       <div className="flex flex-1 flex-col p-2.5 sm:p-3">
+                        <span className="mb-1 w-fit max-w-full truncate rounded-full bg-pink-soft px-2 py-0.5 text-[10px] font-medium text-pink sm:text-[11px]">{triggerChip(tp, t)}</span>
                         <div className="text-[13px] font-medium leading-snug sm:text-sm">{t(tp.title)}</div>
                         <div className="mt-0.5 line-clamp-3 flex-1 text-[11px] leading-snug text-muted sm:text-xs">{t(tp.desc)}</div>
                         <div className="mt-2.5 flex gap-1.5">

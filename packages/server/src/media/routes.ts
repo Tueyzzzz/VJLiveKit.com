@@ -8,6 +8,7 @@ import { isAdmin } from '../admin/routes.js';
 import { requireUser, getUser } from '../auth/middleware.js';
 import { config } from '../config/index.js';
 import { settings } from '../settings/index.js';
+import { getEntitlements } from '../plans/index.js';
 
 /**
  * อัปโหลดเสียง/เพลงของวีเจ ใช้กับกฎ "เล่นเสียง" (แทนการหาลิงก์ไฟล์เอง)
@@ -15,7 +16,12 @@ import { settings } from '../settings/index.js';
  * ชื่อไฟล์สุ่ม เดาไม่ได้ — overlay ใน OBS โหลดได้โดยไม่ต้องล็อกอิน
  */
 const ROOT = path.join(process.env.SNAPSHOT_DIR ? path.dirname(process.env.SNAPSHOT_DIR) : path.resolve(process.cwd(), '../../data'), 'sounds');
-const lim = () => ({ bytes: settings().soundMaxMB * 1024 * 1024, files: settings().soundMaxFiles }); // ปรับได้ที่หน้าตั้งค่าระบบ
+/** ลิมิตอัปโหลดเสียงตามแพลน (0 = ใช้ค่าจากหน้าตั้งค่าระบบ) */
+const lim = async (userId: string) => {
+  const e = await getEntitlements(userId).catch(() => null);
+  const mb = e?.soundMaxMB || settings().soundMaxMB;
+  return { mb, bytes: mb * 1024 * 1024, files: e?.soundMaxFiles || settings().soundMaxFiles };
+};
 const TYPES: Record<string, string> = { 'audio/mpeg': 'mp3', 'audio/mp3': 'mp3', 'audio/wav': 'wav', 'audio/x-wav': 'wav', 'audio/wave': 'wav', 'audio/ogg': 'ogg', 'audio/mp4': 'm4a', 'audio/x-m4a': 'm4a', 'audio/aac': 'aac', 'audio/webm': 'webm' };
 const MIME: Record<string, string> = { mp3: 'audio/mpeg', wav: 'audio/wav', ogg: 'audio/ogg', m4a: 'audio/mp4', aac: 'audio/aac', webm: 'audio/webm', mp4: 'video/mp4', vwebm: 'video/webm', mov: 'video/quicktime', gif: 'image/gif', png: 'image/png', webp: 'image/webp', jpg: 'image/jpeg' };
 // วิดีโอ/รูป (สติกเกอร์) — ขึ้นจอ FX · ขนาดสูงสุด 20MB (คำขอส่งเป็น base64 จึงจำกัดตาม bodyLimit)
@@ -56,10 +62,10 @@ export async function mediaRoutes(app: FastifyInstance): Promise<void> {
 
   app.get('/api/sounds', { preHandler: requireUser }, async (req) => {
     const { userId } = getUser(req)!;
-    const all = list(userId);
+    const all = list(userId), l = await lim(userId);
     return { sounds: all.filter((f) => (f.kind ?? 'audio') === 'audio').map((f) => ({ id: f.id, name: f.name, size: f.size, url: urlOf(userId, f) })),
       media: all.filter((f) => f.kind === 'video' || f.kind === 'image').map((f) => ({ id: f.id, name: f.name, size: f.size, kind: f.kind, url: urlOf(userId, f) })),
-      max: lim().files, maxBytes: lim().bytes, visualMaxBytes: VISUAL_MAX };
+      max: l.files, maxBytes: l.bytes, visualMaxBytes: VISUAL_MAX };
   });
 
   app.post('/api/sounds', { preHandler: requireUser, bodyLimit: 28_500_000, config: { rateLimit: { max: 20, timeWindow: '10 minutes' } } }, async (req, reply) => {
@@ -71,10 +77,11 @@ export async function mediaRoutes(app: FastifyInstance): Promise<void> {
     if (!ext) return reply.code(400).send({ error: 'รองรับเสียง mp3/wav/ogg/m4a · วิดีโอ mp4/webm · รูป gif/png/webp' });
     const kind: SoundFile['kind'] = mime.startsWith('video/') ? 'video' : mime.startsWith('image/') ? 'image' : 'audio';
     const buf = Buffer.from(data.slice(data.indexOf(',') + 1), 'base64');
-    if (kind === 'audio' && buf.length > lim().bytes) return reply.code(400).send({ error: `ไฟล์ใหญ่เกิน ${settings().soundMaxMB}MB — ตัดให้สั้นลง หรือแปลงเป็น mp3` });
+    const l = await lim(userId);
+    if (kind === 'audio' && buf.length > l.bytes) return reply.code(400).send({ error: `ไฟล์ใหญ่เกิน ${l.mb}MB — ตัดให้สั้นลง หรือแปลงเป็น mp3` });
     if (kind !== 'audio' && buf.length > VISUAL_MAX) return reply.code(400).send({ error: 'วิดีโอ/รูปใหญ่เกิน 20MB — ตัดให้สั้นลงก่อน' });
     const items = list(userId);
-    if (items.length >= lim().files) return reply.code(400).send({ error: `อัปโหลดได้สูงสุด ${lim().files} ไฟล์ — ลบไฟล์เก่าก่อน` });
+    if (items.length >= l.files) return reply.code(400).send({ error: `อัปโหลดได้สูงสุด ${l.files} ไฟล์ — ลบไฟล์เก่าก่อน` });
     const id = crypto.randomBytes(9).toString('base64url');
     const f: SoundFile = { id, name, file: `${id}.${ext}`, size: buf.length, createdAt: new Date().toISOString(), kind };
     fs.mkdirSync(dirOf(userId), { recursive: true });

@@ -7,7 +7,7 @@ import { Badge, Card, PageHeader } from '@/components/ui';
 import { ProfileForm } from '@/components/ProfileEdit';
 import { ActiveRules } from '@/components/ActiveRules';
 import { PromoVideos } from '@/components/PromoVideos';
-import { planLabel } from '@/lib/api';
+import { isPaidPlan, planLabel } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useT } from '@/lib/i18n';
 import { NAV } from '@/lib/nav';
@@ -40,9 +40,9 @@ export default function OverviewPage() {
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl border border-line bg-white px-4 py-2.5 text-sm shadow-sm">
             <span className="text-muted">{t('แพลนของคุณ')}</span>
             <Badge tone={entitlements?.plan === 'free' ? 'gray' : 'pink'}>{planLabel(entitlements)}</Badge>
-            {entitlements?.plan !== 'pro' && (
+            {entitlements?.plan !== 'expert' && (
               <Link href="/dashboard/billing/" className="inline-flex items-center gap-1 font-medium text-pink hover:underline">
-                {entitlements?.plan === 'trial' ? t('สมัคร Pro ไว้เลย (ยังไม่เก็บเงินจนหมดช่วงฟรี)') : t('อัปเกรดเป็น Pro')} <ArrowRight className="size-4" />
+                {entitlements?.plan === 'trial' ? t('สมัครแพลนไว้เลย (ยังไม่เก็บเงินจนหมดช่วงฟรี)') : isPaidPlan(entitlements?.plan) ? t('ดูแพลนที่สูงกว่า') : t('อัปเกรดแพลน')} <ArrowRight className="size-4" />
               </Link>
             )}
           </div>

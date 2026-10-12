@@ -5,7 +5,7 @@ import { hashPassword, verifyPassword, signSession, signPasswordReset, verifyPas
 import { sendMail } from '../mail/send.js';
 import { config } from '../config/index.js';
 import { requireUser, getUser } from './middleware.js';
-import { getEntitlements } from '../plans/index.js';
+import { getEntitlements, trialEndOf } from '../plans/index.js';
 import { recordReferral, checkReferralReward } from '../referrals/routes.js';
 import { isAdmin } from '../admin/routes.js';
 import { getHub } from '../realtime/hub.js';
@@ -134,6 +134,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     // เปลี่ยนชื่อ TikTok -> ล้างแคชกฎของทั้งชื่อเก่าและใหม่
     if (before?.tiktokUsername) getHub()?.invalidateRules(before.tiktokUsername);
     if (user.tiktokUsername) getHub()?.invalidateRules(user.tiktokUsername);
+    if (user.tiktokUsername) trialEndOf(user.createdAt, user.tiktokUsername); // บันทึกประวัติทดลองต่อ TikTok (TikTok เดิมบนบัญชีใหม่ = ได้แค่วันที่เหลือ)
     if (user.tiktokUsername && !before?.tiktokUsername) void checkReferralReward(claims.userId); // ตั้งชื่อ TikTok ครั้งแรก → นับเป็นเพื่อนที่แนะนำสำเร็จ
     return { user };
   });

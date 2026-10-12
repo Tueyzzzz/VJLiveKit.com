@@ -1,7 +1,7 @@
 'use client';
 
 import { Fragment, useCallback, useEffect, useState, type FormEvent } from 'react';
-import { Activity, BarChart3, Bell, CreditCard, Download, Gift, History, KeyRound, Radio, RefreshCw, Search, Settings2, Users, MessageCircle, Smile, Mail, Music } from 'lucide-react';
+import { Activity, BarChart3, Bell, CreditCard, Download, Gift, History, KeyRound, Radio, RefreshCw, Search, Settings2, Users, MessageCircle, Smile, Mail, Music, Tags } from 'lucide-react';
 import { AdminUserDetail } from '@/components/AdminUserDetail';
 import { AdminSupport } from '@/components/AdminSupport';
 import { AdminMascots } from '@/components/AdminMascots';
@@ -10,6 +10,7 @@ import { AdminServer } from '@/components/AdminServer';
 import { AdminErrors } from '@/components/AdminErrors';
 import { AdminMail } from '@/components/AdminMail';
 import { AdminMedia } from '@/components/AdminMedia';
+import { AdminPlans } from '@/components/AdminPlans';
 import { Pager, usePaged } from '@/components/Pager';
 import { WIDGET_LABELS } from '@/components/Pricing';
 import { Alert, Badge, Button, Card, Input, PageHeader, Spinner } from '@/components/ui';
@@ -49,8 +50,8 @@ const SYS_FIELDS: [string, string, string, string?][] = [
   ['presenceLock', 'ล็อกวิดเจ็ต (แบบ TikFinity)', 'วิดเจ็ตในโปรแกรมไลฟ์ทำงานเฉพาะตอนวีเจล็อกอินเปิดเว็บไว้ — ประหยัดเซิร์ฟเวอร์'],
   ['presenceGraceSec', 'ปิดเว็บแล้วรอก่อนพักวิดเจ็ต', 'กันรีเฟรช/เปลี่ยนหน้าแล้วจอดับ', 'วินาที'],
   ['trialDays', 'ทดลองฟรีหลังสมัคร', 'ใช้ได้ทุกอย่างเท่า Pro (มีผลกับทุกคน รวมคนที่สมัครแล้ว)', 'วัน'],
-  ['freeMaxRules', 'แพลนฟรี: กฎ Actions สูงสุด', '', 'ข้อ'],
-  ['freeMaxTokens', 'แพลนฟรี: ชุดลิงก์สูงสุด', '', 'ชุด'],
+  ['freeMaxRules', 'แพลนฟรี: กฎ Actions สูงสุด', 'ค่าเริ่มต้น — ถ้าแก้ในแท็บ "แพลน" จะใช้ค่าจากแท็บนั้นแทน', 'ข้อ'],
+  ['freeMaxTokens', 'แพลนฟรี: ชุดลิงก์สูงสุด', 'ค่าเริ่มต้น — ถ้าแก้ในแท็บ "แพลน" จะใช้ค่าจากแท็บนั้นแทน', 'ชุด'],
   ['soundMaxMB', 'อัปโหลดเสียง: ขนาดต่อไฟล์', '', 'MB'],
   ['soundMaxFiles', 'อัปโหลดเสียง: จำนวนไฟล์ต่อคน', '', 'ไฟล์'],
   ['donateDefaultMin', 'โดเนท: ขั้นต่ำเริ่มต้น', 'ใช้เมื่อวีเจยังไม่ได้ตั้งเอง', 'บาท'],
@@ -61,12 +62,12 @@ const ago = (t: number | null) => { if (!t) return '-'; const m = Math.round((Da
 const EULER_DAILY = 2500; // โควตาแพ็กเกจฟรีของ EulerStream (คำขอ/วัน)
 
 const d = (s: string | null | undefined) => (s ? new Date(s).toLocaleDateString('th-TH', { dateStyle: 'medium' }) : '-');
-const PLAN: Record<string, [string, 'pink' | 'mint' | 'gray']> = { pro: ['Pro', 'pink'], trial: ['ทดลองฟรี', 'mint'], free: ['Free', 'gray'] };
+const PLAN: Record<string, [string, 'pink' | 'mint' | 'gray']> = { starter: ['มือใหม่', 'pink'], pro: ['Pro', 'pink'], promax: ['Pro Max', 'pink'], expert: ['มืออาชีพ', 'pink'], trial: ['ทดลองฟรี', 'mint'], free: ['Free', 'gray'] };
 
 /** หลังบ้านแอดมิน: ภาพรวม · ผู้ใช้ (แจก Pro / รีเซ็ตรหัส) · ไลฟ์ที่ออนไลน์ */
 export default function AdminPage() {
   const { isAdmin } = useAuth();
-  const [tab, setTab] = useState<'overview' | 'reports' | 'users' | 'live' | 'lives' | 'settings' | 'payments' | 'audit' | 'notify' | 'support' | 'mascots' | 'mail' | 'media'>('overview');
+  const [tab, setTab] = useState<'overview' | 'reports' | 'users' | 'live' | 'lives' | 'settings' | 'payments' | 'audit' | 'notify' | 'support' | 'mascots' | 'mail' | 'media' | 'plans'>('overview');
   const [detail, setDetail] = useState<string | null>(null); // ลูกค้าที่เปิดดูรายละเอียด
   const [payments, setPayments] = useState<{ id: string; provider: string; providerRef: string; amountCents: number; status: string; createdAt: string; user: { id: string; email: string; tiktokUsername: string | null } }[] | null>(null);
   const [auditLog, setAuditLog] = useState<{ at: string; admin: string; action: string; target?: string; detail?: string }[] | null>(null);
@@ -153,7 +154,7 @@ export default function AdminPage() {
     <div>
       <PageHeader title="หลังบ้าน (แอดมิน)" description="ภาพรวมระบบ · จัดการผู้ใช้ · ไลฟ์ที่ออนไลน์อยู่" />
       <div className="mb-5 flex flex-wrap gap-2">
-        {([['overview', 'ภาพรวม', Activity], ['reports', 'รายงาน', BarChart3], ['users', 'ลูกค้า', Users], ['live', 'ไลฟ์ตอนนี้', RefreshCw], ['lives', 'จำนวนไลฟ์', Radio], ['payments', 'การชำระเงิน', CreditCard], ['support', 'แชทลูกค้า', MessageCircle], ['mascots', 'มาสคอตสั่งทำ', Smile], ['notify', 'แจ้งเตือน', Bell], ['settings', 'ตั้งค่าระบบ', Settings2], ['mail', 'เมลเซิร์ฟเวอร์', Mail], ['media', 'ไฟล์ลูกค้า', Music], ['audit', 'บันทึกแอดมิน', History]] as const).map(([k, l, Icon]) => (
+        {([['overview', 'ภาพรวม', Activity], ['reports', 'รายงาน', BarChart3], ['users', 'ลูกค้า', Users], ['live', 'ไลฟ์ตอนนี้', RefreshCw], ['lives', 'จำนวนไลฟ์', Radio], ['plans', 'แพลน', Tags], ['payments', 'การชำระเงิน', CreditCard], ['support', 'แชทลูกค้า', MessageCircle], ['mascots', 'มาสคอตสั่งทำ', Smile], ['notify', 'แจ้งเตือน', Bell], ['settings', 'ตั้งค่าระบบ', Settings2], ['mail', 'เมลเซิร์ฟเวอร์', Mail], ['media', 'ไฟล์ลูกค้า', Music], ['audit', 'บันทึกแอดมิน', History]] as const).map(([k, l, Icon]) => (
           <Button key={k} variant={tab === k ? 'primary' : 'secondary'} onClick={() => setTab(k)}><Icon className="size-4" /> {l}</Button>
         ))}
       </div>
@@ -284,7 +285,7 @@ export default function AdminPage() {
                         <div className="mt-1 text-muted">ไลฟ์ล่าสุด {u.lastLiveAt ? d(u.lastLiveAt) : '-'} · 30 วัน {u.lives30 ?? 0} ครั้ง</div>
                       </td>
                       <td className="px-4 py-3"><Badge tone={PLAN[u.plan]?.[1] ?? 'gray'}>{PLAN[u.plan]?.[0] ?? u.plan}</Badge></td>
-                      <td className="px-4 py-3 text-xs">{u.plan === 'trial' ? d(u.trialEndsAt) : u.plan === 'pro' ? d(u.subscription?.currentPeriodEnd) : '-'}{u.subscription?.provider ? <div className="text-muted">{u.subscription.provider}</div> : null}</td>
+                      <td className="px-4 py-3 text-xs">{u.plan === 'trial' ? d(u.trialEndsAt) : u.plan !== 'free' ? d(u.subscription?.currentPeriodEnd) : '-'}{u.subscription?.provider ? <div className="text-muted">{u.subscription.provider}</div> : null}</td>
                       <td className="px-4 py-3 text-xs">{d(u.createdAt)}</td>
                       <td className="px-4 py-3">
                         <div className="flex justify-end gap-1.5">
@@ -310,6 +311,7 @@ export default function AdminPage() {
       {tab === 'mascots' && <AdminMascots />}
       {tab === 'mail' && <AdminMail />}
       {tab === 'media' && <AdminMedia />}
+      {tab === 'plans' && <AdminPlans />}
 
       {tab === 'payments' && (!payments ? <Spinner /> : payments.length === 0 ? <Card className="py-8 text-center text-sm text-muted">ยังไม่มีการชำระเงิน</Card> : (
         <Card className="overflow-x-auto p-0">

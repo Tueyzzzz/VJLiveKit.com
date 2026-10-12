@@ -66,9 +66,25 @@ export interface Entitlements {
   maxActionRules: number;
   maxTokens: number;
   noWatermark: boolean;
+  /** ชื่อแพลนสำหรับแสดงผล (เช่น "มือใหม่", "Pro Max") */
+  planName?: string;
+  tarot?: boolean;
+  liveStats?: boolean;
+  soundMaxMB?: number;
+  soundMaxFiles?: number;
+  prioritySupport?: boolean;
+  mascotDiscountPct?: number;
   /** อยู่ในช่วงทดลองฟรีเดือนแรก (plan = "trial") */
   trialEndsAt?: string;
+  /** ทดลองฟรีนับต่อ TikTok: ใช้ไปแล้วกี่วัน / ทั้งหมดกี่วัน */
+  trialUsedDays?: number;
+  trialTotalDays?: number;
+  trialTiktok?: string | null;
 }
+/** แพลนที่เสียเงิน (ลำดับถูก → แพง) */
+export const PAID_PLAN_CODES = ['starter', 'pro', 'promax', 'expert'] as const;
+export const isPaidPlan = (code: string | null | undefined): boolean => !!code && (PAID_PLAN_CODES as readonly string[]).includes(code);
+const PLAN_NAMES: Record<string, string> = { free: 'Free', starter: 'มือใหม่', pro: 'Pro', promax: 'Pro Max', expert: 'มืออาชีพ' };
 
 /** จำนวนวันที่เหลือของช่วงทดลองฟรี (ไม่อยู่ในช่วงทดลอง = null) */
 export function trialDaysLeft(e: Entitlements | null | undefined): number | null {
@@ -77,7 +93,7 @@ export function trialDaysLeft(e: Entitlements | null | undefined): number | null
 }
 /** ป้ายแพลนสั้น ๆ */
 export function planLabel(e: Entitlements | null | undefined): string {
-  if (e?.plan === 'pro') return 'Pro';
+  if (isPaidPlan(e?.plan)) return translate(e!.planName || PLAN_NAMES[e!.plan] || e!.plan);
   const d = trialDaysLeft(e);
   return d !== null ? translate('ทดลองฟรี · เหลือ {n} วัน', { n: d }) : 'Free';
 }
@@ -98,7 +114,7 @@ export interface Me {
 }
 export interface WidgetUrl { type: string; url: string; locked: boolean }
 export interface OverlayTokenRow { id: string; label: string | null; createdAt: string; urls: WidgetUrl[] }
-export interface Plan { code: string; name: string; priceCents: number; currency: string; features: Omit<Entitlements, 'plan'> }
+export interface Plan { code: string; name: string; priceCents: number; currency: string; badge?: string; tagline?: string; bullets?: string[]; features: Omit<Entitlements, 'plan'> }
 
 export type TriggerEvent = 'gift' | 'follow' | 'share' | 'like' | 'chat' | 'pk' | 'chest' | 'superfanbox' | 'join';
 export type ActionType = 'sound' | 'image' | 'video' | 'text' | 'tarot' | 'effect' | 'sign' | 'glove' | 'mascot';

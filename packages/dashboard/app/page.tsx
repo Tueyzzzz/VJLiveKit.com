@@ -31,7 +31,7 @@ const FAQ: [string, string][] = [
   ['VJLiveKit คืออะไร', 'VJLiveKit คือชุดวิดเจ็ตไลฟ์ TikTok ภาษาไทย ใช้วางบนจอไลฟ์ผ่าน OBS หรือ TikTok LIVE Studio เชื่อมกับไลฟ์จริงแบบเรียลไทม์ เช่น ของขวัญตกลงโหล อันดับคนส่งของขวัญ แจ้งเตือนกิฟต์ และไพ่ทาโร่'],
   ['ใช้กับ TikTok LIVE Studio ได้ไหม', 'ได้ คัดลอกลิงก์วิดเจ็ตไปเพิ่มเป็นแหล่งที่มาแบบลิงก์ใน TikTok LIVE Studio หรือ Browser Source ใน OBS รองรับทั้งไลฟ์แนวนอนและแนวตั้ง'],
   ['ต้องติดตั้งโปรแกรมไหม', 'ไม่ต้องติดตั้งอะไรเพิ่ม สมัคร ใส่ชื่อ TikTok แล้วคัดลอกลิงก์วิดเจ็ตไปใช้ได้ทันที'],
-  ['ราคาเท่าไหร่', 'สมัครใหม่ใช้ฟรีทุกฟีเจอร์เดือนแรก หลังจากนั้นแพลน Pro 199 บาทต่อเดือน และแนะนำเพื่อนครบ 10 คนรับ Pro ฟรี 1 เดือน'],
+  ['ราคาเท่าไหร่', 'สมัครใหม่ใช้ฟรีทุกฟีเจอร์เดือนแรก (นับต่อ TikTok 1 ชื่อ) หลังจากนั้นเลือกแพลนได้ตามต้องการ: มือใหม่ 99 · Pro 199 · Pro Max 299 · มืออาชีพ 349 บาทต่อเดือน และแนะนำเพื่อนครบ 10 คนรับ Pro ฟรี 1 เดือน'],
   ['ลิงก์ต้องเปลี่ยนทุกครั้งที่ไลฟ์ไหม', 'ไม่ต้อง ลิงก์เดิมใช้ได้ตลอด ระบบจับไลฟ์ใหม่ให้เองทุกครั้งที่ขึ้นไลฟ์ และจำกองของขวัญกับอันดับไว้แม้รีเฟรช'],
 ];
 
@@ -42,7 +42,7 @@ const JSONLD = [
     description: 'วิดเจ็ตไลฟ์ TikTok สำหรับ OBS และ TikTok LIVE Studio — โหลของขวัญ ตู้ปลา ต้นไม้ รถลาก Coin Jar อันดับ Top Gifters ลีก TikTok และไพ่ทาโร่',
     inLanguage: 'th', image: 'https://vjlivekit.com/og.png',
     sameAs: ['https://www.instagram.com/vjlivekit/', 'https://www.facebook.com/profile.php?id=61595273575386'],
-    offers: { '@type': 'Offer', price: '199', priceCurrency: 'THB', description: 'ใช้ฟรีเดือนแรก จากนั้น 199 บาท/เดือน' },
+    offers: { '@type': 'AggregateOffer', lowPrice: '0', highPrice: '349', offerCount: 5, priceCurrency: 'THB', description: 'ใช้ฟรีเดือนแรก จากนั้นแพลน 99–349 บาท/เดือน' },
   },
   {
     '@context': 'https://schema.org', '@type': 'FAQPage',
@@ -114,15 +114,15 @@ export default function Home() {
         ))}
       </section>
 
-      <section id="pricing" className="mx-auto max-w-3xl px-4 pb-24">
+      <section id="pricing" className="mx-auto max-w-[1600px] px-4 pb-24">
         <h2 className="mb-8 text-center font-display text-3xl">{t('แพลนและราคา')}</h2>
         {!plans ? <Spinner /> : (
           <PlanCards
             plans={plans}
             renderAction={(p) => (
               <Link href={user ? '/dashboard/billing/' : '/register/'}>
-                <Button variant={p.priceCents > 0 ? 'primary' : 'secondary'} className="w-full">
-                  {p.priceCents > 0 ? t('อัปเกรดเป็น Pro') : t('เริ่มใช้ฟรี')}
+                <Button variant={p.badge ? 'primary' : 'secondary'} className="w-full">
+                  {p.priceCents > 0 ? t('เลือกแพลนนี้') : t('เริ่มใช้ฟรี')}
                 </Button>
               </Link>
             )}

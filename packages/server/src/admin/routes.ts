@@ -5,7 +5,7 @@ import { prisma } from '../db/prisma.js';
 import { requireUser, getUser } from '../auth/middleware.js';
 import { hashPassword } from '../auth/service.js';
 import { config } from '../config/index.js';
-import { getEntitlements, trialEndOf } from '../plans/index.js';
+import { getEntitlements, trialEndOf, trialInfo, getPlans, getPlan, savePlans, resetPlan, DEFAULT_PLANS, WIDGET_TYPES, isPlanCode } from '../plans/index.js';
 import { grantDays } from '../referrals/routes.js';
 import { getHub } from '../realtime/hub.js';
 import { connStats } from '../realtime/connstats.js';
@@ -71,19 +71,22 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
       const live = room?.connected
         ? { status: 'live' as const, viewers: room.viewers, diamonds: room.diamonds, since: room.connectedAt }
         : { status: hub?.webOpen(u.id) || room ? 'online' as const : 'offline' as const };
-      return { ...u, live, lastLiveAt: mine.at(-1)?.startedAt ?? null, lives30: mine.filter((l) => new Date(l.startedAt).getTime() >= cut).length, plan: ent.plan, trialEndsAt: ent.trialEndsAt ?? null, trialEnd: trialEndOf(u.createdAt), admin: u.role === 'ADMIN' || config.adminEmails.includes(u.email.toLowerCase()) };
+      return { ...u, live, lastLiveAt: mine.at(-1)?.startedAt ?? null, lives30: mine.filter((l) => new Date(l.startedAt).getTime() >= cut).length, plan: ent.plan, trialEndsAt: ent.trialEndsAt ?? null, trialEnd: trialEndOf(u.createdAt, u.tiktokUsername), admin: u.role === 'ADMIN' || config.adminEmails.includes(u.email.toLowerCase()) };
     }));
     return { users };
   });
 
-  // แจก Pro เพิ่ม (วัน)
+  // แจกแพลน (วัน) — planCode: starter | pro | promax | expert (ไม่ส่ง = pro เหมือนเดิม)
   app.post('/api/admin/users/:id/grant', { preHandler: requireAdmin }, async (req, reply) => {
     const { id } = req.params as { id: string };
-    const days = Math.round(Number((req.body as { days?: number } | undefined)?.days ?? 30));
+    const body = (req.body ?? {}) as { days?: number; planCode?: string };
+    const days = Math.round(Number(body.days ?? 30));
+    const planCode = body.planCode ?? 'pro';
     if (!Number.isFinite(days) || days < 1 || days > 3650) return reply.code(400).send({ error: 'จำนวนวันไม่ถูกต้อง' });
+    if (!isPlanCode(planCode) || planCode === 'free') return reply.code(400).send({ error: 'ไม่พบแพลนนี้' });
     if (!(await prisma.user.findUnique({ where: { id }, select: { id: true } }))) return reply.code(404).send({ error: 'ไม่พบผู้ใช้' });
-    await grantDays(id, days);
-    audit(getUser(req)!.email, 'แจก Pro', id, `${days} วัน`);
+    await grantDays(id, days, planCode);
+    audit(getUser(req)!.email, `แจก ${getPlan(planCode)?.name ?? planCode}`, id, `${days} วัน`);
     return { ok: true, entitlements: await getEntitlements(id) };
   });
 
@@ -141,14 +144,14 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
   // รายชื่อลูกค้าทั้งหมดเป็น CSV (เปิดใน Excel ได้ — มี BOM ให้ภาษาไทยไม่เพี้ยน)
   app.get('/api/admin/users.csv', { preHandler: requireAdmin }, async (_req, reply) => {
     const rows = await prisma.user.findMany({ orderBy: { createdAt: 'desc' },
-      select: { email: true, displayName: true, tiktokUsername: true, createdAt: true, subscription: { select: { status: true, provider: true, currentPeriodEnd: true } } } });
+      select: { email: true, displayName: true, tiktokUsername: true, createdAt: true, subscription: { select: { status: true, provider: true, currentPeriodEnd: true, plan: { select: { code: true, name: true } } } } } });
     const esc = (v: unknown) => { const t = v == null ? '' : String(v); return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
     const now = Date.now();
     const lines = [['อีเมล', 'ชื่อที่แสดง', 'TikTok', 'สมัครเมื่อ', 'แพลน', 'หมดสิทธิ์', 'ช่องทาง'].join(',')];
     for (const u of rows) {
       const activeSub = u.subscription?.status === 'ACTIVE' && (u.subscription.currentPeriodEnd?.getTime() ?? 0) > now;
-      const trialEnd = trialEndOf(u.createdAt).getTime();
-      const plan = activeSub ? 'Pro' : trialEnd > now ? 'ทดลองฟรี' : 'Free';
+      const trialEnd = trialEndOf(u.createdAt, u.tiktokUsername).getTime();
+      const plan = activeSub ? (getPlan(u.subscription!.plan.code)?.name ?? u.subscription!.plan.name) : trialEnd > now ? 'ทดลองฟรี' : 'Free';
       const until = activeSub ? u.subscription!.currentPeriodEnd!.toISOString().slice(0, 10) : trialEnd > now ? new Date(trialEnd).toISOString().slice(0, 10) : '';
       lines.push([u.email, u.displayName, u.tiktokUsername, u.createdAt.toISOString().slice(0, 10), plan, until, u.subscription?.provider ?? ''].map(esc).join(','));
     }
@@ -166,6 +169,26 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
     if (diff) audit(getUser(req)!.email, 'แก้ตั้งค่าระบบ', undefined, diff);
     if (before.presenceLock && !after.presenceLock) getHub()?.wakeAll(); // ปลดล็อก → วิดเจ็ตที่พักอยู่ต่อไลฟ์ทันที
     return { settings: after };
+  });
+
+  // ---- แพลน (แก้ราคา/ฟีเจอร์ — มีผลทันที เก็บใน data/plans.json) ----
+  app.get('/api/admin/plans', { preHandler: requireAdmin }, async () => ({ plans: getPlans(), defaults: DEFAULT_PLANS, widgets: WIDGET_TYPES }));
+  app.put('/api/admin/plans', { preHandler: requireAdmin }, async (req, reply) => {
+    const list = (req.body as { plans?: unknown } | undefined)?.plans;
+    if (!Array.isArray(list)) return reply.code(400).send({ error: 'ข้อมูลแพลนไม่ถูกต้อง' });
+    const before = getPlans();
+    const plans = await savePlans(list);
+    const diff = plans.filter((p) => JSON.stringify(p) !== JSON.stringify(before.find((b) => b.code === p.code)))
+      .map((p) => { const b = before.find((x) => x.code === p.code)!; return `${p.code}${b.priceCents !== p.priceCents ? ` ราคา ${b.priceCents / 100}→${p.priceCents / 100}` : ''}`; }).join(', ');
+    if (diff) audit(getUser(req)!.email, 'แก้แพลน', undefined, diff);
+    return { plans };
+  });
+  app.post('/api/admin/plans/:code/reset', { preHandler: requireAdmin }, async (req, reply) => {
+    const { code } = req.params as { code: string };
+    if (!isPlanCode(code)) return reply.code(404).send({ error: 'ไม่พบแพลนนี้' });
+    const plans = await resetPlan(code);
+    audit(getUser(req)!.email, 'คืนค่าแพลนเริ่มต้น', undefined, code);
+    return { plans };
   });
 
   // ---- ลูกค้ารายคน: ดูทุกอย่าง + จัดการ ----
@@ -187,7 +210,7 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
     const room = tk ? (getHub()?.listRooms() ?? []).find((r) => r.username.toLowerCase() === tk) : undefined;
     return {
       user: { ...u, widgetConfigs: u.widgetConfigs.filter((w) => !w.type.startsWith('_')) },
-      entitlements: ent, trialEnd: trialEndOf(u.createdAt),
+      entitlements: ent, trialEnd: trialEndOf(u.createdAt, u.tiktokUsername), trial: trialInfo(u.createdAt, u.tiktokUsername),
       admin: u.role === 'ADMIN' || config.adminEmails.includes(u.email.toLowerCase()), adminByEnv: config.adminEmails.includes(u.email.toLowerCase()),
       suspended: suspendedInfo(id),
       live: room ? { connected: room.connected, viewers: room.viewers, diamonds: room.diamonds, widgets: room.widgets } : null,

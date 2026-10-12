@@ -5,7 +5,7 @@ import { requireUser, getUser } from '../auth/middleware.js';
 import { billing } from './index.js';
 import { BillingError, type WebhookResult } from './provider.js';
 import { config } from '../config/index.js';
-import { PLAN_DEFS, trialEndOf } from '../plans/index.js';
+import { getPlans, publicPlans, trialEndOf } from '../plans/index.js';
 
 function sendBillingError(reply: import('fastify').FastifyReply, err: unknown) {
   if (err instanceof BillingError) return reply.code(err.status).send({ error: err.message });
@@ -61,18 +61,16 @@ async function applyWebhook(r: WebhookResult, log: FastifyInstance['log']): Prom
 }
 
 export async function billingRoutes(app: FastifyInstance): Promise<void> {
-  // แพลนทั้งหมด (สาธารณะ — ใช้แสดงหน้า pricing)
-  app.get('/api/billing/plans', async () => ({
-    provider: billing.name,
-    enabled: billing.enabled,
-    plans: PLAN_DEFS.map((p) => ({ code: p.code, name: p.name, priceCents: p.priceCents, currency: p.currency, features: p.features })),
-  }));
+  // แพลนทั้งหมด (สาธารณะ ไม่ต้องล็อกอิน — หน้า pricing / billing อ่านจากตารางเดียวกับที่แอดมินแก้)
+  const plansPayload = async () => ({ provider: billing.name, enabled: billing.enabled, plans: publicPlans() });
+  app.get('/api/plans', plansPayload);
+  app.get('/api/billing/plans', plansPayload); // ชื่อเดิม (เผื่อแดชบอร์ดเวอร์ชันเก่าที่ยังเปิดค้าง)
 
   // เริ่มจ่ายเงิน/สมัคร subscription -> คืน URL ให้ redirect
   app.post('/api/billing/checkout', { preHandler: requireUser }, async (req, reply) => {
     const claims = getUser(req)!;
     const planCode = (req.body as { planCode?: string })?.planCode ?? 'pro';
-    const plan = PLAN_DEFS.find((p) => p.code === planCode && p.priceCents > 0);
+    const plan = getPlans().find((p) => p.code === planCode && p.priceCents > 0);
     if (!plan) return reply.code(400).send({ error: 'ไม่พบแพลนนี้' });
 
     const user = await prisma.user.findUnique({ where: { id: claims.userId }, include: { subscription: true } });
@@ -91,7 +89,7 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
         planName: plan.name,
         priceCents: plan.priceCents,
         currency: plan.currency,
-        trialEnd: trialEndOf(user.createdAt),
+        trialEnd: trialEndOf(user.createdAt, user.tiktokUsername),
         successUrl: `${config.publicBaseUrl}/billing/success/`,
         cancelUrl: `${config.publicBaseUrl}/billing/cancel/`,
       });

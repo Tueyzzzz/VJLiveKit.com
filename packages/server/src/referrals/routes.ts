@@ -38,9 +38,9 @@ async function stats(referrerId: string) {
 }
 
 /** ต่ออายุ Pro ให้ผู้แนะนำ (นับต่อจากวันหมดเดิม/วันหมดช่วงทดลอง ไม่เสียวันที่เหลือ) */
-export async function grantDays(userId: string, days: number): Promise<void> {
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { createdAt: true, subscription: true } });
-  const plan = await prisma.plan.findUnique({ where: { code: 'pro' } });
+export async function grantDays(userId: string, days: number, planCode = 'pro'): Promise<void> {
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { createdAt: true, tiktokUsername: true, subscription: true } });
+  const plan = await prisma.plan.findUnique({ where: { code: planCode } });
   if (!user || !plan) return;
   const sub = user.subscription;
   // มี subscription ที่ตัดบัตรอัตโนมัติอยู่ → ไม่ยุ่งกับรอบบิลของ gateway (เก็บเป็นวันสะสมไว้ก่อน)
@@ -55,7 +55,7 @@ export async function grantDays(userId: string, days: number): Promise<void> {
     return;
   }
   const cur = sub?.status === 'ACTIVE' ? sub.currentPeriodEnd?.getTime() ?? 0 : 0;
-  const end = new Date(Math.max(Date.now(), trialEndOf(user.createdAt).getTime(), cur) + days * DAY);
+  const end = new Date(Math.max(Date.now(), trialEndOf(user.createdAt, user.tiktokUsername).getTime(), cur) + days * DAY);
   await prisma.subscription.upsert({
     where: { userId },
     create: { userId, planId: plan.id, status: 'ACTIVE', provider: 'referral', currentPeriodEnd: end, cancelAtPeriodEnd: true },

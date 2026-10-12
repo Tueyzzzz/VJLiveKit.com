@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react';
 import { Pager, usePaged } from '@/components/Pager';
 import { ExternalLink } from 'lucide-react';
-import { PlanCards, usePlans } from '@/components/Pricing';
+import { PlanCards, askForPlan, usePlans } from '@/components/Pricing';
 import { Alert, Badge, Button, Card, PageHeader, Spinner } from '@/components/ui';
-import { api, formatMoney, trialDaysLeft, type PaymentRow } from '@/lib/api';
+import { api, formatMoney, isPaidPlan, trialDaysLeft, type PaymentRow } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useLang, useT } from '@/lib/i18n';
 
@@ -40,7 +40,9 @@ export default function BillingPage() {
   const payPg = usePaged(payments, 10);
   if (!user) return null;
   const sub = user.subscription;
-  const isPro = entitlements?.plan === 'pro';
+  const isPaid = isPaidPlan(entitlements?.plan);
+  /** ตัดบัตรอัตโนมัติอยู่แล้ว → เปลี่ยนแพลนผ่านแชท (กันจ่ายซ้อน) */
+  const hasCardSub = sub?.provider === 'stripe' && ['ACTIVE', 'TRIALING', 'PAST_DUE'].includes(sub.status);
 
   return (
     <div>
@@ -48,13 +50,19 @@ export default function BillingPage() {
 
       {error && <div className="mb-5"><Alert>{error}</Alert></div>}
       {entitlements?.plan === 'trial' && (
-        <div className="mb-5"><Alert tone="info">{t('🎁 คุณอยู่ในช่วงทดลองฟรี เหลือ {n} วัน (ถึง {date}) — สมัคร Pro ตอนนี้ได้เลย ระบบจะเริ่มเก็บ 199 บาท/เดือน หลังหมดช่วงฟรี (สมาชิก Pro ไม่มีป้าย vjlivekit.com มุมจอ)', { n: trialDaysLeft(entitlements) ?? 0, date: new Date(entitlements.trialEndsAt!).toLocaleDateString(loc, { dateStyle: 'long' }) })}</Alert></div>
+        <div className="mb-5"><Alert tone="info">
+          {t('🎁 คุณอยู่ในช่วงทดลองฟรี เหลือ {n} วัน (ถึง {date}) — ใช้ได้ทุกฟีเจอร์ เลือกแพลนไว้ล่วงหน้าได้เลย (แพลนเสียเงินไม่มีป้าย vjlivekit.com มุมจอ)', { n: trialDaysLeft(entitlements) ?? 0, date: new Date(entitlements.trialEndsAt!).toLocaleDateString(loc, { dateStyle: 'long' }) })}
+          {entitlements.trialTiktok && <div className="mt-1 text-xs opacity-80">{t('ทดลองฟรีนับต่อ TikTok: @{tiktok} ใช้ทดลองไปแล้ว {used}/{total} วัน', { tiktok: entitlements.trialTiktok, used: entitlements.trialUsedDays ?? 0, total: entitlements.trialTotalDays ?? 0 })}</div>}
+        </Alert></div>
       )}
       {entitlements?.plan === 'free' && (
-        <div className="mb-5"><Alert>{t('ช่วงทดลองฟรีหมดแล้ว — ตอนนี้ใช้ได้เฉพาะวิดเจ็ตพื้นฐาน สมัคร Pro 199 บาท/เดือน เพื่อใช้ทุกวิดเจ็ตต่อ')}</Alert></div>
+        <div className="mb-5"><Alert>
+          {t('ช่วงทดลองฟรีหมดแล้ว — ตอนนี้ใช้ได้เฉพาะวิดเจ็ตพื้นฐาน เลือกแพลนด้านล่างเพื่อปลดล็อกเพิ่ม')}
+          {entitlements.trialTiktok && <div className="mt-1 text-xs opacity-80">{t('TikTok @{tiktok} ใช้ทดลองฟรีครบ {total} วันแล้ว (นับต่อ TikTok ไม่ใช่ต่อบัญชี)', { tiktok: entitlements.trialTiktok, total: entitlements.trialTotalDays ?? 0 })}</div>}
+        </Alert></div>
       )}
       {!billingEnabled && plans && (
-        <div className="mb-5"><Alert tone="info">{t('ระบบชำระเงินยังไม่เปิดใช้งาน — กรุณาติดต่อผู้ดูแล')}</Alert></div>
+        <div className="mb-5"><Alert tone="info">{t('ตอนนี้สมัครแพลนผ่านแชทกับทีมงาน — กด “เลือกแพลนนี้” แล้วทีมงานจะส่งช่องทางชำระเงินให้')}</Alert></div>
       )}
 
       {sub && (
@@ -85,17 +93,22 @@ export default function BillingPage() {
         <PlanCards
           plans={plans}
           currentPlan={entitlements?.plan}
-          renderAction={(p) => p.priceCents === 0 ? (
-            <Button variant="secondary" className="w-full" disabled>{isPro ? t('ยกเลิกได้ที่ “จัดการสมาชิก”') : t('แพลนปัจจุบัน')}</Button>
-          ) : isPro ? (
-            <Button variant="secondary" className="w-full" disabled>{t('คุณเป็นสมาชิก Pro แล้ว 🎉')}</Button>
-          ) : (
-            <Button className="w-full" disabled={!billingEnabled} loading={busy === p.code} onClick={() => go('/api/billing/checkout', p.code, { planCode: p.code })}>
-              {entitlements?.plan === 'trial' ? t('สมัคร {plan} (เก็บเงินหลังหมดช่วงฟรี)', { plan: p.name }) : t('อัปเกรดเป็น {plan}', { plan: p.name })}
-            </Button>
-          )}
+          renderAction={(p) => {
+            if (p.code === entitlements?.plan) return <Button variant="secondary" className="w-full" disabled>{t('แพลนปัจจุบัน')}</Button>;
+            if (p.priceCents === 0) return <Button variant="secondary" className="w-full" disabled>{isPaid ? t('ยกเลิกได้ที่ “จัดการสมาชิก”') : t('ฟรีตลอด')}</Button>;
+            // จ่ายผ่านบัตรได้ และยังไม่มีรอบบิลบัตร → checkout · นอกนั้น (ยังไม่เปิดระบบตัดบัตร / เปลี่ยนแพลน) → แชทซัพพอร์ต
+            const viaCheckout = billingEnabled && !hasCardSub;
+            return (
+              <Button className="w-full" variant={p.badge ? 'primary' : 'secondary'} loading={busy === p.code}
+                onClick={() => viaCheckout ? go('/api/billing/checkout', p.code, { planCode: p.code })
+                  : askForPlan(t(p.name), isPaid ? t('อยากเปลี่ยนเป็นแพลน {plan} ค่ะ/ครับ') : t('อยากสมัครแพลน {plan} ค่ะ/ครับ'))}>
+                {isPaid ? t('เปลี่ยนเป็นแพลนนี้') : t('เลือกแพลนนี้')}
+              </Button>
+            );
+          }}
         />
       )}
+      <p className="mt-3 text-center text-xs text-muted">{t('ราคาต่อเดือน (บาท) · ยกเลิกได้ทุกเมื่อ · มีคำถามกดแชทมุมขวาล่างได้เลย')}</p>
 
       <h2 className="mb-3 mt-10 font-medium">{t('ประวัติการชำระเงิน')}</h2>
       {!payments ? <Spinner /> : payments.length === 0 ? (

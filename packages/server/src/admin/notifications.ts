@@ -38,7 +38,8 @@ export async function notificationRoutes(app: FastifyInstance): Promise<void> {
   // ลูกค้า: การแจ้งเตือนที่ส่งถึงตัวเอง (ล่าสุดก่อน)
   app.get('/api/notifications', { preHandler: requireUser }, async (req) => {
     const { userId } = getUser(req)!;
-    const plan = (await getEntitlements(userId)).plan as Audience;
+    const ent = (await getEntitlements(userId)).plan;
+    const plan: Audience = ent === 'trial' || ent === 'free' ? ent : 'pro'; // ทุกแพลนเสียเงิน = กลุ่ม "pro"
     return { notifications: notes.filter((n) => n.audience === 'all' || n.audience === plan).slice(-50).reverse().map(({ by: _by, ...n }) => n) };
   });
 

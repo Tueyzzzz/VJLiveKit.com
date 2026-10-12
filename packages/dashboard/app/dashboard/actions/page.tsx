@@ -593,6 +593,7 @@ function ActionsInner() {
                     <div className="min-w-0 flex-1 text-sm">
                       <span className="font-medium">{t('🔗 ลิงก์เฉพาะ PK')}</span>
                       <span className="block text-xs text-muted">{t('ไม่บังคับ — ใช้เมื่ออยากวางหมวดนี้แยกตำแหน่ง/ขนาดเอง (เช่น ไพ่ไว้มุมจอ) ถ้าใช้ลิงก์ FX ลิงก์เดียวก็ไม่ต้องทำอะไร')}</span>
+                      <code className="mt-1.5 block break-all select-all rounded-lg bg-white px-3 py-1.5 text-xs text-muted">{`${fxUrl}&only=pk`}</code>
                     </div>
                     <Button variant="secondary" onClick={() => copyCat('pk')}>{catCopied === 'pk' ? <><Check className="size-4 text-mint" /> {t('คัดลอกแล้ว')}</> : <><Copy className="size-4" /> {t('คัดลอกลิงก์ PK')}</>}</Button>
                   </div>
@@ -664,6 +665,7 @@ function ActionsInner() {
                     <div className="min-w-0 flex-1 text-sm">
                       <span className="font-medium">{t('🔗 ลิงก์เฉพาะหมวดนี้')}</span>
                       <span className="block text-xs text-muted">{t('ไม่บังคับ — ใช้เมื่ออยากวางหมวดนี้แยกตำแหน่ง/ขนาดเอง (เช่น ไพ่ไว้มุมจอ) ถ้าใช้ลิงก์ FX ลิงก์เดียวก็ไม่ต้องทำอะไร')}</span>
+                      <code className="mt-1.5 block break-all select-all rounded-lg bg-white px-3 py-1.5 text-xs text-muted">{`${fxUrl}&only=${tplGroup}`}</code>
                     </div>
                     <Button variant="secondary" onClick={() => copyCat(tplGroup)}>{catCopied === tplGroup ? <><Check className="size-4 text-mint" /> {t('คัดลอกแล้ว')}</> : <><Copy className="size-4" /> {t('คัดลอกลิงก์หมวดนี้')}</>}</Button>
                   </div>

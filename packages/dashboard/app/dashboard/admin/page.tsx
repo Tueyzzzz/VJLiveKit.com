@@ -12,6 +12,7 @@ import { AdminMail } from '@/components/AdminMail';
 import { AdminEasySlip } from '@/components/AdminEasySlip';
 import { AdminMedia } from '@/components/AdminMedia';
 import { AdminPlans } from '@/components/AdminPlans';
+import { AdminPayAccount, AdminPaySlips } from '@/components/AdminPaySlips';
 import { Pager, usePaged } from '@/components/Pager';
 import { WIDGET_LABELS } from '@/components/Pricing';
 import { Alert, Badge, Button, Card, Input, PageHeader, Spinner } from '@/components/ui';
@@ -314,6 +315,7 @@ export default function AdminPage() {
       {tab === 'media' && <AdminMedia />}
       {tab === 'plans' && <AdminPlans />}
 
+      {tab === 'payments' && <><AdminPayAccount /><AdminPaySlips onUser={setDetail} onChange={() => api<{ payments: NonNullable<typeof payments> }>('/api/admin/payments').then((r) => setPayments(r.payments)).catch(() => {})} /></>}
       {tab === 'payments' && (!payments ? <Spinner /> : payments.length === 0 ? <Card className="py-8 text-center text-sm text-muted">ยังไม่มีการชำระเงิน</Card> : (
         <Card className="overflow-x-auto p-0">
           <div className="border-b border-line px-4 py-3 text-sm">รับชำระแล้ว (PAID) รวม <b>฿{(payments.filter((x) => x.status === 'PAID').reduce((a, x) => a + x.amountCents, 0) / 100).toLocaleString('th-TH')}</b> จาก {payments.length} รายการล่าสุด</div>

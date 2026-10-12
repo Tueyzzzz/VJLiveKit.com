@@ -135,7 +135,7 @@ export interface Rule {
   action: { type: ActionType; move?: 'dance' | 'kiss' | 'joy' | 'heart' | 'walk' | 'spin' | 'jump'; url?: string; sound?: string; text?: string; durationMs?: number; cards?: number; deck?: TarotDeck; topic?: TarotTopic; effect?: 'butterflies' | 'sakura' | 'hearts' | 'coins' | 'stars' | 'snow' | 'bubbles' | 'balloons' | 'roses' | 'fireflies' | 'confetti' | 'vcake' | 'vcat' | 'vchicks' | 'animal' | 'chest' | 'bag' | 'prank'; style?: string; animal?: AnimalName; prank?: PrankName; tint?: 'pink' | 'blue' | 'purple' | 'mint' | 'gold' | 'rainbow'; count?: number; repeat?: number; volume?: number; key?: string; signStyle?: 'led' | 'neon' | 'bulb' | 'cute' | 'pixel' | 'y2k' | 'glass' | 'surreal' | 'boho' | 'victorian' | 'graffiti' | 'future' | 'mwhite' | 'mblack' | 'mline' | 'mpill'; signMode?: 'scroll' | 'static' | 'blink' | 'pulse'; signPos?: 'top' | 'center' | 'bottom'; color?: string };
   createdAt: string;
 }
-export interface PaymentRow { id: string; amountCents: number; currency: string; status: string; createdAt: string; rawPayload: { hosted_invoice_url?: string; number?: string } | null }
+export interface PaymentRow { id: string; amountCents: number; currency: string; status: string; createdAt: string; rawPayload: { hosted_invoice_url?: string; number?: string; kind?: string; planName?: string } | null }
 
 export function formatMoney(cents: number, currency: string): string {
   try {

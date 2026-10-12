@@ -5,15 +5,16 @@ import { Pager, usePaged } from '@/components/Pager';
 import { ExternalLink } from 'lucide-react';
 import { PlanCards, askForPlan, usePlans } from '@/components/Pricing';
 import { PlanCompare } from '@/components/PlanCompare';
+import { SlipPaySheet, useSlipPay } from '@/components/SlipPaySheet';
 import { Alert, Badge, Button, Card, PageHeader, Spinner } from '@/components/ui';
-import { api, formatMoney, isPaidPlan, trialDaysLeft, type PaymentRow } from '@/lib/api';
+import { api, formatMoney, isPaidPlan, trialDaysLeft, type PaymentRow, type Plan } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useLang, useT } from '@/lib/i18n';
 
 const STATUS_LABEL: Record<string, string> = { ACTIVE: 'ใช้งานอยู่', TRIALING: 'ทดลองใช้', PAST_DUE: 'ค้างชำระ', CANCELED: 'ยกเลิกแล้ว', INCOMPLETE: 'ชำระเงินไม่สำเร็จ' };
 
 export default function BillingPage() {
-  const { user, entitlements } = useAuth();
+  const { user, entitlements, refresh } = useAuth();
   const t = useT();
   const [lang] = useLang();
   const loc = lang === 'en' ? 'en-US' : 'th-TH';
@@ -21,10 +22,11 @@ export default function BillingPage() {
   const [payments, setPayments] = useState<PaymentRow[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const slipPay = useSlipPay(); // บัญชีรับโอนที่แอดมินตั้งไว้ → เลือกแพลนแล้วขึ้นหน้าโอน + แนบสลิป
+  const [paying, setPaying] = useState<Plan | null>(null);
 
-  useEffect(() => {
-    api<{ payments: PaymentRow[] }>('/api/billing/payments').then((r) => setPayments(r.payments)).catch(() => setPayments([]));
-  }, []);
+  const loadPayments = () => api<{ payments: PaymentRow[] }>('/api/billing/payments').then((r) => setPayments(r.payments)).catch(() => setPayments([]));
+  useEffect(() => { void loadPayments(); }, []);
 
   async function go(path: string, key: string, body?: unknown) {
     setBusy(key);
@@ -47,7 +49,7 @@ export default function BillingPage() {
 
   return (
     <div>
-      <PageHeader title={t('แพลน & การชำระเงิน')} description={t('ชำระผ่านบัตรอย่างปลอดภัยด้วย Stripe ยกเลิกได้ทุกเมื่อ')} />
+      <PageHeader title={t('แพลน & การชำระเงิน')} description={!billingEnabled && slipPay?.enabled ? t('ชำระด้วยการโอน / สแกน QR พร้อมเพย์ แนบสลิปแล้วเปิดแพลนได้ทันที ไม่ตัดเงินอัตโนมัติ') : t('ชำระผ่านบัตรอย่างปลอดภัยด้วย Stripe ยกเลิกได้ทุกเมื่อ')} />
 
       {error && <div className="mb-5"><Alert>{error}</Alert></div>}
       {entitlements?.plan === 'trial' && (
@@ -62,7 +64,7 @@ export default function BillingPage() {
           {entitlements.trialTiktok && <div className="mt-1 text-xs opacity-80">{t('TikTok @{tiktok} ใช้ทดลองฟรีครบ {total} วันแล้ว (นับต่อ TikTok ไม่ใช่ต่อบัญชี)', { tiktok: entitlements.trialTiktok, total: entitlements.trialTotalDays ?? 0 })}</div>}
         </Alert></div>
       )}
-      {!billingEnabled && plans && (
+      {!billingEnabled && plans && !slipPay?.enabled && (
         <div className="mb-5"><Alert tone="info">{t('ตอนนี้สมัครแพลนผ่านแชทกับทีมงาน — กด “เลือกแพลนนี้” แล้วทีมงานจะส่งช่องทางชำระเงินให้')}</Alert></div>
       )}
 
@@ -95,13 +97,18 @@ export default function BillingPage() {
           plans={plans}
           currentPlan={entitlements?.plan}
           renderAction={(p) => {
+            // จ่ายด้วยสลิปไว้ (ไม่ตัดเงินอัตโนมัติ) → ต่ออายุแพลนเดิมได้เอง
+            if (p.code === entitlements?.plan && sub?.provider === 'slip' && slipPay?.enabled && !billingEnabled) return <Button variant="secondary" className="w-full" onClick={() => setPaying(p)}>{t('ต่ออายุ {days} วัน', { days: slipPay.days })}</Button>;
             if (p.code === entitlements?.plan) return <Button variant="secondary" className="w-full" disabled>{t('แพลนปัจจุบัน')}</Button>;
             if (p.priceCents === 0) return <Button variant="secondary" className="w-full" disabled>{isPaid ? t('ยกเลิกได้ที่ “จัดการสมาชิก”') : t('ฟรีตลอด')}</Button>;
             // จ่ายผ่านบัตรได้ และยังไม่มีรอบบิลบัตร → checkout · นอกนั้น (ยังไม่เปิดระบบตัดบัตร / เปลี่ยนแพลน) → แชทซัพพอร์ต
             const viaCheckout = billingEnabled && !hasCardSub;
+            // ยังไม่เปิดตัดบัตร แต่แอดมินตั้งบัญชีรับโอนไว้ → หน้าโอน + แนบสลิป
+            const viaSlip = !billingEnabled && !hasCardSub && !!slipPay?.enabled;
             return (
               <Button className="w-full" variant={p.badge ? 'primary' : 'secondary'} loading={busy === p.code}
                 onClick={() => viaCheckout ? go('/api/billing/checkout', p.code, { planCode: p.code })
+                  : viaSlip ? setPaying(p)
                   : askForPlan(t(p.name), isPaid ? t('อยากเปลี่ยนเป็นแพลน {plan} ค่ะ/ครับ') : t('อยากสมัครแพลน {plan} ค่ะ/ครับ'))}>
                 {isPaid ? t('เปลี่ยนเป็นแพลนนี้') : t('เลือกแพลนนี้')}
               </Button>
@@ -111,6 +118,9 @@ export default function BillingPage() {
       )}
       <p className="mt-3 text-center text-xs text-muted">{t('ราคาต่อเดือน (บาท) · ยกเลิกได้ทุกเมื่อ · มีคำถามกดแชทมุมขวาล่างได้เลย')}</p>
       {plans && <PlanCompare plans={plans} />}
+      {paying && slipPay && (
+        <SlipPaySheet plan={paying} info={slipPay} onClose={() => { setPaying(null); void loadPayments(); }} onPaid={() => { void refresh(); void loadPayments(); }} />
+      )}
 
       <h2 className="mb-3 mt-10 font-medium">{t('ประวัติการชำระเงิน')}</h2>
       {!payments ? <Spinner /> : payments.length === 0 ? (
@@ -126,7 +136,8 @@ export default function BillingPage() {
                 <tr key={p.id}>
                   <td className="px-5 py-3">{new Date(p.createdAt).toLocaleDateString(loc)}</td>
                   <td className="px-5 py-3">{formatMoney(p.amountCents, p.currency)}</td>
-                  <td className="px-5 py-3"><Badge tone={p.status === 'PAID' ? 'mint' : 'pink'}>{p.status === 'PAID' ? t('ชำระแล้ว') : p.status === 'FAILED' ? t('ไม่สำเร็จ') : p.status}</Badge></td>
+                  <td className="px-5 py-3"><Badge tone={p.status === 'PAID' ? 'mint' : p.status === 'PENDING' ? 'violet' : 'pink'}>{p.status === 'PAID' ? t('ชำระแล้ว') : p.status === 'FAILED' ? t('ไม่สำเร็จ') : p.status === 'PENDING' ? t('รอตรวจสลิป') : p.status}</Badge>
+                    {p.rawPayload?.kind === 'slip' && <div className="mt-1 text-xs text-muted">{t('โอน + สลิป')}{p.rawPayload.planName ? ` · ${t(p.rawPayload.planName)}` : ''}</div>}</td>
                   <td className="px-5 py-3 text-right">
                     {p.rawPayload?.hosted_invoice_url && (
                       <a href={p.rawPayload.hosted_invoice_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-pink hover:underline">

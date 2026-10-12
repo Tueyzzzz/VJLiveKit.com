@@ -7,6 +7,7 @@ import path from 'node:path';
 import { authRoutes } from './auth/routes.js';
 import { widgetRoutes } from './widgets/routes.js';
 import { billingRoutes } from './billing/routes.js';
+import { slipBillingRoutes } from './billing/slip.js';
 import { actionRoutes } from './actions/routes.js';
 import { ttsRoutes } from './tts/routes.js';
 import { referralRoutes } from './referrals/routes.js';
@@ -116,6 +117,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(authRoutes);
   await app.register(widgetRoutes);
   await app.register(billingRoutes);
+  await app.register(slipBillingRoutes);
   await app.register(actionRoutes);
   await app.register(ttsRoutes);
   await app.register(referralRoutes);

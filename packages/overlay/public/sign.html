@@ -43,10 +43,40 @@
   .rainbow.scroll .txt { animation:marq var(--dur,10s) linear infinite, rb 3s linear infinite; }
   .led.rainbow .txt, .neon.rainbow .txt { text-shadow:none; filter:drop-shadow(0 0 8px rgba(255,255,255,.5)); }
   @keyframes rb { to { background-position:200% 0 } }
+  /* เทมเพลตกรอบรูป (frame=01..20 · ตำแหน่งจอดำใน sign/frames.json) — ข้อความวิ่งอยู่ในจอของกรอบ */
+  #fr { position:relative; display:none; }
+  body.framed #fr { display:block; } body.framed .board { display:none; }
+  #fr img { display:block; width:100%; height:auto; pointer-events:none; user-select:none; }
+  #fr .scr { position:absolute; overflow:hidden; display:flex; align-items:center; border-radius:var(--sr,12px); }
+  body.scroll #fr .scr { -webkit-mask-image:linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent); mask-image:linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent); }
+  #fr .track { width:100%; }
+  /* ชั้นบน: กรอบเดิมแต่เจาะจอทิ้ง (mask-XX) → ของตกแต่งที่ยื่นเข้าจอ (โบว์/ตุ๊กตา) ทับตัวอักษร */
+  #fr #ftop { position:absolute; left:0; top:0; height:100%; -webkit-mask-size:100% 100%; mask-size:100% 100%; -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; }
+  body.framed .txt { line-height:1.3; color:var(--c); text-shadow:0 0 calc(var(--fs) * .05) var(--g), 0 0 calc(var(--fs) * .16) var(--g), 0 0 calc(var(--fs) * .4) var(--g2,var(--g)); }
+  body.framed.rainbow .txt { text-shadow:none; filter:drop-shadow(0 0 calc(var(--fs) * .1) rgba(255,255,255,.55)); }
+  /* ตาข่ายจุด LED (เลือกปิดได้) — ตัวอักษรเป็นจุดไฟ จุดอยู่กับที่ ข้อความวิ่งผ่าน · ระยะจุดเป็น px เต็ม (คม) */
+  body.dots #fr .track { -webkit-mask-image:radial-gradient(circle, #000 0 calc(var(--dp) * .34), rgba(0,0,0,.18) calc(var(--dp) * .5));
+    mask-image:radial-gradient(circle, #000 0 calc(var(--dp) * .34), rgba(0,0,0,.18) calc(var(--dp) * .5));
+    -webkit-mask-size:var(--dp) var(--dp); mask-size:var(--dp) var(--dp); }
+  /* ── มินิมอล (วาดด้วยโค้ด คมทุกขนาด ไม่มีรูป) ── */
+  #fr.minf { aspect-ratio:var(--ar,6.2); border-radius:var(--R); box-sizing:border-box; }
+  #fr.minf img { display:none; }
+  #fr.minf .scr { border-radius:var(--R); }
+  .fm-white #fr { background:#fff; border:1.5px solid rgba(20,20,40,.12); box-shadow:0 6px 24px rgba(0,0,0,.18); }
+  .fm-black #fr { --R:999px !important; background:#141416; border:1px solid rgba(255,255,255,.08); box-shadow:0 6px 24px rgba(0,0,0,.3); }
+  .fm-glass #fr { background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.55); box-shadow:0 8px 32px rgba(20,10,60,.22), inset 0 1px 0 rgba(255,255,255,.5);
+    backdrop-filter:blur(14px) saturate(1.3); -webkit-backdrop-filter:blur(14px) saturate(1.3); }
+  .fm-outline #fr { background:transparent; border:2px solid var(--c); box-shadow:0 0 6px var(--c), inset 0 0 6px var(--c); }
+  .fm-pastel #fr { --R:999px !important; background:color-mix(in srgb, var(--pc) 30%, white); border:1px solid color-mix(in srgb, var(--pc) 45%, white); box-shadow:0 6px 20px color-mix(in srgb, var(--pc) 30%, transparent); }
+  .fm-led #fr { background:#0b0b0e; border:1px solid #26262c; box-shadow:0 6px 24px rgba(0,0,0,.35); }
+  body.fm-white .txt, body.fm-black .txt, body.fm-pastel .txt { text-shadow:none; }
+  body.fm-glass .txt { text-shadow:0 2px 10px rgba(30,15,70,.45); }
+  body.fm-outline .txt { text-shadow:0 0 calc(var(--fs) * .12) var(--c); }
 </style>
 </head>
 <body>
-  <div id="wrap"><div class="board sb"><div class="bulbs" id="bulbs"></div><div class="track"><span class="txt stx" id="txt"></span></div></div></div>
+  <div id="wrap"><div class="board sb"><div class="bulbs" id="bulbs"></div><div class="track"><span class="txt stx" id="txt"></span></div></div>
+    <div id="fr"><img id="fimg" alt="" /><div class="scr" id="fscr"><div class="track"><span class="txt" id="ftxt"></span></div></div><img id="ftop" alt="" /></div></div>
   <script src="/socket.io/socket.io.js"></script>
   <script src="js/overlay-client.js"></script>
   <script>
@@ -54,14 +84,22 @@
     // ป้ายไฟ LED / นีออน / ไฟหลอด — ข้อความวิ่งหรืออยู่กับที่
     // ?text=ข้อความ (หลายข้อความคั่นด้วย |) · ?style=led|neon|bulb|cute · ?mode=scroll|static|blink|pulse · ?color=#ff4fa3 · ?rainbow=0
     // ?speed=5 (1–10) · ?size=64 · ?width=80 (% จอ) · ?pos=top|center|bottom · ?bg=85 · ?font=Kanit · ?every=6 (วินาที สลับข้อความ, ไม่เลื่อน)
+    // ?frame=01..20 เทมเพลตกรอบรูป (ว่าง = แบบเดิม) — width = ความกว้างกรอบ, size 64 = พอดีจอของกรอบ
+    // ?ink=theme|custom สีตัวอักษรตามธีมกรอบ / ใช้ ?color · ?dots=1 ตาข่ายจุด LED บนจอ
     // ข้อความใส่ตัวแปรได้: {likes} {diamonds} {viewers} {follows} {gifts} — อัปเดตตามไลฟ์จริง
     const P = (k, d) => Overlay.param(k, d);
     const num = (k, d, lo, hi) => Math.max(lo, Math.min(hi, parseFloat(P(k, d)) || parseFloat(d)));
-    const wrap = document.getElementById('wrap'), txt = document.getElementById('txt'), bulbs = document.getElementById('bulbs');
+    const wrap = document.getElementById('wrap'); let txt = document.getElementById('txt'); const bulbs = document.getElementById('bulbs');
     const STYLE = ['led', 'neon', 'bulb', 'cute', 'pixel', 'y2k', 'glass', 'surreal', 'boho', 'victorian', 'graffiti', 'future', 'mwhite', 'mblack', 'mline', 'mpill'].includes(P('style', 'led')) ? P('style', 'led') : 'led';
     const MODE = ['scroll', 'static', 'blink', 'pulse'].includes(P('mode', 'scroll')) ? P('mode', 'scroll') : 'scroll';
     const RAINBOW = ['1', 'true'].includes(String(P('rainbow', '0')));
-    document.body.className = [STYLE, 'st-' + STYLE, MODE, RAINBOW ? 'rainbow' : '', STYLE === 'neon' ? 'flicker' : ''].join(' ');
+    // มินิมอล: min-white|min-black|min-glass|min-outline|min-pastel|min-mono-led (วาดด้วย CSS) · รูปกรอบ: 01..20
+    const MINS = { 'min-white': 'white', 'min-black': 'black', 'min-glass': 'glass', 'min-outline': 'outline', 'min-pastel': 'pastel', 'min-mono-led': 'led' };
+    const RAWF = String(P('frame', '') || '').trim();
+    const MIN = MINS[RAWF] || '';
+    const FRAME = MIN ? RAWF : RAWF.replace(/[^0-9]/g, '').slice(0, 2);
+    const DOTS = MIN ? MIN === 'led' : !['0', 'false'].includes(String(P('dots', '1')));
+    document.body.className = FRAME ? ['framed', MIN ? 'fm-' + MIN : '', MODE, RAINBOW ? 'rainbow' : '', DOTS ? 'dots' : ''].join(' ') : [STYLE, 'st-' + STYLE, MODE, RAINBOW ? 'rainbow' : '', STYLE === 'neon' ? 'flicker' : ''].join(' ');
     wrap.classList.add(['top', 'center', 'bottom'].includes(P('pos', 'top')) ? P('pos', 'top') : 'top');
     const S = document.documentElement.style;
     const color = /^#[0-9a-f]{3,8}$/i.test(P('color', '#ff4fa3')) ? P('color', '#ff4fa3') : '#ff4fa3';
@@ -80,6 +118,7 @@
     function show() {
       const line = lines[idx % lines.length] || '';
       txt.textContent = MODE === 'scroll' ? lines.map(fill).join('     ✦     ') : fill(line);
+      if (FRAME && MODE !== 'scroll') fitFrame();
       if (MODE === 'scroll') {
         // ความเร็วคงที่ตามความยาวข้อความ (speed 1 ช้า → 10 เร็ว)
         const pxPerSec = 40 + num('speed', '5', 1, 10) * 28;
@@ -95,7 +134,60 @@
       for (let k = 0; k <= nx; k++) { add(k * r.width / nx, 0); add(k * r.width / nx, r.height); }
       for (let k = 1; k < ny; k++) { add(0, k * r.height / ny); add(r.width, k * r.height / ny); }
     }
-    show(); setTimeout(layoutBulbs, 300); addEventListener('resize', layoutBulbs);
+    // ── เทมเพลตกรอบรูป: ตัวอักษรพอดีความสูงจอของกรอบ สี/แสงเรืองตามธีม ──
+    // [สีตัวอักษร, แสงเรือง, แสงเรืองชั้นนอก]
+    const INK = {
+      pink: ['#ffe3f0', '#ff4fa3', '#ff86c0'], lavender: ['#fff6c8', '#b48cff', '#ffd95a'], marquee: ['#fff1c2', '#ffb300', '#ff7a00'],
+      neon: ['#ffffff', '#22e6ff', '#ff2ea6'], candy: ['#ffe6f3', '#ff5fae', '#ffb3d9'], sakura: ['#ffe9f1', '#ff7fb0', '#ffc2d8'],
+      thai: ['#ffeaa8', '#e8a317', '#ff6a00'], ocean: ['#eafdff', '#3fd2ff', '#b48cff'], bear: ['#ffeedd', '#ff8fbf', '#ffb067'],
+      champion: ['#ffe08a', '#ffb300', '#ff5a1f'], rainbow: ['#ffffff', '#ff8fd0', '#7fd8ff'], galaxy: ['#f5ecff', '#a77bff', '#5fb0ff'],
+      strawberry: ['#ffe6ec', '#ff3f6c', '#ff9ab3'], cat: ['#ffffff', '#ff7fb8', '#ffc0dc'], bunny: ['#fff4e2', '#ff9a3c', '#8fe07a'],
+      pixel: ['#8afff2', '#ff3ec8', '#3fa8ff'], graffiti: ['#e4ff3a', '#ff2ea6', '#22e6ff'], xmas: ['#fff7e0', '#ff3b3b', '#ffd24a'],
+      halloween: ['#ffbf5a', '#ff6a00', '#a64dff'], rose: ['#ffe4e4', '#ff2e55', '#ffb36b'],
+    };
+    // มินิมอล: [สีตัวอักษร, แสง, แสงนอก] — outline/pastel ใช้สีที่เลือก
+    const MINK = { white: ['#1d1b26', 'transparent', 'transparent'], black: ['#ffffff', 'transparent', 'transparent'], glass: ['#ffffff', 'transparent', 'transparent'],
+      led: ['#ffd25a', '#ff9d00', '#ff6a00'] };
+    let fitFrame = () => {};
+    if (FRAME) {
+      const scr = document.getElementById('fscr'), $fr = document.getElementById('fr');
+      txt = document.getElementById('ftxt');
+      wrap.style.visibility = 'hidden';
+      const setup = (F, isMin) => {
+        const b = F.screen, img = document.getElementById('fimg');
+        if (isMin) $fr.classList.add('minf');
+        else {
+          img.width = F.w; img.height = F.h; img.src = 'sign/frame-' + F.id + '.webp';
+          const top = document.getElementById('ftop'), mk = `url(sign/mask-${F.id}.webp)`;
+          top.src = img.src; top.style.webkitMaskImage = mk; top.style.maskImage = mk;
+        }
+        scr.style.left = b[0] * 100 + '%'; scr.style.top = b[1] * 100 + '%';
+        scr.style.width = (b[2] - b[0]) * 100 + '%'; scr.style.height = (b[3] - b[1]) * 100 + '%';
+        const ink = (isMin ? MINK[MIN] : INK[F.theme]) || INK.pink;
+        const custom = P('ink', 'theme') === 'custom' || MIN === 'outline' || MIN === 'pastel';
+        if (MIN === 'pastel') { S.setProperty('--pc', color); S.setProperty('--c', `color-mix(in srgb, ${color} 75%, black)`); }
+        else S.setProperty('--c', custom ? color : ink[0]);
+        S.setProperty('--g', custom && MIN !== 'pastel' ? color : ink[1]); S.setProperty('--g2', custom && MIN !== 'pastel' ? color : ink[2]);
+        const scale = num('size', '64', 16, 220) / 64;
+        fitFrame = () => {
+          const W = wrap.getBoundingClientRect().width, h = (b[3] - b[1]) * W * F.h / F.w, w = (b[2] - b[0]) * W;
+          scr.style.setProperty('--sr', Math.round(h * .16) + 'px');
+          if (isMin) $fr.style.setProperty('--R', Math.round(h * .22) + 'px');
+          const fs = Math.min(h * .74, h * .54 * scale);
+          S.setProperty('--fs', fs.toFixed(1) + 'px');
+          S.setProperty('--dp', Math.max(3, Math.round(fs / 12)) + 'px'); // ระยะจุด LED เป็น px เต็ม (คมทุกจอ)
+          if (MODE !== 'scroll') { const sw = txt.scrollWidth; if (sw > w * .94) S.setProperty('--fs', (fs * w * .94 / sw).toFixed(1) + 'px'); }
+        };
+        const go = () => { fitFrame(); show(); wrap.style.visibility = ''; };
+        if (isMin || img.complete) go(); else { img.onload = go; img.onerror = go; }
+        if (document.fonts) document.fonts.ready.then(() => { fitFrame(); show(); });
+      };
+      if (MIN) setup({ id: FRAME, w: 620, h: 100, screen: [.03, .1, .97, .9] }, true);
+      else fetch('sign/frames.json').then((r) => r.json()).then((all) => setup(all[FRAME] || all['01'], false)).catch(() => { document.body.className = [STYLE, 'st-' + STYLE, MODE].join(' '); txt = document.getElementById('txt'); wrap.style.visibility = ''; show(); });
+    }
+    if (!FRAME) show();
+    addEventListener('resize', () => { if (FRAME) { fitFrame(); show(); } });
+    setTimeout(layoutBulbs, 300); addEventListener('resize', layoutBulbs);
     // ไม่เลื่อน + หลายข้อความ → สลับทุก ?every วินาที
     if (MODE !== 'scroll' && lines.length > 1) setInterval(() => { idx++; show(); }, num('every', '6', 2, 60) * 1000);
 

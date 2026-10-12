@@ -13,6 +13,7 @@ import { api, ApiError, type OverlayTokenRow } from '@/lib/api';
 import { NumberInput } from '@/components/NumberInput';
 import { GiftPicker, useGifts } from '@/components/GiftPicker';
 import { useLang, useT } from '@/lib/i18n';
+import { useAuth } from '@/lib/auth';
 import { WIDGET_SETTINGS, defaultsOf, toOverlayParams, type FieldDef, type Values } from '@/lib/widgetSettings';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
@@ -216,7 +217,7 @@ function GiftListEditor({ value, onChange, tone = 'add' }: { value: string; onCh
   );
 }
 
-function FieldInput({ f, value, onChange }: { f: FieldDef; value: Values[string]; onChange: (v: Values[string]) => void }) {
+function FieldInput({ f, value, onChange, allowed }: { f: FieldDef; value: Values[string]; onChange: (v: Values[string]) => void; allowed?: Set<string> | null }) {
   const t = useT();
   switch (f.type) {
     case 'menuItems':
@@ -261,11 +262,12 @@ function FieldInput({ f, value, onChange }: { f: FieldDef; value: Values[string]
               {g && <div className="mb-1.5 text-xs font-semibold text-violet">{t(g)}</div>}
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                 {opts.map(([v, l, , thumb]) => {
-                  const on = String(value) === v;
+                  const on = String(value) === v, locked = !!allowed && !allowed.has(v);
                   return (
-                    <button key={v} type="button" onClick={() => onChange(v)} aria-pressed={on} title={t(l)}
-                      className={`flex flex-col items-center gap-1 rounded-xl border-2 p-1.5 text-center transition ${on ? 'border-pink bg-pink-soft' : 'border-line bg-white hover:border-pink/40'}`}>
-                      <span className="grid aspect-square w-full place-items-center overflow-hidden rounded-lg bg-canvas">
+                    <button key={v} type="button" onClick={() => { if (locked) { if (window.confirm(t('แบบนี้ใช้ได้ในแพลนที่สูงกว่า — ไปหน้าแพลนไหม?'))) window.location.href = '/dashboard/billing/'; return; } onChange(v); }} aria-pressed={on} title={locked ? t('อัปเกรดแพลนเพื่อใช้แบบนี้') : t(l)}
+                      className={`relative flex flex-col items-center gap-1 rounded-xl border-2 p-1.5 text-center transition ${on ? 'border-pink bg-pink-soft' : 'border-line bg-white hover:border-pink/40'}`}>
+                      {locked && <span className="absolute right-1 top-1 z-10 grid size-6 place-items-center rounded-full bg-white/90 text-xs shadow">👑</span>}
+                      <span className={`grid aspect-square w-full place-items-center overflow-hidden rounded-lg bg-canvas ${locked ? 'opacity-45 grayscale-[60%]' : ''}`}>
                         {thumb
                           ? <img src={thumb.startsWith('/') ? `${API_BASE}${thumb}` : `${API_BASE}/overlay/themes/thumbs/${thumb}.webp`} alt="" loading="lazy" className={`max-h-full max-w-full object-contain p-1 ${thumb.includes('/rings/') ? 'animate-[spin_6s_linear_infinite]' : ''}`} />
                           : <span className="text-2xl">✏️</span>}
@@ -312,6 +314,23 @@ function WidgetSettings() {
   const t = useT();
   const [values, setValues] = useState<Values | null>(null);
   const [saved, setSaved] = useState<string>('');
+  // แบบให้เลือกตามแพลน: แบบที่มีรูปในแต่ละช่อง ใช้ได้ N แบบแรก (ตามลำดับในรายการเต็ม) · แบบที่บันทึกไว้แล้วใช้ต่อได้เสมอ
+  const { entitlements, isAdmin } = useAuth();
+  const styleLimit = isAdmin ? 999 : entitlements?.styleLimit ?? 999;
+  const allowedOf = useMemo(() => {
+    const m = new Map<string, Set<string>>();
+    const full = WIDGET_SETTINGS[type];
+    if (!full || styleLimit >= 999) return m;
+    let savedV: Record<string, unknown> = {}; try { savedV = saved ? JSON.parse(saved) : {}; } catch { /* ignore */ }
+    for (const sec of full.sections) for (const f of sec.fields) {
+      if (f.type !== 'select' || !f.options.some((o) => o[3])) continue;
+      const set = new Set(f.options.slice(0, styleLimit).map((o) => String(o[0])));
+      if (savedV[f.key] != null) set.add(String(savedV[f.key]));
+      if (f.key === 'char') customMascots.forEach((c) => set.add(c.code)); // มาสคอตสั่งทำของตัวเอง ใช้ได้เสมอ
+      m.set(f.key, set);
+    }
+    return m;
+  }, [type, styleLimit, saved, customMascots]);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
   const [previewSrc, setPreviewSrc] = useState('');
@@ -463,11 +482,11 @@ function WidgetSettings() {
                     {fields.map((f) => f.type === 'toggle' ? (
                       <div key={f.key} className="flex items-center justify-between gap-3">
                         <span className="text-sm font-medium text-ink">{t(f.label)}</span>
-                        <FieldInput f={f} value={values[f.key]} onChange={(v) => setValues({ ...values, [f.key]: v })} />
+                        <FieldInput f={f} value={values[f.key]} allowed={allowedOf.get(f.key) ?? null} onChange={(v) => setValues({ ...values, [f.key]: v })} />
                       </div>
                     ) : (
                       <Field key={f.key} label={t(f.label)} hint={f.hint ? t(f.hint) : f.hint}>
-                        <FieldInput f={f} value={values[f.key]} onChange={(v) => setValues({ ...values, [f.key]: v })} />
+                        <FieldInput f={f} value={values[f.key]} allowed={allowedOf.get(f.key) ?? null} onChange={(v) => setValues({ ...values, [f.key]: v })} />
                       </Field>
                     ))}
                   </div>
@@ -524,11 +543,11 @@ function WidgetSettings() {
                     {fields.map((f) => f.type === 'toggle' ? (
                       <div key={f.key} className="flex items-center justify-between gap-3">
                         <span className="text-sm font-medium text-ink">{t(f.label)}</span>
-                        <FieldInput f={f} value={values[f.key]} onChange={(v) => setValues({ ...values, [f.key]: v })} />
+                        <FieldInput f={f} value={values[f.key]} allowed={allowedOf.get(f.key) ?? null} onChange={(v) => setValues({ ...values, [f.key]: v })} />
                       </div>
                     ) : (
                       <Field key={f.key} label={t(f.label)} hint={f.hint ? t(f.hint) : f.hint}>
-                        <FieldInput f={f} value={values[f.key]} onChange={(v) => setValues({ ...values, [f.key]: v })} />
+                        <FieldInput f={f} value={values[f.key]} allowed={allowedOf.get(f.key) ?? null} onChange={(v) => setValues({ ...values, [f.key]: v })} />
                       </Field>
                     ))}
                   </div>

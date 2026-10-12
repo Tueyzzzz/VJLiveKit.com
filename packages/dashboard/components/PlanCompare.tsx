@@ -75,6 +75,7 @@ export function PlanCompare({ plans }: { plans: Plan[] }) {
               </Frag>
             ))}
             {head('⚙️ ลิมิต & สิทธิพิเศษ')}
+            {row(t('แบบให้เลือกต่อวิดเจ็ต'), plans.map((p) => { const n = (p.features as { styleLimit?: number }).styleLimit ?? 999; return n >= 999 ? t('ทุกแบบ') : `${n} ${t('แบบ')}`; }), t('เช่น โหล 93 แบบ · ต้นไม้ · รถลาก · กรอบ MVP'))}
             {row(t('กฎ Actions & Events'), plans.map((p) => lim(p.features.maxActionRules, ' ' + t('ข้อ'))), t('เช่น ได้ Rose → ผีเสื้อ · PK ชนะ → ฉลอง'))}
             {row(t('ลิงก์ overlay'), plans.map((p) => lim(p.features.maxTokens, ' ' + t('ชุด'))))}
             {row(t('อัปโหลดเสียง/วิดีโอของตัวเอง'), plans.map((p) => (p.features.soundMaxFiles ? `${p.features.soundMaxFiles} ${t('ไฟล์')} · ${p.features.soundMaxMB}MB` : no)))}

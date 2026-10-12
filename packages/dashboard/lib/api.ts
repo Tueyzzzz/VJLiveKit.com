@@ -74,6 +74,8 @@ export interface Entitlements {
   soundMaxFiles?: number;
   prioritySupport?: boolean;
   mascotDiscountPct?: number;
+  /** จำนวนแบบให้เลือกต่อวิดเจ็ต (999 = ทุกแบบ) */
+  styleLimit?: number;
   /** อยู่ในช่วงทดลองฟรีเดือนแรก (plan = "trial") */
   trialEndsAt?: string;
   /** ทดลองฟรีนับต่อ TikTok: ใช้ไปแล้วกี่วัน / ทั้งหมดกี่วัน */

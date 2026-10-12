@@ -31,6 +31,8 @@ export interface PlanFeatures {
   prioritySupport: boolean;
   /** ส่วนลดสั่งทำมาสคอตหน้าตัวเอง (%) */
   mascotDiscountPct: number;
+  /** จำนวนแบบให้เลือกต่อวิดเจ็ต (ตัวเลือกที่มีรูปในหน้าตั้งค่า · นับจากแบบแรก) — 999 = ทุกแบบ */
+  styleLimit: number;
 }
 
 export interface Entitlements extends PlanFeatures {
@@ -88,31 +90,31 @@ export const DEFAULT_PLANS: PlanDef[] = [
     code: 'free', name: 'Free', priceCents: 0, currency: 'thb', badge: '',
     tagline: 'ลองของก่อน ไม่ต้องใช้บัตร',
     bullets: ['แจ้งเตือน · แชท · แถบเป้าหมาย', 'โหลแก้ว · ตู้ปลา · ตัวละครกินของขวัญ', 'ไม่มีโลโก้บนจอ'],
-    features: { widgets: W_FREE, maxActionRules: 3, maxTokens: 2, noWatermark: true, tarot: false, liveStats: false, soundMaxMB: 0, soundMaxFiles: 0, prioritySupport: false, mascotDiscountPct: 0 },
+    features: { widgets: W_FREE, maxActionRules: 3, maxTokens: 2, noWatermark: true, tarot: false, liveStats: false, soundMaxMB: 0, soundMaxFiles: 0, prioritySupport: false, mascotDiscountPct: 0, styleLimit: 3 },
   },
   {
     code: 'starter', name: 'มือใหม่', priceCents: 9900, currency: 'thb', badge: '',
     tagline: 'เริ่มไลฟ์จริงจัง ครบเครื่องมือหลัก',
     bullets: ['ทุกอย่างในแพลน Free +', 'Top Gifters · นาฬิกา Subathon · ป้ายไฟ LED', 'Actions & Events · เมนูของขวัญ · โดเนท'],
-    features: { widgets: W_STARTER_NEW, maxActionRules: 15, maxTokens: 3, noWatermark: true, tarot: false, liveStats: false, soundMaxMB: 5, soundMaxFiles: 20, prioritySupport: false, mascotDiscountPct: 0 },
+    features: { widgets: W_STARTER_NEW, maxActionRules: 15, maxTokens: 3, noWatermark: true, tarot: false, liveStats: false, soundMaxMB: 5, soundMaxFiles: 20, prioritySupport: false, mascotDiscountPct: 0, styleLimit: 10 },
   },
   {
     code: 'pro', name: 'Pro', priceCents: 19900, currency: 'thb', badge: 'ยอดนิยม',
     tagline: 'ครบทุกวิดเจ็ต คุ้มสุด',
     bullets: ['ทุกวิดเจ็ต (รถลาก · ต้นไม้ · กองทับกัน · ลูกแก้ว …)', 'MVP ของ PK · ลีก · มาสคอตตัวแทนวีเจ', 'อ่านแชท (TTS) · ไพ่ทาโร่ · สถิติไลฟ์'],
-    features: { widgets: W_ALL, maxActionRules: 40, maxTokens: 5, noWatermark: true, tarot: true, liveStats: true, soundMaxMB: 10, soundMaxFiles: 50, prioritySupport: false, mascotDiscountPct: 0 },
+    features: { widgets: W_ALL, maxActionRules: 40, maxTokens: 5, noWatermark: true, tarot: true, liveStats: true, soundMaxMB: 10, soundMaxFiles: 50, prioritySupport: false, mascotDiscountPct: 0, styleLimit: 20 },
   },
   {
     code: 'promax', name: 'Pro Max', priceCents: 29900, currency: 'thb', badge: '',
     tagline: 'สายแข่ง PK ไลฟ์ทุกวัน',
     bullets: ['ทุกอย่างใน Pro +', 'กฎ Actions 100 ข้อ · ลิงก์ 10 ชุด', 'ซัพพอร์ตด่วน · ส่วนลดสั่งทำมาสคอต 10%'],
-    features: { widgets: W_ALL, maxActionRules: 100, maxTokens: 10, noWatermark: true, tarot: true, liveStats: true, soundMaxMB: 15, soundMaxFiles: 100, prioritySupport: true, mascotDiscountPct: 10 },
+    features: { widgets: W_ALL, maxActionRules: 100, maxTokens: 10, noWatermark: true, tarot: true, liveStats: true, soundMaxMB: 15, soundMaxFiles: 100, prioritySupport: true, mascotDiscountPct: 10, styleLimit: 40 },
   },
   {
     code: 'expert', name: 'มืออาชีพ', priceCents: 34900, currency: 'thb', badge: '',
     tagline: 'ไม่จำกัด สำหรับมืออาชีพ/เอเจนซี่',
     bullets: ['ทุกอย่างใน Pro Max +', 'กฎ Actions ไม่จำกัด · ลิงก์ 20 ชุด', 'อัปโหลดเสียง 200 ไฟล์ · ส่วนลดมาสคอต 20%'],
-    features: { widgets: W_ALL, maxActionRules: 999, maxTokens: 20, noWatermark: true, tarot: true, liveStats: true, soundMaxMB: 20, soundMaxFiles: 200, prioritySupport: true, mascotDiscountPct: 20 },
+    features: { widgets: W_ALL, maxActionRules: 999, maxTokens: 20, noWatermark: true, tarot: true, liveStats: true, soundMaxMB: 20, soundMaxFiles: 200, prioritySupport: true, mascotDiscountPct: 20, styleLimit: 999 },
   },
 ];
 
@@ -148,6 +150,7 @@ function merge(def: PlanDef, o: PlanOverride | undefined): PlanDef {
       soundMaxFiles: clampInt(f.soundMaxFiles ?? d.soundMaxFiles, 0, 500, d.soundMaxFiles),
       prioritySupport: typeof f.prioritySupport === 'boolean' ? f.prioritySupport : d.prioritySupport,
       mascotDiscountPct: clampInt(f.mascotDiscountPct ?? d.mascotDiscountPct, 0, 100, d.mascotDiscountPct),
+      styleLimit: clampInt(f.styleLimit ?? d.styleLimit, 1, 999, d.styleLimit),
     },
   };
 }
@@ -218,7 +221,7 @@ export async function getEntitlements(userId: string): Promise<Entitlements> {
     const ti = user ? trialInfo(user.createdAt, user.tiktokUsername) : null;
     const trial = ti ? { trialUsedDays: ti.usedDays, trialTotalDays: ti.totalDays, trialTiktok: ti.tiktok } : {};
     if (trialEnd && trialEnd.getTime() > Date.now()) {
-      return { plan: 'trial', planName: 'ทดลองฟรี', ...plans[plans.length - 1]!.features, noWatermark: true, prioritySupport: false, mascotDiscountPct: 0, trialEndsAt: trialEnd.toISOString(), ...trial };
+      return { plan: 'trial', planName: 'ทดลองฟรี', ...plans[plans.length - 1]!.features, noWatermark: true, prioritySupport: false, mascotDiscountPct: 0, styleLimit: 999, trialEndsAt: trialEnd.toISOString(), ...trial };
     }
     return { plan: free.code, planName: free.name, ...free.features, ...trial };
   }

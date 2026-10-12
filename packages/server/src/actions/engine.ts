@@ -139,12 +139,15 @@ export function joinAllowed(r: ActionRule, e: TikTokEvent, session = '', now = D
   return true;
 }
 
+const ruleLast = new Map<string, number>();
 /** คืนรายการ action ที่ต้องยิงสำหรับเหตุการณ์นี้ · session = รหัสไลฟ์ (กฎ join ทักครั้งเดียวต่อคนต่อไลฟ์) */
 export function evaluate(rules: ActionRule[], e: TikTokEvent, session = ''): ActionFire[] {
   const out: ActionFire[] = [];
   for (const r of rules) {
     if (!ruleMatches(r, e)) continue;
     if (e.type === 'member' && !joinAllowed(r, e, session)) continue;
+    // คูลดาวน์ของกฎอื่น ๆ (เช่น พิมพ์ "เต้น" ในแชท) — ตั้ง cooldownSec ไว้เท่านั้น · กันผู้ชมพิมพ์รัวจนจอเล่นไม่หยุด
+    if (e.type !== 'member' && r.trigger.cooldownSec) { const last = ruleLast.get(r.id) ?? 0, now = Date.now(); if (now - last < r.trigger.cooldownSec * 1000) continue; ruleLast.set(r.id, now); if (ruleLast.size > 20000) ruleLast.delete(ruleLast.keys().next().value!); }
     const limit = r.action.type === 'tarot' ? 1 : Math.max(1, Math.min(20, r.action.repeat ?? 1));
     const times = e.type === 'gift' ? Math.min(limit, Math.max(1, e.repeatCount ?? 1)) : 1;
     out.push({ ruleId: r.id, name: r.name, action: r.action, event: e, ts: Date.now(), times });

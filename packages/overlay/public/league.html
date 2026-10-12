@@ -23,6 +23,7 @@
    *   tier=B level=1 levels=3          ลีกปัจจุบัน / ระดับย่อย / จำนวนระดับย่อยต่อลีก
    *   target=44999 start=0 grow=1      เป้าหมาย / คะแนนที่มีอยู่แล้ว / ตัวคูณเป้าหมายเมื่อขึ้นระดับ
    *   label=ปลดล็อกเป้าหมายถัดไป names=1 scale=1 x=0 y=0 minCoins=0 reset=1
+   *   frame=01..10                     เทมเพลตกรอบรูปโดม (ว่าง = แบบเดิมวาดด้วยโค้ด) — ช่องต่าง ๆ ใน league/frames.json
    */
   (function () {
     const P = (k, d) => Overlay.param(k, d);
@@ -53,14 +54,47 @@
     const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch { /* storage ปิด */ } };
 
     // ---- เรขาคณิต (หน่วยออกแบบ: 0,0 = กลางล่าง) ----
-    const DC = { x: 0, y: -235 }, R = 215;              // โดม
+    const DC = { x: 0, y: -235 }; let R = 215, RY = 215; // โดม (กรอบรูป = วงรี)
+    const BADGE = { x: 0, y: -320 };                      // จุดกลางตราลีก (พลุตอนขึ้นระดับ)
+
+    // ---- เทมเพลตกรอบรูป (frame=01..10 · ช่องหกเหลี่ยม/ป้าย/แถบใน league/frames.json) ----
+    const FRAME = String(P('frame', '') || '').replace(/[^0-9]/g, '').slice(0, 2);
+    const FW = 560;                                       // กว้างกรอบ (หน่วยออกแบบ)
+    let FR = FRAME ? null : false;                        // null = กำลังโหลด · false = แบบเดิม
+    // สีต่อธีม: ตัวอักษร [บน, ล่าง], ขอบ, เรือง, แถบ [ซ้าย, ขวา], สีป้ายระดับ
+    const INK = {
+      pink: { l: ['#ffffff', '#ff8cc0'], o: '#a01f55', g: 'rgba(255,120,180,.85)', b: ['#ff8cc4', '#ff3d8f'], p: '#b02a63' },
+      gold: { l: ['#fff7d6', '#e6a92a'], o: '#5a0c16', g: 'rgba(255,205,90,.85)', b: ['#ffe08a', '#d4901c'], p: '#7a1420' },
+      neon: { l: ['#ffffff', '#5ff1ff'], o: '#1a0b3a', g: 'rgba(40,220,255,.95)', b: ['#22e6ff', '#ff2ea6'], p: '#4a1a9a' },
+      galaxy: { l: ['#ffffff', '#b9a2ff'], o: '#1b1050', g: 'rgba(160,130,255,.95)', b: ['#8fb4ff', '#b06bff'], p: '#3b2a8a' },
+      sakura: { l: ['#ffffff', '#ff9ec4'], o: '#6e0f1e', g: 'rgba(255,160,200,.85)', b: ['#ff9ec4', '#e0365a'], p: '#9a1830' },
+      candy: { l: ['#ffffff', '#ff9ad0'], o: '#a03a63', g: 'rgba(255,150,210,.85)', b: ['#8fe8cf', '#ff7ab8'], p: '#b0306a' },
+      thai: { l: ['#fff4cf', '#e0a520'], o: '#4a0808', g: 'rgba(255,200,80,.85)', b: ['#ffd76a', '#c0281e'], p: '#8a1010' },
+      ocean: { l: ['#ffffff', '#5fd8f0'], o: '#0a4a63', g: 'rgba(80,220,255,.9)', b: ['#7ff0ff', '#1a8fd0'], p: '#0f5f7a' },
+      bear: { l: ['#ffffff', '#ffa8c4'], o: '#8a3a52', g: 'rgba(255,150,190,.85)', b: ['#ff9cbc', '#e0507e'], p: '#8a3a52' },
+      boxing: { l: ['#fff2b0', '#d89a1a'], o: '#1a1206', g: 'rgba(255,200,80,.9)', b: ['#ffd76a', '#d0281e'], p: '#1a1206' },
+    };
+    if (FRAME) {
+      fetch('league/frames.json').then((r) => r.json()).then((all) => {
+        const F = all[FRAME] || all['01'], img = new Image();
+        img.onload = () => {
+          const FH = FW / F.aspect, top = -56 - FH, bx = (b) => ({ x0: -FW / 2 + b[0] * FW, y0: top + b[1] * FH, x1: -FW / 2 + b[2] * FW, y1: top + b[3] * FH });
+          FR = { img, F, FH, top, hex: bx(F.hex), plaque: bx(F.plaque), track: bx(F.track), ink: INK[F.theme] || INK.pink };
+          // โดมแก้วในภาพ ≈ x 0.21–0.79 · บน 0.11 · ฐาน 0.70 → วงรีให้ของขวัญชน/ลอยอยู่ข้างใน
+          DC.y = top + 0.70 * FH; R = 0.29 * FW; RY = 0.59 * FH;
+          BADGE.y = (FR.hex.y0 + FR.hex.y1) / 2;
+        };
+        img.onerror = () => { FR = false; };
+        img.src = 'league/frame-' + F.id + '.webp';
+      }).catch(() => { FR = false; });
+    }
     const hexes = []; const HX = 26;                     // ตาข่ายหกเหลี่ยมบนโดม
     for (let row = 0; row < 12; row++) for (let col = -10; col <= 10; col++) {
       const x = col * HX * 1.5, y = DC.y - row * HX * Math.sqrt(3) - (col & 1 ? HX * Math.sqrt(3) / 2 : 0);
       if (Math.hypot(x - DC.x, y - DC.y) < R + HX) hexes.push({ x, y, glow: 0 });
     }
     const hexPath = (x, y, r) => { ctx.beginPath(); for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3; ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r); } ctx.closePath(); };
-    const domeClip = () => { ctx.beginPath(); ctx.arc(DC.x, DC.y, R, Math.PI, 0); ctx.ellipse(DC.x, DC.y, R, 34, 0, 0, Math.PI); ctx.closePath(); };
+    const domeClip = () => { ctx.beginPath(); ctx.ellipse(DC.x, DC.y, R, RY, 0, Math.PI, 0); ctx.ellipse(DC.x, DC.y, R, 34 * R / 215, 0, 0, Math.PI); ctx.closePath(); };
 
     // ---- ลูกเล่น ----
     const fx = new Juice.Particles(500), badgeSpring = new Juice.Spring(220, 11), barSpring = new Juice.Spring(260, 14), shake = new Juice.Spring(300, 16);
@@ -72,7 +106,7 @@
 
     function launch(g, value, name, delay) {
       const side = Math.random() < 0.5 ? -1 : 1, a = side > 0 ? Math.PI * 2 - 0.2 - Math.random() * 1.1 : Math.PI + 0.2 + Math.random() * 1.1; // ชนด้านเดียวกับที่มา
-      const hit = { x: DC.x + Math.cos(a) * R, y: DC.y + Math.sin(a) * R };
+      const hit = { x: DC.x + Math.cos(a) * R, y: DC.y + Math.sin(a) * RY };
       const from = { x: side * (520 + Math.random() * 120), y: DC.y + 40 - Math.random() * 260 };
       const ctrl = { x: (from.x + hit.x) / 2, y: Math.min(from.y, hit.y) - 80 - Math.random() * 120 };
       const size = Math.min(24 * (Juice.sizeFor ? Juice.sizeFor(g.d, 4) : 1), 96); // ของแพงใหญ่ตามราคา (เพดาน 72)
@@ -93,7 +127,7 @@
       st.pts -= st.target; st.target = Math.round(st.target * GROW); shownPts = 0; // แถบเริ่มใหม่จาก 0
       st.lvl++; if (st.lvl > LEVELS) { st.lvl = 1; st.tier = LADDER[Math.min(LADDER.length - 1, LADDER.indexOf(st.tier) + 1)]; }
       unlockText = 'ปลดล็อก ' + st.tier + st.lvl + ' แล้ว!'; unlockT = performance.now();
-      badgeSpring.kick(-9); fx.confetti(0, -330, 70); fx.sparkle(0, -330, 24, '#ffe39a'); save();
+      badgeSpring.kick(-9); fx.confetti(BADGE.x, BADGE.y - 10, 70); fx.sparkle(BADGE.x, BADGE.y - 10, 24, '#ffe39a'); save();
     }
 
     // ---- วาด ----
@@ -110,21 +144,24 @@
         if (h.glow > 0.01) { ctx.fillStyle = `rgba(180,225,255,${0.45 * h.glow})`; ctx.fill(); h.glow *= 0.94; }
         ctx.strokeStyle = 'rgba(255,255,255,.28)'; ctx.stroke();
       }
-      // ระลอกคลื่นตอนชน
+      drawRipples();
+      ctx.restore();
+      // ฐานด้านหลัง
+      ctx.beginPath(); ctx.ellipse(DC.x, DC.y, R + 8, 36, 0, Math.PI, 0); ctx.strokeStyle = 'rgba(190,210,245,.45)'; ctx.lineWidth = 6; ctx.stroke();
+    }
+    // ระลอกคลื่นตอนชน (เรียกภายใน clip ของโดม)
+    function drawRipples() {
       for (let i = ripples.length - 1; i >= 0; i--) {
         const r = ripples[i]; r.age += 1 / 60; const k = r.age / 0.7; if (k >= 1) { ripples.splice(i, 1); continue; }
         ctx.beginPath(); ctx.arc(r.x, r.y, 10 + k * (r.big ? 190 : 110), 0, Math.PI * 2);
         ctx.strokeStyle = `rgba(200,235,255,${0.8 * (1 - k)})`; ctx.lineWidth = 6 * (1 - k) + 1; ctx.stroke();
       }
-      ctx.restore();
-      // ฐานด้านหลัง
-      ctx.beginPath(); ctx.ellipse(DC.x, DC.y, R + 8, 36, 0, Math.PI, 0); ctx.strokeStyle = 'rgba(190,210,245,.45)'; ctx.lineWidth = 6; ctx.stroke();
     }
     function drawFloaters(time) {
       ctx.save(); domeClip(); ctx.clip();
       for (const f of floaters) {
         f.age += 1 / 60; f.x += f.vx; f.y += f.vy; f.vy += 0.01; f.vx *= 0.995; f.rot += f.vr;
-        const dx = f.x - DC.x, dy = f.y - DC.y, d = Math.hypot(dx, dy), lim = R - f.size * 0.6;
+        const dx = f.x - DC.x, dy = f.y - DC.y, d = Math.hypot(dx / R, dy / RY), lim = 1 - f.size * 0.6 / R;
         if (d > lim) { f.x = DC.x + dx / d * lim; f.y = DC.y + dy / d * lim; f.vx *= -0.6; f.vy *= -0.6; }
         if (f.y > DC.y + 10) { f.y = DC.y + 10; f.vy = -Math.abs(f.vy) * 0.5 - 0.3; }
         const a = Math.max(0, Math.min(1, (8 - f.age) / 2)); if (a <= 0) continue;
@@ -193,10 +230,72 @@
       const txt = Overlay.fmt(shownPts) + ' / ' + Overlay.fmt(st.target) + '  ·  ' + Math.floor(pct * 100) + '%';
       ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(10,12,25,.85)'; ctx.strokeText(txt, 0, 1); ctx.fillStyle = '#ffffff'; ctx.fillText(txt, 0, 1);
       ctx.restore();
-      // ข้อความใต้แถบ
+      drawCaption(y + 56);
+    }
+    // ข้อความใต้แถบ (ตอนขึ้นระดับ = "ปลดล็อก B2 แล้ว!")
+    function drawCaption(y) {
       const showUnlock = performance.now() - unlockT < 3500;
-      ctx.font = '800 34px Kanit, sans-serif'; ctx.lineWidth = 7; ctx.strokeStyle = 'rgba(10,12,25,.85)';
-      const t = showUnlock ? unlockText : LABEL; ctx.strokeText(t, 0, y + 56); ctx.fillStyle = showUnlock ? '#ffe39a' : '#ffffff'; ctx.fillText(t, 0, y + 56);
+      ctx.font = '800 34px Kanit, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineWidth = 7; ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(10,12,25,.85)';
+      const t = showUnlock ? unlockText : LABEL; ctx.strokeText(t, 0, y); ctx.fillStyle = showUnlock ? '#ffe39a' : '#ffffff'; ctx.fillText(t, 0, y);
+    }
+
+    // ---- แบบกรอบรูป ----
+    // ตัวอักษรไล่สี + ขอบหนา + เรืองแสงตามธีม พอดีกล่อง b (สูงตามสัดส่วน hk)
+    function fancyText(txt, b, hk, ink, outline) {
+      const w = b.x1 - b.x0, h = b.y1 - b.y0, cx = (b.x0 + b.x1) / 2, cy = (b.y0 + b.y1) / 2;
+      let fs = h * hk; ctx.font = `800 ${fs}px Kanit, sans-serif`;
+      const tw = ctx.measureText(txt).width; if (tw > w * 0.86) { fs *= w * 0.86 / tw; ctx.font = `800 ${fs}px Kanit, sans-serif`; }
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+      const y = cy + fs * 0.06;
+      const g = ctx.createLinearGradient(0, cy - fs * 0.4, 0, cy + fs * 0.4); g.addColorStop(0, ink.l[0]); g.addColorStop(0.55, ink.l[1]); g.addColorStop(1, ink.l[1]);
+      ctx.save();
+      if (outline) {
+        ctx.shadowColor = ink.g; ctx.shadowBlur = fs * 0.25;
+        ctx.lineWidth = fs * 0.16; ctx.strokeStyle = ink.o; ctx.strokeText(txt, cx, y); ctx.shadowBlur = 0;
+        ctx.lineWidth = fs * 0.05; ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.strokeText(txt, cx, y);
+        ctx.fillStyle = g; ctx.fillText(txt, cx, y);
+      } else { ctx.fillStyle = ink.p; ctx.fillText(txt, cx, y); }
+      ctx.restore();
+    }
+    function drawFramedBack() {
+      ctx.drawImage(FR.img, -FW / 2, FR.top, FW, FR.FH);
+      ctx.save(); domeClip(); ctx.clip(); drawRipples(); ctx.restore();
+    }
+    function drawFramedFront(time) {
+      const ink = FR.ink, hb = FR.hex, cx = (hb.x0 + hb.x1) / 2, cy = (hb.y0 + hb.y1) / 2;
+      // ตัวอักษรลีกในหกเหลี่ยม (เด้งตอนขึ้นระดับ)
+      const s = (1 + Math.max(-0.3, Math.min(0.4, -badgeSpring.x * 0.04))) * Juice.breathe(time, 0.015, 0.4);
+      ctx.save(); ctx.translate(cx, cy); ctx.scale(s, s); ctx.translate(-cx, -cy);
+      fancyText(st.tier, hb, 0.62, ink, true);
+      ctx.restore();
+      // ระดับย่อยในป้าย
+      fancyText(st.tier + st.lvl, FR.plaque, 0.72, ink, false);
+      // แถบความคืบหน้า (ด้านในราง)
+      shownPts += (st.pts - shownPts) * 0.12; if (Math.abs(st.pts - shownPts) < 0.5) shownPts = st.pts;
+      const pct = Math.max(0, Math.min(1, shownPts / st.target)), tb = FR.track;
+      const th = tb.y1 - tb.y0, ins = th * 0.16, x0 = tb.x0 + ins, y0 = tb.y0 + ins, iw = tb.x1 - tb.x0 - ins * 2, ih = th - ins * 2;
+      const bump = 1 + Math.max(-0.04, Math.min(0.05, barSpring.x * 0.015)), bcx = (tb.x0 + tb.x1) / 2, bcy = (tb.y0 + tb.y1) / 2;
+      ctx.save(); ctx.translate(bcx, bcy); ctx.scale(bump, bump); ctx.translate(-bcx, -bcy);
+      if (pct > 0) {
+        const fw = Math.max(ih, iw * pct);
+        ctx.save(); ctx.beginPath(); ctx.roundRect(x0, y0, fw, ih, ih / 2); ctx.clip();
+        const g = ctx.createLinearGradient(x0, 0, x0 + fw, 0); g.addColorStop(0, ink.b[0]); g.addColorStop(1, ink.b[1]);
+        ctx.fillStyle = g; ctx.fillRect(x0, y0, fw, ih);
+        // แถบเฉียงวิ่ง + ไฮไลต์ด้านบน
+        ctx.fillStyle = 'rgba(255,255,255,.18)'; const st2 = ih * 1.2, off = (time * 40) % (st2 * 2);
+        for (let x = x0 - st2 * 2 + off; x < x0 + fw; x += st2 * 2) { ctx.beginPath(); ctx.moveTo(x, y0 + ih); ctx.lineTo(x + st2, y0 + ih); ctx.lineTo(x + st2 * 2, y0); ctx.lineTo(x + st2, y0); ctx.closePath(); ctx.fill(); }
+        ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(x0, y0 + ih * 0.12, fw, ih * 0.22);
+        // ประกายที่ปลายแถบ
+        const sx = x0 + (time * 0.45 % 1.4) * fw; const sg = ctx.createLinearGradient(sx - ih, 0, sx + ih, 0);
+        sg.addColorStop(0, 'rgba(255,255,255,0)'); sg.addColorStop(0.5, 'rgba(255,255,255,.55)'); sg.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = sg; ctx.fillRect(sx - ih, y0, ih * 2, ih);
+        ctx.restore();
+        ctx.beginPath(); ctx.roundRect(x0, y0, fw, ih, ih / 2); ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(0,0,0,.18)'; ctx.stroke();
+      }
+      const fs = ih * 0.72; ctx.font = `700 ${fs}px Kanit, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+      const txt = Overlay.fmt(shownPts) + ' / ' + Overlay.fmt(st.target) + '  ·  ' + Math.floor(pct * 100) + '%';
+      ctx.lineWidth = fs * 0.22; ctx.strokeStyle = ink.o; ctx.strokeText(txt, bcx, bcy + fs * 0.05); ctx.fillStyle = '#ffffff'; ctx.fillText(txt, bcx, bcy + fs * 0.05);
+      ctx.restore();
+      drawCaption(-26);
     }
     function drawComets(dt) {
       for (let i = comets.length - 1; i >= 0; i--) {
@@ -235,7 +334,8 @@
       badgeSpring.step(dt); barSpring.step(dt); shake.step(dt);
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.imageSmoothingQuality = 'high';
       const o = origin(), s = S(); ctx.translate(o.x + shake.x * Math.sin(now * 0.09), o.y + shake.x * 0.5 * Math.cos(now * 0.11)); ctx.scale(s, s);
-      drawDomeBack(time); drawFloaters(time); drawBadge(time); drawDomeFront(time); drawBar();
+      if (FR) { drawFramedBack(); drawFloaters(time); drawFramedFront(time); }
+      else if (FR === false) { drawDomeBack(time); drawFloaters(time); drawBadge(time); drawDomeFront(time); drawBar(); }
       drawTrail(); drawComets(dt); fx.step(); fx.draw(ctx);
       requestAnimationFrame(frame);
     }

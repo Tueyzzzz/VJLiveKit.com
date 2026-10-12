@@ -333,6 +333,13 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
   league: {
     resettable: 'ล้างคะแนนลีก (เริ่มจากค่าตั้งต้น)',
     sections: [
+      // กรอบรูปโดมลีก 10 ธีม (overlay/public/league/frame-XX.webp · ช่องตัวอักษร/ป้าย/แถบใน league/frames.json) — ว่าง = แบบเดิม
+      { title: 'เทมเพลต', fields: [
+        { key: 'frame', label: 'เทมเพลต', type: 'select', def: '', options: [
+          ['', '🎨 แบบเดิม', '', '/overlay/league/thumb-classic.webp'],
+          ...MVP_FRAMES.map(([id, l]): [string, string, string, string] => [id, l, '', `/overlay/league/thumb-${id}.webp`]),
+        ] },
+      ] },
       { title: 'ลีกและเป้าหมาย', fields: [
         { key: 'tier', label: 'ลีกปัจจุบัน', type: 'select', def: 'B', options: [['D', 'D'], ['C', 'C'], ['B', 'B'], ['A', 'A'], ['S', 'S']] },
         { key: 'level', label: 'ระดับย่อยปัจจุบัน', type: 'number', min: 1, max: 9, def: 1, hint: 'เช่น B1 = 1' },

@@ -22,7 +22,7 @@ const PARAM_HINTS: Record<string, string> = {
   follower: '&label=...&showCount=0',
   topgifters: '&max=5&label=...&bg=35&pos=tr',
   toplikers: '&max=5&label=...&bg=35&pos=tr',
-  pkmvp: '&pos=tr&theme=candy|glass|white|gold&them=1&idle=wait|hide&hold=20&scale=1',
+  pkmvp: '&frame=01..10|css&pos=tr&theme=candy|glass|white|gold&them=1&idle=wait|hide&hold=20&scale=1',
   timer: '&start=60&coin=5&like=0&follow=30&share=10&max=0&label=...&fontSize=90&bg=35',
   league: '&tier=B&level=1&levels=3&target=44999&start=0&label=...',
   tts: '&lang=th-TH&rate=1&readChat=1&readGift=1&minGift=1',
@@ -101,6 +101,7 @@ const SHOT_POSTERS = new Set(['league', 'timer', 'alerts', 'chat', 'follower', '
 /** รูปนิ่งของแบบที่เลือกไว้ (จากตัวเลือกที่มีรูปย่อในหน้าตั้งค่า) */
 function posterOf(type: string, config?: Record<string, unknown>): string | null {
   const fr = String(config?.frames ?? 'a');
+  if ((type === 'topgifters' || type === 'toplikers') && /^mvp\d\d$/.test(fr)) return `${API_BASE}/overlay/mvp/thumb-${fr.slice(3)}.webp`; // แท่นกรอบรูปเต็มชุด
   if ((type === 'topgifters' || type === 'toplikers') && fr !== 'off') return `${API_BASE}/overlay/thumbs/${type}-${fr}.webp`; // แท่น Top 3 มีรูปโปรไฟล์ (ก่อนรูปกรอบเปล่า)
   const def = WIDGET_SETTINGS[type];
   if (!def) return null;

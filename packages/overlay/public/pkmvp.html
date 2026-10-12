@@ -10,6 +10,10 @@
   #box { position:fixed; zoom:var(--s,1); width:330px; -webkit-font-smoothing:antialiased; transition:opacity .5s, transform .5s; }
   #box.tl { left:16px; top:16px } #box.tr { right:16px; top:16px } #box.bl { left:16px; bottom:16px } #box.br { right:16px; bottom:16px }
   #box.tc { left:50%; top:16px; margin-left:-165px }
+  #box.fr { width:360px } #box.fr.tc { margin-left:-180px }
+  #box.fr .opp { margin:2px 18px 0; background:rgba(30,10,40,.55); color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.6); }
+  #box.fr .thx { margin:4px 18px 0; text-align:center; font-family:'Itim',sans-serif; font-size:15px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.8),0 0 8px rgba(0,0,0,.4); }
+  #stage { position:relative; } #stage .spark { z-index:6; font-size:20px; }
   #box.off { opacity:0; transform:translateY(-10px) scale(.96); pointer-events:none; }
   .panel { position:relative; border-radius:24px; padding:12px 12px 10px; overflow:hidden;
     background:linear-gradient(160deg,rgba(255,220,238,var(--bgx,.95)),rgba(228,214,255,var(--bgx,.95))); border:2px solid #fff;
@@ -56,12 +60,14 @@
 </style>
 </head>
 <body>
-  <div id="box" class="off"><div class="panel" id="panel"></div></div>
+  <div id="box" class="off"><div class="panel" id="panel"></div><div id="stage" hidden></div><div id="extra"></div></div>
   <script src="/socket.io/socket.io.js"></script>
   <script src="js/overlay-client.js"></script>
+  <script src="js/mvpframe.js"></script>
   <script>
   (function () {
     // 👑 MVP ของ PK: 3 อันดับคนช่วยฝั่งเรามากสุดระหว่าง PK (สด) + MVP ฝั่งคู่แข่ง · จบ PK โชว์ MVP ตัวใหญ่ค้างไว้ ?hold= วินาที
+    // ?frame=01..10 (กรอบรูปภาพ mvp/frame-XX.webp) | css (ใช้ ?theme= แบบเดิม)
     // ?pos=tl|tr|bl|br|tc · ?theme=candy|glass|white|gold · ?title= · ?them=1 · ?idle=wait|hide · ?hold=20 · ?scale=1 · ?bg=45
     const P = (k, d) => Overlay.param(k, d), esc = Overlay.esc, fmt = (n) => (Math.round(Number(n)) || 0).toLocaleString('en-US');
     const box = document.getElementById('box'), panel = document.getElementById('panel');
@@ -72,13 +78,17 @@
     const SHOW_BAR = !['0', 'false'].includes(String(P('bar', '1')));
     const IDLE = P('idle', 'wait') === 'hide' ? 'hide' : 'wait';
     const HOLD = Math.max(3, Math.min(300, parseFloat(P('hold', '20')) || 20)) * 1000;
-    box.className = POS + ' th-' + THEME + ' off';
+    const FRAME = MvpFrame.has(P('frame', '01')) ? P('frame', '01') : 'css';
+    const stage = document.getElementById('stage'), extra = document.getElementById('extra');
+    let fr = null, lastRes = null; // กรอบรูปภาพ (MvpFrame) — null = แบบ CSS เดิม
+    if (FRAME !== 'css') panel.hidden = true;
+    box.className = POS + ' th-' + THEME + ' off' + (FRAME !== 'css' ? ' fr' : '');
     box.style.setProperty('--s', Math.max(.4, Math.min(4, parseFloat(P('scale', '1')) || 1)));
     box.style.setProperty('--bgx', Math.max(.3, Math.min(1, parseFloat(P('bg', '45')) / 100 + .45)));
     panel.style.setProperty('--bg', Math.max(0, Math.min(100, parseFloat(P('bg', '45')))) / 100);
 
     const MEDAL = ['🥇', '🥈', '🥉'];
-    let state = 'idle', us = 0, them = 0, mvp = [], themMvp = null, prev = new Map(), finalTimer = null, staleTimer = null;
+    let prevUs = 0, prevThem = 0, state = 'idle', us = 0, them = 0, mvp = [], themMvp = null, prev = new Map(), finalTimer = null, staleTimer = null;
 
     const initial = (n) => esc((Array.from(String(n || '?').trim())[0] || '?').toUpperCase());
     function avatar(m, cls) {
@@ -98,12 +108,24 @@
     function renderIdle() {
       state = 'idle'; prev = new Map();
       if (IDLE === 'hide') { show(false); return; }
+      if (fr) { fr.highlight(false); fr.setTitle(TITLE); fr.setCaps(SHOW_BAR ? '⚔️ รอ PK…' : '', ''); fr.setTop([], ''); extra.innerHTML = ''; show(true); return; }
       panel.className = 'panel';
       panel.innerHTML = `<div class="title">${esc(TITLE)}</div><div class="wait">⚔️ รอ PK…</div>`;
       show(true);
     }
     function renderLive() {
-      state = 'live'; panel.className = 'panel';
+      state = 'live';
+      if (fr) {
+        const pu = prevUs, pt = prevThem; prevUs = us; prevThem = them;
+        fr.highlight(false); fr.setTitle(TITLE);
+        fr.setCaps(SHOW_BAR ? '💖 ' + fmt(us) : '', SHOW_BAR ? fmt(them) + ' 😈' : '', us > pu ? 'l' : them > pt ? 'r' : '');
+        fr.setTop(mvp.slice(0, 3), '⚔️');
+        extra.innerHTML = mvp.length ? oppHtml() : '<div class="thx">ยังไม่มีคนช่วย — ส่งของขวัญเลย! 💖</div>';
+        show(true);
+        clearTimeout(staleTimer); staleTimer = setTimeout(renderIdle, 6 * 60 * 1000);
+        return;
+      }
+      panel.className = 'panel';
       let rows = '';
       mvp.slice(0, 3).forEach((m, i) => {
         const old = prev.get(m.name), bump = old !== undefined && old !== m.score;
@@ -115,9 +137,20 @@
       clearTimeout(staleTimer); staleTimer = setTimeout(renderIdle, 6 * 60 * 1000); // ไม่มีข้อมูล PK นานมาก = PK จบไปแล้ว (สัญญาณจบหาย)
     }
     function renderFinal(result) {
-      state = 'final'; clearTimeout(staleTimer); panel.className = 'panel final';
+      state = 'final'; clearTimeout(staleTimer); lastRes = result;
       const top = mvp[0];
       const res = result === 'win' ? '🏆 ชนะ PK!' : result === 'lose' ? '💪 สู้เต็มที่!' : result === 'draw' ? '🤝 เสมอ' : '⚔️ จบ PK';
+      if (fr) {
+        fr.setTitle(res); fr.setCaps(SHOW_BAR ? '💖 ' + fmt(us) : '', SHOW_BAR ? fmt(them) + ' 😈' : '');
+        fr.setTop(mvp.slice(0, 3), '⚔️'); fr.highlight(!!top, '👑 MVP');
+        stage.querySelectorAll('.spark').forEach((e) => e.remove());
+        for (let i = 0; i < 8; i++) { const e = document.createElement('span'); e.className = 'spark'; e.textContent = ['✨', '💖', '⭐'][i % 3]; Object.assign(e.style, { left: (6 + Math.random() * 88) + '%', top: (4 + Math.random() * 70) + '%', animationDelay: (i * .3).toFixed(1) + 's' }); stage.appendChild(e); }
+        extra.innerHTML = (top ? `<div class="thx">ขอบคุณ <b>${esc(top.name)}</b> MVP ของเรา 💖</div>` : '<div class="thx">ขอบคุณทุกคนที่ช่วยกันนะ 💖</div>') + oppHtml();
+        show(true);
+        clearTimeout(finalTimer); finalTimer = setTimeout(() => { stage.querySelectorAll('.spark').forEach((e) => e.remove()); renderIdle(); }, HOLD);
+        return;
+      }
+      panel.className = 'panel final';
       if (!top) panel.innerHTML = `<div class="title">${esc(TITLE)}</div><div style="text-align:center"><span class="res">${res}</span></div><div class="empty">ขอบคุณทุกคนที่ช่วยกันนะ 💖</div>`;
       else {
         const rest = mvp.slice(1, 3).map((m, i) => `<span>${MEDAL[i + 1]} ${esc(m.name)} · ${fmt(m.score)}</span>`).join('');
@@ -132,7 +165,7 @@
 
     function onPk(k) {
       if (!k) return;
-      if (k.kind === 'start') { clearTimeout(finalTimer); us = 0; them = 0; mvp = []; themMvp = null; prev = new Map(); renderLive(); return; }
+      if (k.kind === 'start') { clearTimeout(finalTimer); us = 0; them = 0; prevUs = 0; prevThem = 0; stage.querySelectorAll('.spark').forEach((e) => e.remove()); mvp = []; themMvp = null; prev = new Map(); renderLive(); return; }
       if (k.kind === 'score') {
         if (state === 'final') return; // คะแนนที่มาช้าหลังจบ
         if (typeof k.us === 'number') us = k.us; if (typeof k.them === 'number') them = k.them;
@@ -146,7 +179,14 @@
       }
     }
     Overlay.on('event', (e) => { if (e && e.type === 'pk') onPk(e.pk); });
-    renderIdle();
+    function boot() { renderIdle(); }
+    if (FRAME !== 'css') {
+      MvpFrame.ready().then(() => {
+        fr = MvpFrame.create(stage, FRAME, { width: 360 });
+        if (fr) stage.hidden = false; else panel.hidden = false; // โหลดตารางกรอบไม่ได้ → ใช้แบบ CSS
+        if (state === 'idle') renderIdle(); else if (state === 'live') renderLive(); else renderFinal(lastRes); // ข้อมูลที่มาก่อนกรอบโหลดเสร็จ
+      });
+    } else boot();
 
     // เดโม (ตัวอย่างในแดชบอร์ด/ไม่มีลิงก์): PK จำลองวนไปเรื่อย ๆ
     if (!Overlay.connected) {
@@ -159,7 +199,7 @@
           step++;
           const who = NAMES[Math.floor(Math.random() * NAMES.length)], add = [1, 5, 10, 30, 99][Math.floor(Math.random() * 5)];
           pts.set(who, (pts.get(who) || 0) + add); u += add; th += Math.floor(Math.random() * 60);
-          const list = [...pts].map(([name, score]) => ({ name, score })).sort((a, b) => b.score - a.score).slice(0, 3);
+          const list = [...pts].map(([name, score]) => ({ name, score, avatar: 'avatars/demo' + (NAMES.indexOf(name) + 1) + '.webp' })).sort((a, b) => b.score - a.score).slice(0, 3);
           if (step < 14) onPk({ kind: 'score', us: u, them: th, mvp: list, themMvp: { name: 'คู่แข่งสายเปย์', score: Math.round(th * .4) } });
           else { clearInterval(t); onPk({ kind: 'end', result: u >= th ? 'win' : 'lose', us: u, them: th, mvp: list }); setTimeout(cycle, Math.min(HOLD, 8000) + 2500); }
         }, 900);

@@ -10,6 +10,7 @@
  *   ?reset=1      ล้างอันดับที่จำไว้ (ปกติล้างเองเมื่อเริ่มไลฟ์ใหม่)
  *   ?list=false   ซ่อนรายการอันดับ 4 ลงไป (เหลือแค่แท่น Top 3)
  *   ?frames=a     แท่น Top 3: a | b (พระราชวัง) | gaming | singer | toy | off
+ *                 | mvp01..mvp10 = แท่นกรอบรูปภาพทั้งชุด (ป้ายหัวข้อ + แคปซูลยอดรวม + 3 วง) จาก js/mvpframe.js
  *
  * Ranking.mount({ mode: 'gifts' | 'likes', title, icon })
  */
@@ -72,6 +73,8 @@ window.Ranking = (function () {
   @keyframes mcrown{50%{transform:translateX(-50%) translateY(-4px) rotate(-4deg)}}
   .mbadge{position:absolute;left:50%;bottom:8%;transform:translateX(-50%);min-width:22%;height:16%;padding:0 6%;border-radius:999px;display:grid;place-items:center;
     background:linear-gradient(135deg,var(--c2),var(--c1) 55%,var(--c3));color:#2b1a10;font-family:'Itim',sans-serif;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+  #board.mvpf{width:auto;padding:0;background:none;border:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+  #board.mvpf .tt{display:none} #board.mvpf ol{margin:2px 14px 0} #board.mvpf li{background:rgba(25,12,35,calc(.25 + var(--bg,.35)))}
   .mname{margin-top:2px;max-width:100%;font-family:'Itim',sans-serif;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}`;
   /** กรอบ: ตำแหน่งรูของรูปโปรไฟล์ (สัดส่วนของรูปกรอบ) + แถบริบบิ้นใส่ชื่อ — วัดจากรูปจริง */
   const FRAMES = {
@@ -182,8 +185,20 @@ window.Ranking = (function () {
     const colOf = (nm) => cols[(nm || '?').charCodeAt(0) % cols.length];
     const MEDAL = ['🥇', '🥈', '🥉'];
     const totals = new Map(); // id -> { nm, avatar, value }
-    const fset = FRAME_SETS[P('frames', 'a')] || null; // off = ป้ายรายการธรรมดาเหมือนเดิม
-    let podium = null, lastFirst = null;
+    const mvpM = /^mvp(\d\d)$/.exec(P('frames', 'a'));
+    const mvpId = mvpM && window.MvpFrame && MvpFrame.has(mvpM[1]) ? mvpM[1] : null; // แท่นกรอบรูปภาพทั้งชุด
+    const fset = mvpId ? null : FRAME_SETS[P('frames', 'a')] || null; // off = ป้ายรายการธรรมดาเหมือนเดิม
+    let podium = null, lastFirst = null, mvpf = null;
+    if (mvpId) {
+      board.classList.add('mvpf');
+      const holder = document.createElement('div'); board.insertBefore(holder, list);
+      MvpFrame.ready().then(() => {
+        mvpf = MvpFrame.create(holder, mvpId, { width: Math.round(Math.min(360, innerWidth * 0.94)) });
+        if (!mvpf) { board.classList.remove('mvpf'); return; }
+        mvpf.setTitle(P('label', opts.title)); mvpf.setCaps(opts.icon + ' 0', '👥 0'); mvpf.setTop([], '');
+        render();
+      });
+    }
     if (fset) {
       board.classList.add('pod');
       podium = document.createElement('div'); podium.className = 'podium';
@@ -241,10 +256,17 @@ window.Ranking = (function () {
     }
 
     function render(bumpId) {
-      const top = [...totals.entries()].sort((a, b) => b[1].value - a[1].value).slice(0, MAX);
+      const all = [...totals.entries()].sort((a, b) => b[1].value - a[1].value), top = all.slice(0, MAX);
       if (!top.length) return;
       list.innerHTML = '';
-      const rest = fset ? top.slice(3) : top;
+      if (mvpId) {
+        if (!mvpf) return; // รอกรอบโหลด
+        const sum = all.reduce((t, [, g]) => t + (g.value || 0), 0), prevSum = mvpf._sum || 0; mvpf._sum = sum;
+        mvpf.setCaps(opts.icon + ' ' + Overlay.fmt(sum), '👥 ' + Overlay.fmt(all.length), sum > prevSum && prevSum ? 'l' : '');
+        mvpf.setTop(top.slice(0, 3).map(([, g]) => ({ name: g.nm, avatar: g.avatar, score: g.value })), opts.icon);
+      }
+      const rest = fset || mvpId ? top.slice(3) : top;
+      if (mvpId) list.style.display = rest.length && P('list', 'true') !== 'false' ? '' : 'none';
       if (fset) {
         // คนเดิมอันดับเดิม → อัปเดตแค่ยอด (ไม่สร้างใหม่ ภาพเคลื่อนไหวไม่สะดุด)
         const sig = top.slice(0, 3).map(([id, g]) => id + '|' + g.avatar).join(',');
@@ -264,7 +286,7 @@ window.Ranking = (function () {
         }
         list.style.display = rest.length && P('list', 'true') !== 'false' ? '' : 'none'; // ?list=false = โชว์แค่แท่น Top 3
       }
-      rest.forEach(([id, g], j) => { const i = fset ? j + 3 : j;
+      rest.forEach(([id, g], j) => { const i = fset || mvpId ? j + 3 : j;
         const li = document.createElement('li'); if (id === bumpId) li.className = 'bump';
         const ava = document.createElement('div'); ava.className = 'ava';
         if (g.avatar && /^(https:\/\/|avatars\/demo)/.test(g.avatar)) ava.style.backgroundImage = `url("${g.avatar.replace(/"/g, '')}")`;

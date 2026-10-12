@@ -95,6 +95,9 @@ function configQuery(config?: Record<string, unknown>): string {
   return str ? '&' + str : '';
 }
 
+/** วิดเจ็ตที่ใช้ภาพจับจอจริงตอนเล่นเดโม (overlay/public/thumbs/<type>.webp) */
+const SHOT_POSTERS = new Set(['league', 'timer', 'alerts', 'chat', 'follower', 'pkmvp', 'fx', 'sign', 'donate', 'tts']);
+
 /** รูปนิ่งของแบบที่เลือกไว้ (จากตัวเลือกที่มีรูปย่อในหน้าตั้งค่า) */
 function posterOf(type: string, config?: Record<string, unknown>): string | null {
   const fr = String(config?.frames ?? 'a');
@@ -118,7 +121,7 @@ function posterOf(type: string, config?: Record<string, unknown>): string | null
     const st = v('style', 'bar');
     return `${API_BASE}/overlay/hearts/thumb-${st.startsWith('h-') ? st.slice(2) : st === 'heart' ? 'heart' : 'melody'}.webp`; // หัวใจมีน้ำ 50%
   }
-  if (type === 'fx') return `${API_BASE}/overlay/tarot/m10.webp`;
+  if (SHOT_POSTERS.has(type)) return `${API_BASE}/overlay/thumbs/${type}.webp`; // ภาพจริงจากโหมดเดโม (แทนอีโมจิ)
   if (type === 'mascot') return `${API_BASE}/overlay/mascot/${String(config?.char ?? 'G1')}/thumb.webp?v=${process.env.NEXT_PUBLIC_BUILD_ID ?? ''}`;
   if (type === 'pile') return `${API_BASE}/overlay/thumbs/pile.webp`;
   return null;

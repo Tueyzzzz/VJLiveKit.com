@@ -6,7 +6,7 @@ import { Check, Copy, Eye, Play, RefreshCw, Settings, X } from 'lucide-react';
 import { Alert, Badge, Button, Card, Field, Input, PageHeader, Spinner } from '@/components/ui';
 import { NumberInput } from '@/components/NumberInput';
 import { api, getToken, type OverlayTokenRow } from '@/lib/api';
-import { BANKS } from '@/lib/banks';
+import { BANKS, bankLogo, bankOf } from '@/lib/banks';
 import { VjAvatarUpload } from '@/components/VjAvatarUpload';
 import { useAuth } from '@/lib/auth';
 import { maskPromptPay } from '@/lib/promptpay';
@@ -91,10 +91,13 @@ export default function DonateDashboard() {
               {/* บัญชีธนาคาร (ไม่บังคับ) — คนดูกดคัดลอกเลขบัญชีไปโอนได้ · มีอย่างใดอย่างหนึ่งก็เปิดหน้าโดเนทได้ */}
               <Field label={t('บัญชีธนาคาร (ไม่บังคับ)')} hint={t('คนดูเลือกโอนเข้าบัญชีนี้แทนสแกน QR ได้ · ตรวจสลิปอัตโนมัติเทียบเลขบัญชีให้ด้วย')}>
                 <div className="grid gap-2 sm:grid-cols-2">
-                  <select value={bank} onChange={(e) => setBank(e.target.value)} className="h-11 rounded-xl border border-line bg-white px-3 text-sm">
+                  <div className="flex items-center gap-2">
+                  {bankOf(bank) && <img src={bankLogo(bank)} alt="" className="size-10 shrink-0 rounded-full bg-white object-contain shadow" />}
+                  <select value={bank} onChange={(e) => setBank(e.target.value)} className="h-11 min-w-0 flex-1 rounded-xl border border-line bg-white px-3 text-sm">
                     <option value="">{t('— เลือกธนาคาร —')}</option>
-                    {BANKS.map((b) => <option key={b.code} value={b.code}>{b.name}</option>)}
+                    {BANKS.map((b) => <option key={b.code} value={b.code}>{b.abbr} · {b.name}</option>)}
                   </select>
+                  </div>
                   <Input inputMode="numeric" value={bankAcc} onChange={(e) => setBankAcc(e.target.value)} placeholder={t('เลขบัญชี')} />
                 </div>
                 <Input className="mt-2" maxLength={60} value={bankHolder} onChange={(e) => setBankHolder(e.target.value)} placeholder={t('ชื่อบัญชี (ให้คนดูเช็กก่อนโอน)')} />

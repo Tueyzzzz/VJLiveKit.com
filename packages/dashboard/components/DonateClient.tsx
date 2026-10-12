@@ -8,7 +8,7 @@ import { api, ApiError } from '@/lib/api';
 import { promptPayPayload, maskPromptPay } from '@/lib/promptpay';
 import { toDigits } from './NumberInput';
 import { TikTokAvatar } from './TikTokAvatar';
-import { bankOf, fmtAccount } from '@/lib/banks';
+import { bankLogo, bankOf, fmtAccount } from '@/lib/banks';
 import { translate, useLang, useT } from '@/lib/i18n';
 
 interface PageInfo { name: string; tiktok: string; promptpay: string; bank?: { code: string; account: string; holder: string } | null; min: number; title: string; autoVerify: boolean }
@@ -166,7 +166,7 @@ export function DonateClient() {
               <div className="mx-auto w-60 rounded-3xl bg-gradient-to-br from-pink to-violet p-[3px] shadow-md">
                 <div className="rounded-[22px] bg-white p-3">
                   {tooLow ? <p className="py-16 text-sm text-pink">{t('ใส่ยอดอย่างน้อย {min} บาท', { min: info.min })}</p> : qr ? <img src={qr} alt={t('QR พร้อมเพย์')} className="mx-auto w-full" /> : <div className="py-16"><Spinner /></div>}
-                  <div className="mt-1 text-xs font-semibold tracking-wide text-[#113566]">PromptPay</div>
+                  <img src={bankLogo('promptpay')} alt="PromptPay" className="mx-auto mt-1 size-12 rounded-full object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                 </div>
               </div>
               <p className="mt-3 text-xs text-muted">{t('พร้อมเพย์ {pp} · ยอด ฿{amount} · เงินเข้าบัญชีวีเจโดยตรง', { pp: maskPromptPay(info.promptpay), amount: amt.toLocaleString(loc) })}</p>
@@ -175,7 +175,10 @@ export function DonateClient() {
             <>
               <div className="overflow-hidden rounded-2xl text-white shadow-md" style={{ background: `linear-gradient(135deg, ${bank.meta?.color ?? '#7a5cff'}, #2b1a3a)` }}>
                 <div className="p-4">
-                  <div className="text-sm opacity-90">🏦 {bank.meta?.name ?? bank.code}</div>
+                  <div className="flex items-center gap-2.5">
+                    <img src={bankLogo(bank.code)} alt="" className="size-11 shrink-0 rounded-full bg-white object-contain ring-2 ring-white/80 shadow" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                    <span className="text-sm font-medium">{t('ธนาคาร')}{bank.meta?.name ?? bank.code}</span>
+                  </div>
                   <div className="mt-2 font-mono text-2xl font-bold tracking-wider">{fmtAccount(bank.account)}</div>
                   {bank.holder && <div className="mt-1 text-sm opacity-90">{bank.holder}</div>}
                 </div>

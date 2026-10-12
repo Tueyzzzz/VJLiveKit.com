@@ -335,6 +335,7 @@ export const EN_CORE: Record<string, string> = {
   'ใช้อวตารนี้ในแจ้งเตือนโดเนท': 'Use this avatar in donation alerts',
   'ไม่มีรูป? ให้ทีมงานวาดอวตารหน้าคุณ': 'No picture? Ask our team to draw your avatar',
   'สนใจให้ทีมงานทำอวตารการ์ตูนหน้าฉัน 3 ท่าค่ะ/ครับ 🎨': "I'd like your team to draw a 3-pose cartoon avatar of me 🎨",
+  'ธนาคาร': 'Bank: ',
   'ส่งสลิป & ขึ้นจอ 💖': "Send slip & show on screen 💖",
   'ระบบตรวจสลิปอัตโนมัติ ผ่านแล้วขึ้นจอทันที': "Slips are verified automatically and appear on screen instantly",
   'วีเจจะตรวจสลิป แล้วชื่อของคุณจะขึ้นจอ': "The streamer will check your slip, then your name will appear on screen",

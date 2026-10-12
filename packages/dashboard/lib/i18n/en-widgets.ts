@@ -603,6 +603,8 @@ export const EN_WIDGETS: Record<string, string> = {
   "🫧 ฟองลอย (ไม่มีกรอบ)": "🫧 Floating bubbles (no frame)",
   "หน้าตาแต่ละข้อ": "Item style",
   "🎁 รูปของขวัญ + คำอธิบายใต้รูป (ไม่มีพื้นหลัง)": "🎁 Gift image + caption below (no background)",
+  "📋 รายการ: รูป · ชื่อ + 💎ราคา ➜ สิ่งที่เกิด (อ่านง่าย)": "📋 List: image · name + 💎price ➜ what happens (easy to read)",
+  "พรีวิวโชว์เมนูกลางกรอบให้ดูชัด — บนจอไลฟ์จริงจะอยู่มุมที่เลือก": "The preview centers the menu so it's easy to see — on your live screen it sits in the corner you pick",
   "▭ แถบ: รูปซ้าย + \"ส่ง … เหรียญ\"": "▭ Bar: image left + \"Send … coins\"",
   "จอ 4K: ตั้ง Browser Source ใน OBS เป็น 3840×2160 แล้วตั้งขนาด 2× — ตัวหนังสือและรูปคมชัด": "4K screen: set the OBS Browser Source to 3840×2160 and size 2× — crisp text and images",
   "แสดงหัวข้อ": "Show title",

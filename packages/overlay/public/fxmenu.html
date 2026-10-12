@@ -9,7 +9,11 @@
   html,body { margin:0; width:100%; height:100%; background:transparent; overflow:hidden; font-family:'Mali','Itim',sans-serif; }
   /* zoom (ไม่ใช่ transform:scale) → เบราว์เซอร์วาดตัวหนังสือ/รูปใหม่ที่ขนาดจริง คมชัดแม้จอ 4K */
   #box { position:fixed; zoom:var(--s,1); width:340px; -webkit-font-smoothing:antialiased; text-rendering:geometricPrecision; }
-  .ico img { image-rendering:-webkit-optimize-contrast; }
+  /* รูปของขวัญย่อจากไฟล์ใหญ่ → ให้เบราว์เซอร์ย่อแบบนุ่ม (auto) ไม่แตกเป็นหยัก */
+  .ico img { image-rendering:auto; }
+  /* พรีวิวในแดชบอร์ด (?demo=1): วางกลางจอให้ตัวซูมอัตโนมัติจับกรอบได้สวย ไม่จมมุม (ลิงก์จริงยังใช้มุมที่ตั้ง) */
+  #box.demo { left:50% !important; top:50% !important; right:auto !important; bottom:auto !important; transform:translate(-50%,-50%); }
+  #box { --acc:#fff2a8; } #box.th-candy, #box.th-bubble { --acc:#e0468e; } #box.th-white { --acc:#ff4fa3; } #box.th-neon { --acc:#00e5ff; } #box.th-gold { --acc:#ffd76a; }
   #box.tl { left:16px; top:16px; --o:0 0 } #box.tr { right:16px; top:16px; --o:100% 0 }
   #box.bl { left:16px; bottom:16px; --o:0 100% } #box.br { right:16px; bottom:16px; --o:100% 100% }
   .panel { border-radius:22px; padding:12px 12px 10px; color:#fff; background:rgba(40,20,60,var(--bg,.45)); backdrop-filter:blur(8px);
@@ -87,6 +91,23 @@
     filter:drop-shadow(0 0 3px var(--rg,#fff)); }
   .ring.thin::after { content:''; position:absolute; left:50%; top:-1px; width:7px; height:7px; margin-left:-3.5px; border-radius:50%; background:#fff; box-shadow:0 0 6px 2px var(--rg,#fff); display:var(--dot,block); }
   .ring.thin.dbl { box-shadow:none; } .ring.thin.dbl::before { content:''; position:absolute; inset:5px; border-radius:50%; border:1.5px solid var(--rg); opacity:.55; }
+  /* ===== แบบแถว (ค่าเริ่มต้น): [รูปของขวัญ] ชื่อ + 💎ราคา ➜ สิ่งที่เกิดบนจอ ===== */
+  #box.it-row { width:450px; }
+  .it-row .row { gap:10px; padding:8px 12px 8px 8px; margin-top:8px; border-radius:18px; position:relative; }
+  .it-row .ico { width:64px; height:64px; border-radius:16px; font-size:36px; } .it-row .ico img { width:60px; height:60px; }
+  .it-row .src { flex:0 0 100px; min-width:0; text-align:center; line-height:1.2; }
+  .it-row .gn { font-size:15px; font-weight:700; overflow-wrap:break-word; }
+  .it-row .gp { display:inline-block; margin-top:3px; font-size:13px; font-weight:700; color:var(--acc); background:rgba(255,255,255,.22); border-radius:999px; padding:1px 8px; white-space:nowrap; }
+  .th-candy.it-row .gp, .th-white.it-row .gp, .th-bubble.it-row .gp { background:#fff0f7; }
+  .it-row .arr { flex:none; font-size:20px; font-weight:700; color:var(--acc); }
+  .it-row .what { flex:1; font-size:19px; line-height:1.25; white-space:normal; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; }
+  .th-candy.it-row .row { background:rgba(255,255,255,.82); box-shadow:0 3px 10px rgba(224,70,142,.12); }
+  .it-row.horiz .row { width:150px; padding:8px 6px; } .it-row.horiz .src { flex:none; } .it-row.horiz .arr { transform:rotate(90deg); line-height:1; }
+  .it-row.horiz .what { font-size:16px; text-align:center; }
+  /* แถวตัวอย่าง (พรีวิวเท่านั้น — เติมให้ดูหน้าตาเมื่อเมนูจริงยังมีไม่ถึง 4 ข้อ) */
+  .row.sample { opacity:.8; outline:2px dashed rgba(224,70,142,.45); outline-offset:-2px; position:relative; }
+  .row.sample::after { content:'ตัวอย่าง'; position:absolute; top:-7px; right:10px; font:700 11px 'Mali',sans-serif; color:#fff; background:#e0468e; border-radius:999px; padding:1px 7px; }
+  .it-tile .row.hot .ico img { filter:drop-shadow(0 0 10px #ffd76a) drop-shadow(0 0 4px #fff); }
   @keyframes hot { 50% { box-shadow:0 0 0 3px #ffe17a, 0 0 22px #ffcf5c; transform:scale(1.04) } }
 </style>
 </head>
@@ -104,14 +125,17 @@
     const LAYOUT = P('layout', 'list') === 'rotate' ? 'rotate' : 'list';
     const DIR = P('dir', 'vertical') === 'horizontal' ? 'horiz' : 'vert';
     const MOVE = ['bob', 'bounce', 'spin', 'pulse', 'wiggle', 'none'].includes(P('move', 'bounce')) ? P('move', 'bounce') : 'bounce';
-    const THEME = ['glass', 'candy', 'white', 'neon', 'gold', 'bubble'].includes(P('theme', 'glass')) ? P('theme', 'glass') : 'glass';
-    box.className = POS + ' ' + LAYOUT + ' ' + DIR + ' mv-' + MOVE + ' th-' + THEME + ' it-' + (P('item', 'tile') === 'row' ? 'row' : 'tile');
+    const ITEM = P('item', 'row') === 'tile' ? 'tile' : 'row'; // ค่าเริ่มต้น = แถวอ่านง่าย (รูป · ชื่อ+ราคา ➜ สิ่งที่เกิด)
+    const THEME = ['glass', 'candy', 'white', 'neon', 'gold', 'bubble'].includes(P('theme', 'candy')) ? P('theme', 'candy') : 'candy';
+    box.className = POS + ' ' + LAYOUT + ' ' + DIR + ' mv-' + MOVE + ' th-' + THEME + ' it-' + ITEM;
+    const DEMO = !Overlay.connected; // พรีวิว/เดโม (ไม่มีลิงก์จริง)
+    if (P('demo', '') === '1') box.classList.add('demo');
     // สีตัวหนังสือ (เว้นว่าง = ตามเทมเพลต)
     const TS = P('textStyle', 'template'), HEX = /^#[0-9a-fA-F]{3,8}$/;
     const [TFG, TBG] = TS === 'wb' ? ['#ffffff', '#000000'] : TS === 'bw' ? ['#000000', '#ffffff'] : TS === 'custom' ? [P('textColor', '#ffffff'), P('strokeColor', '#000000')] : [];
     if (TFG && HEX.test(TFG) && HEX.test(TBG)) { // ตัวหนังสือ + ขอบหนา (วาดขอบใต้ตัวอักษร ไม่กินตัวหนังสือ)
       const st = document.createElement('style');
-      st.textContent = `#box .what, #box .title, #box .how, #box .how b { color:${TFG} !important; -webkit-text-stroke:4px ${TBG}; paint-order:stroke fill; text-shadow:none !important }`;
+      st.textContent = `#box .what, #box .title, #box .how, #box .how b, #box .gn, #box .gp, #box .arr { color:${TFG} !important; -webkit-text-stroke:4px ${TBG}; paint-order:stroke fill; text-shadow:none !important }`;
       document.head.appendChild(st);
     }
     // วงแหวนรอบไอคอน: 01..20 (ภาพ AI) · 21..30 (เส้นบาง ภาพ AI) · t1..t10 (เส้นบาง CSS) · mix = แต่ละข้อคนละแบบ · off = ปิด
@@ -159,6 +183,7 @@
       const ico = document.createElement('div'); ico.className = 'ico';
       if (m.image) { const im = document.createElement('img'); im.src = m.image; im.alt = ''; ico.appendChild(im); }
       else ico.textContent = m.event === 'gift' ? '🎁' : (EV[m.event] || ['✨'])[0];
+      if (m.sample) r.classList.add('sample');
       const tx = document.createElement('div'); tx.className = 'txt';
       const what = document.createElement('div'); what.className = 'what'; what.textContent = LABELS[m.id] || m.label;
       const how = document.createElement('div'); how.className = 'how';
@@ -173,15 +198,45 @@
         else { rg.style.backgroundImage = `url(rings/ring-${n}.webp)`; rg.style.setProperty('--rg', RING_GLOW[+n - 1] + 'aa'); if (RING_STILL.has(n)) rg.classList.add('still'); }
         rg.style.animationDelay = -((i || 0) * 1.3) + 's'; ico.prepend(rg);
       }
+      if (ITEM === 'row') { // [รูป] ชื่อของขวัญ + 💎ราคา ➜ สิ่งที่เกิด
+        const src = document.createElement('div'); src.className = 'src';
+        const gn = document.createElement('div'); gn.className = 'gn';
+        const gp = document.createElement('span'); gp.className = 'gp';
+        if (m.event === 'gift') {
+          if (m.gift) { gn.textContent = m.th || m.gift; gp.textContent = m.diamonds ? '💎' + fmt(m.diamonds) : ''; }
+          else if (m.minDiamonds) { gn.textContent = 'ของขวัญ'; gp.textContent = '💎' + fmt(m.minDiamonds) + '+'; }
+          else { gn.textContent = 'ของขวัญ'; gp.textContent = 'อะไรก็ได้'; }
+        } else if (m.event === 'chat') { gn.textContent = `พิมพ์ “${m.keyword || ''}”`; gp.textContent = 'ในแชท'; }
+        else gn.textContent = (EV[m.event] || ['', m.event])[1];
+        src.append(gn); if (gp.textContent) src.append(gp);
+        const arr = document.createElement('div'); arr.className = 'arr'; arr.textContent = '➜';
+        r.append(ico, src, arr, what); return r;
+      }
       tx.append(what, how); r.append(ico, tx); return r;
     }
 
-    let items = [], timer = null, idx = 0;
+    let items = [], timer = null, idx = 0, realLoaded = false;
+    const IMG = 'https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/';
+    const SAMPLES = [ // ตัวอย่างสมมติ (พรีวิวเท่านั้น ไม่โผล่บนลิงก์จริง)
+      { event: 'gift', gift: 'Rose', th: 'กุหลาบ', diamonds: 1, label: '🔮 เปิดไพ่ทาโร่ 1 ใบ', image: IMG + 'eba3a9bb85c33e017f3648eaf88d7189~tplv-obj.webp' },
+      { event: 'gift', gift: 'Finger Heart', th: 'หัวใจนิ้ว', diamonds: 5, label: '🦋 ผีเสื้อเทพนิยายบินทั่วจอ', image: IMG + 'a4c4dc437fd3a6632aba149769491f49.png~tplv-obj.webp' },
+      { event: 'gift', gift: 'Perfume', th: 'น้ำหอม', diamonds: 20, label: '🫧 ฟองสบู่เต็มจอ', image: IMG + '20b8f61246c7b6032777bb81bf4ee055~tplv-obj.webp' },
+      { event: 'gift', gift: 'Doughnut', th: 'โดนัท', diamonds: 30, label: '💃 เต้นให้ดู 10 วิ', image: IMG + '4e7ad6bdf0a1d860c538f38026d4e812~tplv-obj.webp' },
+      { event: 'gift', gift: 'Confetti', th: 'กระดาษโปรย', diamonds: 100, label: '🃏 ไพ่ 3 ใบ อดีต · ปัจจุบัน · อนาคต', image: 'https://p16-webcast.tiktokcdn.com/img/alisg/webcast-sg/resource/472bf660b0804bb37f616d173edb8a9d.png~tplv-obj.webp' },
+      { event: 'chat', keyword: 'ดูดวง', label: '💬 ดูดวงฟรี 1 ใบ' },
+      { event: 'follow', label: '💗 ขอบคุณที่ติดตาม' },
+    ];
     function render() {
       clearInterval(timer); list.innerHTML = '';
       // รายการที่วีเจเพิ่มเองในหน้าตั้งค่า (ไม่ต้องมีกฎ) — ต่อท้ายตามราคา
       const custom = (SEL.custom || []).filter((c) => c && c.label).map((c) => ({ id: c.id, event: 'gift', gift: c.gift, th: c.th, image: /^https:\/\//.test(c.image || '') ? c.image : undefined, diamonds: c.diamonds, label: c.label }));
-      const show = items.concat(custom).sort((a, b) => (a.event === 'gift' ? (a.diamonds || a.minDiamonds || 0) : 1e9) - (b.event === 'gift' ? (b.diamonds || b.minDiamonds || 0) : 1e9)).filter((m) => (OTHER || m.event === 'gift') && !HIDE.has(m.id)).map((m) => (/^https:\/\//.test(ICONS[m.id] || '') ? { ...m, image: ICONS[m.id] } : m));
+      let show = items.concat(custom).sort((a, b) => (a.event === 'gift' ? (a.diamonds || a.minDiamonds || 0) : 1e9) - (b.event === 'gift' ? (b.diamonds || b.minDiamonds || 0) : 1e9)).filter((m) => (OTHER || m.event === 'gift') && !HIDE.has(m.id)).map((m) => (/^https:\/\//.test(ICONS[m.id] || '') ? { ...m, image: ICONS[m.id] } : m));
+      // พรีวิว: ยังไม่ได้เมนูจริง → ตัวอย่างล้วน · เมนูจริงมีไม่ถึง 4 ข้อ → ของจริงก่อน แล้วเติมแถว "ตัวอย่าง" ให้ดูหน้าตาออก (ลิงก์จริงไม่เติมเด็ดขาด)
+      if (DEMO) {
+        const okS = SAMPLES.filter((m) => OTHER || m.event === 'gift');
+        if (!realLoaded && !show.length) show = okS.slice();
+        else if (show.length < 4) { const have = new Set(show.map((m) => m.gift).filter(Boolean)); show = show.concat(okS.filter((m) => !m.gift || !have.has(m.gift)).slice(0, 4 - show.length).map((m) => ({ ...m, sample: true }))); }
+      }
       if (!show.length) { list.innerHTML = '<div class="empty">ยังไม่มีกฎ — ตั้งที่เมนู Actions &amp; Events</div>'; return; }
       if (LAYOUT === 'rotate') {
         const PER = Math.max(1, Math.min(10, parseInt(P('per', '1'), 10) || 1)); // หมุนทีละกี่รายการ
@@ -201,19 +256,9 @@
     let session = null; try { session = localStorage.getItem('vjl_token') || sessionStorage.getItem('vjl_token'); } catch (e) { /* ignore */ }
     if (!Overlay.connected && session) {
       fetch('/api/actions/menu', { headers: { Authorization: 'Bearer ' + session } }).then((r) => (r.ok ? r.json() : null))
-        .then((j) => { if (j && j.items && (j.items.length || (SEL.custom || []).length)) { items = j.items; render(); } }).catch(() => {});
+        .then((j) => { if (j && Array.isArray(j.items)) { items = j.items; realLoaded = true; render(); } }).catch(() => {}); // เมนูว่าง [] ก็ใช้ได้ → ของที่เพิ่มเอง + แถวตัวอย่าง
     }
-    if (!Overlay.connected) {
-      const IMG = 'https://p16-webcast.tiktokcdn.com/img/maliva/webcast-va/';
-      items = [
-        { event: 'gift', gift: 'Rose', th: 'กุหลาบ', diamonds: 1, label: '🔮 เปิดไพ่ทาโร่ 1 ใบ', image: IMG + 'eba3a9bb85c33e017f3648eaf88d7189~tplv-obj.webp' },
-        { event: 'gift', gift: 'Finger Heart', th: 'หัวใจนิ้ว', diamonds: 5, label: '🦋 ผีเสื้อเทพนิยาย', image: IMG + 'a4c4dc437fd3a6632aba149769491f49.png~tplv-obj.webp' },
-        { event: 'gift', minDiamonds: 99, label: '🃏 ไพ่ 3 ใบ อดีต · ปัจจุบัน · อนาคต' },
-        { event: 'chat', keyword: 'ดูดวง', label: '💬 ดูดวงฟรี 1 ใบ' },
-        { event: 'follow', label: '💗 ขอบคุณที่ติดตาม' },
-      ];
-      render();
-    }
+    if (DEMO) render(); // ตัวอย่างก่อน (แทนที่ด้วยของจริงเมื่อโหลดเสร็จ)
   })();
   </script>
 </body>

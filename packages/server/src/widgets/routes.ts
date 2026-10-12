@@ -82,7 +82,14 @@ export async function widgetRoutes(app: FastifyInstance): Promise<void> {
     if (!isWidgetType(type)) return reply.code(400).send({ error: 'ชนิด widget ไม่ถูกต้อง' });
     const parsed = z.record(z.unknown()).safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: 'ตั้งค่าไม่ถูกต้อง' });
-    const settings = parsed.data as Prisma.InputJsonValue;
+    let body = parsed.data;
+    // โดเนท: หน้าตั้งค่าวิดเจ็ตไม่มีช่องบัญชีธนาคาร → เก็บค่าเดิมไว้ ไม่ให้บันทึกหน้าตาแจ้งเตือนแล้วบัญชีหาย
+    if (type === 'donate') {
+      const prev = await prisma.widgetConfig.findUnique({ where: { userId_type: { userId: claims.userId, type } }, select: { settings: true } });
+      const old = (prev?.settings ?? {}) as Record<string, unknown>;
+      for (const k of ['bank', 'bankAccount', 'bankHolder', 'promptpay', 'min', 'title']) if (!(k in body) && k in old) body = { ...body, [k]: old[k] };
+    }
+    const settings = body as Prisma.InputJsonValue;
     const cfg = await prisma.widgetConfig.upsert({
       where: { userId_type: { userId: claims.userId, type } },
       create: { userId: claims.userId, type, settings },

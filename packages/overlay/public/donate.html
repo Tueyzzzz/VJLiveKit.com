@@ -25,6 +25,15 @@
   @keyframes spin { 50% { transform:translateX(-50%) rotate(-12deg) scale(1.15) } }
   .coin { position:fixed; font-size:28px; pointer-events:none; animation:fall var(--d,2.4s) cubic-bezier(.3,.1,.6,1) forwards; }
   @keyframes fall { from { transform:translate(0,-60px) rotate(0) } to { transform:translate(var(--x,0),110vh) rotate(var(--r,360deg)) } }
+  /* กรอบรูป GPT (?frame=01..10 · ตำแหน่งช่องข้อความใน donate/frames.json) */
+  .fcard { position:relative; width:min(760px,94vw); transform:scale(var(--s,1)); transform-origin:50% 0; animation:pop .7s cubic-bezier(.2,1.5,.4,1) both; filter:drop-shadow(0 14px 26px rgba(60,20,80,.45)); }
+  .fcard.out { animation:out .5s ease-in forwards; }
+  .fcard img.fr { display:block; width:100%; height:auto; }
+  .fcard .pn { position:absolute; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; overflow:hidden; color:var(--ink,#5a2a3a); }
+  .fcard .who { text-shadow:none; color:var(--ink,#5a2a3a); font-size:calc(var(--ph) * .19); white-space:nowrap; max-width:96%; overflow:hidden; text-overflow:ellipsis; }
+  .fcard .amt { font-size:calc(var(--ph) * .40); margin:0; color:var(--amt,#ff4f9a); text-shadow:0 2px 0 rgba(255,255,255,.7), 0 0 14px rgba(255,200,120,.55); }
+  .fcard .msg { font-size:calc(var(--ph) * .15); margin-top:2px; padding:2px 10px; background:transparent; color:var(--ink,#5a2a3a); max-width:96%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .coin img { width:1em; height:1em; object-fit:contain; display:block; }
 </style>
 </head>
 <body>
@@ -42,6 +51,11 @@
     // พรีวิว/เดโม (ไม่มีลิงก์จริง) วนโชว์ตลอด → ปิดเสียง ไม่งั้นกริ๊งไม่หยุดตอนเปิดหน้าแดชบอร์ด
     const SOUND = P('sound', 'true') !== 'false' && (Overlay.connected || new URLSearchParams(location.search).get('sound') === '1'), COINS = P('coins', 'true') !== 'false';
     const fmt = (n) => Number(n).toLocaleString('th-TH', { maximumFractionDigits: 2 });
+    // กรอบรูป GPT 10 ธีม (?frame=01..10) · เหรียญ/แบงก์ 3D (donate/coin-*.webp) แทนอีโมจิ ถ้ามีไฟล์
+    let FR = null; const FRAME = String(P('frame', '') || '');
+    let frDone = !/^\d{2}$/.test(FRAME);
+    if (!frDone) fetch('donate/frames.json').then((r) => r.json()).then((m) => { if (m[FRAME]) { FR = m[FRAME]; new Image().src = 'donate/frame-' + FR.id + '.webp'; } }).catch(() => {}).finally(() => { frDone = true; });
+    const COIN_IMG = []; fetch('donate/coins.json').then((r) => r.json()).then((l) => l.forEach((n) => { const im = new Image(); im.src = 'donate/' + n; im.onload = () => COIN_IMG.push(im.src); })).catch(() => {});
 
     let ac = null;
     function chime() {
@@ -59,9 +73,10 @@
       if (!COINS) return;
       const n = Math.min(40, 8 + Math.round(Math.log10(Math.max(1, amount)) * 10));
       for (let i = 0; i < n; i++) setTimeout(() => {
-        const c = document.createElement('div'); c.className = 'coin'; c.textContent = i % 4 ? '🪙' : (i % 8 ? '💖' : '💸');
+        const c = document.createElement('div'); c.className = 'coin';
+        if (COIN_IMG.length) { const im = document.createElement('img'); im.src = COIN_IMG[i % COIN_IMG.length]; c.appendChild(im); } else c.textContent = i % 4 ? '🪙' : (i % 8 ? '💖' : '💸');
         c.style.left = Math.random() * 100 + 'vw'; c.style.setProperty('--x', (Math.random() - .5) * 120 + 'px'); c.style.setProperty('--r', (Math.random() * 720 - 360) + 'deg');
-        c.style.setProperty('--d', (2 + Math.random() * 1.6) + 's'); c.style.fontSize = (20 + Math.random() * 18) + 'px';
+        c.style.setProperty('--d', (2 + Math.random() * 1.6) + 's'); c.style.fontSize = (COIN_IMG.length ? 34 + Math.random() * 26 : 20 + Math.random() * 18) + 'px';
         document.body.appendChild(c); setTimeout(() => c.remove(), 4000);
       }, i * 60);
     }
@@ -69,10 +84,19 @@
     // ต่อคิวทีละรายการ (โดเนทพร้อมกันหลายคนไม่ทับกัน)
     const q = []; let busy = false;
     function next() {
+      if (!frDone) { busy = true; setTimeout(() => { busy = false; next(); }, 120); return; } // รอข้อมูลกรอบโหลดก่อน (แจ้งเตือนแรกไม่หลุดเป็นแบบเดิม)
       const d = q.shift(); if (!d) { busy = false; return; } busy = true;
-      const card = document.createElement('div'); card.className = 'card'; card.style.setProperty('--s', SCALE);
+      const card = document.createElement('div'); card.style.setProperty('--s', SCALE);
       const big = d.amount >= 500;
-      card.innerHTML = `<div class="badge">${big ? '👑' : '💖'}</div><div class="who"></div><div class="amt"></div>${d.message ? '<div class="msg"></div>' : ''}`;
+      if (FR) { // กรอบรูป: ข้อความอยู่ในช่องกลางกรอบ ขนาดตามความสูงช่อง
+        card.className = 'fcard'; card.style.setProperty('--ink', FR.ink || '#5a2a3a'); card.style.setProperty('--amt', FR.amt || '#ff4f9a');
+        const b = FR.panel;
+        card.innerHTML = `<img class="fr" src="donate/frame-${FR.id}.webp" alt=""><div class="pn" style="left:${b[0] * 100}%;top:${b[1] * 100}%;width:${(b[2] - b[0]) * 100}%;height:${(b[3] - b[1]) * 100}%"><div class="who"></div><div class="amt"></div>${d.message ? '<div class="msg"></div>' : ''}</div>`;
+        requestAnimationFrame(() => { const pn = card.querySelector('.pn'); pn.style.setProperty('--ph', pn.clientHeight * (d.message ? 1 : 1.12) + 'px'); });
+      } else {
+        card.className = 'card';
+        card.innerHTML = `<div class="badge">${big ? '👑' : '💖'}</div><div class="who"></div><div class="amt"></div>${d.message ? '<div class="msg"></div>' : ''}`;
+      }
       card.querySelector('.who').textContent = `${d.name} ${P('label', 'โดเนท')}`;
       card.querySelector('.amt').textContent = `฿${fmt(d.amount)}`;
       if (d.message) card.querySelector('.msg').textContent = d.message;

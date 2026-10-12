@@ -84,13 +84,13 @@ export const DEFAULT_PLANS: PlanDef[] = [
   {
     code: 'free', name: 'Free', priceCents: 0, currency: 'thb', badge: '',
     tagline: 'ลองของก่อน ไม่ต้องใช้บัตร',
-    bullets: ['วิดเจ็ตพื้นฐาน 6 แบบ', 'มีป้าย vjlivekit.com บนจอ'],
-    features: { widgets: W_FREE, maxActionRules: 3, maxTokens: 2, noWatermark: false, tarot: false, liveStats: false, soundMaxMB: 0, soundMaxFiles: 0, prioritySupport: false, mascotDiscountPct: 0 },
+    bullets: ['วิดเจ็ตพื้นฐาน 6 แบบ', 'ไม่มีโลโก้บนจอ'],
+    features: { widgets: W_FREE, maxActionRules: 3, maxTokens: 2, noWatermark: true, tarot: false, liveStats: false, soundMaxMB: 0, soundMaxFiles: 0, prioritySupport: false, mascotDiscountPct: 0 },
   },
   {
     code: 'starter', name: 'มือใหม่', priceCents: 9900, currency: 'thb', badge: '',
     tagline: 'เริ่มไลฟ์จริงจัง จอสะอาดไม่มีโลโก้',
-    bullets: ['ไม่มีป้าย vjlivekit.com บนจอ', 'Top Gifters · ป้ายไฟ · เมนูของขวัญ · โดเนท', 'Actions & Events (FX)'],
+    bullets: ['Top Gifters · ป้ายไฟ · เมนูของขวัญ · โดเนท', 'Actions & Events (FX)'],
     features: { widgets: W_STARTER, maxActionRules: 10, maxTokens: 3, noWatermark: true, tarot: false, liveStats: false, soundMaxMB: 5, soundMaxFiles: 20, prioritySupport: false, mascotDiscountPct: 0 },
   },
   {
@@ -215,7 +215,7 @@ export async function getEntitlements(userId: string): Promise<Entitlements> {
     const ti = user ? trialInfo(user.createdAt, user.tiktokUsername) : null;
     const trial = ti ? { trialUsedDays: ti.usedDays, trialTotalDays: ti.totalDays, trialTiktok: ti.tiktok } : {};
     if (trialEnd && trialEnd.getTime() > Date.now()) {
-      return { plan: 'trial', planName: 'ทดลองฟรี', ...plans[plans.length - 1]!.features, noWatermark: false, prioritySupport: false, mascotDiscountPct: 0, trialEndsAt: trialEnd.toISOString(), ...trial };
+      return { plan: 'trial', planName: 'ทดลองฟรี', ...plans[plans.length - 1]!.features, noWatermark: true, prioritySupport: false, mascotDiscountPct: 0, trialEndsAt: trialEnd.toISOString(), ...trial };
     }
     return { plan: free.code, planName: free.name, ...free.features, ...trial };
   }

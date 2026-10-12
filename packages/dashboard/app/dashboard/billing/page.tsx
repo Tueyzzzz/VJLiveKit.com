@@ -51,7 +51,7 @@ export default function BillingPage() {
       {error && <div className="mb-5"><Alert>{error}</Alert></div>}
       {entitlements?.plan === 'trial' && (
         <div className="mb-5"><Alert tone="info">
-          {t('🎁 คุณอยู่ในช่วงทดลองฟรี เหลือ {n} วัน (ถึง {date}) — ใช้ได้ทุกฟีเจอร์ เลือกแพลนไว้ล่วงหน้าได้เลย (แพลนเสียเงินไม่มีป้าย vjlivekit.com มุมจอ)', { n: trialDaysLeft(entitlements) ?? 0, date: new Date(entitlements.trialEndsAt!).toLocaleDateString(loc, { dateStyle: 'long' }) })}
+          {t('🎁 คุณอยู่ในช่วงทดลองฟรี เหลือ {n} วัน (ถึง {date}) — ใช้ได้ทุกฟีเจอร์ เลือกแพลนไว้ล่วงหน้าได้เลย', { n: trialDaysLeft(entitlements) ?? 0, date: new Date(entitlements.trialEndsAt!).toLocaleDateString(loc, { dateStyle: 'long' }) })}
           {entitlements.trialTiktok && <div className="mt-1 text-xs opacity-80">{t('ทดลองฟรีนับต่อ TikTok: @{tiktok} ใช้ทดลองไปแล้ว {used}/{total} วัน', { tiktok: entitlements.trialTiktok, used: entitlements.trialUsedDays ?? 0, total: entitlements.trialTotalDays ?? 0 })}</div>}
         </Alert></div>
       )}

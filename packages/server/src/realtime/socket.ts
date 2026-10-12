@@ -40,7 +40,7 @@ async function resolveViewer(token: string | undefined, username: string | undef
     // ใช้ชื่อ TikTok ปัจจุบันของผู้ใช้ (เปลี่ยนชื่อแล้วลิงก์เดิมยังใช้ได้)
     // แอดมิน/เจ้าของระบบ ไม่มีป้าย vjlivekit.com บนจอ
     const admin = user.role === 'ADMIN' || config.adminEmails.includes((user.email ?? '').toLowerCase());
-    return { username: user.tiktokUsername, ownerId: payload.userId, watermark: !ent.noWatermark && !admin };
+    return { username: user.tiktokUsername, ownerId: payload.userId, watermark: false }; // ป้ายโลโก้บนจอ: ปิดทุกแพลน (เจ้าของสั่ง) — เดิม !ent.noWatermark && !admin
   }
   if (username && config.demoMode) return { username: username.replace(/^@/, '').trim() };
   return { error: 'ไม่มี token หรือ username ที่ถูกต้อง' };

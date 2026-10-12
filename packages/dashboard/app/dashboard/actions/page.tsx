@@ -13,7 +13,7 @@ import { toAudioDataUrl } from '@/lib/sounds';
 import { api, ApiError, type OverlayTokenRow, type ActionType, type AnimalName, type Rule, type TarotDeck, type TarotTopic, type TriggerEvent } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { translate, useT } from '@/lib/i18n';
-import { ANIMALS, EFFECTS, effectLabel, PK_TEMPLATES, TEMPLATES, TEMPLATE_GROUPS, type EffectName, type Template, type TemplateGroup } from '@/lib/actionTemplates';
+import { ANIMALS, CHEST_STYLES, EFFECTS, effectLabel, PK_TEMPLATES, TEMPLATES, TEMPLATE_GROUPS, type EffectName, type Template, type TemplateGroup } from '@/lib/actionTemplates';
 
 const EVENT_LABELS: Record<TriggerEvent, string> = { gift: '🎁 ได้รับกิฟต์', follow: '➕ มีคนติดตาม', share: '🔁 มีคนแชร์', like: '❤️ มีคนกดไลค์', chat: '💬 แชทมีคำว่า', chest: '🎁 กล่องสมบัติ (กล่องของขวัญ)', superfanbox: '💜 กล่องซูเปอร์แฟน (ถุงม่วง)', join: '👋 มีคนเข้าห้อง', pk: '⚔️ PK (แข่ง)' };
 /** สถานการณ์ PK ที่ตั้งกฎได้ */
@@ -51,6 +51,8 @@ interface Draft {
   /** เอฟเฟกต์เต็มจอ: แบบ */
   effect: EffectName;
   animal: AnimalName;
+  /** กล่องสมบัติ/ถุงซูเปอร์แฟน (effect=chest|bag): แบบ 01–10 */
+  style: string;
   /** สีผีเสื้อ/อนุภาค */
   tint: 'pink' | 'blue' | 'purple' | 'mint' | 'gold' | 'rainbow';
   /** ป้ายไฟ */
@@ -60,7 +62,7 @@ interface Draft {
   color: string;
 }
 
-const EMPTY: Draft = { name: '', enabled: true, event: 'gift', giftName: '', minDiamonds: '', keyword: '', pk: 'win', pkSide: '', joinOnce: true, cooldownSec: '10', joinWho: '', type: 'sound', url: '', sound: 'chime', text: '', durationSec: '5', cards: '1', deck: 'full', topic: 'general', count: '12', effect: 'butterflies', animal: 'catdance', move: 'dance', repeat: '1', tint: 'pink', signStyle: 'led', signMode: 'scroll', signPos: 'top', color: '#ff4fa3' };
+const EMPTY: Draft = { name: '', enabled: true, event: 'gift', giftName: '', minDiamonds: '', keyword: '', pk: 'win', pkSide: '', joinOnce: true, cooldownSec: '10', joinWho: '', type: 'sound', url: '', sound: 'chime', text: '', durationSec: '5', cards: '1', deck: 'full', topic: 'general', count: '12', effect: 'butterflies', animal: 'catdance', style: '01', move: 'dance', repeat: '1', tint: 'pink', signStyle: 'led', signMode: 'scroll', signPos: 'top', color: '#ff4fa3' };
 
 /** เสียงสำเร็จรูป — ชุดเดียวกับ overlay/js/sfx.js (ฟังตัวอย่างโดยโหลดไฟล์นั้นมาเล่น) */
 const SFX: [string, string][] = [['chime', '🔔 กริ๊ง'], ['coin', '🪙 เหรียญ'], ['levelup', '⬆️ เลเวลอัป'], ['fanfare', '🎺 ฟันแฟร์'], ['magic', '✨ เวทมนตร์'], ['pop', '🫧 ป๊อป'], ['whoosh', '💨 วู้ช'], ['drum', '🥁 ตึ่งโป๊ะ'], ['boing', '🌀 ดึ๋ง'], ['heart', '💗 หัวใจ'], ['applause', '👏 ปรบมือ'], ['alarm', '🚨 ไซเรน']];
@@ -89,6 +91,7 @@ function toDraft(r: Rule): Draft {
     count: String(r.action.count ?? 12),
     effect: r.action.effect ?? 'butterflies',
     animal: r.action.animal ?? 'catdance',
+    style: r.action.style ?? '01',
     move: r.action.move ?? 'dance',
     repeat: String(r.action.repeat ?? 1),
     tint: r.action.tint ?? 'pink',
@@ -117,6 +120,7 @@ function toBody(d: Draft) {
   if (d.type === 'mascot') action.move = d.move;
   if (d.type === 'glove') action.count = Math.max(1, Math.min(5, Number(d.count) || 1));
   if (d.type === 'effect' && d.effect === 'animal') { action.effect = 'animal'; action.animal = d.animal; }
+  else if (d.type === 'effect' && (d.effect === 'chest' || d.effect === 'bag')) { action.effect = d.effect; action.style = d.style; }
   else if (d.type === 'effect') { action.tint = d.tint; action.effect = d.effect; action.count = Math.max(1, Math.min(30, Number(d.count) || 12)); }
   if (d.text.trim()) action.text = d.text.trim();
   if (d.type === 'tarot') { action.cards = Number(d.cards) || 1; if (d.deck !== 'full') action.deck = d.deck; if (d.topic !== 'general') action.topic = d.topic; }
@@ -489,7 +493,20 @@ function ActionsInner() {
                   </Select>
                 </Field>
               )}
-              {draft.type === 'effect' && draft.effect !== 'coins' && draft.effect !== 'animal' && !draft.effect.startsWith('v') && (
+              {draft.type === 'effect' && (draft.effect === 'chest' || draft.effect === 'bag') && (
+                <Field label={t(draft.effect === 'bag' ? 'แบบถุงซูเปอร์แฟน' : 'แบบกล่องสมบัติ')} hint={t(draft.effect === 'bag' ? 'หล่นลงกลางล่างจอ สั่นลุ้น แล้วเด้งเปิด (~6 วิ) · ข้อความว่าง = “💜 {user} ส่งถุงซูเปอร์แฟน”' : 'หล่นลงกลางล่างจอ สั่นลุ้น แล้วเด้งเปิด (~6 วิ) · ข้อความว่าง = “🎁 {user} ส่งกล่องสมบัติ 💎{diamonds}”')}>
+                  <div role="radiogroup" className="grid grid-cols-5 gap-1.5">
+                    {CHEST_STYLES.map(([k, l]) => (
+                      <button key={k} type="button" role="radio" aria-checked={draft.style === k} title={t(l)} onClick={() => set('style', k)}
+                        className={`flex aspect-square items-center justify-center rounded-xl border-2 p-0.5 transition ${draft.style === k ? 'border-pink-400 bg-pink-50 shadow-sm' : 'border-transparent bg-black/[.03] hover:bg-pink-50/60'}`}>
+                        <img src={`/fxthumbs/${draft.effect}-${k}.webp`} alt={t(l)} width={96} height={96} loading="lazy" decoding="async" className="size-full object-contain" />
+                      </button>
+                    ))}
+                  </div>
+                  <p className="mt-1 text-xs text-muted">{t(CHEST_STYLES.find(([k]) => k === draft.style)?.[1] ?? CHEST_STYLES[0][1])}</p>
+                </Field>
+              )}
+              {draft.type === 'effect' && draft.effect !== 'coins' && draft.effect !== 'animal' && draft.effect !== 'chest' && draft.effect !== 'bag' && !draft.effect.startsWith('v') && (
                 <Field label={t(draft.effect === 'butterflies' ? 'สีผีเสื้อ' : 'โทนสี')}>
                   <Select value={draft.tint} onChange={(e) => set('tint', e.target.value as Draft['tint'])}>
                     <option value="pink">{t('🩷 ชมพู (ค่าเริ่มต้น)')}</option><option value="purple">{t('💜 ม่วง')}</option><option value="blue">{t('💙 ฟ้า')}</option>
@@ -497,7 +514,7 @@ function ActionsInner() {
                   </Select>
                 </Field>
               )}
-              {draft.type === 'effect' && draft.effect !== 'animal' && !draft.effect.startsWith('v') && (
+              {draft.type === 'effect' && draft.effect !== 'animal' && draft.effect !== 'chest' && draft.effect !== 'bag' && !draft.effect.startsWith('v') && (
                 <Field label={t(draft.effect === 'butterflies' ? 'จำนวนผีเสื้อ' : 'ความหนาแน่น')} hint={t(draft.effect === 'butterflies' ? '1–30 ตัว · ข้อความประกอบจะขึ้นเป็นหัวเรื่องกลางจอ' : '1–30 (มาก = อนุภาคเยอะขึ้น) · ข้อความประกอบจะขึ้นเป็นหัวเรื่องกลางจอ')}>
                   <Input type="text" inputMode="numeric" value={draft.count} onChange={(e) => set('count', toDigits(e.target.value))} />
                 </Field>

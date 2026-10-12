@@ -18,6 +18,12 @@ export const EFFECTS: [EffectName, string, NonNullable<Rule['action']['tint']>][
   ['roses', '🌹 กลีบกุหลาบหมุนวน', 'pink'], ['fireflies', '✨ หิ่งห้อยเรืองแสง', 'gold'], ['confetti', '🎊 คอนเฟตติฉลอง', 'rainbow'],
   ['vcake', '🎬 เค้กปาหน้า (วิดีโอ)', 'pink'], ['vcat', '🎬 แมวร่มชูชีพ (วิดีโอ)', 'pink'],
   ['animal', '🐾 สัตว์น่ารักออกมาเต้น', 'pink'],
+  ['chest', '🎁 กล่องสมบัติเด้งเปิด', 'gold'], ['bag', '💜 ถุงซูเปอร์แฟนเด้งเปิด', 'purple'],
+];
+/** แบบกล่องสมบัติ/ถุงซูเปอร์แฟน (effect=chest|bag, action.style) — 10 ธีม ลำดับเดียวกันทั้งกล่องและถุง · รูปย่อ /fxthumbs/<chest|bag>-NN.webp */
+export const CHEST_STYLES: [string, string][] = [
+  ['01', '🩷 พาสเทลคาวาอี้'], ['02', '👑 ทองทับทิมรอยัล'], ['03', '🎮 นีออนเกมมิ่ง'], ['04', '🌙 กาแล็กซี่'], ['05', '🌸 ซากุระ'],
+  ['06', '🍭 ลูกกวาด'], ['07', '🏯 ทองไทย'], ['08', '🐚 ไข่มุกทะเล'], ['09', '🧸 หมีเท็ดดี้'], ['10', '🏆 แชมป์ดำทอง'],
 ];
 /** สัตว์น่ารัก (effect=animal) — ต้องตรงกับ ANIMALS ใน overlay/public/fx.html · [ค่า, ชื่อ] */
 export const ANIMALS: [AnimalName, string][] = [
@@ -139,11 +145,24 @@ export const TEMPLATES: Template[] = [
     rule: { name: 'ป้ายนีออนผู้ติดตาม', trigger: { event: 'follow' }, action: { type: 'sign', signStyle: 'neon', signMode: 'pulse', signPos: 'top', color: '#ff4fa3', text: '💗 {user} ติดตามแล้ว ขอบคุณน้า', durationMs: 4000 } } },
   { id: 'thanks-galaxy', group: 'thanks', icon: '🌟', title: 'ได้ Galaxy → ข้อความพิเศษ', desc: 'ขอบคุณแบบเฉพาะกิฟต์',
     rule: { name: 'ขอบคุณ Galaxy', trigger: { event: 'gift', giftName: 'Galaxy' }, action: { type: 'text', text: '🌌 {user} ส่ง Galaxy! รักเลย 💜', durationMs: 5000 } } },
-  // กล่องสมบัติ / ถุงม่วง / คนเข้าห้อง (ยังไม่มีรูปตัวอย่าง → ไม่มี id)
-  { group: 'thanks', icon: '🎁', title: 'กล่องสมบัติ → ฝนเหรียญ + ขอบคุณ', desc: 'มีคนส่งกล่องสมบัติให้ผู้ชมแย่งกันเปิด → เหรียญทองโปรยทั้งจอ',
-    rule: { name: 'ขอบคุณกล่องสมบัติ', trigger: { event: 'chest' }, action: { type: 'effect', effect: 'coins', tint: 'gold', count: 16, text: 'ขอบคุณ {user} ที่ส่งกล่องสมบัติ 💎{diamonds}', durationMs: 7000 } } },
-  { group: 'thanks', icon: '💜', title: 'ถุงม่วง → ผีเสื้อม่วง + ขอบคุณ', desc: 'มีคนส่งกล่องซูเปอร์แฟน (ถุงม่วง) → ผีเสื้อสีม่วงเต็มจอ',
-    rule: { name: 'ขอบคุณถุงม่วง', trigger: { event: 'superfanbox' }, action: { type: 'effect', effect: 'butterflies', tint: 'purple', count: 14, text: '💜 ขอบคุณ {user} ที่ส่งกล่องซูเปอร์แฟน รักเลย!', durationMs: 7000 } } },
+  // 🎁 กล่องสมบัติ / 💜 ถุงม่วง → กล่อง/ถุงหล่นลงมา สั่นลุ้น แล้วเด้งเปิด เหรียญ เพชร หัวใจพุ่ง (overlay/public/js/chestfx.js)
+  { id: 'chest-pink', group: 'thanks', icon: '🩷', title: 'กล่องสมบัติ → กล่องชมพูคาวาอี้เด้งเปิด', desc: 'กล่องโบว์ชมพูหล่นตุ้บ สั่นลุ้น แล้วเปิดออก เหรียญ เพชร หัวใจพุ่งเต็มจอ',
+    rule: { name: 'กล่องสมบัติ ชมพูคาวาอี้', trigger: { event: 'chest' }, action: { type: 'effect', effect: 'chest', style: '01', text: '🎁 {user} ส่งกล่องสมบัติ 💎{diamonds}' } } },
+  { id: 'chest-royal', group: 'thanks', icon: '👑', title: 'กล่องสมบัติ → หีบทองรอยัลเด้งเปิด', desc: 'หีบทองมงกุฎทับทิม เปิดแล้วแสงทองพุ่ง เหรียญกระจาย หรูสุด ๆ',
+    rule: { name: 'กล่องสมบัติ ทองรอยัล', trigger: { event: 'chest' }, action: { type: 'effect', effect: 'chest', style: '02', text: '👑 {user} ส่งกล่องสมบัติ 💎{diamonds} ขอบคุณค่า' } } },
+  { id: 'chest-neon', group: 'thanks', icon: '🎮', title: 'กล่องสมบัติ → หีบนีออนเกมมิ่ง', desc: 'หีบเกมมิ่งไฟนีออน สั่นแรง ๆ แล้วระเบิดคริสตัลม่วงฟ้า',
+    rule: { name: 'กล่องสมบัติ นีออนเกมมิ่ง', trigger: { event: 'chest' }, action: { type: 'effect', effect: 'chest', style: '03', text: '🎮 {user} ดรอปกล่องสมบัติ 💎{diamonds}!' } } },
+  { id: 'chest-champion', group: 'thanks', icon: '🏆', title: 'กล่องสมบัติ → หีบแชมป์ดำทอง', desc: 'หีบดำทองมงกุฎแชมป์ เปิดแล้วทองทะลัก สมศักดิ์ศรีสายเปย์',
+    rule: { name: 'กล่องสมบัติ แชมป์ดำทอง', trigger: { event: 'chest' }, action: { type: 'effect', effect: 'chest', style: '10', text: '🏆 แชมป์ {user} ส่งกล่องสมบัติ 💎{diamonds}' } } },
+  { id: 'bag-pink', group: 'thanks', icon: '💜', title: 'ถุงม่วง → ถุงพาสเทลหัวใจเด้งเปิด', desc: 'ถุงลูกไม้พาสเทลหล่นลงมา สั่นดุ๊กดิ๊ก แล้วหัวใจ เพชรม่วงพุ่งออกมา',
+    rule: { name: 'ถุงซูเปอร์แฟน พาสเทล', trigger: { event: 'superfanbox' }, action: { type: 'effect', effect: 'bag', style: '01', text: '💜 {user} ส่งถุงซูเปอร์แฟน รักเลย!' } } },
+  { id: 'bag-royal', group: 'thanks', icon: '💎', title: 'ถุงม่วง → ถุงกำมะหยี่รอยัล', desc: 'ถุงกำมะหยี่ม่วงลายทอง เปิดแล้วแสงม่วงชมพูพุ่ง เพชรกระจาย',
+    rule: { name: 'ถุงซูเปอร์แฟน รอยัล', trigger: { event: 'superfanbox' }, action: { type: 'effect', effect: 'bag', style: '02', text: '💜 {user} ส่งถุงซูเปอร์แฟน ขอบคุณมากค่า' } } },
+  { id: 'bag-neon', group: 'thanks', icon: '🕹️', title: 'ถุงม่วง → ถุงนีออนเกมมิ่ง', desc: 'ถุงจอยเกมไฟนีออน สั่นลุ้นแล้วระเบิดหัวใจพิกเซล',
+    rule: { name: 'ถุงซูเปอร์แฟน นีออนเกมมิ่ง', trigger: { event: 'superfanbox' }, action: { type: 'effect', effect: 'bag', style: '03', text: '💜 {user} ส่งถุงซูเปอร์แฟน GG!' } } },
+  { id: 'bag-champion', group: 'thanks', icon: '🏅', title: 'ถุงม่วง → ถุงแชมป์ดำทอง', desc: 'ถุงดำทองมงกุฎ เปิดแล้วเพชรม่วงกับเหรียญทองพุ่งเต็มจอ',
+    rule: { name: 'ถุงซูเปอร์แฟน แชมป์', trigger: { event: 'superfanbox' }, action: { type: 'effect', effect: 'bag', style: '10', text: '👑 {user} ส่งถุงซูเปอร์แฟน สุดยอด!' } } },
+  // คนเข้าห้อง (ยังไม่มีรูปตัวอย่าง → ไม่มี id)
   { group: 'thanks', icon: '👋', title: 'มีคนเข้าห้อง → ข้อความต้อนรับ', desc: '“ยินดีต้อนรับ {user}” ทักครั้งเดียวต่อคน เว้น 10 วิ ไม่รกจอ',
     rule: { name: 'ต้อนรับคนเข้าห้อง', trigger: { event: 'join', joinOnce: true, cooldownSec: 10 }, action: { type: 'text', text: 'ยินดีต้อนรับ {user} 💖', durationMs: 3000 } } },
   // 🧸 มาสคอต

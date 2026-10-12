@@ -118,6 +118,7 @@
   <script src="/socket.io/socket.io.js"></script>
   <script src="js/overlay-client.js"></script>
   <script src="js/sfx.js"></script>
+  <script src="js/chestfx.js"></script>
   <script>
   (function(){
     const fx=document.getElementById('fx'), armBtn=document.getElementById('armBtn');
@@ -796,6 +797,7 @@
     function play(a,ev){
       if(a.type==='mascot') return; // ท่าของมาสคอต → วิดเจ็ตมาสคอตทำเอง
       if(a.type==='effect'&&a.effect==='animal') return animal(a,ev);
+      if(a.type==='effect'&&(a.effect==='chest'||a.effect==='bag')&&window.VJLChestFx) return VJLChestFx.play({kind:a.effect,style:a.style,volume:a.volume,caption:fill(a.text||(a.effect==='bag'?'💜 {user} ส่งถุงซูเปอร์แฟน':'🎁 {user} ส่งกล่องสมบัติ 💎{diamonds}'),ev)}).catch(()=>particles({...a,effect:'coins'},ev)); // 🎁 กล่องสมบัติ/💜 ถุงม่วง (js/chestfx.js)
       if(a.type==='tarot') return tarot(a,ev);
       if(a.type==='glove') return glove(a,ev);
       if(a.type==='sign') return sign(a,ev);

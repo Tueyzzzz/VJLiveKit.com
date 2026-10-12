@@ -182,8 +182,8 @@
           ctx.drawImage(car, C.x, C.y, C.w, C.h); ctx.restore();
         }
       }
-      // ฝุ่นเล็ก ๆ หลังล้อหลัง
-      if (!SHOT && SPEED > 0 && Math.random() < 0.08 && fx.dust) { const w0 = META.wheels[0]; fx.dust(C.x + (w0[0] - w0[2]) * C.w, GROUND - 4 * s, 1); }
+      // ควันฝุ่นจาง ๆ หลังล้อหลัง (วาดเอง ไม่ใช้ fx.dust ที่เป็นจุดขาวใหญ่)
+      if (!SHOT && SPEED > 0) { const w0 = META.wheels[0] || [0.2, 0.8, 0.1], px = C.x + (w0[0] - w0[2] * 0.9) * C.w; for (let i = 0; i < 3; i++) { const k = ((t * 1.6 + i / 3) % 1), x = px - k * 70 * s, y = GROUND - 6 * s - k * 14 * s; ctx.beginPath(); ctx.arc(x, y, (4 + k * 12) * s, 0, 6.2832); ctx.fillStyle = `rgba(210,200,220,${(1 - k) * 0.18})`; ctx.fill(); } }
       fx.draw(ctx);
       requestAnimationFrame(frame);
     }

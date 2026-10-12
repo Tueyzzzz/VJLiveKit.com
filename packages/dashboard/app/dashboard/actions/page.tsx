@@ -538,10 +538,10 @@ function ActionsInner() {
                 const added = have.has(tp.rule.name);
                 return (
                   <div key={tp.rule.name} className="flex flex-col rounded-xl border border-line bg-canvas/50 p-3">
-                    {/* PK: ตัวอย่างจริงที่ขึ้นจอ — วิดีโอการ์ด/ผล PK (เคลื่อนไหว) · ไม่มีวิดีโอ = รูปวีเจประจำเทมเพลต */}
+                    {/* PK: ตัวอย่างจริงที่ขึ้นจอ — เฟรมที่เห็นชัดสุดของวิดีโอการ์ด/ผล PK (public/pk-prev) · ไม่มีวิดีโอ = รูปวีเจประจำเทมเพลต */}
                     {tp.rule.trigger.pk && PK_VID.has(tp.rule.trigger.pk)
                       ? <div className="-mx-1 -mt-1 grid aspect-video place-items-center overflow-hidden rounded-lg bg-gradient-to-br from-pink-soft to-violet-soft">
-                          <img src={`/overlay/pk/${tp.rule.trigger.pk}.webp`} alt="" loading="lazy" className="h-full w-full object-contain" />
+                          <img src={`/pk-prev/${tp.rule.trigger.pk}.webp`} alt="" loading="lazy" className="h-[88%] w-[88%] object-contain drop-shadow-md" />
                         </div>
                       : tp.rule.trigger.pk
                       ? <div className="-mx-1 -mt-1 grid aspect-video place-items-center overflow-hidden rounded-lg bg-gradient-to-br from-pink-soft to-violet-soft">

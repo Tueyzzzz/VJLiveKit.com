@@ -43,6 +43,7 @@
   <script src="js/overlay-client.js"></script>
   <script src="js/collect-store.js"></script>
   <script src="js/juice.js"></script>
+  <script src="js/swimtank.js"></script>
   <script>/* โหมดทดลอง ?physics=matter → ใช้ Matter.js (MIT) แทนฟิสิกส์เดิม */ if (/[?&]physics=matter\b/.test(location.search)) document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.20.0/matter.min.js"><\/script>');</script>
   <script>
   /*
@@ -62,6 +63,7 @@
   (function () {
     const P = (k, d) => Overlay.param(k, d);
     const num = (k, d) => { const v = parseFloat(P(k, d)); return Number.isFinite(v) ? v : d; };
+    if (/^sw-/.test(String(P('shape', ''))) && window.VJLSwimTank) return VJLSwimTank.start(P, num); // ตู้ปลาใหญ่: ของขวัญว่ายน้ำเหมือนปลา (js/swimtank.js)
     const SCALE = num('scale', 1), GIFT_SCALE = num('giftScale', 1), OX = num('x', 0), OY = num('y', 0);
     const SHOW_ALERT = P('alert', '1') !== '0', ALERT_MS = num('alertSec', 5) * 1000;
     const SHOW_BOARD = P('board', '1') !== '0', TOP = Math.max(1, Math.min(10, num('top', 1))), BOARD_FULL = P('boardFormat', 'full') !== 'name';

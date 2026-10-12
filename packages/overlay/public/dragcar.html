@@ -26,6 +26,7 @@
   <script src="js/overlay-client.js"></script>
   <script src="js/collect-store.js"></script>
   <script src="js/juice.js"></script>
+  <script src="js/sidecar.js"></script>
   <script>
   /*
    * รถลากของขวัญ (แบบรถงานแต่ง Just Married)
@@ -39,6 +40,7 @@
   (function () {
     const P = (k, d) => Overlay.param(k, d);
     const num = (k, d) => { const v = parseFloat(P(k, d)); return Number.isFinite(v) ? v : d; };
+    if (/^sc-/.test(String(P('car', ''))) && window.VJLSideCar) return VJLSideCar.start(P, num); // รถมุมข้าง (js/sidecar.js)
     const SCALE = num('scale', 1), GIFT_SCALE = num('giftScale', 1), OX = num('x', 0), OY = num('y', 0);
     const SHOW_ALERT = P('alert', '1') !== '0', MIN_COINS = num('minCoins', 0);
     const MAX = Math.round(Math.max(30, Math.min(400, num('max', 140) / (GIFT_SCALE * GIFT_SCALE))));

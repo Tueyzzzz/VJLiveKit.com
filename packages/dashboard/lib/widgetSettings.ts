@@ -56,6 +56,7 @@ const MVP_FRAMES: [string, string][] = [['01', '💗 ชมพูพาสเท
 const mvpThumb = (id: string) => `/overlay/mvp/thumb-${id}.webp`;
 const MVP_RANK_OPTS: [string, string, string?, string?][] = MVP_FRAMES.map(([id, l]) => ['mvp' + id, l, '🏆 แท่นกรอบรูปเต็มชุด', mvpThumb(id)]);
 // ป้ายไฟ LED: กรอบรูป 20 แบบ (overlay/public/sign/frame-XX.webp · จอดำใน sign/frames.json) + มินิมอลวาดด้วยโค้ด 6 แบบ
+const TIMER_SHAPES: [string, string][] = [['21', '⭕ วงกลมชมพู'], ['22', '💗 หัวใจ'], ['23', '☁️ ก้อนเมฆสายรุ้ง'], ['24', '⭐ ดาวทอง'], ['25', '🐱 หัวแมว'], ['26', '🧸 หัวหมี'], ['27', '⏰ นาฬิกาปลุก'], ['28', '📺 ทีวีย้อนยุค'], ['30', '👑 มงกุฎ'], ['31', '🎀 ริบบิ้น'], ['32', '💬 กล่องข้อความ'], ['33', '🎮 หกเหลี่ยมเกมมิ่ง'], ['34', '🛡️ โล่อีสปอร์ต'], ['35', '🌸 ดอกไม้'], ['36', '🌙 พระจันทร์'], ['37', '🎂 เค้กวันเกิด'], ['38', '🎁 กล่องของขวัญ'], ['39', '🎟️ ตั๋วทอง'], ['40', '🏮 โคมจีน']];
 const TIMER_MIN: [string, string][] = [['11', '🤍 มินิมอล ขาวกระจก'], ['12', '🖤 มินิมอล ดำขอบทอง'], ['13', '🪵 มินิมอล ไม้โอ๊ค'], ['14', '🌿 มินิมอล เขียวเสจ'], ['15', '🌷 มินิมอล ชมพูบลัช'],
   ['16', '🌙 มินิมอล กรมท่าเงิน'], ['17', '💜 มินิมอล ลาเวนเดอร์'], ['18', '💎 มินิมอล อะคริลิกใส'], ['19', '🏺 มินิมอล ดินเผา'], ['20', '🩶 มินิมอล ปูนเปลือย']];
 // ตัวแทนวีเจ (มาสคอต) ทุกตัว — ใช้ทั้งวิดเจ็ตมาสคอต และอวตารในแจ้งเตือนโดเนท
@@ -760,6 +761,8 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
           ...MVP_FRAMES.map(([id, l]): [string, string, string, string] => [id, l, '', `/overlay/timer/thumb-${id}.webp`]),
           // มินิมอล 10 แบบ (GPT · timer/frame-11..20)
           ...TIMER_MIN.map(([id, l]): [string, string, string, string] => [id, l, '', `/overlay/timer/thumb-${id}.webp`]),
+          // ทรงต่าง ๆ (GPT · timer/frame-21..40 ยกเว้น 29 มือถือ: จอแคบเกินตัวเลข)
+          ...TIMER_SHAPES.map(([id, l]): [string, string, string, string] => [id, l, '', `/overlay/timer/thumb-${id}.webp`]),
         ] },
       ] },
       { title: 'เวลา', fields: [

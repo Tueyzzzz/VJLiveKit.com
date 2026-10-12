@@ -369,7 +369,7 @@ export class TikTokRoom extends EventEmitter {
       case 'share': this.stats.shareCount++; this.send('share', { user }); break;
       case 'member': { // followStatus 1 = ติดตาม · 2 = เพื่อน (ติดตามกัน) · แฟนคลับ ACTIVE = 1
         const u = d.user ?? {};
-        const fs = Number(u.followInfo?.followStatus ?? u.followStatus ?? 0) || (u.isFollower ? 1 : 0);
+        const fs = Number(u.followInfo?.followStatus ?? 0); // เทียบกับเจ้าของห้อง (ฟิลด์ followStatus/isFollower ชั้นบนเทียบกับบัญชีที่ต่อ ไม่ใช้)
         const fc = u.fansClub?.data ?? {}, fcAnchor = String(fc.anchorId ?? '');
         const club = Number(fc.userFansClubStatus ?? 0) === 1 && Number(fc.level ?? 0) > 0 && (!this.hostId || !fcAnchor || fcAnchor === '0' || fcAnchor === this.hostId); // แฟนคลับของห้องนี้
         this.send('member', { user, fan: { follower: fs >= 1 || club, club } });

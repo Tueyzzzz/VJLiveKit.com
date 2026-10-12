@@ -103,6 +103,7 @@ function posterOf(type: string, config?: Record<string, unknown>): string | null
   const fr = String(config?.frames ?? 'a');
   if ((type === 'topgifters' || type === 'toplikers') && /^mvp\d\d$/.test(fr)) return `${API_BASE}/overlay/mvp/thumb-${fr.slice(3)}.webp`; // แท่นกรอบรูปเต็มชุด
   if ((type === 'topgifters' || type === 'toplikers') && fr !== 'off') return `${API_BASE}/overlay/thumbs/${type}-${fr}.webp`; // แท่น Top 3 มีรูปโปรไฟล์ (ก่อนรูปกรอบเปล่า)
+  if (type === 'timer' && !config?.frame) return `${API_BASE}/overlay/thumbs/timer.webp`; // ยังไม่เลือกเทมเพลต → ภาพรวมหลายแบบ (นาฬิกาแบบเดิมเปล่า ๆ ดูไม่น่าใช้)
   const def = WIDGET_SETTINGS[type];
   if (!def) return null;
   for (const sec of def.sections) for (const f of sec.fields) {

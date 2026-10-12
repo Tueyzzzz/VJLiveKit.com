@@ -344,14 +344,15 @@
       }
       ctx.lineCap = 'round';
       if (BUNDLE) { // เส้นบางสีเข้ม + ขอบสว่างจาง ๆ (เห็นได้ทั้งพื้นมืด/สว่าง)
-        ctx.lineWidth = 2.2; ctx.strokeStyle = 'rgba(255,255,255,.22)'; ctx.stroke(rope);
-        ctx.lineWidth = 1; ctx.strokeStyle = `rgba(38,36,48,${Math.max(0.45, Math.min(0.8, 0.95 - list.length / 300)).toFixed(2)})`; ctx.stroke(rope);
-        if (used.size) { ctx.beginPath(); ctx.arc(0, tY, 3, 0, Math.PI * 2); ctx.fillStyle = '#2a2833'; ctx.fill(); }
+        // เชือกลูกโป่งสีเทาอ่อน (สีเดียวกับเชือกลากกระป๋อง) + ขอบเข้มจาง ๆ ให้เห็นบนพื้นสว่าง
+        ctx.lineWidth = 2.2; ctx.strokeStyle = 'rgba(60,60,70,.25)'; ctx.stroke(rope);
+        ctx.lineWidth = 1.1; ctx.strokeStyle = `rgba(196,196,204,${Math.max(0.6, Math.min(0.95, 1.1 - list.length / 300)).toFixed(2)})`; ctx.stroke(rope);
+        if (used.size) { ctx.beginPath(); ctx.arc(0, tY, 3, 0, Math.PI * 2); ctx.fillStyle = '#b4b4bc'; ctx.fill(); }
       } else {
-      ctx.lineWidth = 2.4; ctx.strokeStyle = 'rgba(90,60,120,.3)'; ctx.stroke(rope);
-      ctx.lineWidth = 1.2; ctx.strokeStyle = `rgba(255,255,255,${Math.max(0.5, Math.min(0.88, 1.15 - list.length / 220)).toFixed(2)})`; ctx.stroke(rope); // ของเยอะ → เชือกจางลงนิด ไม่เป็นแผงขาว
+      ctx.lineWidth = 2.4; ctx.strokeStyle = 'rgba(60,60,70,.28)'; ctx.stroke(rope);
+      ctx.lineWidth = 1.2; ctx.strokeStyle = `rgba(196,196,204,${Math.max(0.5, Math.min(0.88, 1.15 - list.length / 220)).toFixed(2)})`; ctx.stroke(rope); // ของเยอะ → เชือกจางลงนิด ไม่เป็นแผงขาว
       // ปมผูกบนหลังคา
-      for (const i of used) { ctx.beginPath(); ctx.arc(tieX(i), tY, 3.5, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(120,90,160,.6)'; ctx.stroke(); }
+      for (const i of used) { ctx.beginPath(); ctx.arc(tieX(i), tY, 3.5, 0, Math.PI * 2); ctx.fillStyle = '#f4f0fb'; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(110,110,120,.6)'; ctx.stroke(); }
       }
       // ของขวัญ
       for (const { b, sl } of list) {

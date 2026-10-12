@@ -14,6 +14,7 @@ import { NotificationBell } from '@/components/NotificationBell';
 import { SupportBubble } from '@/components/SupportBubble';
 import { LiveStatusBar } from '@/components/LiveStatusBar';
 import { AdminLiveBar } from '@/components/AdminLiveBar';
+import { RightRail } from '@/components/RightRail';
 import { Badge, Spinner, cx } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { api, planLabel } from '@/lib/api';
@@ -141,6 +142,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <LogOut className="size-4" /> {t('ออกจากระบบ')}
         </button>
       </main>
+      <RightRail />
     </div>
   );
 }

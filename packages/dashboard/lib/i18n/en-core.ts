@@ -673,4 +673,12 @@ export const EN_CORE: Record<string, string> = {
   'ดูแพลนที่สูงกว่า': "See higher plans",
   'อัปเกรดแพลน': "Upgrade plan",
   'บัญชีของคุณเป็นแพลน {plan} แล้ว 🎉': "Your account is now on the {plan} plan 🎉",
+  '🎁 ชวนเพื่อนมาใช้ ได้ใช้ฟรี': '🎁 Invite friends, get free days',
+  'เพื่อนสมัครผ่านลิงก์นี้ คุณได้ใช้ฟรีเพิ่ม {n} วัน': 'When a friend signs up with this link you get {n} free days',
+  'แชร์ลิงก์นี้ให้เพื่อน VJ': 'Share this link with VJ friends',
+  'คัดลอกลิงก์แนะนำ': 'Copy referral link',
+  '✨ ใหม่': '✨ New',
+  'มีมาสคอตเป็นหน้าตัวเอง': 'A mascot that looks like you',
+  'ทีมงานวาดตัวแทนวีเจจากรูปคุณ ครบทุกท่า เต้น · ส่งจุ๊บ · รับของขวัญ': 'We draw your VJ mascot from your photo — dance, blow kisses, catch gifts',
+  'สั่งทำเลย 💖': 'Order now 💖',
 };

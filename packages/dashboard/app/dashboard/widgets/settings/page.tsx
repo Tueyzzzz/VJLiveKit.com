@@ -417,13 +417,13 @@ function WidgetSettings() {
           <div className="flex w-max gap-1.5 rounded-2xl border border-line bg-white p-1.5 shadow-sm">
             {COLLECT_TYPES.flatMap((k) => [
               <Link key={k} href={`/dashboard/widgets/settings/?type=${k}`}
-                className={`whitespace-nowrap rounded-xl px-3 py-1.5 text-sm transition ${k === type && !jarTab ? 'bg-pink font-medium text-white' : 'text-muted hover:bg-pink-soft hover:text-ink'}`}>
-                {COLLECT_ICON[k]} {t(WIDGET_LABELS[k] ?? k)}
+                className={`flex items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-1.5 text-sm transition ${k === type && !jarTab ? 'bg-gradient-to-r from-pink to-violet font-semibold text-white shadow-md' : 'text-ink/70 hover:bg-pink-soft hover:text-ink'}`}>
+                <img src={`/tabs/${k}.webp`} alt="" width={28} height={28} className="size-7 object-contain drop-shadow-sm" /> {t(WIDGET_LABELS[k] ?? k)}
               </Link>,
               ...(k === 'giftjar' ? JAR_TABS.map((x) => (
                 <Link key={x.g} href={`/dashboard/widgets/settings/?type=giftjar&g=${x.g}`}
-                  className={`whitespace-nowrap rounded-xl px-3 py-1.5 text-sm transition ${jarTab?.g === x.g ? 'bg-pink font-medium text-white' : 'text-muted hover:bg-pink-soft hover:text-ink'}`}>
-                  {x.icon} {t(x.label)}
+                  className={`flex items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-1.5 text-sm transition ${jarTab?.g === x.g ? 'bg-gradient-to-r from-pink to-violet font-semibold text-white shadow-md' : 'text-ink/70 hover:bg-pink-soft hover:text-ink'}`}>
+                  <img src={`/tabs/${x.g}.webp`} alt="" width={28} height={28} className="size-7 object-contain drop-shadow-sm" /> {t(x.label).replace(/^\S+\s/, '')}
                 </Link>
               )) : []),
             ])}

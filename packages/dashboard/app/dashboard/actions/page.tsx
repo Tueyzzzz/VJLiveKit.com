@@ -612,8 +612,8 @@ function ActionsInner() {
                 <div className="flex w-max gap-1.5 rounded-2xl border border-line bg-white p-1.5 shadow-sm" role="tablist">
                   {tplGroups.map(([g, label, n]) => (
                     <button key={g} type="button" role="tab" aria-selected={g === tplGroup} onClick={() => setTplGroup(g)}
-                      className={`whitespace-nowrap rounded-xl px-3 py-1.5 text-sm transition ${g === tplGroup ? 'bg-pink font-medium text-white' : 'text-muted hover:bg-pink-soft hover:text-ink'}`}>
-                      {t(label)} <span className={`ml-0.5 text-xs ${g === tplGroup ? 'text-white/80' : 'text-muted/70'}`}>{n}</span>
+                      className={`flex items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-1.5 text-sm transition ${g === tplGroup ? 'bg-gradient-to-r from-pink to-violet font-semibold text-white shadow-md' : 'text-ink/70 hover:bg-pink-soft hover:text-ink'}`}>
+                      <img src={`/tabs/${g}.webp`} alt="" width={28} height={28} className="size-7 object-contain drop-shadow-sm" /> {t(label).replace(/^\S+\s/, '')} <span className={`ml-0.5 text-xs ${g === tplGroup ? 'text-white/80' : 'text-muted/70'}`}>{n}</span>
                     </button>
                   ))}
                 </div>

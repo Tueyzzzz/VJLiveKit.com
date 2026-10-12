@@ -883,4 +883,6 @@ export const EN_WIDGETS: Record<string, string> = {
   "🧜 นางเงือกใต้ทะเล": "🧜 Ocean mermaid",
   "🧸 หมีกับกระต่าย": "🧸 Teddy & bunny",
   "🥊 แชมป์มวย ดำทอง": "🥊 Boxing champ black & gold",
+  "เทมเพลต": "Template",
+  "เทมเพลตกรอบรูป: ปรับขนาดทั้งกรอบ": "Picture templates: scales the whole frame",
 };

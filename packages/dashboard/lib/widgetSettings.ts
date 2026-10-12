@@ -617,6 +617,13 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
   timer: {
     resettable: 'เริ่มนับเวลาใหม่',
     sections: [
+      // กรอบรูปนาฬิกา 10 ธีม (overlay/public/timer/frame-XX.webp · ตำแหน่งป้าย/จอใน timer/frames.json) — ว่าง = แบบเดิม
+      { title: 'เทมเพลต', fields: [
+        { key: 'frame', label: 'เทมเพลต', type: 'select', def: '', options: [
+          ['', '🎨 แบบเดิม', '', '/overlay/timer/thumb-classic.webp'],
+          ...MVP_FRAMES.map(([id, l]): [string, string, string, string] => [id, l, '', `/overlay/timer/thumb-${id}.webp`]),
+        ] },
+      ] },
       { title: 'เวลา', fields: [
         { key: 'start', label: 'เวลาเริ่มต้น (นาที)', type: 'number', min: 1, def: 60 },
         { key: 'max', label: 'เวลาสูงสุด (นาที)', type: 'number', min: 0, def: 0, hint: '0 = ไม่จำกัด' },
@@ -635,8 +642,9 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
       { title: 'การแสดงผล', fields: [
         { key: 'label', label: 'ข้อความด้านบน', type: 'text', def: '⏳ ส่งของขวัญเพื่อเพิ่มเวลา' },
         { key: 'done', label: 'ข้อความเมื่อหมดเวลา', type: 'text', def: 'หมดเวลา! 🎉' },
-        { key: 'fontSize', label: 'ขนาดตัวเลข', type: 'range', min: 40, max: 160, step: 2, def: 90 },
-        bg(),
+        { key: 'fontSize', label: 'ขนาดตัวเลข', type: 'range', min: 40, max: 160, step: 2, def: 90, hint: 'เทมเพลตกรอบรูป: ปรับขนาดทั้งกรอบ' },
+        { ...bg(), when: (v) => !v.frame },
+        ...pos(),
       ] },
     ],
   },

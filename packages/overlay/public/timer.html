@@ -7,7 +7,7 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Itim&family=Chakra+Petch:wght@600;700&display=swap');
   html,body{margin:0;width:100%;height:100%;background:transparent;overflow:hidden;font-family:'Itim',sans-serif}
-  #box{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:4px;
+  #box{position:fixed;left:calc(50% + var(--ox,0px));top:calc(50% + var(--oy,0px));transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:4px;
     padding:14px 30px 18px;border-radius:26px;background:rgba(25,12,35,var(--bg,.35));border:1.5px solid rgba(255,255,255,.35);
     backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
   #box.clear{border-color:transparent;backdrop-filter:none;-webkit-backdrop-filter:none}
@@ -24,11 +24,22 @@
   .plus.sub,.plus.add{font-size:calc(var(--fs) * .34px);animation-duration:2.2s}
   #box.hit{animation:hit .45s ease-out}
   @keyframes hit{20%{transform:translate(calc(-50% - 6px),-50%)}40%{transform:translate(calc(-50% + 6px),-50%)}60%{transform:translate(calc(-50% - 4px),-50%)}80%{transform:translate(calc(-50% + 2px),-50%)}}
+  /* เทมเพลตกรอบรูป (frame=01..10 · ตำแหน่งป้ายหัวข้อ/จอใน timer/frames.json) */
+  #fr{position:fixed;left:calc(50% + var(--ox,0px));top:calc(50% + var(--oy,0px));transform:translate(-50%,-50%);width:var(--fw,630px);display:none}
+  #fr.on{display:block}
+  #fr img{display:block;width:100%;height:auto;pointer-events:none;user-select:none}
+  #fr .slot{position:absolute;display:flex;align-items:center;justify-content:center;white-space:nowrap;line-height:1}
+  #ftitle{font-family:'Itim',sans-serif;color:var(--ink,#5a2a3a)}
+  #ftime{font-family:'Chakra Petch',sans-serif;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:1px;color:var(--dc,#fff);text-shadow:var(--ds)}
+  #ftime.blink{animation:fblink 1s steps(1) infinite}
+  @keyframes fblink{50%{color:var(--blink,#ffd76a)}}
+  #fr.hit{animation:hit .45s ease-out}
   @keyframes up{0%{opacity:0;transform:translate(-50%,10px) scale(.7)}15%{opacity:1;transform:translate(-50%,0) scale(1.1)}100%{opacity:0;transform:translate(-50%,-60px) scale(1)}}
 </style>
 </head>
 <body>
   <div id="box"><div id="label"></div><div id="time">--:--</div></div>
+  <div id="fr"><img id="fimg" alt="" /><div id="ftitle" class="slot"></div><div id="ftime" class="slot"></div></div>
   <script src="/socket.io/socket.io.js"></script>
   <script src="js/overlay-client.js"></script>
   <script>
@@ -42,6 +53,8 @@
    *   max=0         เวลาสูงสุด (นาที, 0 = ไม่จำกัด)
    *   label=...     ข้อความบน    done=...  ข้อความเมื่อหมดเวลา    blink=60  กะพริบเมื่อเหลือ (วินาที)
    *   fontSize=90 bg=35          ขนาดตัวเลข / ความทึบพื้นหลัง (0 = ใส)
+   *   frame=01..10               เทมเพลตกรอบรูป (ว่าง = แบบเดิม) — fontSize ใช้เป็นขนาดกรอบด้วย (90 ≈ กว้าง 630px)
+   *   x=0 y=0                    เลื่อนตำแหน่ง (px)
    *   reset=1                    เริ่มนับใหม่ (เปิดครั้งเดียวแล้วเอาออก)
    * เวลาที่เหลือถูกจำไว้ — รีเฟรช OBS แล้วนับต่อ
    */
@@ -54,11 +67,67 @@
     // ของขวัญที่เลือกเอง: ชื่อ (ตัวเล็ก) → วินาทีต่อชิ้น
     const giftMap = (k) => { const m = new Map(); try { const a = JSON.parse(P(k, '') || '[]'); if (Array.isArray(a)) a.forEach((g) => { const n = g && String(g.name || '').trim().toLowerCase(), sec = Number(g && g.sec) || 0; if (n && sec > 0) m.set(n, sec * 1e3); }); } catch { /* ค่าเสีย */ } return m; };
     const GIFT_ADD = giftMap('giftAdd'), GIFT_SUB = giftMap('giftSub');
-    const box = document.getElementById('box'), $time = document.getElementById('time');
-    document.documentElement.style.setProperty('--fs', String(num('fontSize', 90)));
+    let box = document.getElementById('box'), $time = document.getElementById('time');
+    const root = document.documentElement.style;
+    root.setProperty('--fs', String(num('fontSize', 90)));
+    root.setProperty('--ox', num('x', 0) + 'px'); root.setProperty('--oy', num('y', 0) + 'px');
     const BG = Math.max(0, Math.min(100, num('bg', 35))) / 100;
     box.style.setProperty('--bg', String(BG)); if (BG === 0) box.classList.add('clear');
-    document.getElementById('label').textContent = P('label', '⏳ ส่งของขวัญเพื่อเพิ่มเวลา');
+    const LABEL = P('label', '⏳ ส่งของขวัญเพื่อเพิ่มเวลา');
+    document.getElementById('label').textContent = LABEL;
+
+    // ── เทมเพลตกรอบรูป: ตัวเลขใหญ่กลางจอของกรอบ หัวข้ออยู่ในป้ายด้านบน ──
+    const FRAME = String(P('frame', '') || '').replace(/[^0-9]/g, '').slice(0, 2);
+    // ขอบตัวอักษร 8 ทิศ (ความหนา w px)
+    const OUT = (c, w) => [[1, 0], [-1, 0], [0, 1], [0, -1], [.7, .7], [-.7, .7], [.7, -.7], [-.7, -.7]].map(([x, y]) => `${(x * w).toFixed(1)}px ${(y * w).toFixed(1)}px 0 ${c}`).join(',');
+    // สีตัวเลขให้อ่านง่ายบนจอแต่ละสี: [สีตัวเลข, เงา/ขอบ (k = สเกล), สีตอนกะพริบ]
+    const INK = {
+      pink: ['#ffffff', (k) => OUT('#a01f55', 2.2 * k) + `,0 ${4 * k}px 0 #ff8fbd,0 0 ${16 * k}px rgba(255,120,180,.75)`, '#fff36a'],
+      candy: ['#ffffff', (k) => OUT('#a01f55', 2.2 * k) + `,0 ${4 * k}px 0 #ff9ccc,0 0 ${16 * k}px rgba(255,150,200,.75)`, '#fff36a'],
+      bear: ['#ffffff', (k) => OUT('#93204a', 2.2 * k) + `,0 ${4 * k}px 0 #f7b267,0 0 ${16 * k}px rgba(255,140,180,.7)`, '#fff36a'],
+      gold: ['#fff7dc', (k) => OUT('#4a0810', 2.2 * k) + `,0 ${4 * k}px 0 #e0a92e,0 0 ${18 * k}px rgba(255,210,100,.75)`, '#ffffff'],
+      sakura: ['#ffffff', (k) => OUT('#4a0810', 2.2 * k) + `,0 ${4 * k}px 0 #ff9ec4,0 0 ${16 * k}px rgba(255,170,205,.75)`, '#ffe08a'],
+      thai: ['#fff4cf', (k) => OUT('#420808', 2.2 * k) + `,0 ${4 * k}px 0 #d9a520,0 0 ${18 * k}px rgba(255,205,90,.75)`, '#ffffff'],
+      neon: ['#ffffff', (k) => OUT('#1a0b3a', 2 * k) + `,0 0 ${10 * k}px #22e6ff,0 0 ${24 * k}px #ff2ea6`, '#ff8ad8'],
+      galaxy: ['#ffffff', (k) => OUT('#1b1050', 2 * k) + `,0 0 ${10 * k}px #b58cff,0 0 ${24 * k}px #6d8bff`, '#ffe48a'],
+      ocean: ['#ffffff', (k) => OUT('#0a4a63', 2.2 * k) + `,0 ${4 * k}px 0 #0e6f8c,0 0 ${16 * k}px rgba(0,60,90,.55)`, '#fff36a'],
+      boxing: ['#ffd76a', (k) => OUT('#1a1206', 2 * k) + `,0 ${4 * k}px 0 #8a5a12,0 0 ${20 * k}px rgba(255,200,80,.7)`, '#ff4d4d'],
+    };
+    const $fr = document.getElementById('fr'), $ft = document.getElementById('ftitle'), $fn = document.getElementById('ftime');
+    let fit = () => {};
+    if (FRAME) {
+      box.style.display = 'none';
+      const W = Math.round(num('fontSize', 90) * 7);
+      $fr.style.setProperty('--fw', W + 'px');
+      fetch('timer/frames.json').then((r) => r.json()).then((all) => {
+        const F = all[FRAME] || all['01'];
+        const img = document.getElementById('fimg');
+        img.src = 'timer/frame-' + F.id + '.webp';
+        const place = (el, b) => { el.style.left = b[0] * 100 + '%'; el.style.top = b[1] * 100 + '%'; el.style.width = (b[2] - b[0]) * 100 + '%'; el.style.height = (b[3] - b[1]) * 100 + '%'; };
+        place($ft, F.title); place($fn, F.screen);
+        const H = W / F.aspect, k = W / 630, ink = INK[F.theme] || INK.pink;
+        $fr.style.setProperty('--ink', F.titleInk || '#5a2a3a');
+        $fr.style.setProperty('--dc', ink[0]); $fr.style.setProperty('--ds', ink[1](k)); $fr.style.setProperty('--blink', ink[2]);
+        if (F.titleOnScreen) $ft.style.textShadow = `0 ${2 * k}px 0 #3a2400,0 0 ${10 * k}px rgba(255,200,80,.5)`;
+        else if (/^#f/i.test(F.titleInk || '')) $ft.style.textShadow = `0 ${2 * k}px 0 rgba(20,0,40,.8),0 0 ${8 * k}px rgba(140,90,255,.8)`;
+        $ft.textContent = LABEL;
+        // ย่อขนาดตัวอักษรให้พอดีกล่อง (สูงตามสัดส่วน hk · กว้างไม่เกิน 92%)
+        const fitEl = (el, bw, bh, hk) => {
+          let fs = bh * hk; el.style.fontSize = fs + 'px';
+          const sw = el.scrollWidth; if (sw > bw * .92) el.style.fontSize = fs * (bw * .92) / sw + 'px';
+        };
+        const tb = F.title, sb = F.screen;
+        let lastLen = -1;
+        fit = (force) => {
+          const n = $fn.textContent.length + ($fn.classList.contains('done') ? 100 : 0);
+          if (!force && n === lastLen) return; lastLen = n;
+          fitEl($fn, (sb[2] - sb[0]) * W, (sb[3] - sb[1]) * H, n >= 100 ? .5 : .78);
+        };
+        $time = $fn; box = $fr; $fr.classList.add('on'); render();
+        const fitAll = () => { fitEl($ft, (tb[2] - tb[0]) * W, (tb[3] - tb[1]) * H, .68); fit(true); };
+        fitAll(); if (document.fonts) document.fonts.ready.then(fitAll);
+      }).catch(() => { box.style.display = ''; });
+    }
 
     const KEY = 'vjl-timer:' + (P('t', '') || P('username', 'demo')).slice(-24);
     let end = 0;
@@ -70,10 +139,12 @@
     const pad = (n) => String(n).padStart(2, '0');
     function render() {
       const left = end - Date.now();
-      if (left <= 0) { $time.textContent = DONE; $time.className = 'done'; return; }
+      const cls = $time === $fn ? 'slot ' : '';
+      if (left <= 0) { $time.textContent = DONE; $time.className = cls + 'done'; fit(); return; }
       const s = Math.ceil(left / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
       $time.textContent = (h ? h + ':' + pad(m) : pad(m)) + ':' + pad(s % 60);
-      $time.className = left <= BLINK ? 'blink' : '';
+      $time.className = cls + (left <= BLINK ? 'blink' : '');
+      fit();
     }
     setInterval(render, 250); render();
 

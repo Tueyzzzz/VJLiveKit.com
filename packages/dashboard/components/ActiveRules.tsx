@@ -56,7 +56,7 @@ export function ActiveRules() {
               <div className="scale-90"><GiftCell name={r.trigger.giftName} event={r.trigger.event} /></div>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-medium">{r.name}</div>
-                <div className="truncate text-xs text-muted">{when(r, t)} → {r.action.type === 'effect' ? t(effectLabel(r.action.effect)) : ACTION[r.action.type] ? t(ACTION[r.action.type]) : r.action.type}</div>
+                <div className="truncate text-xs text-muted">{when(r, t)} → {r.action.type === 'effect' ? t(effectLabel(r.action.effect, r.action.animal)) : ACTION[r.action.type] ? t(ACTION[r.action.type]) : r.action.type}</div>
                 <div className="mt-1.5 flex items-center gap-1.5">
                   <button role="switch" aria-checked={r.enabled} aria-label={t('เปิด/ปิดกฎ')} onClick={() => toggle(r)}
                     className={cx('relative h-5 w-9 shrink-0 rounded-full transition', r.enabled ? 'bg-mint' : 'bg-gray-200')}>

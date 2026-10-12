@@ -50,6 +50,7 @@ const roomJs = (r) => `(() => { const d = document.createElement('div');
 /** ช่วงที่อัด: เริ่มอัด (วินาทีหลังสั่งเล่น) · ภาพนิ่ง (poster) ณ วินาทีไหน · action ที่ใช้อัด (ยืดเวลาเอฟเฟกต์ให้เต็มช่วง) */
 function plan(a) {
   if (a.type === 'tarot') { const p = a.cards === 7 ? 9 : a.cards === 3 ? 6.2 : 3.4; return { s0: p - 2.1, poster: p }; }
+  if (a.type === 'effect' && a.effect === 'animal') return { s0: 0.62, poster: 0, act: { ...a, durationMs: 20000 }, animal: a.animal };
   if (a.type === 'effect') {
     if (a.effect === 'confetti') return { s0: 0.15, poster: 1.2 };
     if (a.effect === 'butterflies' || !a.effect) return { s0: 2.2, poster: 3.4 };
@@ -67,11 +68,17 @@ const HOOK = `(() => { let o; Object.defineProperty(window, 'Overlay', { configu
   try { Object.defineProperty(v, 'connected', { configurable: true, get: () => true, set() {} }); } catch (e) {}
   const on = v.on.bind(v); window.__h = []; v.on = (k, fn) => { if (k === 'action') window.__h.push(fn); return on(k, fn); }; } }); })();`;
 
+// 🐾 สัตว์น่ารัก: ภาพนิ่ง = เฟรมที่น่ารักที่สุด (ลำดับ 0–5) · ลูปอัด = 2 รอบท่าพอดี (ท่าวนเป๊ะ → ต่อปลาย-ต้นไม่สะดุด)
+const ANIMAL_POSTER = { catshake: 1, dogshake: 1, catdance: 3, dogdance: 3, bunnyhop: 2, pandawave: 3, hamsterspin: 0, penguinslide: 2, capybara: 1, duckwalk: 4,
+  frogjump: 3, bearhug: 5, catpunch: 1, dogspin: 2, catshock: 3, dogwag: 5, owlblink: 2, pigdance: 3, foxtail: 1, corgiwiggle: 2 };
+const evalv = async (S, expression) => (await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }, S)).result?.result?.value;
+
 const toRaw = (jpg) => sharp(jpg).resize(OW, OH, { kernel: 'lanczos3' }).removeAlpha().raw().toBuffer();
 
 const list = TEMPLATES.filter((tp) => tp.id && (!only || only.split(',').includes(tp.id)));
 for (const tp of list) {
   const a = tp.rule.action, pl = plan(a), act = pl.act ?? a;
+  let loop = LOOP;
   const { result: { targetId } } = await send('Target.createTarget', { url: 'about:blank' });
   const { result: { sessionId: S } } = await send('Target.attachToTarget', { targetId, flatten: true });
   await send('Page.enable', {}, S);
@@ -86,6 +93,11 @@ for (const tp of list) {
     ? `window.__h.forEach((f) => f({ action: ${JSON.stringify(act)}, event: ${ev} }))`
     : `window.__play(${JSON.stringify(act)}, ${ev})`;
   await sleep(a.type === 'mascot' ? 1500 : 300);
+  if (pl.animal) { // โหลดเฟรมไว้ก่อน → เริ่มเล่นทันทีที่สั่ง · ภาพนิ่ง = เฟรมเต็ม ๆ หลังวนครบ 1 รอบ
+    const cyc = (await evalv(S, `window.__animalCycle(${JSON.stringify(pl.animal)})`)) / 1000;
+    await evalv(S, `window.__animalPreload(${JSON.stringify(pl.animal)})`);
+    loop = 2 * cyc; pl.holdMs = Math.round((2 * cyc + ((ANIMAL_POSTER[pl.animal] ?? 0) + 0.25) * (cyc / 6)) * 1000); // กลางช่วงเฟรมนิ่ง (ไม่ติดช่วงซ้อนภาพ)
+  }
 
   // screencast: เก็บทุกเฟรมพร้อมเวลา (วินาที) นับจากตอนสั่งเล่น
   const frames = []; let t0 = 0;
@@ -98,16 +110,23 @@ for (const tp of list) {
   t0 = now; // timestamp ของ screencast = เวลา epoch (วินาที) ของหน้า
   frames.length = 0;
   await send('Runtime.evaluate', { expression: run }, S);
-  const end = Math.max(pl.s0 + LOOP + XF, pl.poster) + 0.3;
+  const end = Math.max(pl.s0 + loop + XF, pl.poster) + 0.3;
   await sleep(end * 1000);
   await send('Page.stopScreencast', {}, S);
   listeners.delete(onMsg);
+  let still = null;
+  if (pl.holdMs != null) { // ภาพนิ่งสัตว์: หยุดเวลาไว้ที่เฟรมเต็ม แล้วถ่ายจอตรง ๆ (ไม่พึ่งเวลา screencast)
+    await evalv(S, `window.__animalHold = ${pl.holdMs}; new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))`);
+    await sleep(150);
+    const shot = await send('Page.captureScreenshot', { format: 'png' }, S);
+    still = Buffer.from(shot.result.data, 'base64');
+  }
   await send('Target.closeTarget', { targetId });
   if (frames.length < 5) { console.log(tp.id, 'ไม่มีเฟรม — ข้าม'); continue; }
 
   // เลือกเฟรมล่าสุด ณ เวลา t (หน้านิ่ง = ไม่มีเฟรมใหม่ → ใช้เฟรมเดิม)
   const at = (t) => { let f = frames[0]; for (const x of frames) { if (x.t <= t) f = x; else break; } return Buffer.from(f.data, 'base64'); };
-  const N = Math.round(LOOP * FPS), F = Math.round(XF * FPS), cache = new Map();
+  const N = Math.round(loop * FPS), F = Math.round(XF * FPS), cache = new Map();
   const raw = async (t) => { const k = Math.round(t * 1000); if (!cache.has(k)) cache.set(k, await toRaw(at(t))); return cache.get(k); };
   const out = [];
   for (let k = 0; k < N; k++) {
@@ -120,7 +139,7 @@ for (const tp of list) {
   }
   const anim = await sharp(Buffer.concat(out), { raw: { width: OW, height: OH * N, channels: 3, pageHeight: OH } })
     .webp({ quality: 58, effort: 6, loop: 0, delay: Array(N).fill(Math.round(1000 / FPS)), smartSubsample: true, minSize: true, mixed: true }).toBuffer();
-  const poster = await sharp(at(pl.poster)).resize(OW, OH, { kernel: 'lanczos3' }).webp({ quality: 72, effort: 6 }).toBuffer();
+  const poster = await sharp(still ?? at(pl.poster)).resize(OW, OH, { kernel: 'lanczos3' }).webp({ quality: 72, effort: 6 }).toBuffer();
   writeFileSync(new URL(`${tp.id}.anim.webp`, OUT), anim);
   writeFileSync(new URL(`${tp.id}.webp`, OUT), poster);
   console.log(tp.id, `${frames.length} เฟรมดิบ → ${N} เฟรม`, Math.round(anim.length / 1024) + 'KB anim', Math.round(poster.length / 1024) + 'KB poster');

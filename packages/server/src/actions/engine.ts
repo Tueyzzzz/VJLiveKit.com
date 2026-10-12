@@ -29,7 +29,9 @@ export interface RuleAction {
   signPos?: 'top' | 'center' | 'bottom';
   color?: string;
   /** เอฟเฟกต์เต็มจอ (type=effect) — ผีเสื้อ + อนุภาค 10 แบบ (ซากุระ หัวใจ เหรียญ ดาว หิมะ ฟองสบู่ ลูกโป่ง กลีบกุหลาบ หิ่งห้อย คอนเฟตติ) */
-  effect?: 'butterflies' | 'sakura' | 'hearts' | 'coins' | 'stars' | 'snow' | 'bubbles' | 'balloons' | 'roses' | 'fireflies' | 'confetti' | 'vcake' | 'vcat' | 'vchicks';
+  effect?: 'butterflies' | 'sakura' | 'hearts' | 'coins' | 'stars' | 'snow' | 'bubbles' | 'balloons' | 'roses' | 'fireflies' | 'confetti' | 'vcake' | 'vcat' | 'vchicks' | 'animal';
+  /** effect=animal: ตัวสัตว์น่ารัก (สไปรต์ 6 เฟรม overlay/public/fx/animals/<ชื่อ>/) */
+  animal?: 'catshake' | 'dogshake' | 'catdance' | 'dogdance' | 'bunnyhop' | 'pandawave' | 'hamsterspin' | 'penguinslide' | 'capybara' | 'duckwalk' | 'frogjump' | 'bearhug' | 'catpunch' | 'dogspin' | 'catshock' | 'dogwag' | 'owlblink' | 'pigdance' | 'foxtail' | 'corgiwiggle';
   /** สีผีเสื้อ (ค่าเริ่มต้น ชมพูสีเดียว) */
   tint?: 'pink' | 'blue' | 'purple' | 'mint' | 'gold' | 'rainbow';
   /** จำนวนตัว/ชิ้นของเอฟเฟกต์ */

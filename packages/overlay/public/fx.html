@@ -697,8 +697,105 @@
       }, k*1100);
     }
 
+    // 🐾 สัตว์น่ารัก (effect=animal): สไปรต์ 6 เฟรม fx/animals/<ชื่อ>/0..5.webp (ตัดจากชีต + จัดเท้าให้ตรงกันแล้ว)
+    // เล่นแบบเนียน: crossfade เฟรมติดกัน (ซ้อน ~45%) + ท่าทางเสริมแบบคำนวณ (หายใจ ยืด-ยุบ เด้ง โยก) ผูกกับเฟส 6 เฟรม → วนลูปต่อเนื่อง
+    // เข้า = เด้งขยายจาก 0.6 · ออก = จาง+ย่อ · ทุกอย่างคิดตามเวลา (rAF + dt) ไม่ใช่ตามจำนวนเฟรม
+    // z = ขยายเพิ่ม (ชีตที่มีท่ากระโดดสูง ตัวจะเล็กกว่าตัวอื่น) · fd = ms ต่อเฟรม · sw = องศาโยก (nS รอบ/ลูป) · bo = เด้ง (สัดส่วนความสูง, nB ครั้ง/ลูป) · dx = เดินซ้าย-ขวา (สัดส่วนความสูง) · sq = ยืด-ยุบตอนแตะพื้น
+    const ANIMALS={
+      catshake:{fd:210,sw:2.5,nS:2,bo:0,nB:2,sq:.02}, dogshake:{fd:210,sw:2.5,nS:2,bo:0,nB:2,sq:.02},
+      catdance:{fd:230,sw:5,nS:3,bo:.03,nB:3,sq:.05}, dogdance:{fd:230,sw:5,nS:3,bo:.03,nB:3,sq:.05}, pigdance:{fd:230,sw:5,nS:3,bo:.03,nB:3,sq:.05},
+      bunnyhop:{z:1.3,fd:200,sw:1.5,nS:1,bo:.03,nB:1,sq:.07}, frogjump:{z:1.15,fd:210,sw:1.5,nS:1,bo:.03,nB:1,sq:.07},
+      pandawave:{fd:250,sw:2.5,nS:1,bo:.01,nB:2,sq:.02}, hamsterspin:{fd:180,sw:0,nS:1,bo:.03,nB:2,sq:.04}, dogspin:{fd:190,sw:0,nS:1,bo:.03,nB:2,sq:.04},
+      penguinslide:{z:1.15,fd:240,sw:3,nS:1,bo:.01,nB:2,dx:.06,sq:.03}, capybara:{fd:260,sw:1.5,nS:1,bo:.015,nB:3,sq:.03},
+      duckwalk:{fd:220,sw:5,nS:3,bo:.02,nB:6,dx:.05,sq:.04}, bearhug:{fd:250,sw:2,nS:1,bo:.015,nB:2,sq:.03},
+      catpunch:{fd:190,sw:1.5,nS:3,bo:.02,nB:3,sq:.04}, catshock:{z:1.08,fd:240,sw:1,nS:2,bo:.015,nB:2,sq:.03},
+      dogwag:{fd:200,sw:3,nS:3,bo:.02,nB:3,sq:.04}, owlblink:{fd:260,sw:2,nS:1,bo:.008,nB:2,sq:.02},
+      foxtail:{fd:240,sw:2.5,nS:1,bo:.01,nB:2,sq:.02}, corgiwiggle:{fd:200,sw:4,nS:3,bo:.015,nB:3,sq:.04},
+    };
+    const animCache={};
+    function animalFrames(name){
+      if(animCache[name]) return animCache[name];
+      const v=window.VJL_VERSION?'?v='+window.VJL_VERSION:'';
+      return animCache[name]=Promise.all([0,1,2,3,4,5].map((i)=>new Promise((ok,no)=>{ const im=new Image(); im.decoding='async'; im.onload=()=>(im.decode?im.decode().catch(()=>{}):Promise.resolve()).then(()=>ok(im)); im.onerror=no; im.src='fx/animals/'+name+'/'+i+'.webp'+v; })))
+        .catch((e)=>{ delete animCache[name]; throw e; });
+    }
+    const animStyle=document.createElement('style'); animStyle.textContent=
+      '.anim{position:fixed;left:0;top:0;pointer-events:none;z-index:20}'+
+      '.acap{position:fixed;left:50%;transform:translate(-50%,-100%);pointer-events:none;z-index:21;width:max-content;max-width:min(86vw,900px);text-align:center;font:700 min(3.4vh,6vw)/1.25 Mali,Itim,sans-serif;color:#fff;padding:.3em .9em;border-radius:1.2em;text-shadow:0 2px 0 rgba(120,40,120,.35);background:linear-gradient(135deg,rgba(255,120,180,.92),rgba(157,134,232,.92));box-shadow:0 8px 22px rgba(120,60,150,.35);opacity:0}';
+    document.head.appendChild(animStyle);
+    const easeOutBack=(x)=>{ const c=1.9; return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2); };
+    const easeInOut=(x)=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+    const smooth=(x)=>{ x=Math.max(0,Math.min(1,x)); return x*x*(3-2*x); };
+    let animLive=0;
+    function animal(a,ev){
+      const name=ANIMALS[a.animal]?a.animal:'catdance', cfg=ANIMALS[name];
+      const slot=animLive++; // ตัวที่ซ้อนกันอยู่ → ขยับไปซ้าย/ขวาสลับกัน
+      animalFrames(name).then((fr)=>runAnimal(a,ev,name,cfg,fr,slot)).catch(()=>{ animLive--; particles({...a,effect:'hearts'},ev); });
+    }
+    function runAnimal(a,ev,name,cfg,fr,slot){
+      const cyc=cfg.fd*6, ENTER=520, EXIT=480;
+      const loops=Math.max(2,Math.min(8,Math.round(((a.durationMs||5000)-ENTER-EXIT)/cyc)));
+      const total=ENTER+loops*cyc+EXIT;
+      const cv=document.createElement('canvas'); cv.className='anim'; document.body.appendChild(cv);
+      const g=cv.getContext('2d');
+      const cap=fill(a.text,ev); let capEl=null;
+      if(cap){ capEl=document.createElement('div'); capEl.className='acap'; capEl.textContent=cap; document.body.appendChild(capEl); }
+      const iw=fr[0].naturalWidth, ih=fr[0].naturalHeight;
+      let W=0,H=0,dpr=1,h=0,w=0,bx=0,by=0;
+      const size=()=>{ W=innerWidth; H=innerHeight; dpr=Math.min(2,devicePixelRatio||1);
+        h=Math.min(H*.4*(cfg.z||1),W*.7*ih/iw); w=h*iw/ih; // สูง ~40% ของจอ (จอแนวตั้ง TikTok) แต่ไม่กว้างเกินจอ
+        const off=slot%3===1?-1:slot%3===2?1:0; bx=W/2+off*Math.min(W*.26,w*.75); by=H*.8; // กลางล่าง ~1/3 ของจอ
+        const pw=w*1.5, ph=h*1.35; cv.width=Math.round(pw*dpr); cv.height=Math.round(ph*dpr);
+        cv.style.width=pw+'px'; cv.style.height=ph+'px'; cv.style.transform='translate('+(bx-pw/2)+'px,'+(by-ph+h*.08)+'px)';
+        if(capEl) capEl.style.top=(by-h*(1.14+(cfg.bo||0)))+'px', capEl.style.left=bx+'px'; };
+      size(); addEventListener('resize',size);
+      if(window.VJLSfx){ try{ VJLSfx.play('pop',(a.volume==null?1:a.volume)*.7); }catch(e){} }
+      const t0=performance.now();
+      const XF=.45; // สัดส่วนช่วงซ้อนภาพของแต่ละเฟรม
+      function draw(now){
+        const t=window.__animalHold!=null?window.__animalHold:now-t0; // __animalHold = หยุดเวลาไว้ (อัดภาพนิ่งตัวอย่างเทมเพลต)
+        if(t>=total){ cv.remove(); if(capEl) capEl.remove(); removeEventListener('resize',size); animLive=Math.max(0,animLive-1); return; }
+        // ซองเข้า/ออก
+        let s=1, al=1, lift=0;
+        if(t<ENTER){ const x=t/ENTER; s=.6+.4*easeOutBack(x); al=smooth(x*2.2); }
+        else if(t>total-EXIT){ const x=(t-(total-EXIT))/EXIT, e=easeInOut(x); s=1-.22*e; al=1-e; lift=e*.05; }
+        // เฟรม + crossfade
+        const ft=(t%cyc)/cfg.fd, i=Math.floor(ft)%6, u=ft-Math.floor(ft), j=(i+1)%6;
+        const k=u<1-XF?0:smooth((u-(1-XF))/XF);
+        // ท่าทางเสริม ผูกกับเฟสลูป p (0..1) → ทุกอย่างวนตรงกันพอดี
+        const p=(t%cyc)/cyc, TAU=Math.PI*2;
+        const rot=(cfg.sw||0)*Math.sin(TAU*p*cfg.nS)*Math.PI/180;
+        const hop=cfg.bo?(.5-.5*Math.cos(TAU*p*cfg.nB)):0; // 0 = พื้น · 1 = สูงสุด
+        const contact=cfg.bo?Math.pow(1-hop,6):0;            // ใกล้พื้น → ยุบ
+        const breathe=.012*Math.sin(TAU*p*2);
+        const sy=1+breathe-(cfg.sq||0)*contact+(cfg.sq||0)*.5*hop*hop, sx=1-breathe*.6+(cfg.sq||0)*contact*.8;
+        const dx=(cfg.dx||0)*h*Math.sin(TAU*p);
+        const pw=cv.width/dpr, ph=cv.height/dpr;
+        g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,pw,ph);
+        g.globalAlpha=1;
+        // เงานุ่มใต้เท้า (เล็กลงตอนลอย)
+        const gx=pw/2+dx, gy=ph-h*.08;
+        g.save(); g.globalAlpha=al*.22*(1-hop*.5); g.translate(gx,gy); g.scale(1,.18); g.beginPath(); g.arc(0,0,w*.32*s*(1-hop*.25),0,TAU);
+        const rg=g.createRadialGradient(0,0,0,0,0,w*.32*s); rg.addColorStop(0,'rgba(40,20,50,1)'); rg.addColorStop(1,'rgba(40,20,50,0)'); g.fillStyle=rg; g.fill(); g.restore();
+        g.save();
+        g.translate(gx,gy-hop*(cfg.bo||0)*h-lift*h); g.rotate(rot); g.scale(s*sx,s*sy);
+        g.imageSmoothingQuality='high';
+        // ภาพปัจจุบันเต็ม → ภาพถัดไปค่อย ๆ ซ้อนทับ แล้วภาพเดิมค่อยจาง (ไม่มีช่วงโปร่งใสวูบ)
+        const aCur=al*(1-smooth((k-.5)/.5)), aNext=al*k;
+        if(aCur>0.003){ g.globalAlpha=aCur; g.drawImage(fr[i],-w/2,-h,w,h); }
+        if(aNext>0.003){ g.globalAlpha=aNext; g.drawImage(fr[j],-w/2,-h,w,h); }
+        g.restore();
+        if(capEl){ const ct=Math.min(1,Math.max(0,(t-150)/450)); capEl.style.opacity=String(Math.min(smooth(ct),al));
+          capEl.style.transform='translate(-50%,-100%) scale('+(.7+.3*easeOutBack(ct))+')'; }
+        requestAnimationFrame(draw);
+      }
+      requestAnimationFrame(draw);
+    }
+    if(Overlay.param('debug','0')==='1'){ window.__animalCycle=(n)=>ANIMALS[n]?ANIMALS[n].fd*6:0; window.__animalPreload=(n)=>animalFrames(n).then(()=>true); } // ใช้ตอนอัดตัวอย่างเทมเพลต
+
     function play(a,ev){
       if(a.type==='mascot') return; // ท่าของมาสคอต → วิดเจ็ตมาสคอตทำเอง
+      if(a.type==='effect'&&a.effect==='animal') return animal(a,ev);
       if(a.type==='tarot') return tarot(a,ev);
       if(a.type==='glove') return glove(a,ev);
       if(a.type==='sign') return sign(a,ev);
@@ -735,11 +832,11 @@
     if(Overlay.param('pktest','')) setInterval(()=>playPk(Overlay.param('pktest','')), 5500); // ?pktest=glove
 
     // ลิงก์แยกหมวด: ?only=tarot (ลิงก์เฉพาะหมวด) · ลิงก์หลักข้ามหมวดที่วีเจตั้ง "แยกจอ" ไว้ (ตั้งค่า fx: split=fx,tarot)
-    // หมวดตามชนิด action: เอฟเฟกต์เต็มจอ=fx · ไพ่=tarot · ป้ายไฟ/ข้อความ=thanks · นวม=fun · เสียง/รูป/วิดีโอ=ลิงก์หลักเสมอ
-    const CAT=(t)=>t==='effect'?'fx':t==='tarot'?'tarot':(t==='sign'||t==='text')?'thanks':t==='glove'?'fun':'main';
+    // หมวดตามชนิด action: เอฟเฟกต์เต็มจอ=fx · ไพ่=tarot · ป้ายไฟ/ข้อความ=thanks · นวม/สัตว์น่ารัก=fun · เสียง/รูป/วิดีโอ=ลิงก์หลักเสมอ
+    const CAT=(a)=>{ const t=a&&a.type; return t==='effect'?(a.effect==='animal'?'fun':'fx'):t==='tarot'?'tarot':(t==='sign'||t==='text')?'thanks':t==='glove'?'fun':'main'; }; // สัตว์น่ารัก = หมวดสนุก ๆ
     const ONLY=(new URLSearchParams(location.search).get('only')||'').split(',').filter(Boolean);
     const SPLIT=ONLY.length?[]:String(Overlay.param('split','')).split(',').filter(Boolean);
-    const mine=(a)=>{ const c=CAT(a&&a.type); return ONLY.length?ONLY.includes(c):!SPLIT.includes(c); };
+    const mine=(a)=>{ const c=CAT(a); return ONLY.length?ONLY.includes(c):!SPLIT.includes(c); };
     // รับ action จากเซิร์ฟเวอร์ (Actions & Events engine)
     Overlay.on('action',(fire)=>{
       const pk=fire.event&&fire.event.type==='pk'&&fire.event.pk;

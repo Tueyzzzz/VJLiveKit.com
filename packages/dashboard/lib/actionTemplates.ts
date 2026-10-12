@@ -1,4 +1,4 @@
-import type { Rule } from './api';
+import type { AnimalName, Rule } from './api';
 
 /** เทมเพลตยอดนิยม — กดครั้งเดียวสร้างกฎได้เลย (ไม่ต้องหาไฟล์เสียง/รูปเอง)
  *  id = ชื่อรูปตัวอย่างจริง /tpl/<id>.webp (อัดจากวิดเจ็ต FX ด้วย scripts/capture-templates.mjs) · group = หมวดในแถบเลือก */
@@ -17,8 +17,18 @@ export const EFFECTS: [EffectName, string, NonNullable<Rule['action']['tint']>][
   ['stars', '⭐ ฝนดาววิบวับ', 'gold'], ['snow', '❄️ หิมะโปรย', 'blue'], ['bubbles', '🫧 ฟองสบู่ลอย', 'blue'], ['balloons', '🎈 ลูกโป่งลอย', 'rainbow'],
   ['roses', '🌹 กลีบกุหลาบหมุนวน', 'pink'], ['fireflies', '✨ หิ่งห้อยเรืองแสง', 'gold'], ['confetti', '🎊 คอนเฟตติฉลอง', 'rainbow'],
   ['vcake', '🎬 เค้กปาหน้า (วิดีโอ)', 'pink'], ['vcat', '🎬 แมวร่มชูชีพ (วิดีโอ)', 'pink'],
+  ['animal', '🐾 สัตว์น่ารักออกมาเต้น', 'pink'],
 ];
-export const effectLabel = (e?: string) => EFFECTS.find(([k]) => k === (e ?? 'butterflies'))?.[1] ?? EFFECTS[0][1];
+/** สัตว์น่ารัก (effect=animal) — ต้องตรงกับ ANIMALS ใน overlay/public/fx.html · [ค่า, ชื่อ] */
+export const ANIMALS: [AnimalName, string][] = [
+  ['catshake', '🐱 แมวส่ายหัว'], ['dogshake', '🐶 ชิบะส่ายหน้า'], ['catdance', '🐱 แมวเต้น'], ['dogdance', '🐶 ชิบะเต้น'],
+  ['bunnyhop', '🐰 กระต่ายกระโดด'], ['pandawave', '🐼 แพนด้าโบกมือ'], ['hamsterspin', '🐹 แฮมสเตอร์หมุนตัว'], ['penguinslide', '🐧 เพนกวินสไลด์'],
+  ['capybara', '🦫 คาปิบาราโยกหัว'], ['duckwalk', '🐥 เป็ดเดินเตาะแตะ'], ['frogjump', '🐸 กบกระโดด'], ['bearhug', '🐻 หมีกอด'],
+  ['catpunch', '🐱 แมวชกลม'], ['dogspin', '🐶 ชิบะหมุนตัว'], ['catshock', '🙀 แมวตกใจ'], ['dogwag', '🐶 ชิบะกระดิกหาง'],
+  ['owlblink', '🦉 นกฮูกกะพริบตา'], ['pigdance', '🐷 หมูน้อยเต้น'], ['foxtail', '🦊 จิ้งจอกสะบัดหาง'], ['corgiwiggle', '🐕 คอร์กี้ส่ายก้น'],
+];
+export const animalLabel = (a?: string) => ANIMALS.find(([k]) => k === a)?.[1] ?? ANIMALS[2][1];
+export const effectLabel = (e?: string, animal?: string) => (e === 'animal' ? animalLabel(animal) : EFFECTS.find(([k]) => k === (e ?? 'butterflies'))?.[1] ?? EFFECTS[0][1]);
 
 /** เทมเพลต PK — โชว์ในเมนู ⚔️ PK Battle */
 export const PK_TEMPLATES: Template[] = [
@@ -146,4 +156,45 @@ export const TEMPLATES: Template[] = [
     rule: { name: 'ส่งนวม', trigger: { event: 'gift', giftName: 'Rose' }, action: { type: 'glove', count: 1, text: '🥊 {user} ส่งนวม!', durationMs: 4000 } } },
   { id: 'fun-glove-chat', group: 'fun', icon: '👊', title: 'พิมพ์ “ปั้ก” ในแชท → นวม 2 หมัด', desc: 'ให้คนดูแกล้งวีเจได้ นวมพุ่งซ้าย-ขวา',
     rule: { name: 'แชทปั้กนวม', trigger: { event: 'chat', keyword: 'ปั้ก' }, action: { type: 'glove', count: 2, text: '👊 {user} ปั้กวีเจ!', durationMs: 4000 } } },
+  // 🐾 สัตว์น่ารักออกมาเต้นบนจอ (effect=animal · สไปรต์ overlay/public/fx/animals/<ชื่อ>/)
+  { id: 'fun-catshake', group: 'fun', icon: '🙅', title: 'ได้ Rose → แมวส่ายหัว', desc: 'ลูกแมวหลับตาส่ายหัว “ไม่เอาาา” น่ารักจนต้องส่งอีก',
+    rule: { name: 'แมวส่ายหัว', trigger: { event: 'gift', giftName: 'Rose' }, action: { type: 'effect', effect: 'animal', animal: 'catshake', text: '🐱 {user} ส่งกุหลาบ… แมวบอกยังไม่พอ! 🌹', durationMs: 5500 } } },
+  { id: 'fun-dogshake', group: 'fun', icon: '🐶', title: 'พิมพ์ “ไม่” ในแชท → ชิบะส่ายหน้า', desc: 'ชิบะส่ายหน้าดุ๊กดิ๊กตามคนพิมพ์ “ไม่”',
+    rule: { name: 'ชิบะส่ายหน้า', trigger: { event: 'chat', keyword: 'ไม่' }, action: { type: 'effect', effect: 'animal', animal: 'dogshake', text: '🐶 {user} บอกไม่… ชิบะก็ไม่เหมือนกัน!', durationMs: 5500 } } },
+  { id: 'fun-dogwag', group: 'fun', icon: '💛', title: 'มีคนติดตาม → ชิบะดีใจกระดิกหาง', desc: 'ชิบะยิ้มแก้มปริ กระดิกหางต้อนรับผู้ติดตามใหม่',
+    rule: { name: 'ชิบะดีใจกระดิกหาง', trigger: { event: 'follow' }, action: { type: 'effect', effect: 'animal', animal: 'dogwag', text: '🐶 ขอบคุณ {user} ที่กดติดตามน้า', durationMs: 5500 } } },
+  { id: 'fun-bearhug', group: 'fun', icon: '🫶', title: 'ได้ Finger Heart → หมีกอด', desc: 'น้องหมีกางแขนกอดแน่น ๆ แล้วยื่นหัวใจให้',
+    rule: { name: 'หมีกอด', trigger: { event: 'gift', giftName: 'Finger Heart' }, action: { type: 'effect', effect: 'animal', animal: 'bearhug', text: '🐻 หมีขอกอด {user} หนึ่งที 💖', durationMs: 5500 } } },
+  { id: 'fun-catdance', group: 'fun', icon: '💃', title: 'พิมพ์ “เต้น” ในแชท → แมวเต้น', desc: 'ลูกแมวเต้นโยกซ้ายขวาสุดเหวี่ยง',
+    rule: { name: 'แมวเต้น', trigger: { event: 'chat', keyword: 'เต้น' }, action: { type: 'effect', effect: 'animal', animal: 'catdance', text: '🐱 {user} สั่งเต้น! จัดไป', durationMs: 5500 } } },
+  { id: 'fun-dogdance', group: 'fun', icon: '🕺', title: 'ได้ TikTok → ชิบะเต้น', desc: 'ชิบะเต้นโบกมือฉลองของขวัญ',
+    rule: { name: 'ชิบะเต้น', trigger: { event: 'gift', giftName: 'TikTok' }, action: { type: 'effect', effect: 'animal', animal: 'dogdance', text: '🐶 ชิบะเต้นให้ {user} ดู!', durationMs: 5500 } } },
+  { id: 'fun-bunnyhop', group: 'fun', icon: '🐰', title: 'มีคนแชร์ → กระต่ายกระโดด', desc: 'กระต่ายขนฟูกระโดดดึ๋ง ๆ ขอบคุณที่แชร์',
+    rule: { name: 'กระต่ายกระโดด', trigger: { event: 'share' }, action: { type: 'effect', effect: 'animal', animal: 'bunnyhop', text: '🐰 ขอบคุณ {user} ที่แชร์ไลฟ์!', durationMs: 5500 } } },
+  { id: 'fun-pandawave', group: 'fun', icon: '👋', title: 'พิมพ์ “สวัสดี” → แพนด้าโบกมือ', desc: 'แพนด้าโบกมือทักทายคนที่พิมพ์สวัสดี',
+    rule: { name: 'แพนด้าโบกมือ', trigger: { event: 'chat', keyword: 'สวัสดี' }, action: { type: 'effect', effect: 'animal', animal: 'pandawave', text: '🐼 สวัสดี {user}~', durationMs: 5500 } } },
+  { id: 'fun-hamsterspin', group: 'fun', icon: '🐹', title: 'ได้ Doughnut → แฮมสเตอร์หมุนตัว', desc: 'แฮมสเตอร์แก้มป่องหมุนตัวรอบ ๆ ดีใจได้โดนัท',
+    rule: { name: 'แฮมสเตอร์หมุนตัว', trigger: { event: 'gift', giftName: 'Doughnut' }, action: { type: 'effect', effect: 'animal', animal: 'hamsterspin', text: '🐹 {user} ให้โดนัท! หมุนดีใจ', durationMs: 5500 } } },
+  { id: 'fun-penguinslide', group: 'fun', icon: '🐧', title: 'ได้ Ice Cream Cone → เพนกวินสไลด์', desc: 'เพนกวินผ้าพันคอไถลตัวบนน้ำแข็ง แล้วลุกขึ้นโบกปีก',
+    rule: { name: 'เพนกวินสไลด์', trigger: { event: 'gift', giftName: 'Ice Cream Cone' }, action: { type: 'effect', effect: 'animal', animal: 'penguinslide', text: '🐧 เย็นชื่นใจ ขอบคุณ {user}', durationMs: 5500 } } },
+  { id: 'fun-capybara', group: 'fun', icon: '🍊', title: 'พิมพ์ “ชิล” → คาปิบาราโยกหัว', desc: 'คาปิบาราส้มบนหัว โยกหัวชิล ๆ ไม่รีบร้อน',
+    rule: { name: 'คาปิบาราโยกหัว', trigger: { event: 'chat', keyword: 'ชิล' }, action: { type: 'effect', effect: 'animal', animal: 'capybara', text: '🦫 ชิล ๆ กับ {user}', durationMs: 5500 } } },
+  { id: 'fun-duckwalk', group: 'fun', icon: '🐥', title: 'พิมพ์ “ก๊าบ” → เป็ดเดินเตาะแตะ', desc: 'ลูกเป็ดเดินเตาะแตะโยกซ้ายขวา',
+    rule: { name: 'เป็ดเดินเตาะแตะ', trigger: { event: 'chat', keyword: 'ก๊าบ' }, action: { type: 'effect', effect: 'animal', animal: 'duckwalk', text: '🐥 ก๊าบ ๆ {user}!', durationMs: 5500 } } },
+  { id: 'fun-frogjump', group: 'fun', icon: '🐸', title: 'ได้ GG → กบกระโดดดีใจ', desc: 'กบน้อยย่อตัวแล้วกระโดดสุดแรงด้วยความดีใจ',
+    rule: { name: 'กบกระโดดดีใจ', trigger: { event: 'gift', giftName: 'GG' }, action: { type: 'effect', effect: 'animal', animal: 'frogjump', text: '🐸 GG! ขอบคุณ {user}', durationMs: 5500 } } },
+  { id: 'fun-catpunch', group: 'fun', icon: '🥊', title: 'พิมพ์ “ต่อย” → แมวชกลม', desc: 'ลูกแมวหน้ามุ่งมั่นออกหมัดซ้ายขวารัว ๆ',
+    rule: { name: 'แมวชกลม', trigger: { event: 'chat', keyword: 'ต่อย' }, action: { type: 'effect', effect: 'animal', animal: 'catpunch', text: '🐱 {user} ท้าต่อย! แมวพร้อม 🥊', durationMs: 5500 } } },
+  { id: 'fun-dogspin', group: 'fun', icon: '🌀', title: 'กิฟต์ 99 เพชรขึ้นไป → ชิบะหมุนตัว', desc: 'ชิบะหมุนตัวไล่หางรอบตัวเองด้วยความตื่นเต้น',
+    rule: { name: 'ชิบะหมุนตัว', trigger: { event: 'gift', minDiamonds: 99 }, action: { type: 'effect', effect: 'animal', animal: 'dogspin', text: '🐶 {user} ใจดี ชิบะหมุนติ้ว!', durationMs: 5500 } } },
+  { id: 'fun-catshock', group: 'fun', icon: '🙀', title: 'กิฟต์ 500 เพชรขึ้นไป → แมวตกใจ', desc: 'ลูกแมวตกใจขนฟู กระโดดตัวลอย “ว้าว ใจป้ำมาก!”',
+    rule: { name: 'แมวตกใจ', trigger: { event: 'gift', minDiamonds: 500 }, action: { type: 'effect', effect: 'animal', animal: 'catshock', text: '🙀 ว้าว! {user} ใจป้ำสุด ๆ', durationMs: 5500 } } },
+  { id: 'fun-owlblink', group: 'fun', icon: '🦉', title: 'พิมพ์ “ง่วง” → นกฮูกกะพริบตา', desc: 'นกฮูกม่วงกะพริบตาปริบ ๆ ง่วงนอนตาม',
+    rule: { name: 'นกฮูกกะพริบตา', trigger: { event: 'chat', keyword: 'ง่วง' }, action: { type: 'effect', effect: 'animal', animal: 'owlblink', text: '🦉 {user} ง่วงแล้วเหรอ~', durationMs: 5500 } } },
+  { id: 'fun-pigdance', group: 'fun', icon: '🐷', title: 'ได้ Perfume → หมูน้อยเต้น', desc: 'หมูน้อยโบว์ชมพูเต้นส่ายสะโพก',
+    rule: { name: 'หมูน้อยเต้น', trigger: { event: 'gift', giftName: 'Perfume' }, action: { type: 'effect', effect: 'animal', animal: 'pigdance', text: '🐷 หอมจัง ขอบคุณ {user}', durationMs: 5500 } } },
+  { id: 'fun-foxtail', group: 'fun', icon: '🦊', title: 'ได้ Hand Hearts → จิ้งจอกสะบัดหาง', desc: 'จิ้งจอกขยิบตาสะบัดหางฟู ๆ ส่งเสน่ห์',
+    rule: { name: 'จิ้งจอกสะบัดหาง', trigger: { event: 'gift', giftName: 'Hand Hearts' }, action: { type: 'effect', effect: 'animal', animal: 'foxtail', text: '🦊 ขยิบตาให้ {user} 😉', durationMs: 5500 } } },
+  { id: 'fun-corgiwiggle', group: 'fun', icon: '🍑', title: 'ได้ Corgi → คอร์กี้ส่ายก้น', desc: 'คอร์กี้หันก้นกลมส่ายดุ๊กดิ๊ก ฮาทั้งห้อง',
+    rule: { name: 'คอร์กี้ส่ายก้น', trigger: { event: 'gift', giftName: 'Corgi' }, action: { type: 'effect', effect: 'animal', animal: 'corgiwiggle', text: '🐕 คอร์กี้ส่ายก้นให้ {user}!', durationMs: 5500 } } },
 ];

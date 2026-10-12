@@ -104,12 +104,14 @@ export type TriggerEvent = 'gift' | 'follow' | 'share' | 'like' | 'chat' | 'pk' 
 export type ActionType = 'sound' | 'image' | 'video' | 'text' | 'tarot' | 'effect' | 'sign' | 'glove' | 'mascot';
 export type TarotTopic = 'general' | 'love' | 'self' | 'money' | 'daily';
 export type TarotDeck = 'full' | 'major' | 'wands' | 'cups' | 'swords' | 'pentacles' | 'lakshmi';
+/** สัตว์น่ารัก (effect=animal) — ต้องตรงกับ ANIMALS ใน overlay/public/fx.html + zod ฝั่งเซิร์ฟเวอร์ */
+export type AnimalName = 'catshake' | 'dogshake' | 'catdance' | 'dogdance' | 'bunnyhop' | 'pandawave' | 'hamsterspin' | 'penguinslide' | 'capybara' | 'duckwalk' | 'frogjump' | 'bearhug' | 'catpunch' | 'dogspin' | 'catshock' | 'dogwag' | 'owlblink' | 'pigdance' | 'foxtail' | 'corgiwiggle';
 export interface Rule {
   id: string;
   name: string;
   enabled: boolean;
   trigger: { event: TriggerEvent; giftName?: string; minDiamonds?: number; keyword?: string; pk?: string; pkSide?: 'us' | 'them'; joinOnce?: boolean; cooldownSec?: number; joinWho?: 'follower' | 'fan' };
-  action: { type: ActionType; move?: 'dance' | 'kiss' | 'joy' | 'heart' | 'walk' | 'spin' | 'jump'; url?: string; sound?: string; text?: string; durationMs?: number; cards?: number; deck?: TarotDeck; topic?: TarotTopic; effect?: 'butterflies' | 'sakura' | 'hearts' | 'coins' | 'stars' | 'snow' | 'bubbles' | 'balloons' | 'roses' | 'fireflies' | 'confetti' | 'vcake' | 'vcat' | 'vchicks'; tint?: 'pink' | 'blue' | 'purple' | 'mint' | 'gold' | 'rainbow'; count?: number; repeat?: number; volume?: number; key?: string; signStyle?: 'led' | 'neon' | 'bulb' | 'cute' | 'pixel' | 'y2k' | 'glass' | 'surreal' | 'boho' | 'victorian' | 'graffiti' | 'future' | 'mwhite' | 'mblack' | 'mline' | 'mpill'; signMode?: 'scroll' | 'static' | 'blink' | 'pulse'; signPos?: 'top' | 'center' | 'bottom'; color?: string };
+  action: { type: ActionType; move?: 'dance' | 'kiss' | 'joy' | 'heart' | 'walk' | 'spin' | 'jump'; url?: string; sound?: string; text?: string; durationMs?: number; cards?: number; deck?: TarotDeck; topic?: TarotTopic; effect?: 'butterflies' | 'sakura' | 'hearts' | 'coins' | 'stars' | 'snow' | 'bubbles' | 'balloons' | 'roses' | 'fireflies' | 'confetti' | 'vcake' | 'vcat' | 'vchicks' | 'animal'; animal?: AnimalName; tint?: 'pink' | 'blue' | 'purple' | 'mint' | 'gold' | 'rainbow'; count?: number; repeat?: number; volume?: number; key?: string; signStyle?: 'led' | 'neon' | 'bulb' | 'cute' | 'pixel' | 'y2k' | 'glass' | 'surreal' | 'boho' | 'victorian' | 'graffiti' | 'future' | 'mwhite' | 'mblack' | 'mline' | 'mpill'; signMode?: 'scroll' | 'static' | 'blink' | 'pulse'; signPos?: 'top' | 'center' | 'bottom'; color?: string };
   createdAt: string;
 }
 export interface PaymentRow { id: string; amountCents: number; currency: string; status: string; createdAt: string; rawPayload: { hosted_invoice_url?: string; number?: string } | null }

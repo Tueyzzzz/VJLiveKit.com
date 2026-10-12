@@ -27,7 +27,8 @@ const actionSchema = z.object({
   signMode: z.enum(['scroll', 'static', 'blink', 'pulse']).optional(),
   signPos: z.enum(['top', 'center', 'bottom']).optional(),
   color: z.string().regex(/^#[0-9a-fA-F]{3,8}$/).optional(),
-  effect: z.enum(['butterflies', 'sakura', 'hearts', 'coins', 'stars', 'snow', 'bubbles', 'balloons', 'roses', 'fireflies', 'confetti', 'vcake', 'vcat', 'vchicks']).optional(), // ต้องตรงกับ PFX ใน overlay/public/fx.html
+  effect: z.enum(['butterflies', 'sakura', 'hearts', 'coins', 'stars', 'snow', 'bubbles', 'balloons', 'roses', 'fireflies', 'confetti', 'vcake', 'vcat', 'vchicks', 'animal']).optional(), // ต้องตรงกับ PFX ใน overlay/public/fx.html
+  animal: z.enum(['catshake', 'dogshake', 'catdance', 'dogdance', 'bunnyhop', 'pandawave', 'hamsterspin', 'penguinslide', 'capybara', 'duckwalk', 'frogjump', 'bearhug', 'catpunch', 'dogspin', 'catshock', 'dogwag', 'owlblink', 'pigdance', 'foxtail', 'corgiwiggle']).optional(), // effect=animal → ANIMALS ใน fx.html
   tint: z.enum(['pink', 'blue', 'purple', 'mint', 'gold', 'rainbow']).optional(), // สีผีเสื้อ/อนุภาค
   count: z.number().int().min(1).max(30).optional(),
   repeat: z.number().int().min(1).max(20).optional(),

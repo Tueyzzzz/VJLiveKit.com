@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Ban, Gift, KeyRound, Link2Off, Shield, X, XCircle } from 'lucide-react';
-import { api } from '@/lib/api';
+import { api, isPaidPlan } from '@/lib/api';
 import { WIDGET_SETTINGS } from '@/lib/widgetSettings';
 import { WIDGET_LABELS } from './Pricing';
 import { SFX, playSound } from '@/lib/sounds';
@@ -15,11 +15,13 @@ interface Detail {
     subscription: { status: string; provider: string | null; currentPeriodEnd: string | null; cancelAtPeriodEnd: boolean; plan: { code: string } } | null;
     payments: { id: string; provider: string; amountCents: number; currency: string; status: string; createdAt: string }[];
     overlayTokens: { id: string; label: string | null; revoked: boolean; createdAt: string }[];
-    actionRules: { id: string; name: string; enabled: boolean; trigger: { event: string; giftName?: string; minDiamonds?: number; keyword?: string }; action: { type: string; effect?: string; sound?: string; url?: string; text?: string; cards?: number; signStyle?: string; volume?: number; key?: string; repeat?: number } }[];
+    actionRules: { id: string; name: string; enabled: boolean; trigger: { event: string; giftName?: string; minDiamonds?: number; keyword?: string }; action: { type: string; effect?: string; animal?: string; sound?: string; url?: string; text?: string; cards?: number; signStyle?: string; volume?: number; key?: string; repeat?: number } }[];
     widgetConfigs: { type: string; updatedAt: string; settings: Record<string, unknown> | null }[];
   };
   entitlements: { plan: string; trialEndsAt?: string; widgets: string[] };
   trialEnd: string; admin: boolean; adminByEnv: boolean;
+  /** ทดลองฟรีนับต่อ TikTok */
+  trial?: { tiktok: string | null; startedAt: string; usedDays: number; totalDays: number; leftDays: number };
   suspended: { at: string; reason: string } | null;
   live: { connected: boolean; viewers: number; diamonds: number; widgets: number } | null;
   webOpen: boolean;
@@ -42,16 +44,19 @@ function describeSettings(type: string, s: Record<string, unknown> | null): [str
 }
 const actionText = (a: Detail['user']['actionRules'][number]['action']) =>
   a.type === 'sound' ? `🔊 ${a.sound ? (SFX.find(([id]) => id === a.sound)?.[1] ?? a.sound) : 'ไฟล์ของลูกค้า'}${a.volume != null ? ` · ${Math.round(a.volume * 100)}%` : ''}${a.key ? ` · ปุ่มลัด ${a.key}` : ''}`
-    : a.type === 'tarot' ? `🔮 ไพ่ ${a.cards ?? 1} ใบ` : a.type === 'sign' ? `💡 ป้ายไฟ ${a.signStyle ?? 'led'}` : a.type === 'effect' ? effectLabel(a.effect) : a.type;
+    : a.type === 'tarot' ? `🔮 ไพ่ ${a.cards ?? 1} ใบ` : a.type === 'sign' ? `💡 ป้ายไฟ ${a.signStyle ?? 'led'}` : a.type === 'effect' ? effectLabel(a.effect, a.animal) : a.type;
 
 const d = (s?: string | null) => (s ? new Date(s).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }) : '-');
-const PLAN: Record<string, string> = { pro: 'Pro', trial: 'ทดลองฟรี', free: 'Free' };
+const PLAN: Record<string, string> = { free: 'Free', trial: 'ทดลองฟรี', starter: 'มือใหม่', pro: 'Pro', promax: 'Pro Max', expert: 'มืออาชีพ' };
+const GRANT_PLANS = ['starter', 'pro', 'promax', 'expert'] as const;
 
 /** หลังบ้าน: ดูลูกค้ารายคนแบบครบ + ปุ่มจัดการ (ทุกการกระทำถูกบันทึกในแท็บ "บันทึกแอดมิน") */
 export function AdminUserDetail({ id, onClose }: { id: string; onClose: () => void }) {
   const [x, setX] = useState<Detail | null>(null);
   const [msg, setMsg] = useState<{ tone: 'success' | 'error' | 'info'; text: string } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [grantPlan, setGrantPlan] = useState<string>('pro');
+  const [grantDays, setGrantDays] = useState('30');
   const load = useCallback(() => api<Detail>(`/api/admin/users/${id}`).then(setX).catch((e) => setMsg({ tone: 'error', text: (e as Error).message })), [id]);
   useEffect(() => { void load(); }, [load]);
 
@@ -77,7 +82,7 @@ export function AdminUserDetail({ id, onClose }: { id: string; onClose: () => vo
         {!x ? <Spinner /> : (
           <div className="space-y-4">
             <div className="flex flex-wrap gap-2">
-              <Badge tone={x.entitlements.plan === 'pro' ? 'pink' : x.entitlements.plan === 'trial' ? 'mint' : 'gray'}>{PLAN[x.entitlements.plan] ?? x.entitlements.plan}</Badge>
+              <Badge tone={isPaidPlan(x.entitlements.plan) ? 'pink' : x.entitlements.plan === 'trial' ? 'mint' : 'gray'}>{PLAN[x.entitlements.plan] ?? x.entitlements.plan}</Badge>
               {x.admin && <Badge tone="violet">แอดมิน{x.adminByEnv ? ' (ADMIN_EMAILS)' : ''}</Badge>}
               {x.suspended && <Badge tone="gray">⛔ ถูกระงับ</Badge>}
               {x.live?.connected ? <Badge tone="mint">🔴 ไลฟ์อยู่ · 👀 {x.live.viewers} · 💎 {x.live.diamonds}</Badge> : x.webOpen ? <Badge tone="violet">เปิดเว็บอยู่</Badge> : <Badge tone="gray">ออฟไลน์</Badge>}
@@ -87,8 +92,15 @@ export function AdminUserDetail({ id, onClose }: { id: string; onClose: () => vo
             <Card className="p-4">
               <h3 className="mb-2 text-sm font-semibold">จัดการ</h3>
               <div className="flex flex-wrap gap-2">
-                <Button variant="secondary" loading={busy === 'grant'} onClick={() => { const v = prompt('แจก Pro กี่วัน?', '30'); const n = Number(v); if (v && n > 0) void act('grant', 'grant', { days: n }, () => `แจก Pro ${n} วันแล้ว ✓`); }}><Gift className="size-4" /> แจก Pro</Button>
-                <Button variant="secondary" loading={busy === 'revoke'} onClick={() => act('revoke', 'revoke-pro', {}, () => 'ยกเลิก Pro แล้ว ✓', 'ยกเลิก Pro ของลูกค้าคนนี้?')}><XCircle className="size-4" /> ยกเลิก Pro</Button>
+                <div className="flex w-full flex-wrap items-center gap-2 rounded-xl border border-line p-2 sm:w-auto">
+                  <select value={grantPlan} onChange={(e) => setGrantPlan(e.target.value)} className="h-10 rounded-lg border border-line bg-white px-2 text-sm" aria-label="แพลนที่จะแจก">
+                    {GRANT_PLANS.map((c) => <option key={c} value={c}>{PLAN[c]}</option>)}
+                  </select>
+                  <input type="number" min={1} max={3650} value={grantDays} onChange={(e) => setGrantDays(e.target.value)} className="h-10 w-20 rounded-lg border border-line bg-white px-2 text-sm" aria-label="จำนวนวัน" />
+                  <span className="text-xs text-muted">วัน</span>
+                  <Button variant="secondary" loading={busy === 'grant'} onClick={() => { const n = Number(grantDays); if (n > 0) void act('grant', 'grant', { days: n, planCode: grantPlan }, () => `แจก ${PLAN[grantPlan]} ${n} วันแล้ว ✓`, `ตั้งแพลน ${PLAN[grantPlan]} ให้ลูกค้าคนนี้ ${n} วัน?`); }}><Gift className="size-4" /> ตั้ง/แจกแพลน</Button>
+                </div>
+                <Button variant="secondary" loading={busy === 'revoke'} onClick={() => act('revoke', 'revoke-pro', {}, () => 'ยกเลิกแพลนแล้ว ✓', 'ยกเลิกแพลนที่จ่าย/แจกของลูกค้าคนนี้?')}><XCircle className="size-4" /> ยกเลิกแพลน</Button>
                 <Button variant="secondary" loading={busy === 'pw'} onClick={() => act('pw', 'reset-password', {}, (r) => `รหัสชั่วคราว: ${String(r.tempPassword)} — ส่งให้ลูกค้าแล้วให้เปลี่ยนเอง`, 'รีเซ็ตรหัสผ่าน?')}><KeyRound className="size-4" /> รีเซ็ตรหัส</Button>
                 <Button variant="secondary" loading={busy === 'tok'} onClick={() => act('tok', 'revoke-tokens', {}, (r) => `เพิกถอนลิงก์ ${String(r.count)} ชุดแล้ว ✓`, 'เพิกถอนลิงก์วิดเจ็ตทั้งหมดของลูกค้าคนนี้? วิดเจ็ตในไลฟ์จะหยุดทันที')}><Link2Off className="size-4" /> เพิกถอนลิงก์ทั้งหมด</Button>
                 {!x.adminByEnv && <Button variant="secondary" loading={busy === 'role'} onClick={() => act('role', 'role', { admin: !x.admin }, () => (x.admin ? 'ถอดแอดมินแล้ว ✓' : 'ตั้งเป็นแอดมินแล้ว ✓'), x.admin ? 'ถอดสิทธิ์แอดมิน?' : 'ตั้งเป็นแอดมิน? (เห็นหลังบ้านทั้งหมด)')}><Shield className="size-4" /> {x.admin ? 'ถอดแอดมิน' : 'ตั้งเป็นแอดมิน'}</Button>}
@@ -102,8 +114,8 @@ export function AdminUserDetail({ id, onClose }: { id: string; onClose: () => vo
               <h3 className="mb-2 font-semibold">ข้อมูลบัญชี</h3>
               <dl className="grid grid-cols-[8rem_1fr] gap-y-1.5">
                 <dt className="text-muted">สมัครเมื่อ</dt><dd>{d(x.user.createdAt)}</dd>
-                <dt className="text-muted">ทดลองฟรีถึง</dt><dd>{d(x.trialEnd)}</dd>
-                <dt className="text-muted">Pro</dt><dd>{x.user.subscription ? `${x.user.subscription.status} · ${x.user.subscription.provider ?? 'แอดมินแจก'} · ถึง ${d(x.user.subscription.currentPeriodEnd)}` : '-'}</dd>
+                <dt className="text-muted">ทดลองฟรีถึง</dt><dd>{d(x.trialEnd)}{x.trial?.tiktok ? <div className="text-xs text-muted">TikTok @{x.trial.tiktok} ใช้ทดลองไปแล้ว {x.trial.usedDays}/{x.trial.totalDays} วัน · เหลือ {x.trial.leftDays} วัน (นับต่อ TikTok ไม่ใช่ต่อบัญชี)</div> : null}</dd>
+                <dt className="text-muted">แพลน</dt><dd>{x.user.subscription ? `${PLAN[x.user.subscription.plan.code] ?? x.user.subscription.plan.code} · ${x.user.subscription.status} · ${x.user.subscription.provider ?? 'แอดมินแจก'} · ถึง ${d(x.user.subscription.currentPeriodEnd)}` : '-'}</dd>
                 <dt className="text-muted">วิดเจ็ตที่ตั้งค่า</dt><dd>{x.user.widgetConfigs.length} ตัว (ดูรายละเอียดด้านล่าง)</dd>
                 <dt className="text-muted">ลิงก์วิดเจ็ต</dt><dd>{x.user.overlayTokens.filter((t) => !t.revoked).length} ชุดใช้งาน · {x.user.overlayTokens.filter((t) => t.revoked).length} ชุดเพิกถอน</dd>
               </dl>

@@ -139,6 +139,16 @@
         if (TINT) recolor(src).then((u) => { im.src = u; }); else im.src = src;
       }; probe.src = src;
     }
+    // ท่าหันรอบตัวแบบละเอียด 16 ทิศ: 25–32 = มุมกึ่งกลาง 22.5° · 67.5° · … · 337.5° (แทรกระหว่าง 1,18–24)
+    // โหลดผ่านเส้นทางเดียวกัน (probe + ย้อมสี tint) · ขาดเฟรมไหน → ช่วงนั้นจางข้าม 45° แบบ 8 ทิศเดิม
+    for (let n = 25; n <= 32; n++) {
+      const im = new Image(); im.alt = '';
+      const src = `mascot/${C}/${n}.webp?v=${encodeURIComponent(window.VJL_VERSION || '1')}`;
+      const probe = new Image(); probe.onload = () => {
+        im.onload = () => { $char.appendChild(im); imgs[n] = im; warm(im); };
+        if (TINT) recolor(src).then((u) => { im.src = u; }); else im.src = src;
+      }; probe.src = src;
+    }
     // ---- เครื่องยนต์ฟิสิกส์: ตัวละครมีมวล — สปริง (หน่วงวิกฤต/เด้งเล็กน้อย) + แรงโน้มถ่วง ----
     // อินทิเกรตแบบ semi-implicit Euler ที่ 120Hz คงที่ (สะสมเวลาจริง) แล้ววาดแบบประมาณค่าระหว่างสเต็ป → ลื่นทุกจอ ไม่สั่น
     const $body = document.getElementById('body'), $shadow = document.getElementById('shadow'), $deco = document.getElementById('deco');
@@ -201,7 +211,10 @@
         vmax: disc > 0 ? (T - Math.sqrt(disc)) / (2 * kk) : T / (2 * kk) });
       $walker.classList.add('moving');
     }
-    const SPIN_SEQ = [1, 18, 19, 20, 21, 22, 23, 24, 1];
+    // ลำดับหมุน 16 ทิศ (ทุก 22.5°): [1,25,18,26,19,27,20,28,21,29,22,30,23,31,24,32,1] · ตัวที่ไม่มี 25–32 → 8 ทิศ [1,18,…,24,1]
+    const SPIN_ALL = [[1, 0], [25, 22.5], [18, 45], [26, 67.5], [19, 90], [27, 112.5], [20, 135], [28, 157.5], [21, 180], [29, 202.5], [22, 225], [30, 247.5], [23, 270], [31, 292.5], [24, 315], [32, 337.5]];
+    let SPIN_SEQ = [[1, 0], [1, 360]];
+    const spinSeq = () => SPIN_ALL.filter(([n]) => n === 1 || imgs[n]).concat([[1, 360]]);
     function tick(h) {
       calm += ((SPIN || WALKING ? 0 : busy ? .35 : 1) - calm) * (1 - Math.exp(-h / .3));
       // 1) เดิน: แรงขับจำกัด (เร่ง/เบรก) → ความเร่งแนวนอน ax ใช้เอียงตัว + เหวี่ยงของในมือ
@@ -279,8 +292,9 @@
       if (SPIN) { // หมุนรอบตัว: มุมจากฟิสิกส์ → จางต่อเนื่องระหว่างเฟรม 8 ทิศ · บีบแนวนอนตอนหันข้าง (หลอกตาเป็น 3D)
         if (SPIN.done) { Object.assign(L, { under: [], top: 1, a0: 1, d: 0 }); const r = SPIN.res; SPIN = null; r(); }
         else {
-          const f = clamp(th, 0, 359.99) / 45, i = Math.min(7, Math.floor(f)), fr = f - i, a = fr * fr * (3 - 2 * fr); // smoothstep: ช่วงซ้อนสั้น ไม่เห็นเงาเบลอค้าง
-          Object.assign(L, { under: [{ n: SPIN_SEQ[i], a: 1 }], top: SPIN_SEQ[i + 1], a0: a, d: 0 });
+          const g = clamp(th, 0, 359.99); let i = 0; while (i < SPIN_SEQ.length - 2 && SPIN_SEQ[i + 1][1] <= g) i++;
+          const fr = (g - SPIN_SEQ[i][1]) / (SPIN_SEQ[i + 1][1] - SPIN_SEQ[i][1]), a = fr * fr * (3 - 2 * fr); // smoothstep: ช่วงซ้อนสั้น ไม่เห็นเงาเบลอค้าง
+          Object.assign(L, { under: [{ n: SPIN_SEQ[i][0], a: 1 }], top: SPIN_SEQ[i + 1][0], a0: a, d: 0 });
           sx -= .07 * Math.abs(Math.sin(th * Math.PI / 180)) * DECO;
         }
       }
@@ -395,13 +409,14 @@
       if (TURN === 7) { // หมุนรอบตัวจริง 8 ทิศ (โหมดวิดีโอ: ซ่อนคลิปชั่วคราวแล้วใช้รูป)
         const vid = VIDEO.on; if (vid) { clearTimeout(VIDEO.t); setVideo(false); pose(1, 0); }
         if (L.top !== 1) { pose(1, 120); await wait(130); }
+        SPIN_SEQ = spinSeq();
         await new Promise((res) => { SPIN = { th: 0, om: 0, al: 0, t: 0, wmax: 450, amax: 1300, done: false, res }; }); // แรงบิดเร่ง 1300°/s² ความเร็วสูงสุด 450°/s → ~1.15 วิ/รอบ เหมือนคนหมุนจริง
         if (vid) { setVideo(true); playClip('joy'); particles(['✨', '⭐', '💫'], 8, 1.6); await wait(1200); return; }
         pose(7); hop(); particles(['✨', '⭐', '💫'], 8, 1.6); if (SPARK !== 'off') twinkle(12, 1); await wait(700); return;
       }
       pose(16, 180); await wait(480); pose(7); hop(); particles(['✨', '⭐', '💫'], 8, 1.6); if (SPARK !== 'off') twinkle(12, 1); await wait(700); }
     async function bigJump() { pose(1); jump(110, .18, .07); await wait(230); pose(7, 120); particles(['🎉', '✨'], 8, 1.6); await wait(560); pose(1); await wait(200); }
-    if (P('debug', '0') === '1') window.__mascot = { spin: () => enqueue(spin), dance: () => enqueue(() => dance(2)), walk: () => enqueue(() => walk()), kiss: () => enqueue(() => kiss(null)), jump: () => enqueue(bigJump), gift: () => enqueue(() => receive(window.VJLCollect ? VJLCollect.demoGift() : { giftName: 'Rose' })), trace: REC }; // trace: [t, walkerX, y, rot, sq, spinθ, giftX, giftY, giftAngle]
+    if (P('debug', '0') === '1') window.__mascot = { spinSeq: () => spinSeq().map((x) => x[0]), spin: () => enqueue(spin), dance: () => enqueue(() => dance(2)), walk: () => enqueue(() => walk()), kiss: () => enqueue(() => kiss(null)), jump: () => enqueue(bigJump), gift: () => enqueue(() => receive(window.VJLCollect ? VJLCollect.demoGift() : { giftName: 'Rose' })), trace: REC }; // trace: [t, walkerX, y, rot, sq, spinθ, giftX, giftY, giftAngle]
     const IDLE = [
       () => walk(),
       async () => { if (TURN === 7) await spin(); else pose(3), await wait(900); }, // หมุนโชว์ (เฉพาะตัวที่มีท่าหันรอบตัว)

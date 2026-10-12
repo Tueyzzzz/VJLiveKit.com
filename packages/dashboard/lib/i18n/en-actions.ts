@@ -129,6 +129,8 @@ export const EN_ACTIONS: Record<string, string> = {
   'กฎแบบ “มาสคอต” (เต้น · ส่งจุ๊บ ฯลฯ) เล่นผ่านลิงก์นี้ ไม่ใช่ลิงก์ FX — วางในโปรแกรมไลฟ์แยกอีกอัน · เลือกตัวละครได้ที่': 'Mascot rules (dance, blow a kiss, etc.) play through this link, not the FX link — add it as a separate source in your streaming software · Pick the character in',
   'ตั้งค่าตัวแทนวีเจ': 'mascot settings',
   'คัดลอกลิงก์มาสคอต': 'Copy mascot link',
+  '🔗 ลิงก์ตัวแทนวีเจ (มาสคอต)': '🔗 VJ mascot link',
+  'เทมเพลตมาสคอตเล่นผ่านลิงก์นี้ — วางในโปรแกรมไลฟ์แยกจากลิงก์ FX': 'Mascot templates play through this link — add it separately from the FX link',
   '🔗 ลิงก์เฉพาะหมวดนี้': '🔗 Link for this category only',
   'ไม่บังคับ — ใช้เมื่ออยากวางหมวดนี้แยกตำแหน่ง/ขนาดเอง (เช่น ไพ่ไว้มุมจอ) ถ้าใช้ลิงก์ FX ลิงก์เดียวก็ไม่ต้องทำอะไร': 'Optional — use it to place this category at its own position/size (e.g. tarot in a corner). If you use the single FX link, nothing to do',
   'คัดลอกลิงก์หมวดนี้': 'Copy category link',

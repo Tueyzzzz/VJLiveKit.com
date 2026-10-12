@@ -618,6 +618,19 @@ function ActionsInner() {
                   ))}
                 </div>
               </div>
+              {mascotUrl && tplGroup === 'mascot' && (
+                // มาสคอต: เล่นผ่านวิดเจ็ตตัวแทนวีเจ (ไม่ใช่ FX) → แสดงลิงก์มาสคอตแยกในแท็บนี้เลย
+                <div className="mb-4 rounded-xl border border-dashed border-line bg-canvas/60 p-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="min-w-0 flex-1 text-sm">
+                      <span className="font-medium">{t('🔗 ลิงก์ตัวแทนวีเจ (มาสคอต)')}</span>
+                      <span className="block text-xs text-muted">{t('เทมเพลตมาสคอตเล่นผ่านลิงก์นี้ — วางในโปรแกรมไลฟ์แยกจากลิงก์ FX')}</span>
+                      <code className="mt-1.5 block break-all select-all rounded-lg bg-white px-3 py-1.5 text-xs text-muted">{mascotUrl}</code>
+                    </div>
+                    <Button variant="secondary" onClick={copyMascot}>{mascotCopied ? <><Check className="size-4 text-mint" /> {t('คัดลอกแล้ว')}</> : <><Copy className="size-4" /> {t('คัดลอกลิงก์มาสคอต')}</>}</Button>
+                  </div>
+                </div>
+              )}
               {fxUrl && ['fx', 'tarot', 'thanks', 'fun'].includes(tplGroup) && (
                 <div className="mb-4 rounded-xl border border-dashed border-line bg-canvas/60 p-3">
                   <div className="flex flex-wrap items-center gap-2">

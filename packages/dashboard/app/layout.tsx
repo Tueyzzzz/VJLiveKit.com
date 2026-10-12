@@ -6,6 +6,7 @@ import { LiveLink } from '@/components/Speaker';
 import { AutoUpdate } from '@/components/AutoUpdate';
 import { ErrorReporter } from '@/components/ErrorReporter';
 import { LangProvider } from '@/lib/i18n';
+import { AdSense } from '@/components/AdSense';
 
 const SITE = 'https://vjlivekit.com';
 const TITLE = 'VJLiveKit — วิดเจ็ตไลฟ์ TikTok สำหรับ OBS & TikTok LIVE Studio';
@@ -26,6 +27,7 @@ export const metadata: Metadata = {
   twitter: { card: 'summary_large_image', title: TITLE, description: DESC, images: ['/og.png'] },
   robots: { index: true, follow: true },
   verification: { google: 'N6KgsEtxCGvYorh9FuZ32OObpolT4t9ylVY3W4_T6qQ' },
+  other: { 'google-adsense-account': 'ca-pub-3733857601096784' }, // ยืนยันเว็บกับ AdSense
 };
 
 export const viewport: Viewport = { themeColor: '#ff93c0' };
@@ -42,6 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-dvh">
         <LangProvider><AuthProvider>{children}<LiveLink /><AutoUpdate /><ErrorReporter /></AuthProvider></LangProvider>
         <Pixels />
+        <AdSense />
       </body>
     </html>
   );

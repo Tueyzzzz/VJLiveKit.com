@@ -69,7 +69,7 @@ export type PlanCode = (typeof PLAN_CODES)[number];
 export const isPlanCode = (c: string): c is PlanCode => (PLAN_CODES as readonly string[]).includes(c);
 
 // ---- ชุดวิดเจ็ตแต่ละขั้น ----
-const W_FREE: WidgetType[] = ['coinjar', 'collect', 'alerts', 'goal', 'chat', 'follower'];
+const W_FREE: WidgetType[] = ['alerts', 'goal', 'chat', 'follower', 'coinjar', 'collect', 'giftjar', 'aquarium', 'belly', 'spacedome']; // ตรงกับที่ใช้จริงบนเว็บ (Free เคยได้ 10 ตัวนี้)
 const W_STARTER: WidgetType[] = [...W_FREE, 'topgifters', 'toplikers', 'timer', 'fx', 'fxmenu', 'sign', 'donate'];
 // ชั่วคราว: Pro เดิมเคยได้ MVP/ลีก/มาสคอต — ยังให้ไว้จนกว่าเจ้าของจะตัดสินใจ (ไม่ลดของลูกค้าที่จ่ายแล้วแบบไม่บอก) · แก้ได้ที่ Admin › แพลน
 const W_PRO: WidgetType[] = [...W_STARTER, 'giftjar', 'aquarium', 'spacedome', 'belly', 'snowglobe', 'vehicle', 'garden', 'tree', 'pile', 'tts', 'pkmvp', 'league', 'mascot'];

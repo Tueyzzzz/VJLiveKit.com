@@ -26,13 +26,16 @@
 
     // ---- ผัง: กึ่งกลางล่างเหมือนโหล · สูงสุด 86% ของจอ ----
     let T = { x: 0, y: 0, w: 0, h: 0 }, E = { cx: 0, cy: 0, rx: 1, ry: 1 }, U = 1; // U = หน่วยขนาด (ความกว้างช่อง/1000)
+    // กรอบเนื้อหา (มองไม่เห็น) ให้พรีวิวในแดชบอร์ดซูมถูกที่ — ของบนแคนวาสวัดจาก DOM ไม่ได้
+    const fitbox = document.createElement('div'); fitbox.setAttribute('data-fit', ''); fitbox.style.cssText = 'position:fixed;pointer-events:none;visibility:hidden'; document.body.appendChild(fitbox);
+    const setFit = (x0, y0, x1, y1) => { fitbox.style.left = x0 + 'px'; fitbox.style.top = y0 + 'px'; fitbox.style.width = Math.max(4, x1 - x0) + 'px'; fitbox.style.height = Math.max(4, y1 - y0) + 'px'; };
     function resize() {
       W = innerWidth; H = innerHeight;
       canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR); canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
       const ar = META.w / META.h; let th = Math.min(H * 0.86, (W * 0.9) / ar) * SCALE; const tw = th * ar;
       T = { x: W / 2 - tw / 2 + OX, y: H - th - Math.max(40, H * 0.05) - OY, w: tw, h: th };
       const e = META.ell; E = { cx: T.x + e[0] * tw, cy: T.y + e[1] * th, rx: e[2] * tw, ry: e[3] * th }; U = (E.rx * 2) / 1000;
-      layoutUi(); updateDensity();
+      layoutUi(); updateDensity(); setFit(T.x, T.y, T.x + T.w, T.y + T.h);
     }
 
     // ---- ของขวัญ ----

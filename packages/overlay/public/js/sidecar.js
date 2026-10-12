@@ -26,6 +26,9 @@
 
     // ---- ผัง: รถค่อนไปทางขวา (ของลากยาวไปทางซ้าย) · พื้นถนนชิดล่าง ----
     let C = { x: 0, y: 0, w: 0, h: 0 }, GROUND = 0;
+    // กรอบเนื้อหา (มองไม่เห็น) ให้พรีวิวในแดชบอร์ดซูมถูกที่ — ของบนแคนวาสวัดจาก DOM ไม่ได้
+    const fitbox = document.createElement('div'); fitbox.setAttribute('data-fit', ''); fitbox.style.cssText = 'position:fixed;pointer-events:none;visibility:hidden'; document.body.appendChild(fitbox);
+    const setFit = (x0, y0, x1, y1) => { fitbox.style.left = x0 + 'px'; fitbox.style.top = y0 + 'px'; fitbox.style.width = Math.max(4, x1 - x0) + 'px'; fitbox.style.height = Math.max(4, y1 - y0) + 'px'; };
     function resize() {
       W = innerWidth; H = innerHeight; s = SCALE * Math.min(1.6, Math.max(0.5, H / 720));
       canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR); canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
@@ -34,6 +37,7 @@
       GROUND = H - 34 * s - OY;
       C = { x: W * 0.74 - cw / 2 + OX, y: GROUND - ch, w: cw, h: ch };
       $alert.style.left = (W / 2 + OX) + 'px'; $alert.style.top = '8px';
+      setFit(Math.max(0, C.x - C.w * 1.1), Math.max(0, C.y - 300 * s), C.x + C.w, GROUND + 10);
     }
     const P2 = (f) => ({ x: C.x + f[0] * C.w, y: C.y + f[1] * C.h + bob.y }); // จุดบนรถ (ตามโช้ค)
 

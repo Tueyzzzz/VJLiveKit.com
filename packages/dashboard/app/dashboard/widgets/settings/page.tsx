@@ -326,6 +326,7 @@ function WidgetSettings() {
     for (const el of Array.from(d.body.querySelectorAll<HTMLElement>('*'))) {
       if (/^(SCRIPT|STYLE|IFRAME)$/.test(el.tagName)) continue;
       const r = el.getBoundingClientRect();
+      if (el.hasAttribute('data-fit')) { x0 = Math.min(x0, Math.max(0, r.left)); y0 = Math.min(y0, Math.max(0, r.top)); x1 = Math.max(x1, Math.min(1920, r.right)); y1 = Math.max(y1, Math.min(1080, r.bottom)); continue; } // วิดเจ็ตวาดบนแคนวาส บอกกรอบเนื้อหาเอง
       if (r.width < 4 || r.height < 4 || (r.width > 1700 && r.height > 950) || r.right < 0 || r.bottom < 0 || r.left > 1920 || r.top > 1080) continue; // นอกจอ/เต็มจอ ไม่นับ
       const cs = d.defaultView!.getComputedStyle(el);
       if (cs.visibility === 'hidden' || cs.display === 'none' || Number(cs.opacity) < 0.05) continue;

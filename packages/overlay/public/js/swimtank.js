@@ -25,6 +25,9 @@
 
     // ---- ผังตู้บนจอ: กึ่งกลางล่าง (เหมือนโหล) · กว้างสุด 94% จอ / สูงสุด 78% จอ ----
     let T = { x: 0, y: 0, w: 0, h: 0 }, BOX = { x0: 0, y0: 0, x1: 0, y1: 0 };
+    // กรอบเนื้อหา (มองไม่เห็น) ให้พรีวิวในแดชบอร์ดซูมถูกที่ — ของบนแคนวาสวัดจาก DOM ไม่ได้
+    const fitbox = document.createElement('div'); fitbox.setAttribute('data-fit', ''); fitbox.style.cssText = 'position:fixed;pointer-events:none;visibility:hidden'; document.body.appendChild(fitbox);
+    const setFit = (x0, y0, x1, y1) => { fitbox.style.left = x0 + 'px'; fitbox.style.top = y0 + 'px'; fitbox.style.width = Math.max(4, x1 - x0) + 'px'; fitbox.style.height = Math.max(4, y1 - y0) + 'px'; };
     function resize() {
       W = innerWidth; H = innerHeight;
       canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR); canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
@@ -32,7 +35,7 @@
       let tw = Math.min(W * 0.94, (H * 0.78) / ar) * SCALE; const th = tw * ar;
       T = { x: W / 2 - tw / 2 + OX, y: H - th - Math.max(70, H * 0.09) - OY, w: tw, h: th };
       const b = META.box; BOX = { x0: T.x + b[0] * tw, y0: T.y + b[1] * th, x1: T.x + b[2] * tw, y1: T.y + b[3] * th };
-      layoutUi();
+      layoutUi(); setFit(T.x, T.y, T.x + T.w, T.y + T.h);
     }
 
     // ---- ปลา (ของขวัญ) ----

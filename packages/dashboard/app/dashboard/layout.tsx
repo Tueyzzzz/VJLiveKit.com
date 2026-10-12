@@ -131,7 +131,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
         <div className={cx('px-5 pb-3 text-[10px] text-muted/70 md:hidden', menu ? 'block' : 'hidden')}>v{process.env.NEXT_PUBLIC_VERSION}</div>
       </aside>
-      <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-8 sm:py-8">
+      <main className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-8 sm:py-8">
         {notice && <div className="mb-6 rounded-2xl bg-pink-soft px-4 py-3 text-sm text-ink">📢 {notice}</div>}
         {isAdmin && <AdminLiveBar />}
         <LiveStatusBar />

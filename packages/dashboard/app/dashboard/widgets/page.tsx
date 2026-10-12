@@ -293,7 +293,7 @@ function WidgetsInner() {
           {collectUrl ? <CopyButton text={collectUrl} /> : <span className="text-xs text-muted">{t('ตั้งชื่อ TikTok ที่หน้าภาพรวมก่อน')}</span>}
         </Card>
       )}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         {list.map((w) => soon(w.type) ? (
           <Card key={w.type} className="relative p-3 opacity-60 grayscale">
             <div className="grid aspect-video place-items-center rounded-xl bg-canvas text-4xl">🚧</div>

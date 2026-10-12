@@ -49,7 +49,7 @@ export default function OverviewPage() {
         } />
 
       {/* เมนูเป็นการ์ดใหญ่ มีรูป VJ · ตารางเดียวต่อกัน (แบ่งหมวดแล้วจอยาวเกิน — ผู้ใช้ขอแบบเดิม) */}
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6">
         {NAV.filter((n) => n.img !== 'overview').map((n) => {
           const soon = 'soon' in n && n.soon;
           const body = (

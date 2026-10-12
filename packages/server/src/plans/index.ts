@@ -75,41 +75,44 @@ const W_STARTER: WidgetType[] = [...W_FREE, 'topgifters', 'toplikers', 'timer', 
 const W_PRO: WidgetType[] = [...W_STARTER, 'giftjar', 'aquarium', 'spacedome', 'belly', 'snowglobe', 'vehicle', 'garden', 'tree', 'pile', 'tts', 'pkmvp', 'league', 'mascot'];
 const W_PROMAX: WidgetType[] = [...new Set<WidgetType>([...W_PRO, 'pkmvp', 'league', 'mascot'])];
 const W_ALL: WidgetType[] = [...WIDGET_TYPES];
+/** มือใหม่ = ทุกอย่างของ Free + ชุดเครื่องมือหลัก + ลูกแก้ว */
+const W_STARTER_NEW: WidgetType[] = [...new Set<WidgetType>([...W_FREE, ...W_STARTER, 'snowglobe'])];
 
 /**
  * ค่าเริ่มต้นของแพลน (โค้ด) — แอดมินแก้ทับได้ที่หน้า Admin › แพลน (เก็บใน data/plans.json)
  * ทุกครั้งที่เซิร์ฟเวอร์สตาร์ท/แอดมินบันทึก จะ sync ลงตาราง Plan ใน DB (ensurePlans)
  */
 export const DEFAULT_PLANS: PlanDef[] = [
+  // จัดใหม่ 2026-10-12: แพลนแพงกว่าได้ "ทุกอย่างของแพลนถูกกว่า" เสมอ (เดิม Free ได้โหล/ตู้ปลามากกว่ามือใหม่) · ไม่มีใครที่จ่ายอยู่เสียฟีเจอร์
   {
     code: 'free', name: 'Free', priceCents: 0, currency: 'thb', badge: '',
     tagline: 'ลองของก่อน ไม่ต้องใช้บัตร',
-    bullets: ['วิดเจ็ตพื้นฐาน 6 แบบ', 'ไม่มีโลโก้บนจอ'],
+    bullets: ['แจ้งเตือน · แชท · แถบเป้าหมาย', 'โหลแก้ว · ตู้ปลา · ตัวละครกินของขวัญ', 'ไม่มีโลโก้บนจอ'],
     features: { widgets: W_FREE, maxActionRules: 3, maxTokens: 2, noWatermark: true, tarot: false, liveStats: false, soundMaxMB: 0, soundMaxFiles: 0, prioritySupport: false, mascotDiscountPct: 0 },
   },
   {
     code: 'starter', name: 'มือใหม่', priceCents: 9900, currency: 'thb', badge: '',
-    tagline: 'เริ่มไลฟ์จริงจัง จอสะอาดไม่มีโลโก้',
-    bullets: ['Top Gifters · ป้ายไฟ · เมนูของขวัญ · โดเนท', 'Actions & Events (FX)'],
-    features: { widgets: W_STARTER, maxActionRules: 10, maxTokens: 3, noWatermark: true, tarot: false, liveStats: false, soundMaxMB: 5, soundMaxFiles: 20, prioritySupport: false, mascotDiscountPct: 0 },
+    tagline: 'เริ่มไลฟ์จริงจัง ครบเครื่องมือหลัก',
+    bullets: ['ทุกอย่างในแพลน Free +', 'Top Gifters · นาฬิกา Subathon · ป้ายไฟ LED', 'Actions & Events · เมนูของขวัญ · โดเนท'],
+    features: { widgets: W_STARTER_NEW, maxActionRules: 15, maxTokens: 3, noWatermark: true, tarot: false, liveStats: false, soundMaxMB: 5, soundMaxFiles: 20, prioritySupport: false, mascotDiscountPct: 0 },
   },
   {
     code: 'pro', name: 'Pro', priceCents: 19900, currency: 'thb', badge: 'ยอดนิยม',
-    tagline: 'ของขวัญตกลงจอแบบเกม ครบทุกสไตล์',
-    bullets: ['วิดเจ็ตสะสมของขวัญทุกแบบ (โหล ตู้ปลา ต้นไม้ รถลาก…)', 'อ่านแชทออกเสียง (TTS)', 'ไพ่ทาโร่ขึ้นจอ'],
-    features: { widgets: W_PRO, maxActionRules: 30, maxTokens: 5, noWatermark: true, tarot: true, liveStats: false, soundMaxMB: 8, soundMaxFiles: 40, prioritySupport: false, mascotDiscountPct: 0 },
+    tagline: 'ครบทุกวิดเจ็ต คุ้มสุด',
+    bullets: ['ทุกวิดเจ็ต (รถลาก · ต้นไม้ · กองทับกัน · ลูกแก้ว …)', 'MVP ของ PK · ลีก · มาสคอตตัวแทนวีเจ', 'อ่านแชท (TTS) · ไพ่ทาโร่ · สถิติไลฟ์'],
+    features: { widgets: W_ALL, maxActionRules: 40, maxTokens: 5, noWatermark: true, tarot: true, liveStats: true, soundMaxMB: 10, soundMaxFiles: 50, prioritySupport: false, mascotDiscountPct: 0 },
   },
   {
     code: 'promax', name: 'Pro Max', priceCents: 29900, currency: 'thb', badge: '',
-    tagline: 'สายแข่ง PK และลีก',
-    bullets: ['MVP ของ PK · ลีก TikTok', 'มาสคอตตัวแทนวีเจ', 'สถิติไลฟ์ละเอียด'],
-    features: { widgets: W_PROMAX, maxActionRules: 100, maxTokens: 10, noWatermark: true, tarot: true, liveStats: true, soundMaxMB: 10, soundMaxFiles: 60, prioritySupport: false, mascotDiscountPct: 0 },
+    tagline: 'สายแข่ง PK ไลฟ์ทุกวัน',
+    bullets: ['ทุกอย่างใน Pro +', 'กฎ Actions 100 ข้อ · ลิงก์ 10 ชุด', 'ซัพพอร์ตด่วน · ส่วนลดสั่งทำมาสคอต 10%'],
+    features: { widgets: W_ALL, maxActionRules: 100, maxTokens: 10, noWatermark: true, tarot: true, liveStats: true, soundMaxMB: 15, soundMaxFiles: 100, prioritySupport: true, mascotDiscountPct: 10 },
   },
   {
     code: 'expert', name: 'มืออาชีพ', priceCents: 34900, currency: 'thb', badge: '',
-    tagline: 'ทุกอย่างไม่จำกัด + ดูแลพิเศษ',
-    bullets: ['ทุกวิดเจ็ต ทุกฟีเจอร์', 'ซัพพอร์ตด่วน ตอบก่อน', 'ส่วนลดสั่งทำมาสคอตหน้าตัวเอง 20%'],
-    features: { widgets: W_ALL, maxActionRules: 200, maxTokens: 20, noWatermark: true, tarot: true, liveStats: true, soundMaxMB: 15, soundMaxFiles: 100, prioritySupport: true, mascotDiscountPct: 20 },
+    tagline: 'ไม่จำกัด สำหรับมืออาชีพ/เอเจนซี่',
+    bullets: ['ทุกอย่างใน Pro Max +', 'กฎ Actions ไม่จำกัด · ลิงก์ 20 ชุด', 'อัปโหลดเสียง 200 ไฟล์ · ส่วนลดมาสคอต 20%'],
+    features: { widgets: W_ALL, maxActionRules: 999, maxTokens: 20, noWatermark: true, tarot: true, liveStats: true, soundMaxMB: 20, soundMaxFiles: 200, prioritySupport: true, mascotDiscountPct: 20 },
   },
 ];
 

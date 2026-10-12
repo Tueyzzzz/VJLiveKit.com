@@ -71,7 +71,7 @@ export default function DonateDashboard() {
 
   if (!user) return null;
   const locked = entitlements ? !entitlements.widgets.includes('donate') : false;
-  const donateUrl = user.tiktokUsername ? `${typeof window !== 'undefined' ? window.location.origin : ''}/donate/?u=${user.tiktokUsername}` : '';
+  const donateUrl = user.tiktokUsername ? `${typeof window !== 'undefined' ? window.location.origin : ''}/d/${user.tiktokUsername.toLowerCase()}` : ''; // ลิงก์สั้น (เซิร์ฟเวอร์ redirect ไป /donate/?u=)
   const ready = !!String(cfg?.promptpay ?? '') || !!String(cfg?.bankAccount ?? '');
 
   return (

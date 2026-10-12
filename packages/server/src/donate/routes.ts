@@ -56,6 +56,13 @@ const submitSchema = z.object({
 });
 
 export async function donateRoutes(app: FastifyInstance): Promise<void> {
+  // ลิงก์สั้นหน้าโดเนท: vjlivekit.com/d/<ชื่อ TikTok> → /donate/?u=<ชื่อ> (ใส่ไบโอง่าย แบบ ezdn.app/<ชื่อ>)
+  app.get('/d/:handle', async (req, reply) => {
+    const h = String((req.params as { handle: string }).handle ?? '').replace(/^@/, '');
+    if (!/^[A-Za-z0-9._]{2,24}$/.test(h)) return reply.code(404).send({ error: 'ไม่พบหน้าโดเนท' });
+    return reply.redirect(`/donate/?u=${encodeURIComponent(h)}`, 302);
+  });
+
   // หน้าโดเนทสาธารณะ: ข้อมูลที่ต้องใช้สร้าง QR พร้อมเพย์
   app.get('/api/donate/page', async (req, reply) => {
     const o = await ownerByHandle((req.query as { u?: string }).u ?? '');

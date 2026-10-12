@@ -71,8 +71,9 @@ export const isPlanCode = (c: string): c is PlanCode => (PLAN_CODES as readonly 
 // ---- ชุดวิดเจ็ตแต่ละขั้น ----
 const W_FREE: WidgetType[] = ['coinjar', 'collect', 'alerts', 'goal', 'chat', 'follower'];
 const W_STARTER: WidgetType[] = [...W_FREE, 'topgifters', 'toplikers', 'timer', 'fx', 'fxmenu', 'sign', 'donate'];
-const W_PRO: WidgetType[] = [...W_STARTER, 'giftjar', 'aquarium', 'spacedome', 'belly', 'snowglobe', 'vehicle', 'garden', 'tree', 'pile', 'tts'];
-const W_PROMAX: WidgetType[] = [...W_PRO, 'pkmvp', 'league', 'mascot'];
+// ชั่วคราว: Pro เดิมเคยได้ MVP/ลีก/มาสคอต — ยังให้ไว้จนกว่าเจ้าของจะตัดสินใจ (ไม่ลดของลูกค้าที่จ่ายแล้วแบบไม่บอก) · แก้ได้ที่ Admin › แพลน
+const W_PRO: WidgetType[] = [...W_STARTER, 'giftjar', 'aquarium', 'spacedome', 'belly', 'snowglobe', 'vehicle', 'garden', 'tree', 'pile', 'tts', 'pkmvp', 'league', 'mascot'];
+const W_PROMAX: WidgetType[] = [...new Set<WidgetType>([...W_PRO, 'pkmvp', 'league', 'mascot'])];
 const W_ALL: WidgetType[] = [...WIDGET_TYPES];
 
 /**

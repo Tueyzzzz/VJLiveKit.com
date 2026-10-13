@@ -96,7 +96,7 @@
         prof: [[-312, 88], [-300, 96], [-292, 104], [-285, 110], [-276, 114], [-266, 116], [-58, 116], [-46, 110], [-36, 98]],
         hw: (y) => profileHW(SHAPES.clear.prof, y),
         openY: -312, openHW: 88, rimHW: 98, topY: -380, fullY: -282, maxHW: 116, floor: -36, backA: 0.18, noClear: true, noShadow: true, px: 0.75, center: true,
-        image: { src: 'themes/jar-clear.webp', x: -129.6, y: -380.0, w: 259.2, h: 380.0 },
+        image: { src: 'themes/jar-clear.webp', back: 'themes/jar-clear-back.webp', x: -129.6, y: -380.0, w: 259.2, h: 380.0 },
       },
       bowl: { // โหลทรงกลมป่อง ปากกว้าง (โหลปลา)
         hw: (y) => 170 * Math.sqrt(Math.max(0, 1 - ((y + 140) / 150) ** 2)),

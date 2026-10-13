@@ -7,6 +7,19 @@
  *   ?username=<ชื่อ>    -> โหมดเดโม (เฉพาะตอนเซิร์ฟเวอร์เปิด DEMO_MODE)
  *   ?demo=1            -> โหมดเดโมในเบราว์เซอร์ล้วน (ไม่ต่อเซิร์ฟเวอร์)
  */
+// ---- รูปของเราโหลดไม่ขึ้น (เน็ตสะดุดชั่วคราวใน OBS / TikTok LIVE Studio) → ลองโหลดใหม่เอง 3 ครั้ง (1 · 3 · 8 วิ) ----
+(function () {
+  window.addEventListener('error', (e) => {
+    const el = e.target;
+    if (!el || el.tagName !== 'IMG' || !el.src || /^data:|^blob:/.test(el.src) || /tiktokcdn|ibyteimg|byteimg|muscdn/.test(el.src)) return;
+    const tries = +(el.dataset.vjlRetry || 0); if (tries >= 3) return;
+    const orig = el.src;
+    setTimeout(() => {
+      el.dataset.vjlRetry = String(tries + 1); if (el.src !== orig || !el.isConnected) return;
+      const u = new URL(orig, location.href); u.searchParams.set('r', String(tries + 1)); el.src = u.toString();
+    }, [1000, 3000, 8000][tries]);
+  }, true);
+})();
 // ---- ส่ง error ของวิดเจ็ตกลับเซิร์ฟเวอร์ (แอดมินดูได้ในหลังบ้าน) · จำกัด 15 ครั้ง/การโหลด, เรื่องเดียวกันไม่เกิน 2 ครั้ง ----
 (function () {
   const qs = new URLSearchParams(location.search);
@@ -24,6 +37,7 @@
     if (el && el !== window && el.tagName) { // รูป/วิดีโอ/เสียง/สคริปต์โหลดไม่ขึ้น
       const src = String(el.currentSrc || el.src || '').split('?')[0];
       if (!src || /tiktokcdn|ibyteimg|byteimg|muscdn/.test(src)) return; // รูปจาก TikTok หายเป็นปกติ
+      if (el.tagName === 'IMG' && +(el.dataset.vjlRetry || 0) < 3) return; // ยังลองโหลดใหม่อยู่ (ดูด้านบน) — รายงานเมื่อครบ 3 ครั้งแล้วยังไม่ขึ้น
       report('load failed: ' + el.tagName.toLowerCase() + ' ' + src); return;
     }
     report(e.message, e.error && e.error.stack, e.filename ? e.filename.split('/').pop().split('?')[0] + ':' + e.lineno : '');

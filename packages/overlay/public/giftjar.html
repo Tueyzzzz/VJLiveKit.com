@@ -1361,8 +1361,8 @@
     const radiusFor = (diamonds) => Math.min(14.4 * GIFT_SCALE * sizeFor(diamonds, 4), Math.max(18, SH.maxHW * 0.45), SH.maxR || 60); // maxR: ภาชนะเตี้ย (เช่น ตู้ไอศกรีม) — ชิ้นใหญ่สูงเกินช่องจะค้างเหนือ fullY → โหมดจางหายลบไม่หยุด
 
     let capArea = 0;
-    function jarCap() { // พื้นที่ช่องในโหล (ปากโหล → พื้น) × 0.6
-      if (!capArea) { const f = SH.floor ?? -3; for (let y = SH.openY; y < f; y += 2) capArea += 2 * Math.max(0, SH.hw(Math.min(-0.5, y))) * 2; capArea = Math.max(4000, capArea * 0.6); }
+    function jarCap() { // พื้นที่ช่องในโหล (ปากโหล → พื้น) × 0.8 (มีฝา × 0.6)
+      if (!capArea) { const f = SH.floor ?? -3; for (let y = SH.openY; y < f; y += 2) capArea += 2 * Math.max(0, SH.hw(Math.min(-0.5, y))) * 2; capArea = Math.max(4000, capArea * (SH.closed ? 0.6 : 0.8)); } // ปากเปิด: ให้เต็มจริงก่อนล้น (ของกลมวางแล้วมีช่องว่าง ~20%) · มีฝา: เผื่อที่ไว้ไม่อัดแน่นจนค้าง
       return capArea;
     }
     const jarUsed = () => bodies.reduce((a, b) => a + (!b.out && !b.dying && !b.eat ? Math.PI * b.r * b.r : 0), 0);

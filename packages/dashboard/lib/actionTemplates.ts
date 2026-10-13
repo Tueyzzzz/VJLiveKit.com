@@ -38,7 +38,7 @@ export const PKB_CATS: [PkBannerCat, string, string, string, '' | 'us' | 'them',
   ['extra', '⏱️ ต่อเวลา', 'EXTRA TIME', 'extra', '', '⏱️ ต่อเวลาแล้ว! ยังมีลุ้น ช่วยกันอีกนิด', '01'],
 ];
 /** หมวดที่มีรูปครบ 10 แบบแล้ว (GPT ยังทยอยทำหมวดที่เหลือ) — หมวดอื่นยังไม่โชว์ */
-export const PKB_READY = new Set<string>(['start', 'win']);
+export const PKB_READY = new Set<string>(['start', 'win', 'lose', 'draw', 'mvp', 'top2']);
 /** 10 ธีมของป้าย PK (ลำดับเดียวกันทุกหมวด) */
 export const PKB_STYLES: [string, string][] = [
   ['01', '🩷 พาสเทลคาวาอี้'], ['02', '👑 ทองทับทิมรอยัล'], ['03', '🎮 นีออนอีสปอร์ต'], ['04', '🌙 กาแล็กซี่'], ['05', '🌸 ซากุระ'],

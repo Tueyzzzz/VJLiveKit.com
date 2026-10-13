@@ -8,6 +8,7 @@ import { WIDGET_LABELS } from './Pricing';
 import { SFX, playSound } from '@/lib/sounds';
 import { effectLabel } from '@/lib/actionTemplates';
 import { Alert, Badge, Button, Card, Spinner } from './ui';
+import { AdminWidgetViewer } from './AdminWidgetViewer';
 
 interface Detail {
   user: {
@@ -109,6 +110,8 @@ export function AdminUserDetail({ id, onClose }: { id: string; onClose: () => vo
                   : <Button variant="danger" loading={busy === 'sus'} onClick={() => { const r = prompt('เหตุผลที่ระงับบัญชี (ลูกค้าจะล็อกอินและใช้วิดเจ็ตไม่ได้)', ''); if (r !== null) void act('sus', 'suspend', { on: true, reason: r }, () => 'ระงับบัญชีแล้ว ✓'); }}><Ban className="size-4" /> ระงับบัญชี</Button>}
               </div>
             </Card>
+
+            <AdminWidgetViewer userId={x.user.id} configured={x.user.widgetConfigs.map((w) => w.type)} />
 
             <Card className="p-4 text-sm">
               <h3 className="mb-2 font-semibold">ข้อมูลบัญชี</h3>

@@ -14,6 +14,7 @@ import { listSounds } from '../media/routes.js';
 import { audit, listAudit, isSuspended, setSuspended, suspendedInfo } from './store.js';
 import { settings, updateSettings, DEFAULTS, LIMITS, type SystemSettings } from '../settings/index.js';
 import { serverStats } from './server-stats.js';
+import { signOverlayToken } from '../widgets/tokens.js';
 
 /** แอดมิน = role ADMIN ในฐานข้อมูล หรืออีเมลอยู่ใน ADMIN_EMAILS */
 export function isAdmin(req: FastifyRequest): boolean {
@@ -218,6 +219,18 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
       sounds: listSounds(id),
       lives,
     };
+  });
+
+  // 👀 ดูวิดเจ็ตของลูกค้าแบบสด (ลิงก์เดียวกับที่ลูกค้าใส่ OBS · ใช้ลิงก์ชุดล่าสุดที่ยังไม่ถูกเพิกถอน ไม่สร้างใหม่) — บันทึกในบันทึกแอดมิน
+  //   ไม่รวม TTS (เปิดแล้วจะอ่านแชทออกเสียง = ใช้โควตาเสียงของระบบ)
+  app.get('/api/admin/users/:id/widget-links', { preHandler: requireAdmin }, async (req, reply) => {
+    const { id } = req.params as { id: string };
+    const tok = await prisma.overlayToken.findFirst({ where: { userId: id, revoked: false }, orderBy: { createdAt: 'desc' } });
+    if (!tok) return reply.code(404).send({ error: 'ลูกค้ายังไม่มีลิงก์วิดเจ็ต (ยังไม่เคยเปิดหน้าโอเวอร์เลย์)' });
+    const ent = await getEntitlements(id);
+    const jwt = signOverlayToken({ tid: tok.id, userId: id }, tok.createdAt);
+    audit(getUser(req)!.email, 'เปิดดูวิดเจ็ตลูกค้า', id);
+    return { links: ent.widgets.filter((t) => t !== 'tts').map((type) => ({ type, url: `${config.publicBaseUrl}/overlay/${type}.html?t=${jwt}&adminview=1` })) };
   });
 
   app.post('/api/admin/users/:id/role', { preHandler: requireAdmin }, async (req, reply) => {

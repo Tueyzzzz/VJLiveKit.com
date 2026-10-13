@@ -91,6 +91,25 @@
     filter:drop-shadow(0 0 3px var(--rg,#fff)); }
   .ring.thin::after { content:''; position:absolute; left:50%; top:-1px; width:7px; height:7px; margin-left:-3.5px; border-radius:50%; background:#fff; box-shadow:0 0 6px 2px var(--rg,#fff); display:var(--dot,block); }
   .ring.thin.dbl { box-shadow:none; } .ring.thin.dbl::before { content:''; position:absolute; inset:5px; border-radius:50%; border:1.5px solid var(--rg); opacity:.55; }
+  /* ไฟวิ่งรอบของขวัญ (?ring=b1..b10) — หลอดไฟกลม ๆ เรียงเป็นวง ไล่ติดทีละดวงแบบป้ายโรงละคร (วงไม่หมุน ไฟวิ่งเอง) */
+  .ring.bulbs { width:134%; height:134%; margin:-67% 0 0 -67%; background:none; animation:none; filter:none; }
+  .ring.bulbs i { position:absolute; width:var(--bs,8px); height:var(--bs,8px); margin:calc(var(--bs,8px) / -2) 0 0 calc(var(--bs,8px) / -2); border-radius:50%;
+    background:radial-gradient(circle at 38% 35%, #fff 0 22%, var(--bc) 55%, color-mix(in srgb, var(--bc) 70%, #000) 100%);
+    box-shadow:0 0 0 1px rgba(0,0,0,.25); opacity:.35; animation:var(--ba,bulbChase) var(--bp,1.6s) linear infinite; }
+  @keyframes bulbChase { 0%,100% { opacity:1; box-shadow:0 0 6px 2px var(--bc), 0 0 12px 3px var(--bc) } 18% { opacity:.85; box-shadow:0 0 4px 1px var(--bc) } 35%,99% { opacity:.3; box-shadow:0 0 0 1px rgba(0,0,0,.25) } }
+  @keyframes bulbAlt { 0%,49% { opacity:1; box-shadow:0 0 6px 2px var(--bc), 0 0 12px 3px var(--bc) } 50%,100% { opacity:.3; box-shadow:0 0 0 1px rgba(0,0,0,.25) } }
+  @keyframes bulbTw { 0%,100% { opacity:.35; box-shadow:none } 50% { opacity:1; box-shadow:0 0 7px 2px var(--bc), 0 0 14px 4px var(--bc) } }
+  @keyframes bulbOn { 0%,100% { opacity:1; box-shadow:0 0 5px 2px var(--bc) } 50% { opacity:.8; box-shadow:0 0 9px 3px var(--bc), 0 0 16px 4px var(--bc) } }
+  /* ไฟเย็นวิ่ง (?ring=s1..s5) — หัวไฟเย็นวิ่งรอบของขวัญ สะเก็ดไฟกระเด็นออก (canvas วาดตามความละเอียดจอ) */
+  .ring.spark { width:175%; height:175%; margin:-87.5% 0 0 -87.5%; background:none; animation:none; filter:none; }
+  .ring.spark canvas { position:absolute; inset:0; width:100%; height:100%; }
+  /* อยู่ในฟองสบู่ (?ring=bu1..bu3) — ฟองสบู่ (ภาพ GPT พื้นใส) ครอบทับของขวัญ ตรงกลางใส เห็นของขวัญลอยอยู่ข้างใน */
+  .ring.bub { z-index:2 !important; width:150%; height:150%; margin:-75% 0 0 -75%; background:url(rings/bubble.webp) center/contain no-repeat;
+    animation:bubWob 3.2s ease-in-out infinite; filter:drop-shadow(0 0 6px rgba(255,255,255,.35)) var(--bf,); }
+  .ico:has(.ring.bub) { background:none !important; box-shadow:none !important; }
+  .ring.bub ~ img { animation:bubFloat 3.2s ease-in-out infinite !important; }
+  @keyframes bubWob { 0%,100% { transform:scale(1,1) translateY(0) } 25% { transform:scale(1.035,.97) translateY(-2px) } 50% { transform:scale(.98,1.025) translateY(-4px) } 75% { transform:scale(1.02,.985) translateY(-2px) } }
+  @keyframes bubFloat { 0%,100% { transform:translateY(0) rotate(-4deg) } 50% { transform:translateY(-5px) rotate(4deg) } }
   /* ===== แบบแถว (ค่าเริ่มต้น): [รูปของขวัญ] ชื่อ + 💎ราคา ➜ สิ่งที่เกิดบนจอ ===== */
   #box.it-row { width:450px; }
   .it-row .row { gap:10px; padding:8px 12px 8px 8px; margin-top:8px; border-radius:18px; position:relative; }
@@ -152,7 +171,56 @@
       t9: ['repeating-conic-gradient(#ffffff 0deg 3deg, transparent 3deg 12deg)', '#b9e6ff', 0],
       t10: ['linear-gradient(#ffffff55, #ffffff55)', '#e8e8f0', 1],
     };
-    const RING = RING_RAW === 'mix' ? 'mix' : THIN[RING_RAW] ? RING_RAW : RN >= 1 && RN <= 40 ? String(RN).padStart(2, '0') : 'off';
+    // ไฟวิ่ง: [สี (rainbow = ไล่สีรุ้งทีละดวง), จังหวะ chase|chase2|alt|tw|on, จำนวนดวง]
+    const BULB = {
+      b1: ['#ffd76a', 'chase', 16], b2: ['#ff7ab8', 'chase', 16], b3: ['#6fd6ff', 'chase', 16], b4: ['#b48bff', 'chase', 16],
+      b5: ['rainbow', 'chase', 18], b6: ['#ffd76a', 'chase2', 16], b7: ['#ff7ab8', 'alt', 14], b8: ['#ffd76a', 'alt', 14],
+      b9: ['#ffffff', 'tw', 18], b10: ['rainbow', 'tw', 18],
+    };
+    // ไฟเย็น: [สีสะเก็ด (rainbow = สลับสี), จำนวนหัวไฟ]
+    const SPARK = { s1: ['#ffcf6a', 1], s2: ['#ff8fc8', 1], s3: ['#8fe3ff', 1], s4: ['rainbow', 1], s5: ['#ffcf6a', 2] };
+    const sparks = []; let sparkRun = false;
+    function sparkLoop(t) {
+      for (const sp of sparks) {
+        const cv = sp.cv, w = Math.round(cv.getBoundingClientRect().width * (window.devicePixelRatio || 1));
+        if (!w) continue; if (cv.width !== w) { cv.width = cv.height = w; }
+        const g = cv.getContext('2d'), c = w / 2, R = w * 0.36, dt = Math.min(0.05, (t - (sp.last || t)) / 1000); sp.last = t;
+        g.globalCompositeOperation = 'source-over'; g.clearRect(0, 0, w, w);
+        sp.th += dt * 2.6;
+        const tone = (a) => sp.col === 'rainbow' ? `hsla(${(t / 8) % 360} 100% 70% / ${a})` : sp.col + Math.round(a * 255).toString(16).padStart(2, '0');
+        g.globalCompositeOperation = 'lighter'; g.lineCap = 'round';
+        // เส้นวงกลม: วงบาง ๆ เรืองตลอด + เส้นที่ไฟเย็นเพิ่งวิ่งผ่าน สว่างแล้วจางตามหลัง
+        g.lineWidth = w * 0.012; g.strokeStyle = tone(0.45); g.shadowColor = sp.col === 'rainbow' ? '#ffd27a' : sp.col; g.shadowBlur = w * 0.03;
+        g.beginPath(); g.arc(c, c, R, 0, 6.29); g.stroke();
+        for (let h = 0; h < sp.heads; h++) { // หัวไฟ → ปล่อยสะเก็ด
+          const th = sp.th + h * Math.PI, hx = c + R * Math.cos(th), hy = c + R * Math.sin(th);
+          const SEG = 24, LEN = sp.heads > 1 ? 2.2 : 3.6;
+          for (let k = 0; k < SEG; k++) { const a0 = th - LEN * (k + 1) / SEG, a1 = th - LEN * k / SEG, f = 1 - k / SEG;
+            g.lineWidth = w * (0.012 + 0.022 * f); g.strokeStyle = k < 3 ? `rgba(255,255,255,${0.9 * f})` : tone(0.95 * f * f); g.beginPath(); g.arc(c, c, R, a0, a1 + 0.02); g.stroke(); }
+          for (let k = 0; k < 11; k++) {
+            const a = Math.random() * Math.PI * 2, v = (0.3 + Math.random()) * w * 0.7;
+            sp.p.push({ x: hx, y: hy, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.15 + Math.random() * 0.3, age: 0, col: sp.col === 'rainbow' ? `hsl(${(t / 8 + Math.random() * 60) % 360} 100% 68%)` : sp.col });
+          }
+          const glow = g.createRadialGradient(hx, hy, 0, hx, hy, w * 0.1);
+          glow.addColorStop(0, '#fff'); glow.addColorStop(0.3, sp.col === 'rainbow' ? '#ffe7a8' : sp.col); glow.addColorStop(1, 'rgba(255,255,255,0)');
+          g.shadowBlur = 0; g.fillStyle = glow; g.beginPath(); g.arc(hx, hy, w * 0.1, 0, 6.29); g.fill();
+        }
+        g.shadowBlur = 0;
+        g.globalCompositeOperation = 'lighter'; g.lineCap = 'round';
+        sp.p = sp.p.filter((q) => (q.age += dt) < q.life);
+        for (const q of sp.p) {
+          const k = 1 - q.age / q.life, x0 = q.x, y0 = q.y; q.vy += w * 0.9 * dt; q.x += q.vx * dt; q.y += q.vy * dt;
+          g.strokeStyle = q.col; g.globalAlpha = k; g.lineWidth = Math.max(1, w * 0.016 * k);
+          g.beginPath(); g.moveTo(x0, y0); g.lineTo(q.x, q.y); g.stroke();
+          if (Math.random() < 0.08) { g.fillStyle = '#fff'; g.beginPath(); g.arc(q.x, q.y, w * 0.01, 0, 6.29); g.fill(); } // ประกายแตกกลางอากาศ
+        }
+        g.globalAlpha = 1;
+      }
+      for (let i = sparks.length - 1; i >= 0; i--) if (!sparks[i].cv.isConnected) sparks.splice(i, 1); // แถวที่หมุนออกไปแล้ว
+      if (sparks.length) requestAnimationFrame(sparkLoop); else sparkRun = false;
+    }
+    const BUB = { bu1: '', bu2: 'sepia(.45) saturate(2.4) hue-rotate(285deg)', bu3: 'sepia(.45) saturate(2.2) hue-rotate(165deg)' }; // ฟองสบู่: รุ้ง · ชมพู · ฟ้า
+    const RING = RING_RAW === 'mix' ? 'mix' : BUB[RING_RAW] !== undefined ? RING_RAW : SPARK[RING_RAW] ? RING_RAW : BULB[RING_RAW] ? RING_RAW : THIN[RING_RAW] ? RING_RAW : RN >= 1 && RN <= 40 ? String(RN).padStart(2, '0') : 'off';
     const RING_GLOW = ['#ffd76a', '#ffb3e6', '#9fd4ff', '#ffc0d8', '#ff4fd8', '#ff8a3d', '#bfe9ff', '#b48bff', '#ffd24a', '#fff1e0', '#ffb0cf', '#7fd8ff', '#ff5a7a', '#ffd76a', '#e6c2ff', '#e8f1ff', '#ffcf5c', '#ff6b8a', '#9dff8a', '#c8f4ff', '#ffd76a', '#ffb3d6', '#bfe9ff', '#d7c2ff', '#ffe3f3', '#fff6f0', '#ffd24a', '#ffc6a8', '#e8f1ff', '#ffffff', '#ff8fc8', '#ffd24a', '#ff4fd8', '#ffc0d8', '#d7c2ff', '#ff5a7a', '#ffb3d6', '#b48bff', '#fff1e0', '#ffd76a'];
     const RING_STILL = new Set(['31', '32', '33', '35', '36', '37']);
     if (RING !== 'off') {
@@ -194,7 +262,25 @@
       else how.innerHTML = `<b>${(EV[m.event] || ['', m.event])[1]}</b>`;
       if (RING !== 'off') { // ใส่วงแหวนไว้ใต้รูปของขวัญ (เริ่มมุมต่างกันนิดหน่อย ไม่หมุนพร้อมกันเป๊ะ)
         const n = ringFor(i || 0), rg = document.createElement('span'); rg.className = 'ring';
-        if (THIN[n]) { const [g, glow, dot, dbl] = THIN[n]; rg.classList.add('thin'); if (dbl) rg.classList.add('dbl'); rg.style.setProperty('--tg', g); rg.style.setProperty('--rg', glow); if (!dot) rg.style.setProperty('--dot', 'none'); }
+        if (BULB[n]) { // ไฟวิ่ง: วางหลอดเป็นวงด้วย % ของวง (คมทุกขนาด) · ดีเลย์ไล่ทีละดวง = ไฟวิ่ง
+          const [col, mode, N] = BULB[n], per = mode === 'alt' ? 1 : mode === 'tw' ? 2.4 : mode === 'on' ? 2 : 1.6;
+          rg.classList.add('bulbs'); rg.style.setProperty('--bp', per + 's');
+          rg.style.setProperty('--ba', mode === 'alt' ? 'bulbAlt' : mode === 'tw' ? 'bulbTw' : mode === 'on' ? 'bulbOn' : 'bulbChase');
+          for (let b = 0; b < N; b++) {
+            const a = (b / N) * Math.PI * 2 - Math.PI / 2, d = document.createElement('i');
+            d.style.left = 50 + 50 * Math.cos(a) + '%'; d.style.top = 50 + 50 * Math.sin(a) + '%';
+            d.style.setProperty('--bc', col === 'rainbow' ? `hsl(${Math.round(b * 360 / N)} 95% 62%)` : col);
+            const delay = mode === 'alt' ? (b % 2) * per / 2 : mode === 'tw' ? ((b * 7919) % 97) / 97 * per : mode === 'chase2' ? (b % (N / 2)) * per / (N / 2) : mode === 'on' ? (b % 2) * per / 2 : b * per / N;
+            d.style.animationDelay = (delay - per * 2 - (i || 0) * 0.37) + 's'; rg.appendChild(d); // แต่ละแถวเหลื่อมกันนิด ไม่กะพริบพร้อมกันเป๊ะ
+          }
+        }
+        else if (BUB[n] !== undefined) { rg.classList.add('bub'); if (BUB[n]) rg.style.filter = `drop-shadow(0 0 6px rgba(255,255,255,.35)) ${BUB[n]}`; }
+        else if (SPARK[n]) {
+          rg.classList.add('spark'); const cv = document.createElement('canvas'); rg.appendChild(cv);
+          sparks.push({ cv, col: SPARK[n][0], heads: SPARK[n][1], th: (i || 0) * 1.7, p: [] });
+          if (!sparkRun) { sparkRun = true; requestAnimationFrame(sparkLoop); }
+        }
+        else if (THIN[n]) { const [g, glow, dot, dbl] = THIN[n]; rg.classList.add('thin'); if (dbl) rg.classList.add('dbl'); rg.style.setProperty('--tg', g); rg.style.setProperty('--rg', glow); if (!dot) rg.style.setProperty('--dot', 'none'); }
         else { rg.style.backgroundImage = `url(rings/ring-${n}.webp)`; rg.style.setProperty('--rg', RING_GLOW[+n - 1] + 'aa'); if (RING_STILL.has(n)) rg.classList.add('still'); }
         rg.style.animationDelay = -((i || 0) * 1.3) + 's'; ico.prepend(rg);
       }

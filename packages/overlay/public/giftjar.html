@@ -92,11 +92,11 @@
         hw: (y) => y > -40 ? 90 + Math.sqrt(Math.max(0, 1600 - (y + 40) ** 2)) : y > -260 ? 130 : y > -300 ? 92 + 38 * (0.5 + 0.5 * Math.cos(Math.PI * (-260 - y) / 40)) : 92,
         openY: -338, openHW: 92, rimHW: 102, topY: -362, fullY: -290, maxHW: 130,
       },
-      clear: { // โหลแก้วใสสมจริง (ภาพ GPT พื้นใส docs/clearjar/) — ขนาดคงที่เท่าโหล TikFinity (สูง ~285px ทุกจอ) · ผนังด้านในวัดจากภาพ
-        prof: [[-312, 88], [-300, 96], [-292, 104], [-285, 110], [-276, 114], [-266, 116], [-58, 116], [-46, 110], [-36, 98]],
+      clear: { // โหลแก้วใสสมจริง (ภาพ GPT พื้นใส docs/clearjar/) — สัดส่วน/ขนาด/โทนสีเท่าโหล TikFinity (สูง ~285px ทุกจอ, กว้าง:สูง 0.76) · ผนังด้านในวัดจากภาพ
+        prof: [[-312, 98], [-300, 107], [-292, 115], [-285, 122], [-276, 127], [-266, 130], [-58, 130], [-46, 124], [-36, 110]],
         hw: (y) => profileHW(SHAPES.clear.prof, y),
-        openY: -312, openHW: 88, rimHW: 98, topY: -380, fullY: -282, maxHW: 116, floor: -36, backA: 0.18, noClear: true, noShadow: true, px: 0.75, center: true,
-        image: { src: 'themes/jar-clear.webp', back: 'themes/jar-clear-back.webp', x: -129.6, y: -380.0, w: 259.2, h: 380.0 },
+        openY: -312, openHW: 98, rimHW: 108, topY: -380, fullY: -282, maxHW: 130, floor: -36, backA: 0.18, noClear: true, noShadow: true, px: 0.75, center: true,
+        image: { src: 'themes/jar-clear.webp', back: 'themes/jar-clear-back.webp', x: -143.6, y: -380.0, w: 287.2, h: 380.0 },
       },
       bowl: { // โหลทรงกลมป่อง ปากกว้าง (โหลปลา)
         hw: (y) => 170 * Math.sqrt(Math.max(0, 1 - ((y + 140) / 150) ** 2)),

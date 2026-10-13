@@ -78,6 +78,8 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
         <p>สวัสดีค่ะ${user.displayName ? ' ' + escapeHtml(user.displayName) : ''} — มีคำขอตั้งรหัสผ่านใหม่สำหรับบัญชี ${escapeHtml(user.email)}</p>
         <p style="margin:28px 0"><a href="${link}" style="background:#ff4f9a;color:#fff;padding:12px 22px;border-radius:999px;text-decoration:none;font-weight:bold">ตั้งรหัสผ่านใหม่</a></p>
         <p style="font-size:13px;color:#8a7a95">ลิงก์ใช้ได้ 30 นาที และใช้ได้ครั้งเดียว · ถ้าไม่ได้ขอ ไม่ต้องทำอะไร รหัสเดิมยังใช้ได้ตามปกติ</p>
+        <p style="font-size:13px;color:#8a7a95;margin-top:18px">กดปุ่มไม่ได้? ถ้าอีเมลนี้อยู่ในโฟลเดอร์สแปม Gmail จะปิดลิงก์ไว้ — กด <b>“ไม่ใช่สแปม / Report not spam”</b> ด้านบนก่อน หรือคัดลอกลิงก์นี้ไปวางในเบราว์เซอร์:</p>
+        <p style="font-size:12px;word-break:break-all;background:#fff0f7;border-radius:10px;padding:10px;color:#3d2f45">${link}</p>
       </div>`);
     if (!sent) await supportNotice(user.id, '🔑 ขอรีเซ็ตรหัสผ่าน (จากหน้าเข้าสู่ระบบ — ระบบอีเมลยังไม่พร้อม)\n→ แอดมิน: เปิดข้อมูลลูกค้า กด "รีเซ็ตรหัส" แล้วส่งรหัสชั่วคราวให้ทางอีเมล ' + user.email);
     return reply.send({ ok: true });

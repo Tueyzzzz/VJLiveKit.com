@@ -83,3 +83,22 @@ export function enqueueSound(a: { sound?: string; url?: string; volume?: number 
   running = true;
   void (async () => { while (queue.length) await queue.shift()!(); running = false; })();
 }
+
+/**
+ * เปิดเว็บหลายแท็บ/หลายหน้าต่างในเครื่องเดียว → ให้ "แท็บหลัก" แท็บเดียวเล่นเสียงจากกฎ (เดิมทุกแท็บเล่นพร้อมกัน = เสียงซ้อน ดังเกิน ตีกัน)
+ * ทะเบียนแท็บ: ไว้รู้ว่าเสียงจาก Beat Pad ที่กดในอีกแท็บของเครื่องนี้ เล่นไปแล้ว ไม่ต้องเล่นซ้ำ
+ */
+const TABS_KEY = 'vjl-tabs', SND_LEAD = 'vjl-snd-lead';
+const readJ = <T,>(k: string, d: T): T => { try { return JSON.parse(localStorage.getItem(k) || '') as T; } catch { return d; } };
+export function tabBeat(id: string): void {
+  const now = Date.now(), m = readJ<Record<string, number>>(TABS_KEY, {});
+  m[id] = now; for (const k of Object.keys(m)) if (now - m[k]! > 15_000) delete m[k];
+  try { localStorage.setItem(TABS_KEY, JSON.stringify(m)); } catch { /* ignore */ }
+}
+export function isLocalTab(id: string): boolean { const t = readJ<Record<string, number>>(TABS_KEY, {})[id]; return !!t && Date.now() - t < 15_000; }
+export function claimSoundLead(id: string): boolean {
+  const now = Date.now(), lead = readJ<{ tab?: string; ts?: number }>(SND_LEAD, {});
+  if (!lead.tab || lead.tab === id || now - (lead.ts ?? 0) > 8000) { try { localStorage.setItem(SND_LEAD, JSON.stringify({ tab: id, ts: now })); } catch { /* ignore */ } return true; }
+  return false;
+}
+export function releaseSoundLead(id: string): void { if (readJ<{ tab?: string }>(SND_LEAD, {}).tab === id) try { localStorage.removeItem(SND_LEAD); } catch { /* ignore */ } }

@@ -8,7 +8,7 @@ import { api } from '@/lib/api';
 import { SoundUpload } from '@/components/SoundUpload';
 import { useAuth } from '@/lib/auth';
 import { useT } from '@/lib/i18n';
-import { SFX, playSound, readAsDataUrl, toAudioDataUrl, type Upload } from '@/lib/sounds';
+import { SFX, enqueueSound, playSound, readAsDataUrl, toAudioDataUrl, type Upload } from '@/lib/sounds';
 import { TAB_ID } from '@/components/Speaker';
 
 interface Pad { label: string; emoji?: string; color: string; sound?: string; url?: string; volume: number; key?: string; media?: string; mediaType?: 'image' | 'video' }
@@ -56,7 +56,7 @@ export default function BeatPadPage() {
   const press = useCallback(async (i: number) => {
     const p = board?.pads[i]; if (!p || (!p.sound && !p.url && !p.media) || i >= limit) return;
     setHit(i); setTimeout(() => setHit((h) => (h === i ? null : h)), 180);
-    if (here) void playSound(p);
+    if (here) enqueueSound(p); // กดรัว ๆ → เล่นต่อกันทีละเสียง ไม่ตีกัน (ตั้งให้ซ้อนได้ที่หน้าเสียงแจ้งเตือน)
     try {
       const r = await api<{ screens: number }>('/api/beatpad/play', { method: 'POST', body: { ...p, tab: TAB_ID } });
       if (!r.screens && !here) setNote({ tone: 'info', text: t('ยังไม่มีเครื่องไหนเปิดรับเสียง — เปิดเว็บนี้ค้างไว้ที่คอมที่ไลฟ์ (เปิด "เสียงจากกฎ") หรือใส่ลิงก์ FX ในโปรแกรมไลฟ์') });

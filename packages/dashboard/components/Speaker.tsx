@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useAuth } from '@/lib/auth';
-import { enqueueSound } from '@/lib/sounds';
+import { claimSoundLead, enqueueSound, isLocalTab, releaseSoundLead, tabBeat } from '@/lib/sounds';
 import { Volume2, VolumeX } from 'lucide-react';
 import { api, getToken, type Rule } from '@/lib/api';
 import { cx } from './ui';
@@ -87,7 +87,7 @@ export function LiveLink() {
 
   useEffect(() => {
     if (!username) return;
-    let sock: SocketLike | null = null, lock: { release: () => Promise<void> } | null = null, dead = false;
+    let sock: SocketLike | null = null, lock: { release: () => Promise<void> } | null = null, dead = false, beatIv: ReturnType<typeof setInterval> | undefined;
     const keepAwake = async () => { try { lock = await (navigator as unknown as { wakeLock?: { request: (t: string) => Promise<{ release: () => Promise<void> }> } }).wakeLock?.request('screen') ?? null; } catch { /* ไม่รองรับ */ } };
     const onVis = () => { if (document.visibilityState === 'visible') void keepAwake(); };
     void (async () => {
@@ -102,8 +102,8 @@ export function LiveLink() {
       sock.on('support', () => window.dispatchEvent(new Event('vjl-support'))); // แชทแจ้งปัญหา: อีกฝั่งตอบ
       sock.on('action', (f: Fire) => {
         const who = f.event?.user?.nickname || f.event?.user?.uniqueId || '';
-        if (f.tab && f.tab === TAB_ID) return; // ปุ่ม Beat Pad ที่กดจากแท็บนี้เอง — แท็บนี้เล่นเองแล้ว/ไม่ต้องเล่นซ้ำ
-        if (f.action.type === 'sound' && store.on) {
+        if (f.tab && (f.tab === TAB_ID || isLocalTab(f.tab))) return; // ปุ่ม Beat Pad ที่กดจากแท็บไหนก็ได้ในเครื่องนี้ — แท็บนั้นเล่นเองแล้ว ไม่เล่นซ้ำ
+        if (f.action.type === 'sound' && store.on && claimSoundLead(TAB_ID)) { // เปิดหลายแท็บ → ดังแท็บเดียว
           const n = Math.max(1, Math.min(20, f.times ?? 1)); // คอมโบ → ดังซ้ำตามจำนวน (ไม่เกินที่ตั้ง) — เข้าคิว/ซ้อนตามตั้งค่าหน้าเสียงแจ้งเตือน
           for (let i = 0; i < n; i++) enqueueSound(f.action);
         }
@@ -112,8 +112,9 @@ export function LiveLink() {
         toastT.current = setTimeout(() => setToast(null), 4000);
       });
       await keepAwake(); document.addEventListener('visibilitychange', onVis);
+      tabBeat(TAB_ID); beatIv = setInterval(() => { tabBeat(TAB_ID); if (store.on) claimSoundLead(TAB_ID); }, 3000);
     })();
-    return () => { dead = true; sock?.disconnect(); store.sock = null; store.live = false; emit(); document.removeEventListener('visibilitychange', onVis); void lock?.release().catch(() => {}); };
+    return () => { dead = true; clearInterval(beatIv); releaseSoundLead(TAB_ID); sock?.disconnect(); store.sock = null; store.live = false; emit(); document.removeEventListener('visibilitychange', onVis); void lock?.release().catch(() => {}); };
   }, [username]);
 
   if (needTap) return (

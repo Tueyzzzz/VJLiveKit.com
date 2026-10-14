@@ -848,6 +848,22 @@
     }
     if(Overlay.param('debug','0')==='1'){ window.__animalCycle=(n)=>ANIMALS[n]?ANIMALS[n].fd*(ANIMALS[n].n||6):0; window.__animalCount=(n)=>ANIMALS[n]?(ANIMALS[n].n||6):0; window.__animalPreload=(n)=>animalFrames(n).then(()=>true); } // ใช้ตอนอัดตัวอย่างเทมเพลต
 
+    // 🔊 คิวเสียง: กฎเสียง/เพลง (เช่น กุหลาบ ×20 · กด Beat Pad รัว ๆ) เล่นต่อกันทีละเสียง ไม่ซ้อนกันจนดังเกิน/ตีกัน · คิวยาวสุด 20
+    const SFX_MS={ chime:900, coin:500, levelup:600, fanfare:1800, magic:1000, pop:200, whoosh:650, drum:800, boing:500, heart:1000, applause:1700, punch:1000, boom:1700, airhorn:1300, sadtrombone:2400, crickets:2600, scratch:500, bonk:300, correct:700, wrong:600, drumroll:2200, suspense:2200, tada:1200, pew:300, kaching:800, slideup:700, slidedown:900, alarm:1300 };
+    const sndQ=[]; let sndBusy=false;
+    function sndEnqueue(a,vol){ if(sndQ.length>=20) return; sndQ.push([a,vol]); if(!sndBusy) sndNext(); }
+    function sndNext(){
+      const it=sndQ.shift(); if(!it){ sndBusy=false; return; } sndBusy=true;
+      const [a,vol]=it; let done=false; const fin=()=>{ if(done) return; done=true; setTimeout(sndNext,60); };
+      if(a.sound && window.VJLSfx){ if(!VJLSfx.play(a.sound,vol) && !audioArmed) armBtn.style.display='block'; setTimeout(fin, SFX_MS[a.sound]||800); return; }
+      if(a.url){
+        // OBS อนุญาต autoplay อยู่แล้ว — ถ้าเบราว์เซอร์บล็อกค่อยให้กดปุ่มเปิดเสียง
+        const au=new Audio(a.url); au.volume=Math.max(0,Math.min(1,vol)); au.onended=fin; au.onerror=fin;
+        au.play().catch(()=>{ if(!audioArmed) armBtn.style.display='block'; fin(); });
+        setTimeout(fin,60000); return; // กันไฟล์ยาวค้างคิว
+      }
+      fin();
+    }
     function play(a,ev){
       if(a.type==='mascot') return; // ท่าของมาสคอต → วิดเจ็ตมาสคอตทำเอง
       if(a.type==='effect'&&a.effect==='animal') return animal(a,ev);
@@ -862,11 +878,8 @@
       const dur=a.durationMs||5000;
       const text=fill(a.text,ev);
       const vol=Math.max(0,Math.min(1.5,a.volume==null?1:a.volume));
-      if(a.type==='sound' && a.sound && window.VJLSfx){ if(!VJLSfx.play(a.sound,vol) && !audioArmed) armBtn.style.display='block'; }
-      else if(a.type==='sound' && a.url){
-        // OBS อนุญาต autoplay อยู่แล้ว — ถ้าเบราว์เซอร์บล็อกค่อยให้กดปุ่มเปิดเสียง
-        const au=new Audio(a.url); au.volume=Math.min(1,vol); au.play().catch(()=>{ if(!audioArmed) armBtn.style.display='block'; });
-      }
+      if(a.type==='sound' && (a.sound||a.url)) sndEnqueue(a,vol); // เสียง/เพลง → เข้าคิว เล่นต่อกันทีละเพลง ไม่ตีกัน
+
       else if(a.type==='image' && a.url){ const img=document.createElement('img'); img.src=a.url; img.className='media'; fx.appendChild(img); clearLater(img,dur); }
       else if(a.type==='video' && a.url){ const v=document.createElement('video'); v.src=a.url; v.autoplay=true; v.playsInline=true; v.className='media'; fx.appendChild(v);
         v.play().catch(()=>{ v.muted=true; v.play().catch(()=>{}); if(!audioArmed) armBtn.style.display='block'; }); v.onended=()=>v.remove(); clearLater(v,dur); }

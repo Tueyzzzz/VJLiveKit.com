@@ -191,7 +191,8 @@ export class RoomHub {
   clearRanking(username: string): void {
     const entry = this.rooms.get(normalize(username)); if (!entry) return;
     entry.room.clearRanking();
-    this.io.to(RoomHub.roomChannel(entry.room.username)).emit('state', entry.room.getState());
+    const ch = RoomHub.roomChannel(entry.room.username), st = entry.room.getState();
+    this.io.to(ch).emit('state', st); this.io.to(ch).emit('stats', st.stats); // แถบเป้าหมาย/อันดับบนจอกลับเป็นค่าเริ่มต้นทันที
   }
 
   /** ส่งตั้งค่าวิดเจ็ตใหม่ให้ overlay ที่เปิดอยู่ของผู้ใช้ (หลังบันทึกใน Dashboard) */

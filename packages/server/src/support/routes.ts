@@ -67,9 +67,10 @@ async function requireAdmin(req: FastifyRequest, reply: FastifyReply) {
 }
 
 /** ข้อความจากระบบเข้าห้องแชทของลูกค้า (เช่น ขอรีเซ็ตรหัสจากหน้า login) → แอดมินเห็นเป็นยังไม่อ่าน */
-export async function supportNotice(userId: string, text: string): Promise<void> {
+export async function supportNotice(userId: string, text: string, imgs: string[] = []): Promise<void> {
   const t = await threadFor(userId);
   push(t, { from: 'user', text });
+  for (const im of imgs) { try { push(t, { from: 'user', text: '', img: saveImg(im) }); } catch { /* รูปเสีย ข้าม */ } }
   t.unreadAdmin++; t.status = 'open'; save();
   getHub()?.emitAdmins('support', { userId });
 }

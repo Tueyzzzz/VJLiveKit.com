@@ -9,7 +9,7 @@ import { promptPayPayload } from '@/lib/promptpay';
 import { bankLogo, bankOf, fmtAccount } from '@/lib/banks';
 import { translate, useLang, useT } from '@/lib/i18n';
 
-export interface SlipPayInfo { enabled: boolean; promptpay: string; bank: { code: string; account: string; holder: string } | null; autoVerify: boolean; days: number }
+export interface SlipPayInfo { enabled: boolean; promptpay: string; bank: { code: string; account: string; holder: string } | null; autoVerify: boolean; days: number; mascotPriceCents?: number; mascotFullCents?: number }
 
 /** บัญชีรับเงินที่แอดมินตั้งไว้ (null = ยังโหลด / ไม่เปิด) — ใช้ตัดสินว่าปุ่มเลือกแพลนเปิดหน้าโอนหรือแชท */
 export function useSlipPay(): SlipPayInfo | null {
@@ -44,7 +44,11 @@ function Step({ n, title, children }: { n: number; title: string; children: Reac
 }
 
 /** หน้าชำระค่าแพลนด้วยการโอน (QR พร้อมเพย์ยอดตรง / บัญชีธนาคาร) + แนบสลิป → ตรวจอัตโนมัติ หรือรอแอดมิน */
-export function SlipPaySheet({ plan, info, onClose, onPaid }: { plan: Plan; info: SlipPayInfo; onClose: () => void; onPaid: () => void }) {
+export function SlipPaySheet({ plan, info, onClose, onPaid, mascot = false }: { plan: Pick<Plan, 'code' | 'name' | 'priceCents'>; info: SlipPayInfo; onClose: () => void; onPaid: () => void; /** สั่งทำมาสคอต: เพิ่มขั้นแนบรูปหน้า + สไตล์ */ mascot?: boolean }) {
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [photoPrev, setPhotoPrev] = useState<string[]>([]);
+  const [note, setNote] = useState('');
+  useEffect(() => { const u = photos.map((f) => URL.createObjectURL(f)); setPhotoPrev(u); return () => u.forEach((x) => URL.revokeObjectURL(x)); }, [photos]);
   const t = useT();
   const [lang] = useLang();
   const loc = lang === 'en' ? 'en-US' : 'th-TH';
@@ -73,11 +77,13 @@ export function SlipPaySheet({ plan, info, onClose, onPaid }: { plan: Plan; info
   }, [busy, onClose]);
 
   async function submit(manual = false) {
+    if (mascot && !photos.length) { setErr(t('แนบรูปหน้าตัวเองอย่างน้อย 1 รูป')); return; }
     if (!slip) { setErr(t('แนบสลิปการโอนด้วย')); return; }
     setBusy(true); setErr(null); setCanManual(false);
     try {
       const data = await shrink(slip);
-      const r = await api<{ status: 'paid' | 'pending'; periodEnd?: string }>('/api/billing/slip', { method: 'POST', body: { planCode: plan.code, slip: data, manual } });
+      const extra = mascot ? { photos: await Promise.all(photos.map(shrink)), note } : {};
+      const r = await api<{ status: 'paid' | 'pending'; periodEnd?: string }>('/api/billing/slip', { method: 'POST', body: { planCode: plan.code, slip: data, manual, ...extra } });
       setDone(r);
       if (r.status === 'paid') onPaid();
     } catch (e) {
@@ -99,10 +105,12 @@ export function SlipPaySheet({ plan, info, onClose, onPaid }: { plan: Plan; info
 
         {/* หัว: แพลน + ยอดที่ต้องโอน */}
         <div className="mb-4 rounded-[24px] bg-white/90 px-4 py-4 text-center shadow-[0_18px_40px_-22px_rgba(190,60,140,.45)] ring-1 ring-white">
-          <div className="text-xs font-medium text-muted">{t('ชำระค่าแพลน')}</div>
+          <div className="text-xs font-medium text-muted">{mascot ? t('สั่งทำ') : t('ชำระค่าแพลน')}</div>
           <h2 className="font-display text-xl">{t(plan.name)}</h2>
           <div className="mt-1 bg-gradient-to-r from-pink to-violet bg-clip-text font-display text-4xl font-bold text-transparent">฿{baht.toLocaleString(loc)}</div>
-          <div className="text-xs text-muted">{t('ใช้งานได้ {days} วัน · ไม่ตัดเงินอัตโนมัติ', { days: info.days })}</div>
+          <div className="text-xs text-muted">{mascot
+            ? <>{info.mascotFullCents && info.mascotFullCents > plan.priceCents ? <><s>฿{(info.mascotFullCents / 100).toLocaleString(loc)}</s> {t('ส่วนลดตามแพลน')} · </> : null}{t('ทีมงานวาดตัวแทนวีเจจากรูปคุณ ครบทุกท่า · จ่ายครั้งเดียว ใช้ได้ตลอด')}</>
+            : t('ใช้งานได้ {days} วัน · ไม่ตัดเงินอัตโนมัติ', { days: info.days })}</div>
         </div>
 
         {done ? (
@@ -110,7 +118,8 @@ export function SlipPaySheet({ plan, info, onClose, onPaid }: { plan: Plan; info
             <div className="text-5xl">{done.status === 'paid' ? '🎉' : '⏳'}</div>
             <h3 className="mt-3 font-display text-xl">{done.status === 'paid' ? t('ชำระเงินสำเร็จ!') : t('ส่งสลิปแล้ว รอแอดมินตรวจ')}</h3>
             <p className="mt-2 text-sm text-muted">
-              {done.status === 'paid'
+              {mascot ? t('ทีมงานได้รับรูปและรายละเอียดแล้ว จะเริ่มวาดมาสคอตให้ — ติดตาม/คุยรายละเอียดได้ที่แชททีมงาน ทำเสร็จแล้วจะขึ้นใน “ตัวแทนวีเจ → ⭐ มาสคอตของฉัน”')
+              : done.status === 'paid'
                 ? t('เปิดแพลน {plan} ให้แล้ว ใช้ได้ถึง {date} ✨', { plan: t(plan.name), date: done.periodEnd ? new Date(done.periodEnd).toLocaleDateString(loc, { dateStyle: 'long' }) : '-' })
                 : t('ทีมงานจะตรวจสลิปและเปิดแพลนให้โดยเร็ว (ปกติไม่เกินไม่กี่ชั่วโมง) — ดูสถานะได้ที่ประวัติการชำระเงิน')}
             </p>
@@ -118,7 +127,18 @@ export function SlipPaySheet({ plan, info, onClose, onPaid }: { plan: Plan; info
           </div>
         ) : (
           <div className="space-y-4">
-            <Step n={1} title={t('โอนเงิน ฿{amount}', { amount: baht.toLocaleString(loc) })}>
+            {mascot && (
+              <Step n={1} title={t('รูปหน้าตัวเอง + สไตล์ที่อยากได้')}>
+                <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-violet/40 bg-violet-soft/30 px-4 py-4 text-center text-sm transition hover:bg-violet-soft/50">
+                  {photoPrev.length ? <div className="flex gap-2">{photoPrev.map((u) => <img key={u} src={u} alt="" className="size-20 rounded-xl object-cover shadow" />)}</div> : <span className="text-3xl">🤳</span>}
+                  <span className="font-medium text-violet">{photos.length ? t('เปลี่ยนรูป') : t('แตะเพื่อเลือกรูปหน้า 1–3 รูป (เห็นหน้าชัด ๆ)')}</span>
+                  <input type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={(e) => { setPhotos([...(e.target.files ?? [])].slice(0, 3)); setErr(null); }} className="sr-only" />
+                </label>
+                <textarea value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} rows={2} placeholder={t('สไตล์ที่อยากได้ เช่น ผมยาวสีชมพู ใส่ชุดเดรส ถือไมค์')}
+                  className="mt-3 w-full rounded-2xl border border-line bg-white px-3 py-2 text-sm outline-none focus:border-pink" />
+              </Step>
+            )}
+            <Step n={mascot ? 2 : 1} title={t('โอนเงิน ฿{amount}', { amount: baht.toLocaleString(loc) })}>
               {info.promptpay && bank && (
                 <div className="mb-3 grid grid-cols-2 gap-1 rounded-full bg-canvas p-1 text-sm">
                   {(['qr', 'bank'] as const).map((k) => (
@@ -155,7 +175,7 @@ export function SlipPaySheet({ plan, info, onClose, onPaid }: { plan: Plan; info
               ) : null}
             </Step>
 
-            <Step n={2} title={t('แนบสลิปการโอน')}>
+            <Step n={mascot ? 3 : 2} title={t('แนบสลิปการโอน')}>
               <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-pink/40 bg-pink-soft/30 px-4 py-5 text-center text-sm transition hover:bg-pink-soft/50">
                 {slipPrev ? <img src={slipPrev} alt="" className="max-h-56 rounded-xl shadow" /> : <span className="text-3xl">🧾</span>}
                 <span className="font-medium text-pink">{slip ? t('เปลี่ยนรูปสลิป') : t('แตะเพื่อเลือกรูปสลิป')}</span>
@@ -167,8 +187,8 @@ export function SlipPaySheet({ plan, info, onClose, onPaid }: { plan: Plan; info
             {canManual && (
               <Button variant="secondary" className="w-full" loading={busy} onClick={() => void submit(true)}>{t('ส่งให้แอดมินตรวจแทน')}</Button>
             )}
-            <Button className="h-12 w-full rounded-2xl bg-gradient-to-r from-pink to-violet text-base shadow-lg" loading={busy} disabled={!slip} onClick={() => void submit(false)}>{t('ส่งสลิป & เปิดแพลน')}</Button>
-            <p className="text-center text-[11px] text-muted">{info.autoVerify ? t('ระบบตรวจสลิปอัตโนมัติ ผ่านแล้วเปิดแพลนทันที') : t('ทีมงานจะตรวจสลิปแล้วเปิดแพลนให้')} · {t('สลิปถูกเก็บไว้เป็นหลักฐาน เงินไม่หายแน่นอน')}</p>
+            <Button className="h-12 w-full rounded-2xl bg-gradient-to-r from-pink to-violet text-base shadow-lg" loading={busy} disabled={!slip} onClick={() => void submit(false)}>{mascot ? t('ส่งสลิป & สั่งทำมาสคอต') : t('ส่งสลิป & เปิดแพลน')}</Button>
+            <p className="text-center text-[11px] text-muted">{mascot ? t('ทีมงานได้รับรูป + สลิปแล้วเริ่มวาดให้') : info.autoVerify ? t('ระบบตรวจสลิปอัตโนมัติ ผ่านแล้วเปิดแพลนทันที') : t('ทีมงานจะตรวจสลิปแล้วเปิดแพลนให้')} · {t('สลิปถูกเก็บไว้เป็นหลักฐาน เงินไม่หายแน่นอน')}</p>
           </div>
         )}
       </div>

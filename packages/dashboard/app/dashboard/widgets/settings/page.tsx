@@ -14,6 +14,7 @@ import { NumberInput } from '@/components/NumberInput';
 import { GiftPicker, useGifts } from '@/components/GiftPicker';
 import { useLang, useT } from '@/lib/i18n';
 import { useAuth } from '@/lib/auth';
+import { useMascotOrder } from '@/components/MascotOrder';
 import { FREE_ALL_STYLES, WIDGET_SETTINGS, defaultsOf, toOverlayParams, type FieldDef, type Values } from '@/lib/widgetSettings';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
@@ -300,7 +301,7 @@ function WidgetSettings() {
   const type = sp.get('type') ?? '';
   const jarTab = type === 'giftjar' ? JAR_TABS.find((x) => x.g === sp.get('g')) : undefined;
   const [customMascots, setCustomMascots] = useState<{ code: string; name: string; mine?: boolean }[]>([]);
-  useEffect(() => { if (type === 'mascot') api<{ mascots: { code: string; name: string; mine?: boolean }[] }>('/api/mascots/custom').then((r) => setCustomMascots(r.mascots)).catch(() => {}); }, [type]);
+  useEffect(() => { if (type === 'mascot') api<{ mascots: { code: string; name: string; mine?: boolean }[] }>('/api/mascots/custom').then((r) => setCustomMascots(r.mascots ?? [])).catch(() => {}); }, [type]);
   // มาสคอตสั่งทำ (หน้าลูกค้าเอง) → เพิ่มเป็นตัวเลือกแรกในกลุ่ม "มาสคอตของฉัน"
   const def = useMemo(() => {
     const base0 = WIDGET_SETTINGS[type];
@@ -464,9 +465,7 @@ function WidgetSettings() {
             <div className="font-semibold">{t('อยากได้มาสคอตเป็นหน้าตัวเอง?')}</div>
             <p className="text-sm text-muted">{t('ส่งรูปหน้าตรงชัด ๆ 1–3 รูป บอกสไตล์ที่ชอบ — ทีมงานวาดเป็นตัวละครของคุณ ครบทุกท่า (รับของขวัญ เต้น เดิน ส่งจุ๊บ) แจ้งราคาและระยะเวลาในแชท')}</p>
           </div>
-          <Button onClick={() => window.dispatchEvent(new CustomEvent('vjl-open-support', { detail: { text: t('สนใจสั่งทำมาสคอตหน้าตัวเองค่ะ/ครับ 🎨 สไตล์ที่อยากได้: ') } }))}>
-            {t('🛒 สั่งทำมาสคอตหน้าตัวเอง')}
-          </Button>
+          <MascotOrderButton />
         </Card>
       )}
 
@@ -573,6 +572,12 @@ function WidgetSettings() {
 }
 
 const portraitFit = (w: number) => (w < 1500 ? 1 : 2); // แนวตั้ง: วาดบนแคนวาสเต็มจอ (เช่น กอง) → โชว์เต็มจอมือถือ
+
+function MascotOrderButton() {
+  const t = useT();
+  const m = useMascotOrder();
+  return <>{m.sheet}<Button onClick={m.start}>{m.price ? t('🛒 สั่งทำ {price}', { price: m.price }) : t('🛒 สั่งทำมาสคอตหน้าตัวเอง')}</Button></>;
+}
 
 export default function WidgetSettingsPage() {
   return <Suspense fallback={<Spinner />}><WidgetSettings /></Suspense>;

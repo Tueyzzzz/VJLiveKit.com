@@ -9,7 +9,9 @@ import { requireUser, getUser } from '../auth/middleware.js';
 import { isAdmin } from '../admin/routes.js';
 import { audit } from '../admin/store.js';
 import { config } from '../config/index.js';
-import { getPlans, getPlan, trialEndOf } from '../plans/index.js';
+import { getPlans, getPlan, trialEndOf, getEntitlements } from '../plans/index.js';
+import { settings as sys } from '../settings/index.js';
+import { supportNotice } from '../support/routes.js';
 import { verifySlipV2, easyslipKey } from '../donate/easyslip.js';
 import { sendMail, mailEnabled } from '../mail/send.js';
 
@@ -109,13 +111,27 @@ async function requireAdmin(req: FastifyRequest, reply: FastifyReply) {
   if (!isAdmin(req)) await reply.code(403).send({ error: 'สำหรับแอดมินเท่านั้น' });
 }
 
-interface SlipRaw { kind: 'slip'; slipId: string; planCode: string; planName: string; priceCents: number; slipAmount?: number; ref?: string; auto: boolean; note?: string; periodEnd?: string }
+interface SlipRaw { product?: 'mascot'; kind: 'slip'; slipId: string; planCode: string; planName: string; priceCents: number; slipAmount?: number; ref?: string; auto: boolean; note?: string; periodEnd?: string }
 
 const submitSchema = z.object({
   planCode: z.string().min(2).max(20),
   slip: z.string().regex(/^data:image\/(jpeg|png|webp);base64,/).max(5_600_000), // ~4MB หลังถอด base64
   manual: z.boolean().optional(), // ระบบอ่านสลิปไม่ได้ → ผู้ใช้ขอให้แอดมินตรวจเอง
+  // สั่งทำมาสคอต (planCode = 'mascot'): รูปหน้า 1–3 รูป + สไตล์ที่อยากได้
+  photos: z.array(z.string().regex(/^data:image\/(jpeg|png|webp);base64,/).max(3_000_000)).max(3).optional(),
+  note: z.string().trim().max(500).optional(),
 });
+/** สั่งทำมาสคอต: ราคา (สตางค์) หลังหักส่วนลดตามแพลน — ราคาจากเซิร์ฟเวอร์เท่านั้น */
+async function mascotPriceCents(userId: string): Promise<number> {
+  const ent = await getEntitlements(userId);
+  return Math.round(sys().mascotPrice * (1 - Math.max(0, Math.min(100, ent.mascotDiscountPct ?? 0)) / 100)) * 100; // ปัดเป็นบาทเต็ม (ไม่มีสตางค์ — QR/สลิปตรงยอดง่าย)
+}
+/** สั่งทำมาสคอต: ส่งรายละเอียด + รูปเข้าแชทลูกค้า (แอดมินเห็นในแชทลูกค้า) */
+async function mascotOrderNotice(userId: string, status: string, baht: number, note?: string, photos: string[] = []): Promise<void> {
+  await supportNotice(userId, `🧸 สั่งทำมาสคอตหน้าตัวเอง — ${status} ฿${baht}
+🎨 สไตล์ที่อยากได้: ${note || '(ไม่ได้ระบุ)'}
+📷 รูปหน้า ${photos.length} รูป (ด้านล่าง)`, photos).catch(() => {});
+}
 const accSchema = z.object({
   promptpay: z.string().trim().max(20).default('').refine((s) => !s || [10, 13, 15].includes(digits(s).length), 'พร้อมเพย์ต้องเป็นเบอร์ 10 หลัก / เลขบัตร 13 หลัก / e-Wallet 15 หลัก'),
   bank: z.string().trim().max(12).regex(/^[a-z]*$/).default(''),
@@ -126,21 +142,25 @@ const accSchema = z.object({
 export async function slipBillingRoutes(app: FastifyInstance): Promise<void> {
   // ---- ของวีเจ ----
   // บัญชีรับเงินของเรา (ไว้สร้าง QR พร้อมเพย์ / แสดงเลขบัญชี) — เป็นบัญชีรับเงินธุรกิจ แสดงให้ลูกค้าเห็นอยู่แล้ว
-  app.get('/api/billing/slip/info', { preHandler: requireUser }, async () => {
+  app.get('/api/billing/slip/info', { preHandler: requireUser }, async (req) => {
     const r = receiving();
-    return { enabled: r.enabled, promptpay: r.promptpay, bank: r.bank, autoVerify: !!easyslipKey(), days: DAYS };
+    return { enabled: r.enabled, promptpay: r.promptpay, bank: r.bank, autoVerify: !!easyslipKey(), days: DAYS, mascotPriceCents: await mascotPriceCents(getUser(req)!.userId), mascotFullCents: sys().mascotPrice * 100 };
   });
 
-  app.post('/api/billing/slip', { preHandler: requireUser, bodyLimit: 6_000_000, config: { rateLimit: { max: 6, timeWindow: '10 minutes' } } }, async (req, reply) => {
+  app.post('/api/billing/slip', { preHandler: requireUser, bodyLimit: 16_000_000, config: { rateLimit: { max: 6, timeWindow: '10 minutes' } } }, async (req, reply) => {
     const { userId, email } = getUser(req)!;
     const p = submitSchema.safeParse(req.body);
     if (!p.success) return reply.code(400).send({ error: 'แนบรูปสลิป (JPG/PNG) ขนาดไม่เกิน 4MB' });
     const rcv = receiving();
     if (!rcv.enabled) return reply.code(400).send({ error: 'ยังไม่เปิดรับชำระด้วยการโอน — ทักแชททีมงานได้เลย' });
     // ราคาจากเซิร์ฟเวอร์เท่านั้น (ไม่เชื่อยอดจากหน้าเว็บ)
-    const plan = getPlans().find((x) => x.code === p.data.planCode && x.priceCents > 0);
+    const isMascot = p.data.planCode === 'mascot';
+    const plan = isMascot
+      ? { code: 'mascot', name: 'มาสคอตหน้าตัวเอง', priceCents: await mascotPriceCents(userId), currency: 'thb' }
+      : getPlans().find((x) => x.code === p.data.planCode && x.priceCents > 0);
     if (!plan) return reply.code(400).send({ error: 'ไม่พบแพลนนี้' });
-    const sub = await prisma.subscription.findUnique({ where: { userId } });
+    if (isMascot && !p.data.photos?.length) return reply.code(400).send({ error: 'แนบรูปหน้าตัวเองอย่างน้อย 1 รูป' });
+    const sub = isMascot ? null : await prisma.subscription.findUnique({ where: { userId } });
     if (sub?.provider === 'stripe' && ['ACTIVE', 'TRIALING', 'PAST_DUE'].includes(sub.status)) return reply.code(409).send({ error: 'คุณตัดบัตรอัตโนมัติอยู่แล้ว — เปลี่ยนแพลนผ่านแชททีมงาน' });
     const waiting = await prisma.payment.count({ where: { userId, provider: PROVIDER, status: 'PENDING' } });
     if (waiting >= 3) return reply.code(429).send({ error: 'มีสลิปรอตรวจอยู่หลายรายการแล้ว — รอแอดมินตรวจสักครู่นะ' });
@@ -152,7 +172,7 @@ export async function slipBillingRoutes(app: FastifyInstance): Promise<void> {
     const id = 'ps_' + crypto.randomBytes(9).toString('base64url').replace(/[^a-zA-Z0-9]/g, 'x');
     saveSlip(id, img, kind); // บันทึกรูปก่อนเสมอ
     const baht = plan.priceCents / 100;
-    const base: SlipRaw = { kind: 'slip', slipId: id, planCode: plan.code, planName: plan.name, priceCents: plan.priceCents, auto: false };
+    const base: SlipRaw = { ...(isMascot ? { product: 'mascot' as const } : {}), kind: 'slip', slipId: id, planCode: plan.code, planName: plan.name, priceCents: plan.priceCents, auto: false };
 
     const v = p.data.manual ? null : await verifySlipV2(img);
     logLine({ id, userId, plan: plan.code, price: baht, verify: v ?? (p.data.manual ? 'manual' : 'unavailable') });
@@ -164,6 +184,7 @@ export async function slipBillingRoutes(app: FastifyInstance): Promise<void> {
     };
     const pending = async (note: string, extra: Partial<SlipRaw> = {}, ref?: string) => {
       await record('PENDING', { ...base, ...extra, note }, ref);
+      if (isMascot) await mascotOrderNotice(userId, 'ส่งสลิปแล้ว รอตรวจ', baht, p.data.note, p.data.photos);
       return { ok: true, status: 'pending' as const };
     };
 
@@ -191,6 +212,10 @@ export async function slipBillingRoutes(app: FastifyInstance): Promise<void> {
     let row;
     try { row = await record('PAID', { ...base, ...extra, auto: true }, v.ref); }
     catch { return reply.code(400).send({ error: 'สลิปนี้ถูกใช้ชำระไปแล้ว' }); }
+    if (isMascot) { // จ่ายผ่าน → ส่งงานเข้าแชท (ไม่มีแพลนให้เปิด)
+      await mascotOrderNotice(userId, '✅ จ่ายแล้ว (ตรวจสลิปผ่าน)', got || baht, p.data.note, p.data.photos);
+      return { ok: true, status: 'paid' as const, plan: plan.name };
+    }
     try {
       const end = await activate(userId, plan.code);
       await prisma.payment.update({ where: { id: row.id }, data: { rawPayload: { ...base, ...extra, auto: true, periodEnd: end?.toISOString() } as unknown as Prisma.InputJsonValue } });
@@ -242,6 +267,13 @@ export async function slipBillingRoutes(app: FastifyInstance): Promise<void> {
     if (act === 'reject') {
       await prisma.payment.update({ where: { id }, data: { status: 'FAILED', rawPayload: { ...raw, note: 'แอดมินปฏิเสธสลิปนี้' } as unknown as Prisma.InputJsonValue } });
       audit(admin, 'ปฏิเสธสลิปค่าแพลน', row.userId, `${raw.planName ?? ''} ฿${row.amountCents / 100}`);
+      return { ok: true };
+    }
+    if (raw.product === 'mascot') { // สั่งทำมาสคอต: อนุมัติ = รับงาน (ไม่เปิดแพลน)
+      const lk = await prisma.payment.updateMany({ where: { id, status: 'PENDING' }, data: { status: 'PAID' } });
+      if (!lk.count) return reply.code(409).send({ error: 'รายการนี้ตรวจไปแล้ว' });
+      await supportNotice(row.userId, `✅ แอดมินยืนยันสลิปค่ามาสคอตแล้ว ฿${row.amountCents / 100} — เริ่มทำมาสคอตให้เลย`).catch(() => {});
+      audit(admin, 'อนุมัติสลิปค่ามาสคอต', row.userId, `฿${row.amountCents / 100}`);
       return { ok: true };
     }
     const planCode = getPlan(raw.planCode ?? '') ? raw.planCode : 'pro';

@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react';
 import { Check, Copy } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useT } from '@/lib/i18n';
+import { useMascotOrder } from './MascotOrder';
 
 /** แถบขวา (จอกว้าง ≥1280px): ลิงก์แนะนำเพื่อน + แบนเนอร์โปรโมต (ภาพจาก GPT, ข้อความเป็น HTML ให้คม) */
 export function RightRail() {
   const t = useT();
+  const mascot = useMascotOrder();
   const [link, setLink] = useState<string | null>(null);
   const [ref, setRef] = useState<{ perReward: number; rewardDays: number; qualified: number; toNext: number } | null>(null);
   const [copied, setCopied] = useState(false);
@@ -36,7 +38,8 @@ export function RightRail() {
           </button>
         </div>
       )}
-      <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('vjl-open-support', { detail: { text: t('สนใจสั่งทำมาสคอตหน้าตัวเองค่ะ/ครับ 🎨 สไตล์ที่อยากได้: ') } }))}
+      {mascot.sheet}
+      <button type="button" onClick={mascot.start}
         className="group relative block w-full overflow-hidden rounded-2xl text-left shadow-md transition hover:-translate-y-0.5 hover:shadow-[0_12px_30px_-10px_rgba(255,105,170,.5)]">
         <img src="/promo/sidebar-ad.webp" alt="" width={793} height={1983} className="block h-auto w-full" />
         <div className="absolute inset-x-0 top-0 px-4 pt-5 text-center">
@@ -45,7 +48,7 @@ export function RightRail() {
           <div className="mt-1 text-xs leading-relaxed text-ink/70">{t('ทีมงานวาดตัวแทนวีเจจากรูปคุณ ครบทุกท่า เต้น · ส่งจุ๊บ · รับของขวัญ')}</div>
         </div>
         <div className="absolute inset-x-0 bottom-[6.2%] flex justify-center">
-          <span className="rounded-full px-5 py-1.5 text-sm font-bold text-white drop-shadow-[0_1px_2px_rgba(160,40,90,.6)]">{t('สั่งทำเลย 💖')}</span>
+          <span className="rounded-full px-5 py-1.5 text-sm font-bold text-white drop-shadow-[0_1px_2px_rgba(160,40,90,.6)]">{mascot.price ? t('สั่งทำ {price} 💖', { price: mascot.price }) : t('สั่งทำเลย 💖')}</span>
         </div>
       </button>
     </aside>

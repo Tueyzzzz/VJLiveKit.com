@@ -1355,10 +1355,13 @@
     const bodies = [], MAX = Math.round(Math.max(250, Math.min(2000, 600 / (GIFT_SCALE * GIFT_SCALE)))), G = 0.6;
     const imgCache = {};
     function giftImg(url) { if (!url || !/^https:\/\//.test(url)) return null; let im = imgCache[url]; if (!im) { im = new Image(); im.src = url; imgCache[url] = im; } return im; }
-    // ของแพงใหญ่ตามราคา (Juice.sizeFor) · จำกัดไม่ให้ใหญ่เกินภาชนะเล็ก (เช่น ท้องหมู/เรือดำน้ำ)
-    const sizeFor = Juice.sizeFor || ((d, max = 4) => 1 + (max - 1) * Math.min(1, Math.log10(Math.max(1, d || 1)) / 4.5)); // กันไฟล์ juice.js เก่าในแคช
-    // เพดาน: ไม่เกิน 42% ของความกว้างภาชนะ และไม่เกิน 56 หน่วย (≈ 1/6 ความสูงจอ) แม้ตั้งขนาดของขวัญไว้ใหญ่
-    const radiusFor = (diamonds) => Math.min(14.4 * GIFT_SCALE * sizeFor(diamonds, 4), Math.max(18, SH.maxHW * 0.45), SH.maxR || 60); // maxR: ภาชนะเตี้ย (เช่น ตู้ไอศกรีม) — ชิ้นใหญ่สูงเกินช่องจะค้างเหนือ fullY → โหมดจางหายลบไม่หยุด
+    // ของแพงใหญ่ตามราคา (ตารางของโหลโดยเฉพาะ — วิดเจ็ตอื่นยังใช้ Juice.sizeFor): 1💎=1× · 99=3× · 1,000=5× · 5,000=6× · 30,000=8×
+    const GJ_SIZE = [[1, 1], [20, 2], [99, 3], [300, 4], [1000, 5], [5000, 6], [30000, 8]];
+    const sizeFor = (d) => { const x = Math.log10(Math.max(1, d || 1)), T = GJ_SIZE; if (x >= Math.log10(T[T.length - 1][0])) return T[T.length - 1][1];
+      for (let i = 1; i < T.length; i++) { const x1 = Math.log10(T[i][0]); if (x <= x1) { const x0 = Math.log10(T[i - 1][0]); return T[i - 1][1] + (T[i][1] - T[i - 1][1]) * (x - x0) / (x1 - x0); } } return 1; };
+    // เพดาน: ชิ้นใหญ่ต้องลอดปากโหลได้ (ไม่เกิน 95% ของปาก) · ภาชนะเตี้ยใช้ maxR · ภาชนะไม่มีปาก (รถ/ฐาน) ไม่เกิน 45% ของความกว้าง
+    const capR = SH.maxR || (SH.openHW ? SH.openHW * 0.95 : Math.max(18, SH.maxHW * 0.45));
+    const radiusFor = (diamonds) => Math.min(14.4 * GIFT_SCALE * sizeFor(diamonds), capR);
 
     let capArea = 0;
     function jarCap() { // พื้นที่ช่องในโหล (ปากโหล → พื้น) × 0.8 (มีฝา × 0.6)

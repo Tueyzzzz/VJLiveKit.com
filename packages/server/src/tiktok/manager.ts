@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { EventEmitter } from 'node:events';
 import { recordGift } from './giftCatalog.js';
 import { recordCollect } from './collectStore.js';
@@ -47,6 +49,8 @@ type Events = {
  * - connect() เชื่อมต่อจริง หรือ เริ่มโหมดเดโม
  * - ส่งอีเวนต์ normalized ผ่าน emitter ('event' / 'stats' / 'status')
  */
+const PK_CARD_LOG = path.join(process.env.SNAPSHOT_DIR ? path.dirname(process.env.SNAPSHOT_DIR) : path.resolve(process.cwd(), '../../data'), 'pk-cards.log');
+
 export class TikTokRoom extends EventEmitter {
   readonly username: string;
   private connection: any = null;
@@ -277,13 +281,18 @@ export class TikTokRoom extends EventEmitter {
   private static CARDS: Record<number, [string, string, string]> = {
     2: ['critical', '⚡ สายฟ้า', 'useCriticalStrikeCard'], 3: ['smoke', '🌫️ หมอก', 'useSmokeCard'], 5: ['extra', '⏱️ ต่อเวลา', 'useExtraTimeCard'],
     6: ['effect', '✨ เอฟเฟกต์พิเศษ', 'useSpecialEffectCard'], 7: ['potion', '🧪 ยาพลัง', 'usePotionCard'], 8: ['wave', '🌊 คลื่น', 'useWaveCard'],
-    10: ['top2', '🥈 เก้าอี้ที่ 2 X2', 'useTop2Card'], 11: ['top3', '🥉 เก้าอี้ที่ 3 X2', 'useTop3Card'], // อันดับ 2/3 ของห้องส่งของขวัญได้คะแนนคูณ 2 12: ['glove', '🥊 นวม', 'useVaultGloveCard'],
+    10: ['top2', '🥈 เก้าอี้ที่ 2 X2', 'useTop2Card'], 11: ['top3', '🥉 เก้าอี้ที่ 3 X2', 'useTop3Card'], // อันดับ 2/3 ของห้องส่งของขวัญได้คะแนนคูณ 2
+    12: ['glove', '🥊 นวม', 'useVaultGloveCard'], // เดิมบรรทัดนี้หลุดไปต่อท้ายคอมเมนต์ข้างบน → ระบบไม่รู้จักการ์ดนวมเลย
   };
   private onCard(d: any) {
     if (this.isDuplicate(d)) return;
     this.logPk('card', d);
-    const def = TikTokRoom.CARDS[Number(d?.msgType)];
+    let def = TikTokRoom.CARDS[Number(d?.msgType)];
     if (!def) return; // แนะนำ/แจกการ์ด — ยังไม่ส่งต่อ
+    // บันทึกการ์ด PK ลงไฟล์ (ไว้ตรวจย้อนหลัง — log ในหน่วยความจำหายตอน deploy)
+    try { const raw = JSON.stringify(d, (k, v) => (k === 'common' || /image|Image|avatar|Thumb/.test(k) ? undefined : v)).slice(0, 2000); fs.appendFileSync(PK_CARD_LOG, JSON.stringify({ t: new Date().toISOString(), u: this.username, msgType: d?.msgType, raw }) + String.fromCharCode(10)); } catch { /* ignore */ }
+    // นวมที่ TikTok ส่งมาในรูปการ์ดสายฟ้า (ข้อความ/ชื่อการ์ดพูดถึงนวม) → ถือเป็นนวม ไม่โชว์คลิปสายฟ้า
+    if (def[0] === 'critical' && /glove|นวม|boxing/i.test(JSON.stringify(d?.[def[2]] ?? {}))) def = TikTokRoom.CARDS[12]!;
     const use = d?.[def[2]] ?? {}, info = use.cardInfo ?? {}, su = info.sendUser?.user;
     const anchor = String(use.anchorId ?? info.toAnchorId ?? '');
     this.send('pk', { user: su?.nickName ? { userId: String(su.userId ?? ''), uniqueId: String(su.displayId ?? su.nickName), nickname: su.nickName, avatar: '' } : undefined, pk: { kind: 'card', card: def[0], label: def[1], by: su?.nickName || undefined, side: !this.hostId || !anchor ? null : anchor === this.hostId ? 'us' : 'them', text: use.displayContent?.defaultPattern || undefined } });

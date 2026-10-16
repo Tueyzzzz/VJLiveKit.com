@@ -281,6 +281,17 @@ export class RoomHub {
       // หลุด/ไลฟ์จบ -> บันทึกสถิติ แล้วลองต่อใหม่ถ้ายังมีคนดู
       if (s.type === 'disconnected' || s.type === 'streamEnd') void this.persist(entry, s.type === 'streamEnd');
       if ((s.type === 'disconnected' || s.type === 'streamEnd') && entry.viewers > 0) this.scheduleRetry(key, entry);
+      // ล้าง Auto ตอนจบไลฟ์: รอ 2 นาทีแล้วเช็กซ้ำว่าจบจริง (TikTok ส่ง "จบ" ผิดกลางไลฟ์ได้ → ไม่ล้างของขวัญกลางไลฟ์)
+      if (s.type === 'streamEnd' && !this.demo) {
+        const endedRoom = room.liveRoomId;
+        setTimeout(() => {
+          void (async () => {
+            if (room.isConnected() && room.liveRoomId === endedRoom) return; // ต่อกลับเข้าห้องเดิมได้ = ยังไลฟ์อยู่
+            if ((await room.checkLive().catch(() => null)) !== false) return; // ยังไลฟ์ / เช็กไม่ได้ → ไม่ล้าง (ไว้ล้างตอนเริ่มไลฟ์ใหม่แทน)
+            await autoClearOnNewLive(room.username);
+          })().catch((err) => console.error('[autoClear] end failed', err));
+        }, 120_000).unref();
+      }
     });
     return entry;
   }

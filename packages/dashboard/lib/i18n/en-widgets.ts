@@ -1156,4 +1156,6 @@ export const EN_WIDGETS: Record<string, string> = {
   "🩵 ฟองสบู่ฟ้า": "🩵 Blue bubble",
   "🧹 ล้าง Auto — ล้างของขวัญเองทุกครั้งที่เริ่มไลฟ์ใหม่": "🧹 Auto clear — empty the gifts every time a new live starts",
   "ปิด = ของขวัญสะสมต่อข้ามไลฟ์ (ล้างเองด้วยปุ่มด้านล่าง) · ลงไลฟ์แล้วขึ้นใหม่ = เริ่มโหลว่าง": "Off = gifts keep piling up across lives (clear manually with the button below) · On = each new live starts empty",
+  "🧹 ล้าง Auto — ล้างของขวัญเองเมื่อจบไลฟ์": "🧹 Auto clear — empty the gifts when the live ends",
+  "จบไลฟ์แล้ว 2 นาที ของขวัญจะล้างให้เอง · ไลฟ์ใหม่เริ่มโหลว่าง · ปิด = ของขวัญสะสมต่อข้ามไลฟ์ (ล้างเองด้วยปุ่มด้านล่าง)": "Gifts clear 2 minutes after the live ends · each new live starts empty · Off = gifts keep piling across lives (clear with the button below)",
 };

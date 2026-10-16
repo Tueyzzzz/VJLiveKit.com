@@ -3,7 +3,7 @@ import { flushLiveStats } from './realtime/livestats.js';
 import { buildApp } from './app.js';
 import { setupRealtime } from './realtime/socket.js';
 import { config } from './config/index.js';
-import { disconnectDb } from './db/prisma.js';
+import { disconnectDb, prisma } from './db/prisma.js';
 import { ensurePlans } from './plans/index.js';
 import { runtime } from './runtime.js';
 
@@ -13,6 +13,12 @@ async function main(): Promise<void> {
   }
   // sync แพลน Free/Pro ลง DB (ไม่ต้องรัน seed เอง)
   await ensurePlans();
+  // ลูกค้าเก่าที่ไม่ได้กรอกชื่อที่แสดง → ใช้ชื่อ TikTok แทน (ทำครั้งเดียว ไม่แตะคนที่มีชื่อแล้ว)
+  try {
+    const noName = await prisma.user.findMany({ where: { OR: [{ displayName: null }, { displayName: '' }], tiktokUsername: { not: null } }, select: { id: true, tiktokUsername: true } });
+    for (const u of noName) await prisma.user.update({ where: { id: u.id }, data: { displayName: u.tiktokUsername } });
+    if (noName.length) console.log(`[users] ตั้งชื่อที่แสดงจากชื่อ TikTok ให้ ${noName.length} บัญชี`);
+  } catch (err) { console.warn('[users] backfill displayName failed', (err as Error).message); }
 
   const app = await buildApp();
   await app.ready();

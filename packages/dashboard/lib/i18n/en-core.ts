@@ -784,4 +784,6 @@ export const EN_CORE: Record<string, string> = {
   'อ่าน QR ในสลิปไม่ได้ หรือไม่ใช่สลิปโอนเงิน — ลองแคปให้ชัดขึ้น': "Couldn't read the slip QR, or it isn't a transfer slip — try a clearer screenshot",
   'อ่าน QR ในสลิปไม่ได้ — ลองถ่าย/แคปให้ชัดขึ้น': "Couldn't read the slip QR — try a clearer photo/screenshot",
   'ไม่พบสลิปนี้ในระบบธนาคาร': "This slip was not found in the banking system",
+  "ชื่อที่แสดง (ผู้ชมจะเห็นชื่อนี้)": "Display name (viewers see this)",
+  "กรุณากรอกชื่อที่แสดง อีเมลให้ถูกต้อง และรหัสผ่านอย่างน้อย 8 ตัวอักษร": "Please enter a display name, a valid email and a password of at least 8 characters",
 };

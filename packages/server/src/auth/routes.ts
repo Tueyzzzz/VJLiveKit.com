@@ -28,13 +28,14 @@ const publicUser = {
 const credsSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
-  displayName: z.string().min(1).optional(),
+  displayName: z.string().trim().min(1).max(60).optional(),
 });
+const registerSchema = credsSchema.extend({ displayName: z.string().trim().min(1).max(60) }); // สมัครใหม่ต้องกรอกชื่อที่แสดง
 
 export async function authRoutes(app: FastifyInstance): Promise<void> {
   // สมัครสมาชิก
   app.post('/api/auth/register', { config: { rateLimit: { max: 10, timeWindow: '1 hour' } } }, async (req, reply) => {
-    const parsed = credsSchema.safeParse(req.body);
+    const parsed = registerSchema.safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: 'ข้อมูลไม่ถูกต้อง', issues: parsed.error.issues });
     const { email, password, displayName } = parsed.data;
 
@@ -133,6 +134,8 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       },
       select: publicUser,
     });
+    // ยังไม่มีชื่อที่แสดง → ใช้ชื่อ TikTok แทน (หลังบ้าน/หน้าโดเนทไม่ขึ้น "-" หรือ "Admin")
+    if (!user.displayName?.trim() && user.tiktokUsername) user.displayName = (await prisma.user.update({ where: { id: claims.userId }, data: { displayName: user.tiktokUsername }, select: { displayName: true } })).displayName;
     // เปลี่ยนชื่อ TikTok -> ล้างแคชกฎของทั้งชื่อเก่าและใหม่
     if (before?.tiktokUsername) getHub()?.invalidateRules(before.tiktokUsername);
     if (user.tiktokUsername) getHub()?.invalidateRules(user.tiktokUsername);

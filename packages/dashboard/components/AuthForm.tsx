@@ -45,7 +45,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
       router.replace(nextPath());
     } catch (err) {
       setError(err instanceof ApiError && err.status === 400 && mode === 'register'
-        ? t('กรุณากรอกอีเมลให้ถูกต้อง และรหัสผ่านอย่างน้อย 8 ตัวอักษร')
+        ? t('กรุณากรอกชื่อที่แสดง อีเมลให้ถูกต้อง และรหัสผ่านอย่างน้อย 8 ตัวอักษร')
         : (err as Error).message);
     } finally {
       setBusy(false);
@@ -61,8 +61,8 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
         <h1 className="mb-5 font-display text-2xl">{isLogin ? t('เข้าสู่ระบบ') : t('สมัครสมาชิก')}</h1>
         <form onSubmit={onSubmit} className="space-y-4" method="post" autoComplete="on">
           {!isLogin && (
-            <Field label={t('ชื่อที่แสดง')}>
-              <Input name="displayName" autoComplete="nickname" placeholder={t('เช่น น้องมิมิ')} />
+            <Field label={t('ชื่อที่แสดง (ผู้ชมจะเห็นชื่อนี้)')}>
+              <Input name="displayName" required maxLength={60} autoComplete="nickname" placeholder={t('เช่น น้องมิมิ')} />
             </Field>
           )}
           <Field label={t('อีเมล')}>

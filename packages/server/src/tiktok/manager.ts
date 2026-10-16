@@ -113,6 +113,8 @@ export class TikTokRoom extends EventEmitter {
     this.emit('stats', this.stats);
   }
 
+  /** ล้างอันดับผู้ชม (ล้าง Auto ตอนจบไลฟ์) */
+  clearRanking(): void { this.gifters.clear(); this.likers.clear(); }
   topGifters(limit = 20): TopGifter[] { return RoomRanking.top(this.gifters, limit); }
   topLikers(limit = 20): TopGifter[] { return RoomRanking.top(this.likers, limit); }
 

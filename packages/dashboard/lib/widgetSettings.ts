@@ -850,6 +850,10 @@ for (const t of ['giftjar', 'aquarium', 'vehicle', 'snowglobe', 'spacedome', 'be
   const d = WIDGET_SETTINGS[t];
   if (d?.sections[0]) d.sections[0].fields.push({ key: 'autoClear', label: '🧹 ล้าง Auto — ล้างของขวัญเองเมื่อจบไลฟ์', type: 'toggle', def: true, hint: 'จบไลฟ์แล้ว 2 นาที ของขวัญจะล้างให้เอง · ไลฟ์ใหม่เริ่มโหลว่าง · ปิด = ของขวัญสะสมต่อข้ามไลฟ์ (ล้างเองด้วยปุ่มด้านล่าง)' });
 }
+for (const t of ['topgifters', 'toplikers']) { // อันดับผู้ชม: ล้าง Auto เหมือนกัน
+  const d = WIDGET_SETTINGS[t];
+  if (d?.sections[0]) d.sections[0].fields.push({ key: 'autoClear', label: '🧹 ล้าง Auto — ล้างอันดับเองเมื่อจบไลฟ์', type: 'toggle', def: true, hint: 'จบไลฟ์แล้ว 2 นาที อันดับจะเริ่มใหม่ · ปิด = อันดับค้างไว้จนเริ่มไลฟ์ใหม่' });
+}
 
 /** ค่าเริ่มต้นของทุกช่อง */
 export function defaultsOf(def: WidgetSettingsDef): Values {

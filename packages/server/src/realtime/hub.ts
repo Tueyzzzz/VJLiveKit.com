@@ -187,6 +187,13 @@ export class RoomHub {
     return (await this.io.in(ch).fetchSockets()).length + (event === 'action' ? (await this.io.in(RoomHub.speakerChannel(userId)).fetchSockets()).length : 0);
   }
 
+  /** ล้าง Auto: ล้างอันดับผู้ชมในห้อง (หน่วยความจำ) แล้วส่ง state ใหม่ให้วิดเจ็ต */
+  clearRanking(username: string): void {
+    const entry = this.rooms.get(normalize(username)); if (!entry) return;
+    entry.room.clearRanking();
+    this.io.to(RoomHub.roomChannel(entry.room.username)).emit('state', entry.room.getState());
+  }
+
   /** ส่งตั้งค่าวิดเจ็ตใหม่ให้ overlay ที่เปิดอยู่ของผู้ใช้ (หลังบันทึกใน Dashboard) */
   pushConfig(userId: string, widget: string, settings: unknown): void {
     this.io.to(RoomHub.configChannel(userId, widget)).emit('config', settings ?? {});
@@ -288,7 +295,7 @@ export class RoomHub {
           void (async () => {
             if (room.isConnected() && room.liveRoomId === endedRoom) return; // ต่อกลับเข้าห้องเดิมได้ = ยังไลฟ์อยู่
             if ((await room.checkLive().catch(() => null)) !== false) return; // ยังไลฟ์ / เช็กไม่ได้ → ไม่ล้าง (ไว้ล้างตอนเริ่มไลฟ์ใหม่แทน)
-            await autoClearOnNewLive(room.username);
+            await autoClearOnNewLive(room.username, true);
           })().catch((err) => console.error('[autoClear] end failed', err));
         }, 120_000).unref();
       }

@@ -172,7 +172,8 @@ export class TikTokRoom extends EventEmitter {
     c.on('envelope', (d: any) => this.onEnvelope(d));
     c.on('disconnected', () => { this.connected = false; this.emit('status', { type: 'disconnected', message: 'การเชื่อมต่อถูกตัด' }); });
     // v2 ส่ง error เป็น { info, exception }
-    c.on('error', (err: any) => { const m = String(err?.exception?.message ?? err?.info ?? err?.message ?? err); recordError({ src: 'tiktok', msg: m, stack: err?.exception?.stack, where: 'live', user: '@' + this.username }); this.emit('status', { type: 'error', message: m }); });
+    // เช็กสถานะไลฟ์ไม่ได้ชั่วคราว (ตอนต่อใหม่หลัง deploy) = ระบบลองใหม่เอง ไม่ใช่ error จริง → ไม่บันทึก
+    c.on('error', (err: any) => { const m = String(err?.exception?.message ?? err?.info ?? err?.message ?? err); if (!/Failed to retrieve live status/i.test(m)) recordError({ src: 'tiktok', msg: m, stack: err?.exception?.stack, where: 'live', user: '@' + this.username }); this.emit('status', { type: 'error', message: m }); });
     // ไลฟ์จบ → ไม่ถือว่ายังต่ออยู่ (เดิมค้างสถานะ "ไลฟ์อยู่") แล้วปิดการเชื่อมต่อ ระบบจะรอต่อใหม่เองเมื่อเริ่มไลฟ์รอบหน้า
     c.on('streamEnd', () => { this.connected = false; this.emit('status', { type: 'streamEnd', message: 'ไลฟ์จบแล้ว' }); void this.connection?.disconnect?.().catch?.(() => {}); });
   }

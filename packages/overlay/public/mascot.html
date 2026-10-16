@@ -162,7 +162,7 @@
     const eQuad = (t) => (t < .5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);
     const DPR = () => window.devicePixelRatio || 1;
     const snap = (v) => Math.round(v * DPR()) / DPR(); // ปัดให้ตรงพิกเซลจอ → ภาพไม่เบลอจากการเลื่อนครึ่งพิกเซล
-    const FADE = 150;
+    const FADE = 230; // เดิม 150 → ท่าเปลี่ยนเห็นรอยต่อ
 
     // เลเยอร์ท่า: ท่าใหม่จางขึ้น "ทับ" ท่าเดิม (ท่าเดิมทึบอยู่ข้างใต้ = ไม่มีวูบ) แล้วซ่อนท่าเดิมทันทีที่ท่าใหม่ทึบเต็ม (ไม่เหลือเงาซ้อน)
     const L = { under: [], top: 0, a0: 1, t0: 0, d: 0 };
@@ -174,7 +174,8 @@
       let under = a >= 1 ? [] : L.under.slice(), a0 = 0;
       if (L.top) under.push({ n: L.top, a });
       under = under.filter((u) => { if (u.n === n) { a0 = Math.max(a0, u.a); return false; } return true; }).slice(-3);
-      ms = ms == null ? FADE : ms;
+      ms = ms == null ? (n === 1 ? 320 : FADE) : ms; // กลับท่ายืน: จางนุ่มกว่า
+      if (ms > 60 && !SPIN && !WALKING) B.vsq -= .22; // เด้งบีบเบา ๆ ตอนเปลี่ยนท่า → ตากลบรอยต่อภาพ (เหมือนแอนิเมชันการ์ตูน)
       Object.assign(L, { under: ms > 0 ? under : [], top: n, a0: ms > 0 ? a0 : 1, t0: t, d: Math.max(0, ms) });
     }
     const shown = {};
@@ -257,16 +258,16 @@
       B.ay = (B.vy - vy0) / h;
       B.vsq += spr(B.sq, B.vsq, sqT, 4, .3) * h; B.sq = clamp(B.sq + B.vsq * h, -.16, .12);
       // 4) ยืนว่าง: โยกแบบสุ่มที่ถูกหน่วง (random walk ผ่านตัวกรองมวล-สปริง ไม่ใช่ sine) + ถ่ายน้ำหนักเป็นครั้งคราว
-      ID.vr += (-1.6 * ID.vr - .9 * ID.r) * h + 1.5 * Math.sqrt(h) * gauss(); ID.r = clamp(ID.r + ID.vr * h, -2.5, 2.5);
+      ID.vr += (-1.6 * ID.vr - .9 * ID.r) * h + 2.1 * Math.sqrt(h) * gauss(); ID.r = clamp(ID.r + ID.vr * h, -3.5, 3.5);
       if ((ID.next -= h) <= 0) {
-        ID.next = 4 + Math.random() * 6;
+        ID.next = 3 + Math.random() * 4;
         if (calm > .8 && !VIDMODE) { ID.shT = (ID.shT > 0 ? -1 : 1) * (.5 + Math.random() * .6); kick(10, -.12); } else ID.shT = 0;
       }
       if (calm < .5) ID.shT = 0;
       ID.vsh += spr(ID.sh, ID.vsh, ID.shT, .7, .85) * h; ID.sh += ID.vsh * h;
       // 5) เอียงตัว: เอียงเข้าหาความเร่ง · หมุนเร็วเอียงออก (หนีศูนย์) · ปล่อยแล้วสปริงเด้งเข้าที่
       const lean = Math.min(1, SWAY);
-      let rotT = VIDMODE ? 0 : (ID.r * .55 * calm + ID.sh) * SWAY;
+      let rotT = VIDMODE ? 0 : (ID.r * .8 * calm + ID.sh) * SWAY;
       rotT += lean * ax * .007;
       if (SPIN) rotT += lean * (2.4 * (SPIN.om / SPIN.wmax) ** 2 - 1.6 * SPIN.al / SPIN.amax);
       const vr0 = B.vrot; B.vrot += spr(B.rot, B.vrot, rotT, 2.2, .4) * h; B.rot += B.vrot * h; B.arot = (B.vrot - vr0) / h;
@@ -299,8 +300,8 @@
         }
       }
       let b = 0;
-      if (!VIDMODE) { b = .5 - .5 * Math.cos(2 * Math.PI * t / 3000); sx += .004 * b; } // หายใจ (scaleY 1→1.015 ทุก ~3 วิ)
-      const sy = 1 + sq + .015 * b, sxx = 1 + sx - sq * .6; // บีบ-ยืดคงปริมาตร
+      if (!VIDMODE) { b = .5 - .5 * Math.cos(2 * Math.PI * t / 3400); sx += .006 * b; } // หายใจ (scaleY 1→1.025 ทุก ~3.4 วิ)
+      const sy = 1 + sq + .025 * b, sxx = 1 + sx - sq * .6; // บีบ-ยืดคงปริมาตร
       const bt = `translate3d(0,${snap(y)}px,0) rotate(${rot.toFixed(3)}deg) scale(${sxx.toFixed(4)},${sy.toFixed(4)})`;
       if (bt !== lastBody) { $body.style.transform = bt; lastBody = bt; }
       const lift = Math.max(0, -y), st = `scale(${Math.max(.45, 1 + .02 * b - lift / 260).toFixed(3)},${Math.max(.6, 1 - lift / 400).toFixed(3)})`, so = Math.max(.3, 1 - lift / 180).toFixed(2); // เงาเล็ก/จางลงตามความสูง
@@ -393,7 +394,7 @@
     (function blink() { // กะพริบตา (จางเร็ว) + บางครั้งเด้งตัวเบา ๆ
       setTimeout(async () => { if (!busy) { if (DECO && Math.random() < .35) kick(-40, .07); pose(2, 45); await wait(110); if (!busy) pose(1, 70); } blink(); }, 2200 + Math.random() * 2400);
     })();
-    const step = (n, ms) => { pose(n, 120); kick(-55, -.3); return wait(ms); }; // ก้าว: เท้าลงพื้น (บีบนิด) แล้วดันตัวขึ้น → ตัวกระเพื่อมตามแรงก้าว
+    const step = (n, ms) => { pose(n, 170); kick(-34, -.16); return wait(ms); }; // ก้าวนุ่มขึ้น (เดิมเด้งแรง -55 ดูกระโดดทีละก้าว) // ก้าว: เท้าลงพื้น (บีบนิด) แล้วดันตัวขึ้น → ตัวกระเพื่อมตามแรงก้าว
     // เดินไปด้านข้างแล้วเดินกลับ (สลับท่าก้าวซ้าย-ขวา)
     async function walk(dist) {
       const dir = POS === 'br' ? -1 : POS === 'bl' ? 1 : (Math.random() < .5 ? -1 : 1), dx = dir * (dist || 150);
@@ -427,7 +428,7 @@
       async () => { pose(7); hop(); particles(['✨', '⭐'], 4, 1.4); await wait(900); },                        // ดีใจเบา ๆ
     ];
     (function idleAct() {
-      setTimeout(async () => { if (!busy && !running) { busy = true; try { if (VIDEO.on) { const r = Math.random(); if (r < 0.15 && TURN === 7) await spin(); else if (r < 0.4 && VIDEO.clips.dance) await clip('dance', 3600); } else await IDLE[Math.floor(Math.random() * IDLE.length)](); } catch (e) { /* ignore */ } pose(1); busy = false; } idleAct(); }, 6000 + Math.random() * 6000);
+      setTimeout(async () => { if (!busy && !running) { busy = true; try { if (VIDEO.on) { const r = Math.random(); if (r < 0.15 && TURN === 7) await spin(); else if (r < 0.4 && VIDEO.clips.dance) await clip('dance', 3600); } else await IDLE[Math.floor(Math.random() * IDLE.length)](); } catch (e) { /* ignore */ } pose(1); busy = false; } idleAct(); }, 4000 + Math.random() * 4500); // ทำท่าเล่นเองบ่อยขึ้น (เดิม 6–12 วิ)
     })();
 
     // ---- คิวท่าทาง (ทีละอย่าง ไม่ทับกัน) ----

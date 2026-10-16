@@ -200,6 +200,7 @@
     const DC = { x: 0, vx: 0, y: 0, vy: 0 };
     const ID = { r: 0, vr: 0, sh: 0, vsh: 0, shT: 0, next: 5 };
     let JMP = null, calm = 1, busy = false;
+    let LEAN = 0, SQH = 0; // ท่าใหม่: เอียงตัวค้าง (องศา) · ย่อตัวค้าง (บีบ) — สปริงพาไปหาค่าเองให้ลื่น
     function kick(vy, vsq) { B.vy += vy; B.vsq += vsq; } // แรงกระแทกสั้น ๆ (ก้าวเท้า/เด้งเล็ก)
     function jump(h, prep, dip) { JMP = { h, prep, dip, t: 0 }; } // ย่อตัว prep วิ → พุ่งขึ้นสูง h px (วิถีโค้งตามแรงโน้มถ่วง)
     function hop() { jump(14, .07, .035); }
@@ -240,7 +241,7 @@
         if (360 - S.th < .05 || (S.om < 1 && S.al <= 0) || S.t > 2.4) { S.th = 360; S.om = 0; S.al = 0; S.done = true; }
       }
       // 3) แนวตั้ง: ย่อตัวก่อนกระโดด → วิถีโค้ง (แรงโน้มถ่วง) → ลงพื้นบีบตามความเร็วกระแทก → เด้งคืน
-      let sqT = 0;
+      let sqT = SQH;
       if (JMP && !B.air) {
         JMP.t += h; const p = c01(JMP.t / JMP.prep);
         sqT -= JMP.dip * p * p * (3 - 2 * p);
@@ -268,7 +269,7 @@
       // 5) เอียงตัว: เอียงเข้าหาความเร่ง · หมุนเร็วเอียงออก (หนีศูนย์) · ปล่อยแล้วสปริงเด้งเข้าที่
       const lean = Math.min(1, SWAY);
       let rotT = VIDMODE ? 0 : (ID.r * .8 * calm + ID.sh) * SWAY;
-      rotT += lean * ax * .007;
+      rotT += lean * ax * .007 + LEAN;
       if (SPIN) rotT += lean * (2.4 * (SPIN.om / SPIN.wmax) ** 2 - 1.6 * SPIN.al / SPIN.amax);
       const vr0 = B.vrot; B.vrot += spr(B.rot, B.vrot, rotT, 2.2, .4) * h; B.rot += B.vrot * h; B.arot = (B.vrot - vr0) / h;
       // 6) ของขวัญในมือ = วัตถุแยก ติดสปริงกับมือ: ตามช้ากว่าตัวนิด ๆ + แกว่งแบบลูกตุ้ม (หน่วง)
@@ -416,8 +417,30 @@
         pose(7); hop(); particles(['✨', '⭐', '💫'], 8, 1.6); if (SPARK !== 'off') twinkle(12, 1); await wait(700); return;
       }
       pose(16, 180); await wait(480); pose(7); hop(); particles(['✨', '⭐', '💫'], 8, 1.6); if (SPARK !== 'off') twinkle(12, 1); await wait(700); }
+    // ---- ท่าใหม่ (ใช้รูปท่าเดิม + การขยับ) ----
+    async function bow() { // 🙇 โค้งขอบคุณ: ย่อตัว + หลับตายิ้ม ค้างแป๊บ แล้วเด้งกลับ
+      pose(14); SQH = -.11; LEAN = 0; await wait(700); particles(['💖', '✨'], 4, 1.3); await wait(500);
+      SQH = 0; pose(3); kick(-60, .1); await wait(500);
+    }
+    async function wiggle() { // 🍑 หันหลังส่ายก้น แล้วหันกลับมายิ้ม
+      if (!imgs[16]) return dance(1);
+      pose(16, 200); await wait(240);
+      for (let i = 0; i < 6; i++) { LEAN = i % 2 ? -7 : 7; kick(-18, -.05); await wait(170); }
+      LEAN = 0; await wait(150); pose(8, 220); hop(); particles(['💗', '✨'], 4, 1.3); await wait(700);
+    }
+    async function cheer() { // 👏 กระโดดตบมือดีใจ ซ้าย-ขวา
+      for (let i = 0; i < 4; i++) { pose(i % 2 ? 10 : 7, 140); LEAN = i % 2 ? -4 : 4; jump(26, .08, .04); await wait(330); }
+      LEAN = 0; particles(['👏', '✨', '🎉'], 6, 1.5); await wait(300);
+    }
+    async function peek() { // 👀 ชะโงกดูซ้าย-ขวา
+      pose(3); LEAN = -9; await wait(650); pose(8); LEAN = 9; await wait(650); LEAN = 0; pose(2, 120); await wait(140); pose(3); await wait(400);
+    }
+    async function stumble() { // 💫 สะดุดเซนิด ๆ แล้วยิ้มแก้เขิน
+      pose(4, 120); LEAN = 13; kick(-40, -.14); await wait(260); LEAN = -6; await wait(240); LEAN = 0;
+      pose(14); particles(['💫', '⭐'], 4, 1.2); await wait(700); pose(3); await wait(300);
+    }
     async function bigJump() { pose(1); jump(110, .18, .07); await wait(230); pose(7, 120); particles(['🎉', '✨'], 8, 1.6); await wait(560); pose(1); await wait(200); }
-    if (P('debug', '0') === '1') window.__mascot = { spinSeq: () => spinSeq().map((x) => x[0]), spin: () => enqueue(spin), dance: () => enqueue(() => dance(2)), walk: () => enqueue(() => walk()), kiss: () => enqueue(() => kiss(null)), jump: () => enqueue(bigJump), gift: () => enqueue(() => receive(window.VJLCollect ? VJLCollect.demoGift() : { giftName: 'Rose' })), trace: REC }; // trace: [t, walkerX, y, rot, sq, spinθ, giftX, giftY, giftAngle]
+    if (P('debug', '0') === '1') window.__mascot = { spinSeq: () => spinSeq().map((x) => x[0]), spin: () => enqueue(spin), dance: () => enqueue(() => dance(2)), walk: () => enqueue(() => walk()), kiss: () => enqueue(() => kiss(null)), jump: () => enqueue(bigJump), gift: () => enqueue(() => receive(window.VJLCollect ? VJLCollect.demoGift() : { giftName: 'Rose' })), bow: () => enqueue(bow), wiggle: () => enqueue(wiggle), cheer: () => enqueue(cheer), peek: () => enqueue(peek), stumble: () => enqueue(stumble), trace: REC }; // trace: [t, walkerX, y, rot, sq, spinθ, giftX, giftY, giftAngle]
     const IDLE = [
       () => walk(),
       async () => { if (TURN === 7) await spin(); else pose(3), await wait(900); }, // หมุนโชว์ (เฉพาะตัวที่มีท่าหันรอบตัว)
@@ -426,6 +449,7 @@
       async () => { pose(3); await wait(1200); },                                                              // ยิ้มเฉย ๆ (ไม่โยกตัว)
       async () => { for (const n of [9, 10, 9, 10]) { pose(n, 160); beat(); await wait(330); } }, // เต้นสั้น ๆ
       async () => { pose(7); hop(); particles(['✨', '⭐'], 4, 1.4); await wait(900); },                        // ดีใจเบา ๆ
+      () => bow(), () => wiggle(), () => cheer(), () => peek(), () => stumble(),                                  // ท่าใหม่
     ];
     (function idleAct() {
       setTimeout(async () => { if (!busy && !running) { busy = true; try { if (VIDEO.on) { const r = Math.random(); if (r < 0.15 && TURN === 7) await spin(); else if (r < 0.4 && VIDEO.clips.dance) await clip('dance', 3600); } else await IDLE[Math.floor(Math.random() * IDLE.length)](); } catch (e) { /* ignore */ } pose(1); busy = false; } idleAct(); }, 4000 + Math.random() * 4500); // ทำท่าเล่นเองบ่อยขึ้น (เดิม 6–12 วิ)
@@ -434,7 +458,7 @@
     // ---- คิวท่าทาง (ทีละอย่าง ไม่ทับกัน) ----
     const queue = []; let running = false;
     function enqueue(fn) { if (queue.length > 6) queue.shift(); queue.push(fn); if (!running) run(); }
-    async function run() { running = true; while (queue.length) { busy = true; try { await queue.shift()(); } catch (e) { /* ignore */ } pose(1); busy = false; await wait(250); } running = false; }
+    async function run() { running = true; while (queue.length) { busy = true; try { await queue.shift()(); } catch (e) { /* ignore */ } LEAN = 0; SQH = 0; pose(1); busy = false; await wait(250); } running = false; }
 
     async function receive(e) {
       const img = e.giftImage || (window.VJLCollect ? VJLCollect.imgFor(e.giftName) : '');
@@ -501,7 +525,7 @@
       const ev = f.event || {}, m = a.move || 'dance';
       enqueue(async () => {
         if (a.text) say(fillText(a.text, ev), 3200);
-        if (m === 'spin') await spin(); else if (m === 'jump') await bigJump(); else if (m === 'walk') await walk(220); else if (m === 'kiss') await kiss(a.text ? null : ev); else if (m === 'joy') await joy(null); else if (m === 'heart') await heart(a.text ? null : ev); else await dance(3);
+        if (m === 'spin') await spin(); else if (m === 'jump') await bigJump(); else if (m === 'walk') await walk(220); else if (m === 'kiss') await kiss(a.text ? null : ev); else if (m === 'joy') await joy(null); else if (m === 'heart') await heart(a.text ? null : ev); else if (m === 'bow') await bow(); else if (m === 'wiggle') await wiggle(); else if (m === 'cheer') await cheer(); else if (m === 'peek') await peek(); else if (m === 'stumble') await stumble(); else await dance(3);
       });
     });
 

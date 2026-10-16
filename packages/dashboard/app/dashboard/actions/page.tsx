@@ -45,7 +45,7 @@ interface Draft {
   topic: TarotTopic;
   count: string;
   /** มาสคอต: ท่า */
-  move: 'dance' | 'kiss' | 'joy' | 'heart' | 'walk' | 'spin' | 'jump';
+  move: NonNullable<Rule['action']['move']>;
   /** คอมโบเล่นซ้ำสูงสุดกี่ครั้ง */
   repeat: string;
   /** เอฟเฟกต์เต็มจอ: แบบ */
@@ -484,6 +484,7 @@ function ActionsInner() {
                   <Select value={draft.move} onChange={(e) => set('move', e.target.value as Draft['move'])}>
                     <option value="dance">{t('💃 เต้น')}</option><option value="kiss">{t('💋 เดินมาส่งจุ๊บ แล้วเดินกลับ')}</option>
                     <option value="joy">{t('🎉 ดีใจสุด ๆ')}</option><option value="heart">{t('😘 ส่งหัวใจ')}</option><option value="walk">{t('🚶 เดินไปมา')}</option><option value="spin">{t('🌀 หมุนตัว')}</option><option value="jump">{t('🦘 กระโดดสูง')}</option>
+                    <option value="bow">{t('🙇 โค้งขอบคุณ')}</option><option value="wiggle">{t('🍑 หันหลังส่ายก้น')}</option><option value="cheer">{t('👏 กระโดดตบมือดีใจ')}</option><option value="peek">{t('👀 ชะโงกซ้ายขวา')}</option><option value="stumble">{t('💫 สะดุดน่ารัก')}</option>
                   </Select>
                 </Field>
               )}

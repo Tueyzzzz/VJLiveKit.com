@@ -690,4 +690,9 @@ export const EN_ACTIONS: Record<string, string> = {
   "⚔️ เอฟเฟกต์ PK ใช้ลิงก์ PK แยก — ดูที่เมนู PK Battle": "⚔️ PK effects use their own PK link — see the PK Battle menu",
   "ลิงก์ FX (Actions) เล่น PK ด้วย — แบบเดิม ใช้ลิงก์เดียวไม่ต้องใส่ลิงก์ PK · ติ๊กออกเมื่อวางลิงก์ PK ในโปรแกรมไลฟ์แล้ว (ไม่งั้น PK จะขึ้นซ้ำ 2 ที่)": "The Actions FX link also plays PK — the old single-link setup · untick once the PK link is in your live app (or PK shows twice)",
   "ตั้งเอฟเฟกต์ตอนแข่ง PK: เริ่ม PK · ชนะ/แพ้ · มีคนใช้การ์ด (นวม สายฟ้า หมอก ต่อเวลา ฯลฯ) → ขึ้นจอผ่านลิงก์ PK": "Set up PK effects: PK start \u00b7 win/lose \u00b7 cards used (glove, lightning, smoke, extra time\u2026) \u2192 shown via the PK link",
+  "🙇 โค้งขอบคุณ": "🙇 Thank-you bow",
+  "🍑 หันหลังส่ายก้น": "🍑 Turn & wiggle",
+  "👏 กระโดดตบมือดีใจ": "👏 Cheer & clap",
+  "👀 ชะโงกซ้ายขวา": "👀 Peek left-right",
+  "💫 สะดุดน่ารัก": "💫 Cute stumble",
 };

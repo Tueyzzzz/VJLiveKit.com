@@ -68,6 +68,9 @@
   .mv-pulse .ico img { animation:mvPulse 1.3s ease-in-out infinite; }
   .mv-wiggle .ico img { animation:mvWiggle .9s ease-in-out infinite; }
   .mv-none .ico img { animation:none; }
+  /* ส่วนบนกระดิก ฐานนิ่ง (?move=jelly): วาดรูปเป็นแถบแนวนอน 80 แถบบน canvas — แถบบนเยื้อง/ยืดตามคลื่น ฐานล่างอยู่กับที่ (หู/หัว/ดอกไม้ดูกระดิก) */
+  .mv-jelly .ico img.jsrc { display:none; }
+  .ico canvas.jelly { width:100%; height:100%; display:block; }
   /* ขยับบางส่วน (?moveWho=some): ของขวัญนิ่ง ยกเว้นอันที่ถึงคิว (วนทีละ 1–2 อัน) — ไม่ตาลาย แต่ยังดูมีชีวิต */
   .mvsome .row:not(.act) .ico img { animation:none !important; }
   .mvsome .row:not(.act) .tw { animation-play-state:paused; opacity:0; }
@@ -169,7 +172,7 @@
     const OLD = P('shine', ''), on = (k, d) => P(k, OLD === 'off' ? '0' : d) !== '0';
     const FX_SWEEP = on('shineSweep', OLD === 'soft' ? '0' : '1'), FX_STARS = on('shineStars', OLD === 'soft' ? '0' : '1'), FX_GLOW = on('shineGlow', '1');
     const SHINE = FX_SWEEP || FX_STARS || FX_GLOW ? 'on' : 'off';
-    const MOVE = ['bob', 'bounce', 'spin', 'pulse', 'wiggle', 'none'].includes(P('move', 'bounce')) ? P('move', 'bounce') : 'bounce';
+    const MOVE = ['bob', 'bounce', 'spin', 'pulse', 'wiggle', 'jelly', 'none'].includes(P('move', 'bounce')) ? P('move', 'bounce') : 'bounce';
     const ITEM = P('item', 'row') === 'tile' ? 'tile' : 'row'; // ค่าเริ่มต้น = แถวอ่านง่าย (รูป · ชื่อ+ราคา ➜ สิ่งที่เกิด)
     const THEME = ['glass', 'candy', 'white', 'neon', 'gold', 'bubble'].includes(P('theme', 'candy')) ? P('theme', 'candy') : 'candy';
     const MOVE_SOME = P('moveWho', 'some') !== 'all';
@@ -278,10 +281,10 @@
       const ico = document.createElement('div'); ico.className = 'ico';
       if (m.image) {
         const im = document.createElement('img'); im.src = m.image; im.alt = '';
-        if (SHINE === 'off') ico.appendChild(im);
+        if (SHINE === 'off') { ico.appendChild(im); if (MOVE === 'jelly') jellyFor(im, ico, i || 0); }
         else { // ห่อรูปด้วยชั้นเรืองแสง (ไม่ไปทับท่าขยับของรูป) + ประกายดาว
           const gl = document.createElement('span'), gb = document.createElement('span'); gl.className = 'gl'; gb.className = 'gb';
-          gl.style.animationDelay = -((i || 0) * .7) + 's'; gb.style.animationDelay = -((i || 0) * 1.1) + 's'; gb.appendChild(im); if (FX_SWEEP) { const sw = document.createElement('span'); sw.className = 'sw'; sw.style.setProperty('--im', `url("${m.image}")`); sw.style.animationDelay = -((i || 0) * .9) + 's'; gb.appendChild(sw); } gl.appendChild(gb); ico.appendChild(gl);
+          gl.style.animationDelay = -((i || 0) * .7) + 's'; gb.style.animationDelay = -((i || 0) * 1.1) + 's'; gb.appendChild(im); if (MOVE === 'jelly') jellyFor(im, gb, i || 0); if (FX_SWEEP) { const sw = document.createElement('span'); sw.className = 'sw'; sw.style.setProperty('--im', `url("${m.image}")`); sw.style.animationDelay = -((i || 0) * .9) + 's'; gb.appendChild(sw); } gl.appendChild(gb); ico.appendChild(gl);
           if (FX_STARS) {
             for (let k = 0; k < 3; k++) { const tw = document.createElement('i'); tw.className = 'tw'; const a = (k / 3) * 6.28 + (i || 0); tw.style.left = 50 + 46 * Math.cos(a) + '%'; tw.style.top = 50 + 46 * Math.sin(a) + '%'; tw.style.margin = '-6px 0 0 -6px'; tw.style.animationDelay = -(k * .75 + (i || 0) * .4) + 's'; tw.style.animationDuration = (1.8 + k * .45) + 's'; ico.appendChild(tw); }
           }
@@ -368,6 +371,34 @@
       } else show.slice(0, MAX).forEach((m, i) => { const r = rowEl(m, i); r.style.animationDelay = i * 0.08 + 's'; list.appendChild(r); });
     }
     // ขยับบางส่วน: วนไฮไลต์ทีละ 1 อัน (เมนูยาวเกิน 5 ข้อ = ทีละ 2 อัน) ทุก ~1.8 วิ
+    // เยลลี่: วงเดียววาดทุกไอคอน (อันที่ถูกไฮไลต์ในโหมดบางส่วนเท่านั้นถ้าเปิด moveWho=some)
+    const JELLY = [];
+    function jellyFor(im, holder, idx) {
+      const cv = document.createElement('canvas'); cv.className = 'jelly'; holder.appendChild(cv); im.classList.add('jsrc');
+      JELLY.push({ im, cv, ph: idx * 1.3, amp: 0 });
+      if (JELLY.length === 1) requestAnimationFrame(jellyLoop);
+    }
+    function jellyLoop(t) {
+      for (let i = JELLY.length - 1; i >= 0; i--) {
+        const J = JELLY[i]; if (!J.cv.isConnected) { JELLY.splice(i, 1); continue; }
+        const im = J.im; if (!im.complete || !im.naturalWidth) continue;
+        const r = J.cv.getBoundingClientRect(), dpr = Math.min(3, (window.devicePixelRatio || 1) * 1.5), W = Math.max(1, Math.round(r.width * dpr)), H = Math.max(1, Math.round(r.height * dpr));
+        if (J.cv.width !== W || J.cv.height !== H) { J.cv.width = W; J.cv.height = H; }
+        const row = J.cv.closest('.row'), live = !box.classList.contains('mvsome') || (row && row.classList.contains('act'));
+        J.amp += ((live ? 1 : 0) - J.amp) * 0.06; // ค่อย ๆ เริ่ม/หยุด ไม่กระตุก
+        const g = J.cv.getContext('2d'); g.clearRect(0, 0, W, H);
+        const k = Math.min(W / im.naturalWidth, H / im.naturalHeight), dw = im.naturalWidth * k, dh = im.naturalHeight * k, ox = (W - dw) / 2, oy = (H - dh) / 2;
+        const N = 80, tt = t / 1000 + J.ph;
+        for (let s2 = N - 1; s2 >= 0; s2--) { // วาดจากล่างขึ้นบน + ซ้อนแถบ 2px → ไม่มีรอยต่อเป็นเส้น
+          const v = s2 / N, top = 1 - v, w = top * top; // บนสุดขยับมาก → ล่างนิ่ง
+          const dx = Math.sin(tt * 4.4 - v * 2.4) * dw * 0.14 * w * J.amp + Math.sin(tt * 11) * dw * 0.02 * w * J.amp; // โยกซ้ายขวา + สั่นเร็วนิด ๆ (หูกระดิก)
+          const sy = 1 + Math.sin(tt * 4.4 + 1) * 0.07 * w * J.amp; // ยืด-หดส่วนบน
+          const y0 = v * im.naturalHeight, hh = im.naturalHeight / N;
+          g.drawImage(im, 0, y0, im.naturalWidth, Math.min(hh * 1.5, im.naturalHeight - y0), ox + dx, oy + dh - (dh - v * dh) * sy, dw, Math.min(hh * 1.5, im.naturalHeight - y0) * k * sy);
+        }
+      }
+      if (JELLY.length) requestAnimationFrame(jellyLoop);
+    }
     if (MOVE_SOME) { let k = 0; setInterval(() => { const rows = [...list.querySelectorAll('.row')]; if (!rows.length) return; const n = rows.length > 5 ? 2 : 1; rows.forEach((r) => r.classList.remove('act')); for (let j = 0; j < n; j++) rows[(k + j * Math.ceil(rows.length / n)) % rows.length].classList.add('act'); k++; }, 1800); }
     if (Overlay.socket) Overlay.socket.on('menu', (m) => { items = Array.isArray(m) ? m : []; render(); });
 

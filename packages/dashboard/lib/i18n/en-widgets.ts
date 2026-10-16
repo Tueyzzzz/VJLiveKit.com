@@ -1170,4 +1170,5 @@ export const EN_WIDGETS: Record<string, string> = {
   "✨ แสงวิ้งวิ่งผ่านรูปของขวัญ": "✨ Light sweep across the gift",
   "⭐ ประกายดาวกะพริบรอบ ๆ": "⭐ Twinkling stars around",
   "🌟 ขอบเรืองแสงเบา ๆ": "🌟 Soft glowing edge",
+  "🐶 ส่วนบนกระดิก ฐานนิ่ง (หู/หัวขยับ)": "🐶 Top wiggles, base stays (ears/head move)",
 };

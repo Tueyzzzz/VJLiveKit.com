@@ -68,6 +68,10 @@
   .mv-pulse .ico img { animation:mvPulse 1.3s ease-in-out infinite; }
   .mv-wiggle .ico img { animation:mvWiggle .9s ease-in-out infinite; }
   .mv-none .ico img { animation:none; }
+  /* ขยับบางส่วน (?moveWho=some): ของขวัญนิ่ง ยกเว้นอันที่ถึงคิว (วนทีละ 1–2 อัน) — ไม่ตาลาย แต่ยังดูมีชีวิต */
+  .mvsome .row:not(.act) .ico img { animation:none !important; }
+  .mvsome .row:not(.act) .tw { animation-play-state:paused; opacity:0; }
+  .mvsome .row.act .gl { filter:drop-shadow(0 0 5px #fff) drop-shadow(0 0 14px rgba(255,210,110,.85)); }
   .row:nth-child(2n) .ico img { animation-delay:-.4s } .row:nth-child(3n) .ico img { animation-delay:-.8s }
   @keyframes mvBounce { 0%,100% { transform:translateY(0) scale(1) } 30% { transform:translateY(-9px) scale(1.06,.96) } 55% { transform:translateY(0) scale(1.08,.92) } 70% { transform:translateY(-3px) } }
   @keyframes mvSpin { to { transform:rotateY(360deg) } }
@@ -110,6 +114,24 @@
   .ring.bub ~ img { animation:bubFloat 3.2s ease-in-out infinite !important; }
   @keyframes bubWob { 0%,100% { transform:scale(1,1) translateY(0) } 25% { transform:scale(1.035,.97) translateY(-2px) } 50% { transform:scale(.98,1.025) translateY(-4px) } 75% { transform:scale(1.02,.985) translateY(-2px) } }
   @keyframes bubFloat { 0%,100% { transform:translateY(0) rotate(-4deg) } 50% { transform:translateY(-5px) rotate(4deg) } }
+  /* ✨ แวววาว (?shine=sparkle|soft|off): ของขวัญเรืองแสงเป็นจังหวะ + แฟลชสว่างวิ้ง + ประกายดาวกะพริบรอบ ๆ (ตามรูปทรงจริงของรูป ไม่เป็นกล่อง) */
+  .gl { position:relative; display:inline-grid; place-items:center; z-index:1; }
+  .fx-glow .gl { animation:glGlow 2.6s ease-in-out infinite; }
+  @keyframes glGlow { 0%,100% { filter:drop-shadow(0 0 2px rgba(255,255,255,.7)) drop-shadow(0 0 5px rgba(255,214,120,.35)) } 50% { filter:drop-shadow(0 0 4px rgba(255,255,255,.95)) drop-shadow(0 0 12px rgba(255,200,90,.75)) } }
+  .tw { position:absolute; width:12px; height:12px; pointer-events:none; z-index:3; opacity:0; animation:twk 2.2s ease-in-out infinite;
+    background:radial-gradient(circle, #fff 0 14%, rgba(255,255,255,0) 15%), conic-gradient(from 0deg, transparent 0 40deg, #fff 45deg, transparent 50deg 130deg, #fff 135deg, transparent 140deg 220deg, #fff 225deg, transparent 230deg 310deg, #fff 315deg, transparent 320deg);
+    filter:drop-shadow(0 0 3px #fff) drop-shadow(0 0 6px #ffe08a); border-radius:50%; }
+  @keyframes twk { 0%,100% { opacity:0; transform:scale(.2) rotate(0deg) } 45% { opacity:1; transform:scale(1) rotate(45deg) } 60% { opacity:.9; transform:scale(.85) rotate(60deg) } }
+  /* แฟลชสว่างวิ้งบนตัวรูป (brightness — ใช้ได้กับรูปทุกแหล่ง ไม่ติด CORS) */
+  .gb { display:inline-grid; place-items:center; }
+  .fx-sweep .gb { animation:glBright 3.4s ease-in-out infinite; }
+  /* แสงวิ้งวิ่งผ่าน: แถบแสงเฉียงวิ่งผ่าน "ตามรูปทรงของขวัญ" (mask = รูปเดียวกัน) */
+  .sw { position:absolute; inset:0; pointer-events:none; -webkit-mask:var(--im) center/contain no-repeat; mask:var(--im) center/contain no-repeat;
+    background:linear-gradient(115deg, transparent 0 38%, rgba(255,255,255,.95) 48%, rgba(255,250,215,.6) 53%, transparent 62% 100%) no-repeat; background-size:250% 100%;
+    animation:swp 3.4s ease-in-out infinite; mix-blend-mode:screen; }
+  @keyframes swp { 0% { background-position:130% 0 } 55%,100% { background-position:-130% 0 } }
+  .mvsome .row:not(.act) .sw { animation-play-state:paused; opacity:0; }
+  @keyframes glBright { 0%,80%,100% { filter:brightness(1) saturate(1) } 86% { filter:brightness(1.45) saturate(1.25) } 92% { filter:brightness(1.05) } }
   /* ===== แบบแถว (ค่าเริ่มต้น): [รูปของขวัญ] ชื่อ + 💎ราคา ➜ สิ่งที่เกิดบนจอ ===== */
   #box.it-row { width:450px; }
   .it-row .row { gap:10px; padding:8px 12px 8px 8px; margin-top:8px; border-radius:18px; position:relative; }
@@ -143,10 +165,15 @@
     const POS = ['tl', 'tr', 'bl', 'br'].includes(P('pos', 'tl')) ? P('pos', 'tl') : 'tl';
     const LAYOUT = P('layout', 'list') === 'rotate' ? 'rotate' : 'list';
     const DIR = P('dir', 'vertical') === 'horizontal' ? 'horiz' : 'vert';
+    // ✨ แวววาว 3 อย่าง เปิด-ปิดแยกกัน (ค่าเก่า shine=off/soft ยังใช้ได้)
+    const OLD = P('shine', ''), on = (k, d) => P(k, OLD === 'off' ? '0' : d) !== '0';
+    const FX_SWEEP = on('shineSweep', OLD === 'soft' ? '0' : '1'), FX_STARS = on('shineStars', OLD === 'soft' ? '0' : '1'), FX_GLOW = on('shineGlow', '1');
+    const SHINE = FX_SWEEP || FX_STARS || FX_GLOW ? 'on' : 'off';
     const MOVE = ['bob', 'bounce', 'spin', 'pulse', 'wiggle', 'none'].includes(P('move', 'bounce')) ? P('move', 'bounce') : 'bounce';
     const ITEM = P('item', 'row') === 'tile' ? 'tile' : 'row'; // ค่าเริ่มต้น = แถวอ่านง่าย (รูป · ชื่อ+ราคา ➜ สิ่งที่เกิด)
     const THEME = ['glass', 'candy', 'white', 'neon', 'gold', 'bubble'].includes(P('theme', 'candy')) ? P('theme', 'candy') : 'candy';
-    box.className = POS + ' ' + LAYOUT + ' ' + DIR + ' mv-' + MOVE + ' th-' + THEME + ' it-' + ITEM;
+    const MOVE_SOME = P('moveWho', 'some') !== 'all';
+    box.className = (MOVE_SOME ? 'mvsome ' : '') + (FX_SWEEP ? 'fx-sweep ' : '') + (FX_STARS ? 'fx-stars ' : '') + (FX_GLOW ? 'fx-glow ' : '') + ' ' + POS + ' ' + LAYOUT + ' ' + DIR + ' mv-' + MOVE + ' th-' + THEME + ' it-' + ITEM;
     const DEMO = !Overlay.connected; // พรีวิว/เดโม (ไม่มีลิงก์จริง)
     if (P('demo', '') === '1') box.classList.add('demo');
     // สีตัวหนังสือ (เว้นว่าง = ตามเทมเพลต)
@@ -249,7 +276,17 @@
     function rowEl(m, i) {
       const r = document.createElement('div'); r.className = 'row' + (m.event === 'gift' ? ' gift' : ''); if (m.id) r.dataset.rule = m.id;
       const ico = document.createElement('div'); ico.className = 'ico';
-      if (m.image) { const im = document.createElement('img'); im.src = m.image; im.alt = ''; ico.appendChild(im); }
+      if (m.image) {
+        const im = document.createElement('img'); im.src = m.image; im.alt = '';
+        if (SHINE === 'off') ico.appendChild(im);
+        else { // ห่อรูปด้วยชั้นเรืองแสง (ไม่ไปทับท่าขยับของรูป) + ประกายดาว
+          const gl = document.createElement('span'), gb = document.createElement('span'); gl.className = 'gl'; gb.className = 'gb';
+          gl.style.animationDelay = -((i || 0) * .7) + 's'; gb.style.animationDelay = -((i || 0) * 1.1) + 's'; gb.appendChild(im); if (FX_SWEEP) { const sw = document.createElement('span'); sw.className = 'sw'; sw.style.setProperty('--im', `url("${m.image}")`); sw.style.animationDelay = -((i || 0) * .9) + 's'; gb.appendChild(sw); } gl.appendChild(gb); ico.appendChild(gl);
+          if (FX_STARS) {
+            for (let k = 0; k < 3; k++) { const tw = document.createElement('i'); tw.className = 'tw'; const a = (k / 3) * 6.28 + (i || 0); tw.style.left = 50 + 46 * Math.cos(a) + '%'; tw.style.top = 50 + 46 * Math.sin(a) + '%'; tw.style.margin = '-6px 0 0 -6px'; tw.style.animationDelay = -(k * .75 + (i || 0) * .4) + 's'; tw.style.animationDuration = (1.8 + k * .45) + 's'; ico.appendChild(tw); }
+          }
+        }
+      }
       else ico.textContent = m.event === 'gift' ? '🎁' : (EV[m.event] || ['✨'])[0];
       if (m.sample) r.classList.add('sample');
       const tx = document.createElement('div'); tx.className = 'txt';
@@ -330,6 +367,8 @@
         step(); if (show.length > PER) timer = setInterval(step, EVERY);
       } else show.slice(0, MAX).forEach((m, i) => { const r = rowEl(m, i); r.style.animationDelay = i * 0.08 + 's'; list.appendChild(r); });
     }
+    // ขยับบางส่วน: วนไฮไลต์ทีละ 1 อัน (เมนูยาวเกิน 5 ข้อ = ทีละ 2 อัน) ทุก ~1.8 วิ
+    if (MOVE_SOME) { let k = 0; setInterval(() => { const rows = [...list.querySelectorAll('.row')]; if (!rows.length) return; const n = rows.length > 5 ? 2 : 1; rows.forEach((r) => r.classList.remove('act')); for (let j = 0; j < n; j++) rows[(k + j * Math.ceil(rows.length / n)) % rows.length].classList.add('act'); k++; }, 1800); }
     if (Overlay.socket) Overlay.socket.on('menu', (m) => { items = Array.isArray(m) ? m : []; render(); });
 
     // มีคนส่งกิฟต์ที่อยู่ในเมนู → ไฮไลต์แถวนั้น ให้คนอื่นเห็นว่าใช้ได้จริง

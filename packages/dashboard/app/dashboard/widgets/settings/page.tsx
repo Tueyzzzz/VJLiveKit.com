@@ -14,7 +14,7 @@ import { NumberInput } from '@/components/NumberInput';
 import { GiftPicker, useGifts } from '@/components/GiftPicker';
 import { useLang, useT } from '@/lib/i18n';
 import { useAuth } from '@/lib/auth';
-import { WIDGET_SETTINGS, defaultsOf, toOverlayParams, type FieldDef, type Values } from '@/lib/widgetSettings';
+import { FREE_ALL_STYLES, WIDGET_SETTINGS, defaultsOf, toOverlayParams, type FieldDef, type Values } from '@/lib/widgetSettings';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '';
 
@@ -320,7 +320,7 @@ function WidgetSettings() {
   const allowedOf = useMemo(() => {
     const m = new Map<string, Set<string>>();
     const full = WIDGET_SETTINGS[type];
-    if (!full || styleLimit >= 999) return m;
+    if (!full || styleLimit >= 999 || (entitlements?.plan === 'free' && FREE_ALL_STYLES.has(type))) return m; // Free: โหลของขวัญ / ป้ายไฟ LED ใช้ได้ทุกแบบ
     let savedV: Record<string, unknown> = {}; try { savedV = saved ? JSON.parse(saved) : {}; } catch { /* ignore */ }
     for (const sec of full.sections) for (const f of sec.fields) {
       if (f.type !== 'select' || !f.options.some((o) => o[3])) continue;

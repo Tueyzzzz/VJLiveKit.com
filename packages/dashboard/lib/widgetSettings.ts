@@ -77,12 +77,15 @@ const pos = (defY = 0): FieldDef[] => [
   { key: 'y', label: 'เลื่อนแนวตั้ง (แกน Y)', type: 'range', min: -500, max: 500, step: 10, def: defY, unit: 'px', hint: 'ลบ = ยกขึ้น' },
 ];
 
+/** แพลน Free ใช้ได้ทุกแบบในวิดเจ็ตเหล่านี้ (ไม่จำกัดตามจำนวนแบบของแพลน) */
+export const FREE_ALL_STYLES = new Set(['giftjar', 'sign']);
+
 export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
   giftjar: {
     resettable: 'ล้างของขวัญในโหลและอันดับ',
     sections: [
       { title: 'รูปแบบโหล', fields: [
-        { key: 'shape', label: 'ทรงโหล', type: 'select', def: 'clear', free: ['clear'], options: [
+        { key: 'shape', label: 'ทรงโหล', type: 'select', def: 'clear', options: [
           ['clear', 'โหลแก้วใสสมจริง', '🫙 แก้วใสเรียบหรู', 'gj-clear'],
           ['heart', 'โหลหัวใจ', '🌸 พาสเทลน่ารัก', 'gj-heart'], ['orb', 'โหลกลมห่วงชมพู', '🌸 พาสเทลน่ารัก', 'gj-orb'],
           ['sundae', 'ถ้วยไอศกรีม', '🌸 พาสเทลน่ารัก', 'gj-sundae'],

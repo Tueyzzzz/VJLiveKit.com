@@ -31,6 +31,8 @@ export interface PlanFeatures {
   prioritySupport: boolean;
   /** ส่วนลดสั่งทำมาสคอตหน้าตัวเอง (%) */
   mascotDiscountPct: number;
+  /** เสียงแจ้งเตือน (กฎเล่นเสียง) สร้างได้กี่เสียง — นับแยกจากกฎ Actions อื่น */
+  soundRules: number;
   /** จำนวนแบบให้เลือกต่อวิดเจ็ต (ตัวเลือกที่มีรูปในหน้าตั้งค่า · นับจากแบบแรก) — 999 = ทุกแบบ */
   styleLimit: number;
 }
@@ -71,7 +73,7 @@ export type PlanCode = (typeof PLAN_CODES)[number];
 export const isPlanCode = (c: string): c is PlanCode => (PLAN_CODES as readonly string[]).includes(c);
 
 // ---- ชุดวิดเจ็ตแต่ละขั้น ----
-const W_FREE: WidgetType[] = ['alerts', 'goal', 'chat', 'follower', 'coinjar', 'collect', 'giftjar', 'aquarium', 'belly', 'spacedome']; // ตรงกับที่ใช้จริงบนเว็บ (Free เคยได้ 10 ตัวนี้)
+const W_FREE: WidgetType[] = ['alerts', 'goal', 'chat', 'follower', 'coinjar', 'collect', 'giftjar', 'aquarium', 'belly', 'spacedome', 'sign']; // + ป้ายไฟ LED (ทุกแบบ) // ตรงกับที่ใช้จริงบนเว็บ (Free เคยได้ 10 ตัวนี้)
 const W_STARTER: WidgetType[] = [...W_FREE, 'topgifters', 'toplikers', 'timer', 'fx', 'fxmenu', 'sign', 'donate'];
 // ชั่วคราว: Pro เดิมเคยได้ MVP/ลีก/มาสคอต — ยังให้ไว้จนกว่าเจ้าของจะตัดสินใจ (ไม่ลดของลูกค้าที่จ่ายแล้วแบบไม่บอก) · แก้ได้ที่ Admin › แพลน
 const W_PRO: WidgetType[] = [...W_STARTER, 'giftjar', 'aquarium', 'spacedome', 'belly', 'snowglobe', 'vehicle', 'garden', 'tree', 'pile', 'tts', 'pkmvp', 'league', 'mascot'];
@@ -90,31 +92,31 @@ export const DEFAULT_PLANS: PlanDef[] = [
     code: 'free', name: 'Free', priceCents: 0, currency: 'thb', badge: '',
     tagline: 'ลองของก่อน ไม่ต้องใช้บัตร',
     bullets: ['แจ้งเตือน · แชท · แถบเป้าหมาย', 'โหลแก้ว · ตู้ปลา · ตัวละครกินของขวัญ', 'ไม่มีโลโก้บนจอ'],
-    features: { widgets: W_FREE, maxActionRules: 3, maxTokens: 2, noWatermark: true, tarot: false, liveStats: false, soundMaxMB: 0, soundMaxFiles: 0, prioritySupport: false, mascotDiscountPct: 0, styleLimit: 3 },
+    features: { widgets: W_FREE, maxActionRules: 3, maxTokens: 2, noWatermark: true, tarot: false, liveStats: false, soundMaxMB: 0, soundMaxFiles: 0, prioritySupport: false, mascotDiscountPct: 0, styleLimit: 3, soundRules: 5 },
   },
   {
     code: 'starter', name: 'มือใหม่', priceCents: 9900, currency: 'thb', badge: '',
     tagline: 'เริ่มไลฟ์จริงจัง ครบเครื่องมือหลัก',
     bullets: ['ทุกอย่างในแพลน Free +', 'Top Gifters · นาฬิกา Subathon · ป้ายไฟ LED', 'Actions & Events · เมนูของขวัญ · โดเนท'],
-    features: { widgets: W_STARTER_NEW, maxActionRules: 15, maxTokens: 3, noWatermark: true, tarot: false, liveStats: false, soundMaxMB: 5, soundMaxFiles: 20, prioritySupport: false, mascotDiscountPct: 0, styleLimit: 10 },
+    features: { widgets: W_STARTER_NEW, maxActionRules: 15, maxTokens: 3, noWatermark: true, tarot: false, liveStats: false, soundMaxMB: 5, soundMaxFiles: 20, prioritySupport: false, mascotDiscountPct: 0, styleLimit: 10, soundRules: 20 },
   },
   {
     code: 'pro', name: 'Pro', priceCents: 19900, currency: 'thb', badge: 'ยอดนิยม',
     tagline: 'ครบทุกวิดเจ็ต คุ้มสุด',
     bullets: ['ทุกวิดเจ็ต (รถลาก · ต้นไม้ · กองทับกัน · ลูกแก้ว …)', 'MVP ของ PK · ลีก · มาสคอตตัวแทนวีเจ', 'อ่านแชท (TTS) · ไพ่ทาโร่ · สถิติไลฟ์'],
-    features: { widgets: W_ALL, maxActionRules: 40, maxTokens: 5, noWatermark: true, tarot: true, liveStats: true, soundMaxMB: 10, soundMaxFiles: 50, prioritySupport: false, mascotDiscountPct: 0, styleLimit: 20 },
+    features: { widgets: W_ALL, maxActionRules: 40, maxTokens: 5, noWatermark: true, tarot: true, liveStats: true, soundMaxMB: 10, soundMaxFiles: 50, prioritySupport: false, mascotDiscountPct: 0, styleLimit: 20, soundRules: 50 },
   },
   {
     code: 'promax', name: 'Pro Max', priceCents: 29900, currency: 'thb', badge: '',
     tagline: 'สายแข่ง PK ไลฟ์ทุกวัน',
     bullets: ['ทุกอย่างใน Pro +', 'กฎ Actions 100 ข้อ · ลิงก์ 10 ชุด', 'ซัพพอร์ตด่วน · ส่วนลดสั่งทำมาสคอต 10%'],
-    features: { widgets: W_ALL, maxActionRules: 100, maxTokens: 10, noWatermark: true, tarot: true, liveStats: true, soundMaxMB: 15, soundMaxFiles: 100, prioritySupport: true, mascotDiscountPct: 10, styleLimit: 40 },
+    features: { widgets: W_ALL, maxActionRules: 100, maxTokens: 10, noWatermark: true, tarot: true, liveStats: true, soundMaxMB: 15, soundMaxFiles: 100, prioritySupport: true, mascotDiscountPct: 10, styleLimit: 40, soundRules: 100 },
   },
   {
     code: 'expert', name: 'มืออาชีพ', priceCents: 34900, currency: 'thb', badge: '',
     tagline: 'ไม่จำกัด สำหรับมืออาชีพ/เอเจนซี่',
     bullets: ['ทุกอย่างใน Pro Max +', 'กฎ Actions ไม่จำกัด · ลิงก์ 20 ชุด', 'อัปโหลดเสียง 200 ไฟล์ · ส่วนลดมาสคอต 20%'],
-    features: { widgets: W_ALL, maxActionRules: 999, maxTokens: 20, noWatermark: true, tarot: true, liveStats: true, soundMaxMB: 20, soundMaxFiles: 200, prioritySupport: true, mascotDiscountPct: 20, styleLimit: 999 },
+    features: { widgets: W_ALL, maxActionRules: 999, maxTokens: 20, noWatermark: true, tarot: true, liveStats: true, soundMaxMB: 20, soundMaxFiles: 200, prioritySupport: true, mascotDiscountPct: 20, styleLimit: 999, soundRules: 999 },
   },
 ];
 
@@ -151,6 +153,7 @@ function merge(def: PlanDef, o: PlanOverride | undefined): PlanDef {
       prioritySupport: typeof f.prioritySupport === 'boolean' ? f.prioritySupport : d.prioritySupport,
       mascotDiscountPct: clampInt(f.mascotDiscountPct ?? d.mascotDiscountPct, 0, 100, d.mascotDiscountPct),
       styleLimit: clampInt(f.styleLimit ?? d.styleLimit, 1, 999, d.styleLimit),
+      soundRules: clampInt(f.soundRules ?? d.soundRules, 0, 1000, d.soundRules),
     },
   };
 }

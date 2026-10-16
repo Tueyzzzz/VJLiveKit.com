@@ -70,8 +70,13 @@ export async function actionRoutes(app: FastifyInstance): Promise<void> {
     if (!parsed.success) return reply.code(400).send({ error: 'กฎไม่ถูกต้อง', issues: parsed.error.issues });
     const { name, enabled, trigger, action } = parsed.data;
     const ent = await getEntitlements(claims.userId);
-    const count = await prisma.actionRule.count({ where: { userId: claims.userId } });
-    if (count >= ent.maxActionRules) {
+    // เสียงแจ้งเตือน (กฎเล่นเสียง) นับโควตาแยก (soundRules) · กฎอื่นนับกับ maxActionRules (ไม่รวมกฎเสียง)
+    const total = await prisma.actionRule.count({ where: { userId: claims.userId } });
+    const sounds = await prisma.actionRule.count({ where: { userId: claims.userId, action: { path: ['type'], equals: 'sound' } } });
+    if (action.type === 'sound') {
+      const lim = ent.soundRules ?? ent.maxActionRules;
+      if (sounds >= lim) return reply.code(403).send({ error: `แพลน ${ent.plan} สร้างเสียงแจ้งเตือนได้สูงสุด ${lim} เสียง — อัปเกรดเพื่อเพิ่ม`, upgrade: true });
+    } else if (total - sounds >= ent.maxActionRules) {
       return reply.code(403).send({ error: `แพลน ${ent.plan} สร้างกฎได้สูงสุด ${ent.maxActionRules} ข้อ — อัปเกรดเป็น Pro เพื่อเพิ่ม`, upgrade: true });
     }
     const rule = await prisma.actionRule.create({

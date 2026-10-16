@@ -8,7 +8,7 @@ import { api, formatMoney } from '@/lib/api';
 
 interface Features {
   widgets: string[]; maxActionRules: number; maxTokens: number; noWatermark: boolean;
-  tarot: boolean; liveStats: boolean; soundMaxMB: number; soundMaxFiles: number; prioritySupport: boolean; mascotDiscountPct: number; styleLimit: number;
+  tarot: boolean; liveStats: boolean; soundMaxMB: number; soundMaxFiles: number; prioritySupport: boolean; mascotDiscountPct: number; styleLimit: number; soundRules: number;
 }
 interface PlanRow { code: string; name: string; priceCents: number; currency: string; badge: string; tagline: string; bullets: string[]; features: Features }
 
@@ -27,6 +27,7 @@ const NUMS: [keyof Features, string, string][] = [
   ['soundMaxFiles', 'จำนวนไฟล์เสียง', 'ไฟล์ (0 = ค่าระบบ)'],
   ['mascotDiscountPct', 'ส่วนลดสั่งทำมาสคอต', '%'],
   ['styleLimit', 'แบบให้เลือกต่อวิดเจ็ต', 'แบบ (999 = ทุกแบบ)'],
+  ['soundRules', 'เสียงแจ้งเตือน', 'เสียง (นับแยกจากกฎอื่น)'],
 ];
 const FLAGS: [keyof Features, string][] = [
   ['noWatermark', 'ไม่มีป้าย vjlivekit.com บนจอ'],

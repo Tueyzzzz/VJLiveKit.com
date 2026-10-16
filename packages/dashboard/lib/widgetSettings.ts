@@ -842,6 +842,12 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
   },
 };
 
+// 🧹 ล้าง Auto: วิดเจ็ตสะสมของขวัญ — เริ่มไลฟ์ใหม่แล้วล้างของเก่าให้เอง (เซิร์ฟเวอร์กด "ล้าง" ให้ตอนเจอห้องไลฟ์ใหม่)
+for (const t of ['giftjar', 'aquarium', 'vehicle', 'snowglobe', 'spacedome', 'belly', 'garden', 'tree', 'coinjar', 'pile']) {
+  const d = WIDGET_SETTINGS[t];
+  if (d?.sections[0]) d.sections[0].fields.push({ key: 'autoClear', label: '🧹 ล้าง Auto — ล้างของขวัญเองทุกครั้งที่เริ่มไลฟ์ใหม่', type: 'toggle', def: false, hint: 'ปิด = ของขวัญสะสมต่อข้ามไลฟ์ (ล้างเองด้วยปุ่มด้านล่าง) · ลงไลฟ์แล้วขึ้นใหม่ = เริ่มโหลว่าง' });
+}
+
 /** ค่าเริ่มต้นของทุกช่อง */
 export function defaultsOf(def: WidgetSettingsDef): Values {
   const v: Values = {};

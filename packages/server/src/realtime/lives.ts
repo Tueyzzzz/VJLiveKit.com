@@ -22,7 +22,11 @@ setInterval(() => {
 export function trackLive(roomId: string, username: string, s: { diamonds?: number; gifts?: number; likes?: number; peakViewers?: number }, ended = false): void {
   const now = new Date().toISOString();
   let r = lives.find((x) => x.roomId === roomId);
-  if (!r) { r = { roomId, username, startedAt: now, lastSeenAt: now, diamonds: 0, gifts: 0, likes: 0, peakViewers: 0, ended: false }; lives.push(r); }
+  if (!r) {
+    r = { roomId, username, startedAt: now, lastSeenAt: now, diamonds: 0, gifts: 0, likes: 0, peakViewers: 0, ended: false }; lives.push(r);
+    // ห้องใหม่ → บันทึกทันที (ไม่รอ 30 วิ) · ล้าง Auto ใช้รายการนี้แยก "ไลฟ์ใหม่" จาก "ต่อห้องเดิมหลัง deploy" — ไฟล์ต้องทันเสมอ
+    try { fs.mkdirSync(path.dirname(FILE), { recursive: true }); fs.writeFileSync(FILE, JSON.stringify(lives.slice(-5000))); } catch (err) { console.error('[lives] save failed', err); }
+  }
   r.lastSeenAt = now; r.username = username;
   r.diamonds = Math.max(r.diamonds, s.diamonds ?? 0); r.gifts = Math.max(r.gifts, s.gifts ?? 0);
   r.likes = Math.max(r.likes, s.likes ?? 0); r.peakViewers = Math.max(r.peakViewers, s.peakViewers ?? 0);

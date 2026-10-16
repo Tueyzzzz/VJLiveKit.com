@@ -13,7 +13,7 @@ import { toAudioDataUrl } from '@/lib/sounds';
 import { api, ApiError, type OverlayTokenRow, type ActionType, type AnimalName, type PrankName, type Rule, type TarotDeck, type TarotTopic, type TriggerEvent } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { translate, useT } from '@/lib/i18n';
-import { ANIMALS, CHEST_STYLES, EFFECTS, effectLabel, PK_TEMPLATES, PKB_CATS, PKB_READY, PKB_STYLES, pkBannerRule, PRANKS, prankLabel, TEMPLATES, type PkBannerCat, TEMPLATE_GROUPS, type EffectName, type Template, type TemplateGroup } from '@/lib/actionTemplates';
+import { ANIMALS, CHEST_STYLES, EFFECTS, effectLabel, PKB_CATS, PKB_READY, PKB_STYLES, pkBannerRule, PRANKS, prankLabel, TEMPLATES, type PkBannerCat, TEMPLATE_GROUPS, type EffectName, type Template, type TemplateGroup } from '@/lib/actionTemplates';
 
 const EVENT_LABELS: Record<TriggerEvent, string> = { gift: '🎁 ได้รับกิฟต์', follow: '➕ มีคนติดตาม', share: '🔁 มีคนแชร์', like: '❤️ มีคนกดไลค์', chat: '💬 แชทมีคำว่า', chest: '🎁 กล่องสมบัติ (กล่องของขวัญ)', superfanbox: '💜 กล่องซูเปอร์แฟน (ถุงม่วง)', join: '👋 มีคนเข้าห้อง', pk: '⚔️ PK (แข่ง)' };
 /** สถานการณ์ PK ที่ตั้งกฎได้ */
@@ -673,36 +673,7 @@ function ActionsInner() {
                 );
               })}
             </div>
-            <h3 className="mb-3 text-sm font-semibold">{t('📋 เทมเพลต PK อื่น ๆ')}</h3>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {PK_TEMPLATES.map((tp, ti) => {
-                const added = have.has(tp.rule.name);
-                // จบ PK (ประกาศ MVP) ไม่มีวิดีโอของตัวเอง → ใช้ภาพตอนชนะ
-                const pk = tp.rule.trigger.pk, pkKey = pk === 'end' ? 'win' : pk;
-                return (
-                  <div key={tp.rule.name} className="flex flex-col rounded-xl border border-line bg-canvas/50 p-3">
-                    {/* PK: ภาพจริงของเทมเพลตนี้บนจอ (ถ่ายจาก fx.html — public/pk-shot/<ลำดับใน PK_TEMPLATES>.webp) · เดิมใช้ภาพตามจังหวะ PK → ชนะ/จบ ทุกใบเป็นถ้วยเดียวกัน */}
-                    {/* กล่อง relative + รูป absolute inset-2 object-contain = รูปสูง/กว้างแค่ไหนก็อยู่ครบกลางกล่อง ไม่ล้น ไม่โดนตัด */}
-                    {pkKey
-                      ? <div className="relative -mx-1 -mt-1 aspect-video overflow-hidden rounded-lg bg-gradient-to-br from-pink-soft to-violet-soft">
-                          <img src={`/pk-shot/${String(ti).padStart(2, '0')}.webp`} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
-                          <span className="absolute left-1.5 top-1.5 grid size-7 place-items-center rounded-full bg-white/90 text-sm shadow-sm">{tp.icon}</span>
-                        </div>
-                      : <div className="text-2xl">{tp.icon}</div>}
-                    <div className="mt-1 text-sm font-medium leading-snug">{t(tp.title)}</div>
-                    <div className="mt-0.5 flex-1 text-xs text-muted">{t(tp.desc)}</div>
-                    <div className="mt-3 flex gap-2">
-                      <Button variant={added ? 'ghost' : 'secondary'} className="min-w-0 flex-1" disabled={added} loading={adding === tp.rule.name} onClick={() => applyTemplate(tp)}>
-                        {added ? <><Check className="size-4" /> {t('เพิ่มแล้ว')}</> : t('ใช้เลย')}
-                      </Button>
-                      <Button variant="ghost" className="shrink-0 px-2.5" title={t('ตั้งค่าก่อนใช้ (เปลี่ยนข้อความ สี ระยะเวลา ฯลฯ)')} aria-label={t('ตั้งค่า')} onClick={() => customizeTemplate(tp)}>
-                        <Settings2 className="size-4" /> {t('ตั้งค่า')}
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            {/* เทมเพลต PK แบบเก่า (ป้ายไฟ/ข้อความ) เอาออกแล้ว — ใช้ป้าย PK สไตล์ GPT ด้านบนแทน · กฎที่เพิ่มไว้แล้วยังทำงานตามเดิม */}
             </>
           ) : (
             <>

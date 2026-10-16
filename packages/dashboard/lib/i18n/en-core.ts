@@ -787,4 +787,6 @@ export const EN_CORE: Record<string, string> = {
   "ชื่อที่แสดง (ผู้ชมจะเห็นชื่อนี้)": "Display name (viewers see this)",
   "กรุณากรอกชื่อที่แสดง อีเมลให้ถูกต้อง และรหัสผ่านอย่างน้อย 8 ตัวอักษร": "Please enter a display name, a valid email and a password of at least 8 characters",
   "แพลน {plan} สร้างเสียงแจ้งเตือนได้สูงสุด {n} เสียง — อัปเกรดเพื่อเพิ่ม": "The {plan} plan can create up to {n} sound alerts — upgrade for more",
+  "📱 มือถือ": "📱 Phone",
+  "🖥 แนวนอน": "🖥 Landscape",
 };

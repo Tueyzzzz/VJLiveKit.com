@@ -336,30 +336,36 @@ function WidgetSettings() {
   const [previewSrc, setPreviewSrc] = useState('');
   const [zoom, setZoom] = useState(0); // ซูมพรีวิว: 0 = อัตโนมัติ (หาตำแหน่งวิดเจ็ตแล้วขยายให้เต็ม) · จำไว้ในเครื่อง
   useEffect(() => { try { const z = Number(localStorage.getItem('vjl-prev-zoom2')); if (z) setZoom(z); } catch { /* ignore */ } }, []);
+  // แนวพรีวิว: 📱 มือถือ (แนวตั้ง 1080×1920 แบบ TikTok LIVE) / 🖥 แนวนอน (1920×1080) · กองทับกันเริ่มที่มือถือ · จำไว้ในเครื่อง
+  const [portrait, setPortrait] = useState(false);
+  useEffect(() => { let v: string | null = null; try { v = localStorage.getItem('vjl-prev-orient:' + type); } catch { /* ignore */ } setPortrait(v ? v === 'p' : type === 'pile'); }, [type]);
+  const VW = portrait ? 1080 : 1920, VH = portrait ? 1920 : 1080;
+  const dims = useRef({ VW, VH }); dims.current = { VW, VH };
   const [fit, setFit] = useState<{ z: number; cx: number; cy: number } | null>(null);
   const frameRef = useRef<HTMLIFrameElement | null>(null);
   // อัตโนมัติ: วัดกรอบรวมของสิ่งที่มองเห็นในหน้าวิดเจ็ต (ไม่นับพื้นหลัง/แคนวาสเต็มจอ) ซ้ำช่วงแรกเพราะวิดเจ็ตค่อย ๆ โผล่
   const measure = useCallback(() => {
     const d = frameRef.current?.contentDocument; if (!d?.body) return;
+    const { VW: MW, VH: MH } = dims.current;
     let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
     for (const el of Array.from(d.body.querySelectorAll<HTMLElement>('*'))) {
       if (/^(SCRIPT|STYLE|IFRAME)$/.test(el.tagName)) continue;
       const r = el.getBoundingClientRect();
-      if (el.hasAttribute('data-fit')) { x0 = Math.min(x0, Math.max(0, r.left)); y0 = Math.min(y0, Math.max(0, r.top)); x1 = Math.max(x1, Math.min(1920, r.right)); y1 = Math.max(y1, Math.min(1080, r.bottom)); continue; } // วิดเจ็ตวาดบนแคนวาส บอกกรอบเนื้อหาเอง
-      if (r.width < 4 || r.height < 4 || (r.width > 1700 && r.height > 950) || r.right < 0 || r.bottom < 0 || r.left > 1920 || r.top > 1080) continue; // นอกจอ/เต็มจอ ไม่นับ
+      if (el.hasAttribute('data-fit')) { x0 = Math.min(x0, Math.max(0, r.left)); y0 = Math.min(y0, Math.max(0, r.top)); x1 = Math.max(x1, Math.min(MW, r.right)); y1 = Math.max(y1, Math.min(MH, r.bottom)); continue; } // วิดเจ็ตวาดบนแคนวาส บอกกรอบเนื้อหาเอง
+      if (r.width < 4 || r.height < 4 || (r.width > MW * 0.88 && r.height > MH * 0.88) || r.right < 0 || r.bottom < 0 || r.left > MW || r.top > MH) continue; // นอกจอ/เต็มจอ ไม่นับ
       const cs = d.defaultView!.getComputedStyle(el);
       if (cs.visibility === 'hidden' || cs.display === 'none' || Number(cs.opacity) < 0.05) continue;
       if (!el.children.length || el.tagName === 'IMG' || el.tagName === 'CANVAS' || cs.backgroundImage !== 'none' || cs.backgroundColor !== 'rgba(0, 0, 0, 0)') {
-        x0 = Math.min(x0, Math.max(0, r.left)); y0 = Math.min(y0, Math.max(0, r.top)); x1 = Math.max(x1, Math.min(1920, r.right)); y1 = Math.max(y1, Math.min(1080, r.bottom));
+        x0 = Math.min(x0, Math.max(0, r.left)); y0 = Math.min(y0, Math.max(0, r.top)); x1 = Math.max(x1, Math.min(MW, r.right)); y1 = Math.max(y1, Math.min(MH, r.bottom));
       }
     }
-    if (x1 <= x0) { setFit({ z: 2, cx: 960, cy: 540 }); return; } // หาไม่เจอ (วาดบนแคนวาสเต็มจอ เช่น โหล) → ซูมกลางจอ
+    if (x1 <= x0) { setFit({ z: portraitFit(MW), cx: MW / 2, cy: MH / 2 }); return; } // หาไม่เจอ (วาดบนแคนวาสเต็มจอ เช่น โหล) → ซูมกลางจอ
     const w = x1 - x0, h = y1 - y0;
-    setFit({ z: Math.max(1, Math.min(3, 0.85 * Math.min(1920 / w, 1080 / h))), cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 });
+    setFit({ z: Math.max(1, Math.min(3, 0.85 * Math.min(MW / w, MH / h))), cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 });
   }, []);
   // พรีวิว: ซ่อนไว้จนวิดเจ็ตโหลดรูปเสร็จ แล้วค่อยเฟดขึ้น — ไม่ให้แวบเห็นแบบเริ่มต้น (โหลเก่าที่วาดด้วยโค้ด) ก่อนเปลี่ยนเป็นแบบที่เลือก
   const [prevShown, setPrevShown] = useState(false);
-  useEffect(() => { setFit(null); setPrevShown(false); }, [previewSrc]);
+  useEffect(() => { setFit(null); setPrevShown(false); }, [previewSrc, portrait]);
   const [boxW, setBoxW] = useState(0);
   const roRef = useRef<ResizeObserver | null>(null);
   const boxRef = useCallback((el: HTMLDivElement | null) => {
@@ -501,24 +507,29 @@ function WidgetSettings() {
               <div className="mb-2 flex items-center justify-between gap-2 text-xs text-muted">
                 <span>{t('พรีวิว (ข้อมูลจำลอง)')}</span>
                 {/* ซูม: วิดเจ็ตส่วนใหญ่อยู่กลางจอ → ขยายให้เต็มกรอบ */}
-                <span className="flex items-center gap-1">
+                <span className="flex flex-wrap items-center justify-end gap-1">
+                  {([['p', t('📱 มือถือ')], ['l', t('🖥 แนวนอน')]] as const).map(([k, l]) => (
+                    <button key={k} onClick={() => { setPortrait(k === 'p'); try { localStorage.setItem('vjl-prev-orient:' + type, k); } catch { /* ignore */ } }}
+                      className={`rounded-md px-1.5 py-0.5 ${(k === 'p') === portrait ? 'bg-violet text-white' : 'hover:bg-canvas'}`}>{l}</button>
+                  ))}
+                  <span className="mx-0.5 h-3 w-px bg-line" />
                   {[0, 1, 1.5, 2, 2.5].map((z) => (
                     <button key={z} onClick={() => { setZoom(z); try { localStorage.setItem('vjl-prev-zoom2', String(z)); } catch { /* ignore */ } }}
                       className={`rounded-md px-1.5 py-0.5 ${zoom === z ? 'bg-pink text-white' : 'hover:bg-canvas'}`}>{z === 0 ? t('อัตโนมัติ') : z === 1 ? t('เต็มจอ') : `${z}×`}</button>
                   ))}
                 </span>
               </div>
-              <div ref={boxRef} className="relative aspect-video overflow-hidden rounded-xl"
+              <div ref={boxRef} className={`relative overflow-hidden rounded-xl ${portrait ? 'mx-auto aspect-[9/16] w-full max-w-[340px]' : 'aspect-video'}`}
                 style={{ background: 'repeating-conic-gradient(#ece6f5 0% 25%, #f8f5fc 0% 50%) 50% / 24px 24px' }}>
                 {previewSrc && boxW > 0 && (() => {
-                  const f = zoom === 0 ? (fit ?? { z: 1, cx: 960, cy: 540 }) : { z: zoom, cx: 960, cy: 540 };
-                  const S = (boxW / 1920) * f.z, boxH = (boxW * 9) / 16;
+                  const f = zoom === 0 ? (portrait ? { z: 1, cx: VW / 2, cy: VH / 2 } : (fit ?? { z: 1, cx: VW / 2, cy: VH / 2 })) : { z: zoom, cx: VW / 2, cy: VH / 2 }; // มือถือ + อัตโนมัติ = เห็นเต็มจอมือถือ (เหมือนบนไลฟ์จริง)
+                  const S = (boxW / VW) * f.z, boxH = (boxW * VH) / VW;
                   // เลื่อนให้ตรงกลางวิดเจ็ตอยู่กลางกรอบ แต่ไม่เลยขอบจอจำลอง
-                  const tx = Math.min(0, Math.max(boxW - 1920 * S, boxW / 2 - f.cx * S)), ty = Math.min(0, Math.max(boxH - 1080 * S, boxH / 2 - f.cy * S));
+                  const tx = Math.min(0, Math.max(boxW - VW * S, boxW / 2 - f.cx * S)), ty = Math.min(0, Math.max(boxH - VH * S, boxH / 2 - f.cy * S));
                   return <iframe key={previewSrc} ref={frameRef} src={previewSrc} title={t('พรีวิววิดเจ็ต')}
                     onLoad={() => { for (const ms of [600, 1500, 3000]) setTimeout(measure, ms); setTimeout(() => setPrevShown(true), 700); }}
-                    className="absolute left-0 top-0 h-[1080px] w-[1920px] origin-top-left border-0"
-                    style={{ transform: `translate(${tx}px, ${ty}px) scale(${S})`, transition: 'transform .4s ease, opacity .35s ease', opacity: prevShown ? 1 : 0 }} />;
+                    className="absolute left-0 top-0 origin-top-left border-0"
+                    style={{ width: VW, height: VH, transform: `translate(${tx}px, ${ty}px) scale(${S})`, transition: 'transform .4s ease, opacity .35s ease', opacity: prevShown ? 1 : 0 }} />;
                 })()}
               </div>
             </Card>
@@ -560,6 +571,8 @@ function WidgetSettings() {
     </div>
   );
 }
+
+const portraitFit = (w: number) => (w < 1500 ? 1 : 2); // แนวตั้ง: วาดบนแคนวาสเต็มจอ (เช่น กอง) → โชว์เต็มจอมือถือ
 
 export default function WidgetSettingsPage() {
   return <Suspense fallback={<Spinner />}><WidgetSettings /></Suspense>;

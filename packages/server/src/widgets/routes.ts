@@ -1,3 +1,4 @@
+import { COLLECT_TYPES } from './autoClear.js';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { Prisma } from '@prisma/client';
@@ -89,6 +90,14 @@ export async function widgetRoutes(app: FastifyInstance): Promise<void> {
       const old = (prev?.settings ?? {}) as Record<string, unknown>;
       for (const k of ['bank', 'bankAccount', 'bankHolder', 'promptpay', 'min', 'title']) if (!(k in body) && k in old) body = { ...body, [k]: old[k] };
     }
+    // ปุ่ม "ล้าง" (resetAt ใหม่): ใช้เวลาเซิร์ฟเวอร์ (นาฬิกาคอมวีเจคลาดได้ → ของบางชิ้นไม่ถูกล้าง)
+    const prevCfg = await prisma.widgetConfig.findUnique({ where: { userId_type: { userId: claims.userId, type } }, select: { settings: true } });
+    const prevReset = ((prevCfg?.settings ?? {}) as Record<string, unknown>).resetAt;
+    const isReset = body.resetAt != null && String(body.resetAt) !== String(prevReset ?? '');
+    const now = Date.now();
+    if (isReset) body = { ...body, resetAt: now };
+    // บันทึกตั้งค่าปกติ (ฟอร์มไม่มีช่อง resetAt) → เก็บเวลากดล้างเดิมไว้ · เดิมหายไป = วิดเจ็ตดึงของขวัญเก่าทั้งหมดกลับมา (ล้างแล้วไม่หาย)
+    else if (body.resetAt == null && prevReset != null) body = { ...body, resetAt: prevReset };
     const settings = body as Prisma.InputJsonValue;
     const cfg = await prisma.widgetConfig.upsert({
       where: { userId_type: { userId: claims.userId, type } },
@@ -96,6 +105,16 @@ export async function widgetRoutes(app: FastifyInstance): Promise<void> {
       update: { settings },
     });
     getHub()?.pushConfig(claims.userId, type, cfg.settings);
+    // วิดเจ็ตสะสมของขวัญใช้กองเดียวกัน (รวมลิงก์ "สะสมของขวัญ ลิงก์เดียว") → กดล้างหน้าไหนก็ล้างทุกแบบ (เดิมกดผิดหน้า = แบบที่ขึ้นจอไม่ถูกล้าง)
+    if (isReset && COLLECT_TYPES.includes(type)) {
+      for (const other of COLLECT_TYPES) {
+        if (other === type) continue;
+        const o = await prisma.widgetConfig.findUnique({ where: { userId_type: { userId: claims.userId, type: other } }, select: { settings: true } });
+        const next = { ...((o?.settings ?? {}) as Record<string, unknown>), resetAt: now } as Prisma.InputJsonValue;
+        await prisma.widgetConfig.upsert({ where: { userId_type: { userId: claims.userId, type: other } }, create: { userId: claims.userId, type: other, settings: next }, update: { settings: next } });
+        getHub()?.pushConfig(claims.userId, other, next);
+      }
+    }
     return { config: cfg.settings };
   });
 }

@@ -3,7 +3,7 @@ import { prisma } from '../db/prisma.js';
 import { getHub } from '../realtime/hub.js';
 
 /** วิดเจ็ตสะสมของขวัญที่มีสวิตช์ "ล้าง Auto" (ตรงกับหน้าตั้งค่า dashboard/lib/widgetSettings.ts) */
-const COLLECT_TYPES = ['giftjar', 'aquarium', 'vehicle', 'snowglobe', 'spacedome', 'belly', 'garden', 'tree', 'coinjar', 'pile'];
+export const COLLECT_TYPES = ['giftjar', 'aquarium', 'vehicle', 'snowglobe', 'spacedome', 'belly', 'garden', 'tree', 'coinjar', 'pile'];
 const isOff = (v: unknown) => v === false || v === 'false' || v === '0' || v === 0;
 
 /**

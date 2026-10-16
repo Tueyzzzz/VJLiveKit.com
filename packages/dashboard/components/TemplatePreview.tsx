@@ -31,14 +31,14 @@ export function triggerChip(tp: Template, t: (s: string) => string): string {
 export function TemplatePreview({ tp }: { tp: Template }) {
   const t = useT();
   const ref = useRef<HTMLDivElement>(null);
-  const [seen, setSeen] = useState(false), [hover, setHover] = useState(false);
+  const [seen, setSeen] = useState(false), [hover, setHover] = useState(false), [bad, setBad] = useState(false); // bad = รูปตัวอย่างโหลดไม่ได้ → โชว์ไอคอนแทน
   useEffect(() => {
     const el = ref.current; if (!el || !tp.id || typeof IntersectionObserver === 'undefined') return;
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
     const io = new IntersectionObserver(([e]) => setSeen(e.isIntersecting), { threshold: 0.6 });
     io.observe(el); return () => io.disconnect();
   }, [tp.id]);
-  const play = !!tp.id && (seen || hover) && !tp.thumb;
+  const play = !!tp.id && (seen || hover) && !tp.thumb && !bad;
   const badge = tp.id && HOT.has(tp.id) ? 'hot' : tp.id && NEW.has(tp.id) ? 'new' : null;
   return (
     <div ref={ref} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
@@ -50,9 +50,9 @@ export function TemplatePreview({ tp }: { tp: Template }) {
           <div className="absolute inset-0 grid place-items-center bg-gradient-to-b from-[#c9b8e8] via-[#e7d6ee] to-[#f6c9da]">
             <img src={tp.thumb} alt={t(tp.title)} width={192} height={192} loading="lazy" decoding="async" className={`w-[78%] object-contain drop-shadow-[0_6px_10px_rgba(80,40,110,.35)]`} />
           </div>
-        ) : tp.id ? (
+        ) : tp.id && !bad ? (
           <>
-            <img src={`/tpl/${tp.id}.webp`} alt={t(tp.title)} width={270} height={480} loading="lazy" decoding="async" className="absolute inset-0 size-full object-cover" />
+            <img src={`/tpl/${tp.id}.webp`} alt="" onError={() => setBad(true)} width={270} height={480} loading="lazy" decoding="async" className="absolute inset-0 size-full object-cover" />
             {play && <img src={`/tpl/${tp.id}.anim.webp`} alt="" aria-hidden width={270} height={480} decoding="async" className="absolute inset-0 size-full object-cover" />}
           </>
         ) : (

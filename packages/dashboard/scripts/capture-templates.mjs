@@ -1,6 +1,6 @@
 // อัดตัวอย่างจริงของเทมเพลต Actions แบบจอแนวตั้ง (TikTok LIVE 9:16) → public/tpl/
 //   <id>.webp       = ภาพนิ่ง (poster) 270×480 ตอนสวยที่สุด — โชว์ก่อน/ตอนไม่อยู่ในจอ
-//   <id>.anim.webp  = แอนิเมชันวนลูป ~2.8 วิ 15fps 270×480 — เล่นเมื่อการ์ดอยู่ในจอ/ชี้เมาส์
+//   <id>.anim.webp  = แอนิเมชันวนลูป ~2.8 วิ 24fps (สัตว์ 25fps) 270×480 — เล่นเมื่อการ์ดอยู่ในจอ/ชี้เมาส์
 // เปิดวิดเจ็ต FX (fx.html?debug=1) / มาสคอต ใน headless Chrome ขนาด 540×960 บนพื้น "กล้องไลฟ์" พาสเทลเบลอ (มีเงาคนจาง ๆ)
 // แล้วสั่งเล่น action ของเทมเพลตนั้น อัดด้วย CDP screencast → เลือกเฟรมตามเวลาจริง → ต่อปลาย-ต้นแบบ crossfade ให้วนเนียน → sharp ทำ webp
 // ใช้: node scripts/capture-templates.mjs <overlayBaseUrl> [id,id,...]
@@ -17,7 +17,8 @@ const OUT = new URL('../public/tpl/', import.meta.url);
 mkdirSync(OUT, { recursive: true });
 const CHROME = process.env.CHROME ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 const PORT = 9334, prof = `${tmpdir()}/vjl-tplcap`, W = 540, H = 960, OW = 270, OH = 480;
-const FPS = 15, LOOP = 2.8, XF = 0.5; // ความยาวลูป · ช่วง crossfade ปลาย→ต้น
+const FPS = 24, LOOP = 2.8, XF = 0.5; // ความยาวลูป · ช่วง crossfade ปลาย→ต้น
+const AFPS = 25; // สัตว์ (หยุดเวลาอัดทีละเฟรม) — ลื่นกว่าเดิม
 const chrome = spawn(CHROME, ['--headless=new', `--remote-debugging-port=${PORT}`, `--user-data-dir=${prof}`, `--window-size=${W},${H}`, '--hide-scrollbars',
   '--autoplay-policy=no-user-gesture-required', '--disable-background-timer-throttling', '--disable-renderer-backgrounding', 'about:blank'], { stdio: 'ignore' });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -50,6 +51,7 @@ const roomJs = (r) => `(() => { const d = document.createElement('div');
 /** ช่วงที่อัด: เริ่มอัด (วินาทีหลังสั่งเล่น) · ภาพนิ่ง (poster) ณ วินาทีไหน · action ที่ใช้อัด (ยืดเวลาเอฟเฟกต์ให้เต็มช่วง) */
 function plan(a) {
   if (a.type === 'tarot') { const p = a.cards === 7 ? 9 : a.cards === 3 ? 6.2 : 3.4; return { s0: p - 2.1, poster: p }; }
+  if (a.type === 'effect' && a.effect === 'prank') return { s0: 0.05, poster: 0.9, prank: a.prank }; // 😈 มุกสั้น 2–4 วิ → อัดตั้งแต่ต้น
   if (a.type === 'effect' && a.effect === 'animal') return { s0: 0.62, poster: 0, act: { ...a, durationMs: 20000 }, animal: a.animal };
   if (a.type === 'effect') {
     if (a.effect === 'confetti') return { s0: 0.15, poster: 1.2 };
@@ -97,11 +99,34 @@ for (const tp of list) {
     ? `window.__h.forEach((f) => f({ action: ${JSON.stringify(act)}, event: ${ev} }))`
     : `window.__play(${JSON.stringify(act)}, ${ev})`;
   await sleep(a.type === 'mascot' ? 1500 : 300);
+  if (pl.prank) await evalv(S, `window.VJLPrank && VJLPrank.preload ? VJLPrank.preload(${JSON.stringify(pl.prank)}).then(() => 1, () => 0) : 0`); // โหลดรูปมุกก่อน → เริ่มทันที
   if (pl.animal) { // โหลดเฟรมไว้ก่อน → เริ่มเล่นทันทีที่สั่ง · ภาพนิ่ง = เฟรมเต็ม ๆ หลังวนครบ 1 รอบ
     const cyc = (await evalv(S, `window.__animalCycle(${JSON.stringify(pl.animal)})`)) / 1000;
     const nfr = (await evalv(S, `window.__animalCount ? window.__animalCount(${JSON.stringify(pl.animal)}) : 6`)) || 6; // การ์ตูน 6 · สัตว์จริง 12
     await evalv(S, `window.__animalPreload(${JSON.stringify(pl.animal)})`);
     loop = 2 * cyc; pl.holdMs = Math.round((2 * cyc + ((ANIMAL_POSTER[pl.animal] ?? 0) + 0.25) * (cyc / nfr)) * 1000); // กลางช่วงเฟรมนิ่ง (ไม่ติดช่วงซ้อนภาพ)
+  }
+
+  if (pl.animal) { // 🐾 อัดแบบหยุดเวลาทีละเฟรม (ตรงเวลาเป๊ะ ไม่หลุดเฟรมแบบ screencast) · 25fps · ลูป = 2 รอบท่าพอดี → วนต่อกันเนียนโดยไม่ต้อง crossfade
+    await send('Runtime.evaluate', { expression: run }, S);
+    await sleep(300);
+    const N = Math.round(loop * AFPS), out = [];
+    for (let k = 0; k < N; k++) {
+      await evalv(S, `window.__animalHold = ${(pl.s0 + (k * loop) / N) * 1000}; new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))`);
+      const shot = await send('Page.captureScreenshot', { format: 'png' }, S);
+      out.push(await toRaw(Buffer.from(shot.result.data, 'base64')));
+    }
+    await evalv(S, `window.__animalHold = ${pl.holdMs}; new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))`);
+    const still = Buffer.from((await send('Page.captureScreenshot', { format: 'png' }, S)).result.data, 'base64');
+    await send('Target.closeTarget', { targetId });
+    const HQ = pl.animal.startsWith('real-');
+    const anim = await sharp(Buffer.concat(out), { raw: { width: OW, height: OH * N, channels: 3, pageHeight: OH } })
+      .webp({ quality: HQ ? 88 : 72, effort: 6, loop: 0, delay: Array(N).fill(Math.round((loop * 1000) / N)), smartSubsample: true, minSize: true, mixed: true }).toBuffer();
+    const poster = await sharp(still).resize(OW, OH, { kernel: 'lanczos3' }).webp({ quality: HQ ? 92 : 72, effort: 6 }).toBuffer();
+    writeFileSync(new URL(`${tp.id}.anim.webp`, OUT), anim);
+    writeFileSync(new URL(`${tp.id}.webp`, OUT), poster);
+    console.log(tp.id, `${N} เฟรม @${AFPS}fps (หยุดเวลา)`, Math.round(anim.length / 1024) + 'KB anim', Math.round(poster.length / 1024) + 'KB poster');
+    continue;
   }
 
   // screencast: เก็บทุกเฟรมพร้อมเวลา (วินาที) นับจากตอนสั่งเล่น

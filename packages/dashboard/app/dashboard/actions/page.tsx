@@ -705,7 +705,7 @@ function ActionsInner() {
               {fxUrl && ['fx', 'tarot', 'thanks', 'fun'].includes(tplCat) && (
                 <div className="mb-4 rounded-xl border border-dashed border-line bg-canvas/60 p-3">
                   <div className="flex flex-wrap items-center gap-2">
-                    <div className="min-w-0 flex-1 text-sm">
+                    <div className="min-w-0 basis-full text-sm sm:basis-0 sm:flex-1">
                       <span className="font-medium">{t('🔗 ลิงก์เฉพาะหมวดนี้')}</span>
                       <span className="block text-xs text-muted">{t('ไม่บังคับ — ใช้เมื่ออยากวางหมวดนี้แยกตำแหน่ง/ขนาดเอง (เช่น ไพ่ไว้มุมจอ) ถ้าใช้ลิงก์ FX ลิงก์เดียวก็ไม่ต้องทำอะไร')}</span>
                       <code className="mt-1.5 block break-all select-all rounded-lg bg-white px-3 py-1.5 text-xs text-muted">{`${fxUrl}&only=${tplCat}`}</code>

@@ -1685,8 +1685,14 @@
       const q = b.sq ? Math.max(-0.35, Math.min(0.35, b.sq.x)) : 0;
       // ลูกแก้ว/โดม: ลอยขึ้นลงเบา ๆ ไม่พร้อมกัน (ภาพอย่างเดียว ไม่กระทบฟิสิกส์)
       const fl = SH.dome && !b.out ? Math.sin(nowT * (0.7 + (b.r % 7) * 0.05) + b.x * 0.07 + b.r) * Math.min(7, 2 + b.r * 0.12) : 0;
-      ctx.save(); ctx.globalAlpha = b.life; ctx.translate(b.x, b.y + fl + b.r * -q * 0.5); ctx.scale(1 - q, 1 + q);
-      ctx.rotate(b.rot + (WAVES && SH.water != null && !b.out && b.y > SH.water ? Math.sin(nowT * 1.4 + b.x * 0.05) * 0.14 : 0)); // ใต้น้ำ: เอียงโยกไปมา
+      // ตู้ปลา: ใต้น้ำ = ไหวตามน้ำทีละชิ้น (ลอยขึ้นลง + เลื่อนซ้ายขวา + เอียง · เฟสไม่พร้อมกัน · ใกล้ผิวน้ำค่อย ๆ จางลง) — ภาพอย่างเดียว ไม่กระทบฟิสิกส์/ของไม่หลุด
+      let wx = 0, wy = 0, wr = 0;
+      if (WAVES && SH.water != null && !b.out && b.y > SH.water) {
+        const ph = b.wph ?? (b.wph = Math.random() * 6.28), k = Math.min(1, (b.y - SH.water) / Math.max(12, b.r * 1.5)), A = Math.min(9, 2.5 + b.r * 0.16) * k;
+        wx = Math.sin(nowT * 0.9 + ph + b.y * 0.02) * A; wy = Math.sin(nowT * 1.3 + ph * 1.7) * A * 0.7; wr = Math.sin(nowT * 1.1 + ph + b.x * 0.03) * 0.2 * k;
+      }
+      ctx.save(); ctx.globalAlpha = b.life; ctx.translate(b.x + wx, b.y + fl + wy + b.r * -q * 0.5); ctx.scale(1 - q, 1 + q);
+      ctx.rotate(b.rot + wr); // ใต้น้ำ: เอียงโยกไปมา
       const st = Juice.sticker ? Juice.sticker(b.img, b.r * 2.2 * S() * DPR) : null; // สติกเกอร์คมชัด ขอบขาว + เงานุ่ม
       if (st) { const s = b.r * 2.2 * Juice.STICKER_PAD; ctx.drawImage(st, -s / 2, -s / 2, s, s); }
       else if (b.img && b.img.complete && b.img.naturalWidth) { const s = b.r * 2.2; ctx.drawImage(b.img, -s / 2, -s / 2, s, s); }

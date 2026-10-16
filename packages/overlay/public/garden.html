@@ -192,6 +192,7 @@
       STEM.leaf = mix(STEM.leaf, .38); STEM.leaf2 = mix(STEM.leaf2, .25); STEM.twig = mix(STEM.twig, .3); STEM.stem = mix(STEM.stem, .2);
     })();
     const STEM_K = Math.max(0.6, Math.min(2.2, num('stemLen', 1.35)));
+    const STEM_W = Math.max(0.35, Math.min(1.5, num('stemW', 0.55))); // ?stemW=0.55 ความหนาก้าน (ภาพก้าน AI บีบแนวนอน · ก้านวาดเส้นบางลง)
     const stems = [];
     for (let i = 0; i < 11; i++) {
       const a = -Math.PI / 2 + (i / 10 - .5) * 2.3 + (rnd() - .5) * .12; // พัดกว้าง ~130°
@@ -337,7 +338,7 @@
     const sprOf = (st) => st.spr && vegImg('themes/veg/stem-' + st.spr + '.webp') ? STEM_SPR[st.spr] : null;
     const sprTheta = (st, time) => st.lean + Math.sin(time * 0.9 + st.phase) * 0.05 * SWAY; // ไหวเบา ๆ = หมุนรอบโคน
     function sprPoint(st, M, t, time) {
-      const H = st.len, W = H / M.a, th = sprTheta(st, time), c = Math.cos(th), s = Math.sin(th), P = M.p, p0 = P[0];
+      const H = st.len, W = H / M.a * STEM_W, th = sprTheta(st, time), c = Math.cos(th), s = Math.sin(th), P = M.p, p0 = P[0];
       const f = Math.max(0, Math.min(10, t * 10)), i = Math.min(9, Math.floor(f)), k = f - i;
       const px = P[i][0] + (P[i + 1][0] - P[i][0]) * k, py = P[i][1] + (P[i + 1][1] - P[i][1]) * k;
       const u = (px - p0[0]) * W * st.m, v = (py - p0[1]) * H, du = (P[i + 1][0] - P[i][0]) * W * st.m, dv = (P[i + 1][1] - P[i][1]) * H;
@@ -896,10 +897,10 @@
       if (STEM.glow) ctx.restore();
     }
     function drawStem(st, si, time, wk0) {
-      const wk = wk0 * (st.wk || 1);
+      const wk = wk0 * (st.wk || 1) * STEM_W;
       const M = st.grow && sprOf(st);
       if (M) { // ก้านภาพ AI: ยึดโคน หมุนไหว · ตอนงอกครั้งแรกเผยจากโคนขึ้นไป
-        const im = vegImg('themes/veg/stem-' + st.spr + '.webp'), H = st.len, W = H / M.a, p0 = M.p[0];
+        const im = vegImg('themes/veg/stem-' + st.spr + '.webp'), H = st.len, W = H / M.a * STEM_W, p0 = M.p[0];
         ctx.save(); ctx.translate(st.sb.x, st.sb.y); ctx.rotate(sprTheta(st, time));
         const gs = st.rev < 1 ? 0.85 + 0.15 * st.rev : 1; ctx.scale(st.m * gs, gs); // งอกครั้งแรก: ยืด + ขยายเข้าเล็กน้อย (ไม่ตัดภาพ ไม่มีขอบตัดแข็ง)
         ctx.drawImage(im, -p0[0] * W, -p0[1] * H, W, H); ctx.restore();

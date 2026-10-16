@@ -821,6 +821,8 @@ export const EN_WIDGETS: Record<string, string> = {
   "🖌️ เลือกสีเอง": "🖌️ Custom",
   "สีขอบตัวหนังสือ": "Outline color",
   "ความยาวกิ่ง": "Branch length",
+  "ความหนาก้าน": "Stem thickness",
+  "น้อย = ก้านเรียวบาง": "Lower = slimmer stems",
   "ช่อกระดาษชมพู": "Pink paper bouquet",
   "ช่อผ้าโปร่งลาเวนเดอร์": "Lavender tulle bouquet",
   "ช่อสไตล์เกาหลี": "Korean-style bouquet",

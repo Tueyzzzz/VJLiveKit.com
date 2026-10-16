@@ -189,7 +189,16 @@ function ActionsInner() {
   // ลิงก์แยกหมวด (fx.html?only=<หมวด>) + "ลิงก์หลักไม่ต้องเล่นหมวดนี้" (ตั้งค่า fx: split) — วางแต่ละหมวดคนละตำแหน่งในโปรแกรมไลฟ์ได้
   const [split, setSplit] = useState<string[]>([]);
   const [catCopied, setCatCopied] = useState<string | null>(null);
-  useEffect(() => { api<{ config: Record<string, unknown> }>('/api/widgets/fx/config').then((r) => setSplit(String(r.config?.split ?? '').split(',').filter(Boolean))).catch(() => {}); }, []);
+  const [pkMain, setPkMain] = useState(false); // ลิงก์ FX หลักเล่น PK ด้วย (แบบเดิม — ลูกค้าเก่า)
+  useEffect(() => { api<{ config: Record<string, unknown> }>('/api/widgets/fx/config').then((r) => { setSplit(String(r.config?.split ?? '').split(',').filter(Boolean)); setPkMain(String(r.config?.pkmain ?? '0') === '1'); }).catch(() => {}); }, []);
+  async function togglePkMain() {
+    try {
+      const cur = (await api<{ config: Record<string, unknown> }>('/api/widgets/fx/config')).config ?? {};
+      const next = !pkMain;
+      await api('/api/widgets/fx/config', { method: 'PUT', body: { ...cur, pkmain: next ? '1' : '0' } });
+      setPkMain(next);
+    } catch (err) { setError({ text: (err as Error).message }); }
+  }
   async function copyCat(g: string) {
     if (!fxUrl) return;
     const u = `${fxUrl}&only=${g}`;
@@ -325,17 +334,24 @@ function ActionsInner() {
   return (
     <div>
       <PageHeader title={pkMode ? '⚔️ PK Battle' : 'Actions & Events'}
-        description={pkMode ? t('ตั้งเอฟเฟกต์ตอนแข่ง PK: เริ่ม PK · ชนะ/แพ้ · มีคนใช้การ์ด (นวม สายฟ้า หมอก ต่อเวลา ฯลฯ) → ขึ้นจอผ่านวิดเจ็ต FX') : t('ตั้งกฎอัตโนมัติ: เมื่อเกิดเหตุการณ์ในไลฟ์ → overlay FX เล่นเสียง/รูป/วิดีโอ/ข้อความ')}
+        description={pkMode ? t('ตั้งเอฟเฟกต์ตอนแข่ง PK: เริ่ม PK · ชนะ/แพ้ · มีคนใช้การ์ด (นวม สายฟ้า หมอก ต่อเวลา ฯลฯ) → ขึ้นจอผ่านลิงก์ PK') : t('ตั้งกฎอัตโนมัติ: เมื่อเกิดเหตุการณ์ในไลฟ์ → overlay FX เล่นเสียง/รูป/วิดีโอ/ข้อความ')}
         actions={!draft && <Button onClick={() => { setError(null); setDraft(pkMode ? { ...EMPTY, event: 'pk', type: 'text', name: '', text: '⚔️ {user} ใช้การ์ดช่วยเรา!' } : { ...EMPTY }); }}><Plus className="size-4" /> {t('เพิ่มกฎ')}</Button>} />
 
       <Card className="mb-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="min-w-0 flex-1">
-            <div className="font-medium">{t('✨ ลิงก์วิดเจ็ตเอฟเฟกต์ (FX)')}</div>
+            <div className="font-medium">{pkMode ? t('⚔️ ลิงก์ PK Battle') : t('✨ ลิงก์วิดเจ็ตเอฟเฟกต์ (FX)')}</div>
+            {pkMode && <p className="text-sm text-muted">{t('ป้าย/วิดีโอ/เอฟเฟกต์ PK ทั้งหมดขึ้นที่ลิงก์นี้ — แยกจากลิงก์ FX ของ Actions · วางในโปรแกรมไลฟ์ให้เต็มจอ')}</p>}
+            {pkMode && fxUrl && <code className="mt-1.5 block break-all select-all rounded-lg bg-canvas px-3 py-1.5 text-xs text-muted">{`${fxUrl}&only=pk`}</code>}
+            {!pkMode && <>
             <p className="text-sm text-muted">{t('Actions ทุกกฎ (ยกเว้นมาสคอต) จะแสดงผ่านวิดเจ็ตนี้ — วางในโปรแกรมไลฟ์')} <b>{t('ให้เต็มจอ')}</b> {t('และไว้')} <b>{t('ชั้นบนสุด')}</b> {t('ครั้งเดียวพอ')}</p>
             {fxUrl && <code className="mt-1.5 block break-all select-all rounded-lg bg-canvas px-3 py-1.5 text-xs text-muted">{fxUrl}</code>}
+            {fxUrl && <p className="mt-1 text-xs text-muted">{t('⚔️ เอฟเฟกต์ PK ใช้ลิงก์ PK แยก — ดูที่เมนู PK Battle')}</p>}
+            </>}
           </div>
-          {fxUrl ? (
+          {fxUrl && pkMode ? (
+            <Button variant="secondary" onClick={() => copyCat('pk')}>{catCopied === 'pk' ? <><Check className="size-4 text-mint" /> {t('คัดลอกแล้ว')}</> : <><Copy className="size-4" /> {t('คัดลอกลิงก์ PK')}</>}</Button>
+          ) : fxUrl ? (
             <Button variant="secondary" onClick={copyFx}>{copied ? <><Check className="size-4 text-mint" /> {t('คัดลอกแล้ว')}</> : <><Copy className="size-4" /> {t('คัดลอกลิงก์ FX')}</>}</Button>
           ) : fxUrl === null ? (
             <Link href="/dashboard/" className="text-sm font-medium text-pink underline">{t('ตั้งชื่อ TikTok ที่หน้าภาพรวมก่อน แล้วลิงก์จะสร้างให้อัตโนมัติ')}</Link>
@@ -619,20 +635,10 @@ function ActionsInner() {
           {pkMode ? (
             <>
               {fxUrl && (
-                <div className="mb-4 rounded-xl border border-dashed border-line bg-canvas/60 p-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <div className="min-w-0 flex-1 text-sm">
-                      <span className="font-medium">{t('🔗 ลิงก์เฉพาะ PK')}</span>
-                      <span className="block text-xs text-muted">{t('ไม่บังคับ — ใช้เมื่ออยากวางหมวดนี้แยกตำแหน่ง/ขนาดเอง (เช่น ไพ่ไว้มุมจอ) ถ้าใช้ลิงก์ FX ลิงก์เดียวก็ไม่ต้องทำอะไร')}</span>
-                      <code className="mt-1.5 block break-all select-all rounded-lg bg-white px-3 py-1.5 text-xs text-muted">{`${fxUrl}&only=pk`}</code>
-                    </div>
-                    <Button variant="secondary" onClick={() => copyCat('pk')}>{catCopied === 'pk' ? <><Check className="size-4 text-mint" /> {t('คัดลอกแล้ว')}</> : <><Copy className="size-4" /> {t('คัดลอกลิงก์ PK')}</>}</Button>
-                  </div>
-                  <label className="mt-2 flex cursor-pointer items-start gap-2 text-xs text-muted">
-                    <input type="checkbox" className="mt-0.5 accent-pink" checked={split.includes('pk')} onChange={() => void toggleSplit('pk')} />
-                    <span>{t('ลิงก์ FX หลักไม่ต้องเล่นหมวดนี้ (ติ๊กหลังจากวางลิงก์หมวดนี้ในโปรแกรมไลฟ์แล้ว ไม่งั้นหมวดนี้จะไม่ขึ้นจอ)')}</span>
-                  </label>
-                </div>
+                <label className="mb-4 flex cursor-pointer items-start gap-2 rounded-xl border border-dashed border-line bg-canvas/60 p-3 text-xs text-muted">
+                  <input type="checkbox" className="mt-0.5 accent-pink" checked={pkMain} onChange={() => void togglePkMain()} />
+                  <span>{t('ลิงก์ FX (Actions) เล่น PK ด้วย — แบบเดิม ใช้ลิงก์เดียวไม่ต้องใส่ลิงก์ PK · ติ๊กออกเมื่อวางลิงก์ PK ในโปรแกรมไลฟ์แล้ว (ไม่งั้น PK จะขึ้นซ้ำ 2 ที่)')}</span>
+                </label>
               )}
             {/* ✨ ป้าย PK สไตล์ GPT — 11 จังหวะ × 10 แบบ · กดรูปย่อเพื่อเปลี่ยนแบบ แล้ว "ใช้เลย" */}
             <h3 className="mb-1 text-sm font-semibold">{t('✨ ป้าย PK สไตล์ GPT — เลือกแบบได้ 10 แบบทุกจังหวะ')}</h3>

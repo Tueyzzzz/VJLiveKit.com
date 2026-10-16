@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { flushCollect } from './tiktok/collectStore.js';
 import { flushLiveStats } from './realtime/livestats.js';
 import { buildApp } from './app.js';
@@ -19,6 +21,22 @@ async function main(): Promise<void> {
     for (const u of noName) await prisma.user.update({ where: { id: u.id }, data: { displayName: u.tiktokUsername } });
     if (noName.length) console.log(`[users] ตั้งชื่อที่แสดงจากชื่อ TikTok ให้ ${noName.length} บัญชี`);
   } catch (err) { console.warn('[users] backfill displayName failed', (err as Error).message); }
+  // แยกลิงก์ PK ออกจาก FX: ลูกค้าที่มีกฎ PK อยู่ก่อนแล้ว → ลิงก์ FX ยังเล่น PK เหมือนเดิม (pkmain=1) ไม่ให้ PK หายกลางไลฟ์ · ทำครั้งเดียว
+  try {
+    const mark = path.join(process.env.SNAPSHOT_DIR ? path.dirname(process.env.SNAPSHOT_DIR) : path.resolve(process.cwd(), '../../data'), 'migrate-pkmain.done');
+    if (!fs.existsSync(mark)) {
+      const rows = await prisma.actionRule.findMany({ where: { trigger: { path: ['event'], equals: 'pk' } }, select: { userId: true }, distinct: ['userId'] });
+      for (const { userId } of rows) {
+        const cur = await prisma.widgetConfig.findUnique({ where: { userId_type: { userId, type: 'fx' } }, select: { settings: true } });
+        const s = (cur?.settings ?? {}) as Record<string, unknown>;
+        if (s.pkmain != null) continue;
+        const next = { ...s, pkmain: '1' };
+        await prisma.widgetConfig.upsert({ where: { userId_type: { userId, type: 'fx' } }, create: { userId, type: 'fx', settings: next }, update: { settings: next } });
+      }
+      fs.mkdirSync(path.dirname(mark), { recursive: true }); fs.writeFileSync(mark, new Date().toISOString());
+      console.log(`[migrate] pkmain: ลิงก์ FX ยังเล่น PK ให้ลูกค้าเดิม ${rows.length} คน`);
+    }
+  } catch (err) { console.warn('[migrate] pkmain failed', (err as Error).message); }
 
   const app = await buildApp();
   await app.ready();

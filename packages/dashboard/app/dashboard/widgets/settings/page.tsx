@@ -324,13 +324,13 @@ function WidgetSettings() {
     let savedV: Record<string, unknown> = {}; try { savedV = saved ? JSON.parse(saved) : {}; } catch { /* ignore */ }
     for (const sec of full.sections) for (const f of sec.fields) {
       if (f.type !== 'select' || !f.options.some((o) => o[3])) continue;
-      const set = new Set(f.options.slice(0, styleLimit).map((o) => String(o[0])));
+      const set = new Set(entitlements?.plan === 'free' && f.free ? f.free : f.options.slice(0, styleLimit).map((o) => String(o[0]))); // Free: บางวิดเจ็ตให้เฉพาะแบบที่กำหนด (เช่น โหลของขวัญ = โหลแก้วใส)
       if (savedV[f.key] != null) set.add(String(savedV[f.key]));
       if (f.key === 'char') customMascots.forEach((c) => set.add(c.code)); // มาสคอตสั่งทำของตัวเอง ใช้ได้เสมอ
       m.set(f.key, set);
     }
     return m;
-  }, [type, styleLimit, saved, customMascots]);
+  }, [type, styleLimit, saved, customMascots, entitlements?.plan]);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
   const [previewSrc, setPreviewSrc] = useState('');

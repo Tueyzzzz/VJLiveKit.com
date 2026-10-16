@@ -1065,7 +1065,7 @@
         body: P('body', '#bfe9e6'),
       },
     };
-    const SH = SHAPES[P('shape', 'heart')] || SHAPES.heart;
+    const SH = SHAPES[P('shape', Overlay.widget === 'giftjar' ? 'clear' : 'heart')] || SHAPES.heart; // ค่าเริ่มต้นโหลของขวัญ = โหลแก้วใส (แบบเดียวที่แพลน Free ใช้ได้)
     const SPACE_FLOAT = !!SH.space && P('float', '0') === '1'; // โดมอวกาศ: ค่าเริ่มต้นของวางบนฐาน · float=1 = ลอยไร้น้ำหนักแบบเดิม
     // ทุกแบบ (รวมลูกแก้ว/โดม/ตัวละครท้องใส) ล้นแล้วกองพื้นข้าง ๆ — ไม่ทำให้ชิ้นเก่าหายไปเอง (เว้นวีเจเลือกโหมดอื่นเอง)
     if (SH.fullMode && SH.fullMode !== 'fade') FULL_MODE = SH.fullMode;

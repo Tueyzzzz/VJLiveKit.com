@@ -10,7 +10,7 @@ const GOAL_FRAME_OPTS: [string, string, string, string][] = GOAL_FRAME_NAMES.map
 export type FieldDef =
   | { key: string; label: string; type: 'range'; min: number; max: number; step: number; def: number; unit?: string; hint?: string; when?: (v: Values) => boolean }
   | { key: string; label: string; type: 'number'; min?: number; max?: number; def: number; hint?: string; when?: (v: Values) => boolean }
-  | { key: string; label: string; type: 'select'; /** [ค่า, ชื่อ, กลุ่ม?, รูปย่อ?] — มีรูปย่อ = แสดงเป็นการ์ดรูปให้กดเลือก */ options: [string, string, string?, string?][]; def: string; hint?: string; when?: (v: Values) => boolean }
+  | { key: string; label: string; type: 'select'; /** [ค่า, ชื่อ, กลุ่ม?, รูปย่อ?] — มีรูปย่อ = แสดงเป็นการ์ดรูปให้กดเลือก */ options: [string, string, string?, string?][]; def: string; hint?: string; when?: (v: Values) => boolean; /** แพลน Free เลือกได้เฉพาะแบบเหล่านี้ (ไม่ใช้โควตา N แบบแรก) */ free?: string[] }
   | { key: string; label: string; type: 'toggle'; def: boolean; hint?: string; when?: (v: Values) => boolean }
   | { key: string; label: string; type: 'swatch'; /** [ค่า, สีที่แสดง, ชื่อ] */ options: [number, string, string][]; def: number; hint?: string; when?: (v: Values) => boolean }
   | { key: string; label: string; type: 'color'; def: string; hint?: string; when?: (v: Values) => boolean }
@@ -82,7 +82,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
     resettable: 'ล้างของขวัญในโหลและอันดับ',
     sections: [
       { title: 'รูปแบบโหล', fields: [
-        { key: 'shape', label: 'ทรงโหล', type: 'select', def: 'heart', options: [
+        { key: 'shape', label: 'ทรงโหล', type: 'select', def: 'clear', free: ['clear'], options: [
           ['clear', 'โหลแก้วใสสมจริง', '🫙 แก้วใสเรียบหรู', 'gj-clear'],
           ['heart', 'โหลหัวใจ', '🌸 พาสเทลน่ารัก', 'gj-heart'], ['orb', 'โหลกลมห่วงชมพู', '🌸 พาสเทลน่ารัก', 'gj-orb'],
           ['sundae', 'ถ้วยไอศกรีม', '🌸 พาสเทลน่ารัก', 'gj-sundae'],

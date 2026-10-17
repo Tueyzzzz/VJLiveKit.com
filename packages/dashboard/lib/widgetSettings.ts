@@ -467,8 +467,9 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
     sections: [
       { title: 'กระถาง', fields: [
         { key: 'sway', label: 'ความแรงลม (กิ่งแกว่ง)', type: 'range', min: 0, max: 3, step: 0.1, def: 1, hint: '0 = นิ่ง' },
-        { key: 'stemLen', label: 'ความยาวกิ่ง', type: 'range', min: 0.8, max: 2, step: 0.05, def: 1.35, unit: '×', when: (v) => v.skin !== 'tree' },
-        { key: 'stemW', label: 'ความหนาก้าน', type: 'range', min: 0.35, max: 1.5, step: 0.05, def: 0.55, unit: '×', hint: 'น้อย = ก้านเรียวบาง', when: (v) => v.skin !== 'tree' },
+        { key: 'look', label: 'แบบดอกไม้', type: 'select', def: 'stems', when: (v) => v.skin !== 'tree', options: [['stems', '🌿 ก้านยาว ของขวัญติดตามกิ่ง'], ['bush', '💐 พุ่มดอกไม้ฟู (ของขวัญเป็นเกสรกลางดอก)']] },
+        { key: 'stemLen', label: 'ความยาวกิ่ง', type: 'range', min: 0.8, max: 2, step: 0.05, def: 1.35, unit: '×', when: (v) => v.skin !== 'tree' && v.look !== 'bush' },
+        { key: 'stemW', label: 'ความหนาก้าน', type: 'range', min: 0.35, max: 1.5, step: 0.05, def: 0.55, unit: '×', hint: 'น้อย = ก้านเรียวบาง', when: (v) => v.skin !== 'tree' && v.look !== 'bush' },
         { key: 'big', label: 'ของขวัญที่เป็นดอกใหญ่บนยอด ตั้งแต่ (เหรียญ)', type: 'number', min: 1, def: 1000 },
         { key: 'leafTone', label: 'สีใบไม้', type: 'select', def: 'pastel', options: [['pastel', '🌿 พาสเทลอ่อน (ไม่เขียวเข้ม)'], ['mint', '💚 มิ้นต์'], ['pink', '🩷 ชมพู'], ['lavender', '💜 ลาเวนเดอร์'], ['sakura', '🌸 ซากุระ'], ['gold', '💛 ทอง'], ['original', 'สีเดิมของแบบ']] },
         { key: 'skin', label: 'แบบกระถาง', type: 'select', def: 'image', options: [

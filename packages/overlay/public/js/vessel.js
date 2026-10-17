@@ -3,7 +3,7 @@
  *   ภาพ: <globe|belly>/<ชื่อ>.webp (ช่องในลูกแก้ว/หน้าต่างท้อง = ใส) · วงรีของช่อง: <kind>/items.json (ell = cx,cy,rx,ry สัดส่วน)
  *   ลูกแก้ว: ของขวัญอยู่ในน้ำ — จมช้า ๆ มีแรงหนืด · ของใหม่มา = เขย่า น้ำหมุนวน ของ+หิมะลอยวนแล้วค่อย ๆ ตกตะกอน
  *   ท้อง: ของขวัญถูกโยนเข้าปาก (ลอดหลังหัว) แล้วตกลงกองในท้อง · ตัวละครยุบ-เด้งตอนกลืน
- *   ของเยอะ → ทุกชิ้นเล็กลง (ไม่ลบ) · เกิน MAX ชิ้นถูกสุด-เก่าสุดค่อยจาง (กองกลาง VJLCollect ยังเก็บครบ)
+ *   ของเยอะ → ทุกชิ้นเล็กลง (ไม่ต่ำกว่า 50%) · เกินนั้นซ่อนชิ้นถูกสุดก่อน (ของยังอยู่ในกองกลาง) · เกิน MAX ชิ้นถูกสุด-เก่าสุดค่อยจาง (กองกลาง VJLCollect ยังเก็บครบ)
  */
 (function () {
   window.VJLVessel = { start };
@@ -48,7 +48,13 @@
     function updateDensity() { // พื้นที่ของขวัญรวม ≤ 55% ของช่อง → เกินแล้วทุกชิ้นเล็กลง
       let area = 0; for (const b of bodies) if (!b.dying) area += Math.PI * b.base * b.base;
       const room = Math.PI * 500 * 500 * (E.ry / Math.max(1, E.rx)) * 0.55;
-      dens = Math.max(0.38, Math.min(1, Math.sqrt(room / Math.max(1, area))));
+      // ของเยอะจนต้องย่อเกิน DMIN → ซ่อนชิ้นถูกสุดก่อน (ราคาเท่ากัน = เก่าก่อน) จนที่พอ · ของยังอยู่ในกองกลาง/อันดับครบ แค่ไม่โชว์บนจอ
+      const DMIN = 0.5;
+      if (area > room / (DMIN * DMIN)) {
+        const live = bodies.filter((b) => !b.dying), order = (window.VJLCollect && VJLCollect.victims) ? VJLCollect.victims(live, live.length) : live.slice().sort((a, b) => a.d - b.d);
+        for (const v of order) { if (area <= room / (DMIN * DMIN) || live.length - 1 < 8) break; v.dying = true; area -= Math.PI * v.base * v.base; }
+      }
+      dens = Math.max(DMIN, Math.min(1, Math.sqrt(room / Math.max(1, area))));
     }
     const R = (b) => b.base * dens * U * Math.min(1, (performance.now() - b.born) / 260 + 0.25);
     function addGift(g, live) {

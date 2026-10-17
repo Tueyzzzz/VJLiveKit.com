@@ -1406,9 +1406,12 @@
       if (alive.length > (MJ ? Math.min(MAX, 350) : MAX)) ((window.VJLCollect && VJLCollect.victims) ? VJLCollect.victims(bodies, 1) : [alive[0]]).forEach((k) => { k.dying = true; }); // จอเต็ม: ถูกสุด-เก่าสุดจางก่อน
     }
 
+    // พื้นของกองนอกโหล = ขอบล่างจอ (เลื่อนโหลขึ้น/จอสูง → ของล้นตกถึงล่างจอ ไม่ค้างกลางอากาศที่ระดับก้นโหล)
+    const groundY = () => Math.max(-3, (H - origin().y) / S() - 4);
     function constrainOutside(b) {
-      if (b.y + b.r > -3) { // พื้น (ระดับก้นโหล): ตกแรงเด้งเล็กน้อย · แรงเสียดทาน → กองเป็นภูเขาข้างโหล
-        b.y = -3 - b.r; b.gnd = true;
+      const GY = groundY();
+      if (b.y + b.r > GY) { // พื้น (ขอบล่างจอ/ก้นโหล): ตกแรงเด้งเล็กน้อย · แรงเสียดทาน → กองเป็นภูเขาข้างโหล
+        b.y = GY - b.r; b.gnd = true;
         if (!b.bq && b.vin > 5) { b.bq = true; b.py = b.y + b.vin * BOUNCE; } else if (!b.bq) b.px = b.x - (b.x - b.px) * 0.5;
       }
       const s = S(), o = origin(), left = -o.x / s, right = (W - o.x) / s;
@@ -1647,11 +1650,11 @@
     let fadeCooldown = 0, resetting = false, spilling = false;
     const conf = [];
     // เพดานกองพื้นนอกโหล: สูงเกิน pileMax% ของจอ → ชิ้นถูกสุดค่อย ๆ จางออก (กองไม่บังหน้าวีเจ)
-    const OUT_MAX = Math.max(0.15, Math.min(0.9, num('pileMax', 45) / 100));
+    const OUT_MAX = Math.max(0.15, Math.min(1, num('pileMax', 100) / 100)); // 100 = เติมเต็มจอได้
     let outCheck = 0;
     function trimOutside() {
       if (++outCheck % 30) return;
-      const limitY = -(H / S()) * (FER ? Math.min(OUT_MAX, 0.22) : OUT_MAX); // ชิงช้า: กองพื้นต่ำ ไม่บังวงล้อ
+      const limitY = groundY() - (H / S()) * (FER ? Math.min(OUT_MAX, 0.22) : OUT_MAX); // ชิงช้า: กองพื้นต่ำ ไม่บังวงล้อ
       const over = bodies.filter((b) => b.out && !b.dying && b.age > 180 && b.y - b.r < limitY).length;
       if (over) ((window.VJLCollect && VJLCollect.victims) ? VJLCollect.victims(bodies, Math.min(6, over), (b) => b.out) : bodies.filter((b) => b.out && !b.dying).slice(0, Math.min(6, over))).forEach((b) => { b.dying = true; });
     }

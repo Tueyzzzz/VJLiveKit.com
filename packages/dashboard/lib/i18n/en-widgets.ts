@@ -829,6 +829,7 @@ export const EN_WIDGETS: Record<string, string> = {
   "แบบดอกไม้": "Flower style",
   "แบบกิ่ง": "Branch style",
   "ฐานโหลชิดขอบล่างจอ": "Jar base at the screen bottom",
+  "🎮 เกมกับผู้ชม": "🎮 Viewer games",
   "🔳 กล่องเทาเข้มมินิ (วางข้างจอ)": "🔳 Mini charcoal box (screen side)",
   "แคบ (10–25%) = ป้ายเล็กข้างจอ ข้อความวิ่งผ่านช่อง": "Narrow (10–25%) = small side sign, text scrolls through",
   "ข้างจอ ขวา": "Right side",

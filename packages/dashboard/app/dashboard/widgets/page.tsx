@@ -41,7 +41,7 @@ const JAR_CARDS = [
 ];
 
 /** เมนูใหญ่ที่เปิดหน้าวิดเจ็ตแบบโชว์หมวดเดียว (?g=) */
-const GROUP_KEYS: Record<string, string> = { rank: '🥇 อันดับผู้ชม', goal: '🏆 เป้าหมายและลีก', mascot: '🧸 ตัวแทนวีเจ' };
+const GROUP_KEYS: Record<string, string> = { rank: '🥇 อันดับผู้ชม', goal: '🏆 เป้าหมายและลีก', mascot: '🧸 ตัวแทนวีเจ', game: '🎮 เกมกับผู้ชม' };
 
 /** จัดหมวดวิดเจ็ตในแกลเลอรี (ประเภทเดียวกันอยู่ด้วยกัน) */
 const WIDGET_GROUPS: [string, string[]][] = [

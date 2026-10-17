@@ -102,6 +102,8 @@ export const EN_CORE: Record<string, string> = {
   'เสียงแจ้งเตือน': "Alert sounds",
   'เมนูของขวัญ': "Gift menu",
   'ป้ายไฟ LED': "LED sign",
+  'เกมกับผู้ชม': 'Viewer games',
+  'เกมให้ผู้ชมส่งของขวัญเล่นด้วยกันบนจอ เช่น ชักเย่อ 2 ทีม': 'Games viewers play together with gifts, like 2-team tug of war',
   'โดเนทขึ้นจอ': "On-screen donations",
   'แพลน & การชำระเงิน': "Plan & billing",
   'แนะนำเพื่อน รับฟรี': "Refer friends, get Pro free",

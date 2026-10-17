@@ -18,6 +18,8 @@ export type FieldDef =
   /** เลือกรายการในเมนูของขวัญ: ค่า = JSON { hide: [ruleId], icons: { ruleId: รูป } } */
   | { key: string; label: string; type: 'menuItems'; def: string; hint?: string; when?: (v: Values) => boolean }
   /** รายการของขวัญที่เลือกเอง + วินาที: ค่า = JSON [{ name, sec }] · tone = สีแถว (เพิ่ม/ลด) */
+  /** เลือกของขวัญ 1 ชิ้น (ค่า = ชื่อของขวัญ TikTok) */
+  | { key: string; label: string; type: 'gift'; def: string; hint?: string; when?: (v: Values) => boolean }
   | { key: string; label: string; type: 'giftlist'; def: string; tone?: 'add' | 'sub'; hint?: string; when?: (v: Values) => boolean };
 
 export type Values = Record<string, string | number | boolean>;
@@ -607,6 +609,33 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
       { title: 'ผู้ติดตามล่าสุด', fields: [
         { key: 'label', label: 'หัวข้อ', type: 'text', def: 'ผู้ติดตามล่าสุด' },
         { key: 'showCount', label: 'แสดงจำนวนผู้ติดตามในไลฟ์', type: 'toggle', def: true },
+      ] },
+    ],
+  },
+  tugwar: {
+    resettable: 'เริ่มรอบใหม่ (ล้างคะแนนทั้ง 2 ทีม)',
+    sections: [
+      { title: 'ทีมซ้าย', fields: [
+        { key: 'nameA', label: 'ชื่อทีม', type: 'text', def: 'ทีมชมพู' },
+        { key: 'giftA', label: 'ของขวัญประจำทีม', type: 'gift', def: 'Rose', hint: 'ส่งของขวัญนี้ = ช่วยทีมซ้ายดึงเชือก' },
+        { key: 'colorA', label: 'สีทีม', type: 'color', def: '#ff6fae' },
+      ] },
+      { title: 'ทีมขวา', fields: [
+        { key: 'nameB', label: 'ชื่อทีม', type: 'text', def: 'ทีมฟ้า' },
+        { key: 'giftB', label: 'ของขวัญประจำทีม', type: 'gift', def: 'GG', hint: 'ส่งของขวัญนี้ = ช่วยทีมขวาดึงเชือก' },
+        { key: 'colorB', label: 'สีทีม', type: 'color', def: '#4fa8ff' },
+      ] },
+      { title: 'กติกา', fields: [
+        { key: 'title', label: 'หัวข้อเกม', type: 'text', def: '⚔️ ชักเย่อ' },
+        { key: 'count', label: 'นับคะแนนแบบ', type: 'select', def: 'coins', options: [['coins', '💎 ตามราคา (เหรียญ × จำนวน)'], ['pieces', '🎁 นับชิ้น (ชิ้นละ 1 คะแนน)']] },
+        { key: 'win', label: 'นำห่างกี่คะแนนถึงชนะ (ดึงถึงเส้นชัย)', type: 'number', min: 10, max: 100000, def: 300 },
+        { key: 'sec', label: 'เวลาต่อรอบ (วินาที)', type: 'number', min: 0, max: 3600, def: 180, hint: '0 = ไม่จับเวลา (เล่นจนกว่าจะดึงถึงเส้นชัย) · หมดเวลา = ทีมที่นำชนะ' },
+        { key: 'next', label: 'เริ่มรอบใหม่เองหลังประกาศผล (วินาที)', type: 'number', min: 3, max: 600, def: 10 },
+      ] },
+      { title: 'ขนาดและตำแหน่ง', fields: [
+        size(),
+        { key: 'pos', label: 'ตำแหน่ง', type: 'select', def: 'bottom', options: [['bottom', 'ล่าง'], ['center', 'กลาง'], ['top', 'บน']] },
+        { key: 'bg', label: 'ความทึบพื้นหลัง', type: 'range', min: 0, max: 100, step: 5, def: 72, unit: '%' },
       ] },
     ],
   },

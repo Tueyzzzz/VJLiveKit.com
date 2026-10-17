@@ -19,6 +19,7 @@ const GROUPS: [string, string[]][] = [
   ['สะสมของขวัญ', ['giftjar', 'aquarium', 'spacedome', 'belly', 'snowglobe', 'vehicle', 'garden', 'tree', 'pile']],
   ['Actions / เสียง', ['fx', 'tts']],
   ['PK / ลีก / มาสคอต', ['pkmvp', 'league', 'mascot']],
+  ['เกม', ['tugwar']],
 ];
 const NUMS: [keyof Features, string, string][] = [
   ['maxActionRules', 'กฎ Actions สูงสุด', 'ข้อ'],

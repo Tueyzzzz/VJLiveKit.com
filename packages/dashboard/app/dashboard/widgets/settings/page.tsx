@@ -223,6 +223,8 @@ function FieldInput({ f, value, onChange, allowed }: { f: FieldDef; value: Value
   switch (f.type) {
     case 'menuItems':
       return <MenuItemsEditor value={String(value ?? '')} onChange={onChange} />;
+    case 'gift':
+      return <GiftPicker value={String(value ?? '')} onChange={(n) => onChange(n)} />;
     case 'giftlist':
       return <GiftListEditor value={String(value ?? '')} tone={f.tone} onChange={onChange} />;
     case 'toggle':

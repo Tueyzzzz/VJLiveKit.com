@@ -303,7 +303,8 @@
       let b = 0;
       if (!VIDMODE) { b = .5 - .5 * Math.cos(2 * Math.PI * t / 3400); sx += .006 * b; } // หายใจ (scaleY 1→1.025 ทุก ~3.4 วิ)
       const sy = 1 + sq + .025 * b, sxx = 1 + sx - sq * .6; // บีบ-ยืดคงปริมาตร
-      const bt = `translate3d(0,${snap(y)}px,0) rotate(${rot.toFixed(3)}deg) scale(${sxx.toFixed(4)},${sy.toFixed(4)})`;
+      // ไม่เอียงตัว (วีเจไม่ชอบ): แรงเอียงทั้งหมด (โยกยืนว่าง · ถ่ายน้ำหนัก · ท่าเต้น) แปลงเป็นขยับซ้าย-ขวาเบา ๆ ตัวตั้งตรงเสมอ
+      const bt = `translate3d(${snap(rot * 2.4)}px,${snap(y)}px,0) scale(${sxx.toFixed(4)},${sy.toFixed(4)})`;
       if (bt !== lastBody) { $body.style.transform = bt; lastBody = bt; }
       const lift = Math.max(0, -y), st = `scale(${Math.max(.45, 1 + .02 * b - lift / 260).toFixed(3)},${Math.max(.6, 1 - lift / 400).toFixed(3)})`, so = Math.max(.3, 1 - lift / 180).toFixed(2); // เงาเล็ก/จางลงตามความสูง
       if (st + so !== lastShadow) { $shadow.style.transform = st; $shadow.style.opacity = so; lastShadow = st + so; }

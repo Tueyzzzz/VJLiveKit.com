@@ -56,6 +56,13 @@
       const nb = gifts.filter((b) => !b.dying && b.kind === 'b').length, nd = gifts.filter((b) => !b.dying && b.kind === 'd').length;
       const capD = Math.max(8, (C.x / (34 * s)) * 4); // กระป๋อง 4 เลน ตามระยะจากท้ายรถถึงขอบจอซ้าย
       dens = Math.max(0.45, Math.min(1, Math.sqrt(capD / Math.max(1, nd)), Math.sqrt(60 / Math.max(1, nb)) * 1.2));
+      // ลูกโป่งเกินที่ว่างเหนือรถ (ครึ่งวงกลมรัศมีเชือกยาวสุด) → ซ่อนชิ้นถูกสุดก่อน (ของยังอยู่ในกองกลาง) · กันช่อล้นลงมาทับรถ/ใต้ล้อ
+      const live = gifts.filter((b) => !b.dying && b.kind === 'b'), room = 0.62 * Math.PI * (250 * s) ** 2 / 2;
+      let used = live.reduce((a, b) => a + Math.PI * radius(b) ** 2, 0);
+      if (used > room && live.length > 6) {
+        const order = (window.VJLCollect && VJLCollect.victims) ? VJLCollect.victims(live.map((x) => ({ ...x, d: x.g.d, ref: x })), live.length).map((x) => x.ref) : live.slice().sort((a, c) => a.g.d - c.g.d);
+        for (const v of order) { if (used <= room) break; v.dying = true; used -= Math.PI * radius(v) ** 2; }
+      }
       let k = 0; for (const b of gifts) if (!b.dying && b.kind === 'd') { b.slot = k++; }
       // ลูกโป่ง: ของแพงเชือกยาวกว่า (ลอยบนสุด)
       gifts.filter((b) => !b.dying && b.kind === 'b').sort((a, c) => a.g.d - c.g.d).forEach((b, i, arr) => { b.L = (120 + (i / Math.max(1, arr.length - 1)) * 120 + (b.jit || 0)) * s; });
@@ -100,6 +107,7 @@
           b.vy += (-620 * s - b.vy * 2.0 + Math.cos(t * 1.1 + b.jit) * 40 * s) * dt;
           b.x += b.vx * dt; b.y += b.vy * dt;
           tether(b, tie.x, tie.y, b.L || 160 * s);
+          const floorB = tie.y - r * 0.7; if (b.y > floorB) { b.y = floorB; if (b.vy > 0) b.vy = 0; } // ลูกโป่งไม่ต่ำกว่าหลังคา (ไม่ทับตัวรถ/กระจก/ล้อ)
         } else {
           b.vy += 2200 * s * dt; b.vx *= Math.pow(0.5, dt);
           b.x += b.vx * dt; b.y += b.vy * dt;
@@ -116,6 +124,7 @@
         const a = bal[i], c = bal[j], dx = c.x - a.x, dy = c.y - a.y, d = Math.hypot(dx, dy) || 0.01, m = (a.r + c.r) * 0.92;
         if (d < m) { const k = (m - d) / d * 0.5; a.x -= dx * k; a.y -= dy * k; c.x += dx * k; c.y += dy * k; }
       }
+      for (const b of bal) { const fb = tie.y - (b.r || 0) * 0.7; if (b.y > fb) b.y = fb; } // หลังดันแยกกันก็ยังอยู่เหนือหลังคา
       // กระป๋องเลนเดียวกันไม่ทับกัน
       const dl = gifts.filter((b) => b.kind === 'd' && !b.dying);
       for (let i = 0; i < dl.length; i++) for (let j = i + 1; j < dl.length; j++) {

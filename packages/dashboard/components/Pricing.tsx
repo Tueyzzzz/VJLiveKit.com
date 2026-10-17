@@ -41,18 +41,21 @@ const ALL_WIDGETS = Object.keys(WIDGET_LABELS);
 export function usePlans() {
   const [plans, setPlans] = useState<Plan[] | null>(null);
   const [enabled, setEnabled] = useState(false);
+  const [promo, setPromo] = useState(0);
   useEffect(() => {
-    api<{ plans: Plan[]; enabled: boolean }>('/api/plans')
-      .then((r) => { setPlans(r.plans); setEnabled(r.enabled); })
+    api<{ plans: Plan[]; enabled: boolean; firstMonthPct?: number }>('/api/plans')
+      .then((r) => { setPlans(r.plans); setEnabled(r.enabled); setPromo(r.firstMonthPct ?? 0); })
       .catch(() => setPlans([]));
   }, []);
-  return { plans, billingEnabled: enabled };
+  return { plans, billingEnabled: enabled, firstMonthPct: promo };
 }
 
 /** การ์ดราคาแพลน (มือถือ 1 คอลัมน์ → จอกว้าง 5 คอลัมน์) */
-export function PlanCards({ plans, currentPlan, renderAction }: {
+export function PlanCards({ plans, currentPlan, renderAction, promoPct = 0 }: {
   plans: Plan[];
   currentPlan?: string;
+  /** 🎉 โปรเดือนแรกลด % (0 = ไม่แสดง) */
+  promoPct?: number;
   renderAction: (plan: Plan) => React.ReactNode;
 }) {
   const t = useT();
@@ -78,6 +81,11 @@ export function PlanCards({ plans, currentPlan, renderAction }: {
               <span className="font-display text-4xl">{paid ? formatMoney(p.priceCents, p.currency) : t('ฟรี')}</span>
               {paid && <span className="text-sm text-muted"> {t('/ เดือน')}</span>}
             </p>
+            {paid && promoPct > 0 && (
+              <p className="mt-1 inline-flex w-fit items-center gap-1.5 rounded-full bg-pink-soft px-2.5 py-1 text-xs font-semibold text-pink">
+                🎉 {t('เดือนแรกลด {pct}% เหลือ {price}', { pct: promoPct, price: formatMoney(Math.round((p.priceCents * (1 - promoPct / 100)) / 100) * 100, p.currency) })}
+              </p>
+            )}
             <ul className="mt-4 space-y-2 text-sm">
               {(p.bullets ?? []).map((b) => (
                 <li key={b} className="flex items-start gap-2"><Check className="mt-0.5 size-4 shrink-0 text-mint" /> <span>{t(b)}</span></li>

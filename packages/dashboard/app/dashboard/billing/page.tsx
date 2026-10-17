@@ -95,6 +95,7 @@ export default function BillingPage() {
       {!plans ? <Spinner /> : (
         <PlanCards
           plans={plans}
+          promoPct={slipPay?.firstMonthPct ?? 0}
           currentPlan={entitlements?.plan}
           renderAction={(p) => {
             // จ่ายด้วยสลิปไว้ (ไม่ตัดเงินอัตโนมัติ) → ต่ออายุแพลนเดิมได้เอง
@@ -119,7 +120,7 @@ export default function BillingPage() {
       <p className="mt-3 text-center text-xs text-muted">{t('ราคาต่อเดือน (บาท) · ยกเลิกได้ทุกเมื่อ · มีคำถามกดแชทมุมขวาล่างได้เลย')}</p>
       {plans && <PlanCompare plans={plans} />}
       {paying && slipPay && (
-        <SlipPaySheet plan={paying} info={slipPay} onClose={() => { setPaying(null); void loadPayments(); }} onPaid={() => { void refresh(); void loadPayments(); }} />
+        <SlipPaySheet plan={slipPay.firstMonthPct ? { ...paying, name: `${paying.name} · 🎉 ${t('เดือนแรกลด {pct}%', { pct: slipPay.firstMonthPct })}`, priceCents: Math.round((paying.priceCents * (1 - slipPay.firstMonthPct / 100)) / 100) * 100 } : paying} info={slipPay} onClose={() => { setPaying(null); void loadPayments(); }} onPaid={() => { void refresh(); void loadPayments(); }} />
       )}
 
       <h2 className="mb-3 mt-10 font-medium">{t('ประวัติการชำระเงิน')}</h2>

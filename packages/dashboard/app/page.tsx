@@ -54,7 +54,7 @@ const JSONLD = [
 export default function Home() {
   const { user, loading } = useAuth();
   const t = useT();
-  const { plans } = usePlans();
+  const { plans, firstMonthPct } = usePlans();
   const router = useRouter();
   // ล็อกอินค้างไว้ → เข้าหน้าแรกแล้วเด้งไป Dashboard เลย (ระหว่างเช็ก session ไม่โชว์หน้าแรกให้กระพริบ)
   const [hasSession, setHasSession] = useState(false);
@@ -120,6 +120,7 @@ export default function Home() {
         {!plans ? <Spinner /> : (
           <PlanCards
             plans={plans}
+            promoPct={firstMonthPct}
             renderAction={(p) => (
               <Link href={user ? '/dashboard/billing/' : '/register/'}>
                 <Button variant={p.badge ? 'primary' : 'secondary'} className="w-full">

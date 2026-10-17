@@ -1,3 +1,4 @@
+import { settings as sysSettings } from '../settings/index.js';
 import type { FastifyInstance } from 'fastify';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../db/prisma.js';
@@ -62,7 +63,7 @@ async function applyWebhook(r: WebhookResult, log: FastifyInstance['log']): Prom
 
 export async function billingRoutes(app: FastifyInstance): Promise<void> {
   // แพลนทั้งหมด (สาธารณะ ไม่ต้องล็อกอิน — หน้า pricing / billing อ่านจากตารางเดียวกับที่แอดมินแก้)
-  const plansPayload = async () => ({ provider: billing.name, enabled: billing.enabled, plans: publicPlans() });
+  const plansPayload = async () => ({ provider: billing.name, enabled: billing.enabled, plans: publicPlans(), firstMonthPct: Math.max(0, Math.min(90, sysSettings().firstMonthPct ?? 0)) });
   app.get('/api/plans', plansPayload);
   app.get('/api/billing/plans', plansPayload); // ชื่อเดิม (เผื่อแดชบอร์ดเวอร์ชันเก่าที่ยังเปิดค้าง)
 

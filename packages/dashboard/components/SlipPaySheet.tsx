@@ -9,7 +9,7 @@ import { promptPayPayload } from '@/lib/promptpay';
 import { bankLogo, bankOf, fmtAccount } from '@/lib/banks';
 import { translate, useLang, useT } from '@/lib/i18n';
 
-export interface SlipPayInfo { enabled: boolean; promptpay: string; bank: { code: string; account: string; holder: string } | null; autoVerify: boolean; days: number; mascotPriceCents?: number; mascotFullCents?: number }
+export interface SlipPayInfo { enabled: boolean; promptpay: string; bank: { code: string; account: string; holder: string } | null; autoVerify: boolean; days: number; mascotPriceCents?: number; mascotFullCents?: number; firstMonthPct?: number }
 
 /** บัญชีรับเงินที่แอดมินตั้งไว้ (null = ยังโหลด / ไม่เปิด) — ใช้ตัดสินว่าปุ่มเลือกแพลนเปิดหน้าโอนหรือแชท */
 export function useSlipPay(): SlipPayInfo | null {

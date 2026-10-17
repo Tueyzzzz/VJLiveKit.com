@@ -26,6 +26,8 @@ export interface SystemSettings {
   brandEveryMin: number;
   /** ราคาสั่งทำมาสคอตหน้าตัวเอง (บาท ก่อนส่วนลดตามแพลน) */
   mascotPrice: number;
+  /** โปรโมชันเดือนแรก: ลดกี่ % ตอนจ่ายแพลนครั้งแรก (0 = ปิด) */
+  firstMonthPct: number;
   /** ประกาศบนแดชบอร์ดทุกคน (เว้นว่าง = ไม่แสดง) */
   announcement: string;
 }
@@ -34,13 +36,13 @@ export const DEFAULTS: SystemSettings = {
   trialDays: 30, presenceLock: true, presenceGraceSec: 90,
   freeMaxRules: 3, freeMaxTokens: 2,
   soundMaxMB: 5, soundMaxFiles: 30,
-  donateDefaultMin: 10, brandEveryMin: 10, mascotPrice: 99, announcement: '',
+  donateDefaultMin: 10, brandEveryMin: 10, mascotPrice: 99, firstMonthPct: 10, announcement: '',
 };
 
 /** ขอบเขตที่อนุญาต [min, max] — กันตั้งค่าผิดจนระบบพัง */
 export const LIMITS: Record<string, [number, number]> = {
   trialDays: [0, 365], presenceGraceSec: [10, 1800], freeMaxRules: [0, 100], freeMaxTokens: [1, 20],
-  soundMaxMB: [1, 20], soundMaxFiles: [1, 200], donateDefaultMin: [1, 10_000], brandEveryMin: [1, 120], mascotPrice: [1, 100_000],
+  soundMaxMB: [1, 20], soundMaxFiles: [1, 200], donateDefaultMin: [1, 10_000], brandEveryMin: [1, 120], mascotPrice: [1, 100_000], firstMonthPct: [0, 90],
 };
 
 const FILE = path.join(process.env.SNAPSHOT_DIR ? path.dirname(process.env.SNAPSHOT_DIR) : path.resolve(process.cwd(), '../../data'), 'settings.json');

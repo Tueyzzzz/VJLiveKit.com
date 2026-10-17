@@ -139,12 +139,21 @@ const accSchema = z.object({
   bankHolder: z.string().trim().max(80).default(''),
 });
 
+/** 🎉 โปรเดือนแรก: ยังไม่เคยจ่ายค่าแพลนสำเร็จ (ไม่นับสั่งทำมาสคอต) → ลด firstMonthPct% · ปัดเป็นบาทเต็ม */
+export async function firstMonthPct(userId: string): Promise<number> {
+  const pct = Math.max(0, Math.min(90, sys().firstMonthPct ?? 0));
+  if (!pct) return 0;
+  const paid = await prisma.payment.findMany({ where: { userId, status: 'PAID' }, select: { rawPayload: true }, take: 50 });
+  return paid.some((x) => (x.rawPayload as { product?: string } | null)?.product !== 'mascot') ? 0 : pct;
+}
+export const promoCents = (priceCents: number, pct: number) => (pct ? Math.round((priceCents * (1 - pct / 100)) / 100) * 100 : priceCents);
+
 export async function slipBillingRoutes(app: FastifyInstance): Promise<void> {
   // ---- ของวีเจ ----
   // บัญชีรับเงินของเรา (ไว้สร้าง QR พร้อมเพย์ / แสดงเลขบัญชี) — เป็นบัญชีรับเงินธุรกิจ แสดงให้ลูกค้าเห็นอยู่แล้ว
   app.get('/api/billing/slip/info', { preHandler: requireUser }, async (req) => {
     const r = receiving();
-    return { enabled: r.enabled, promptpay: r.promptpay, bank: r.bank, autoVerify: !!easyslipKey(), days: DAYS, mascotPriceCents: await mascotPriceCents(getUser(req)!.userId), mascotFullCents: sys().mascotPrice * 100 };
+    return { enabled: r.enabled, promptpay: r.promptpay, bank: r.bank, autoVerify: !!easyslipKey(), days: DAYS, mascotPriceCents: await mascotPriceCents(getUser(req)!.userId), mascotFullCents: sys().mascotPrice * 100, firstMonthPct: await firstMonthPct(getUser(req)!.userId) };
   });
 
   app.post('/api/billing/slip', { preHandler: requireUser, bodyLimit: 16_000_000, config: { rateLimit: { max: 6, timeWindow: '10 minutes' } } }, async (req, reply) => {
@@ -155,10 +164,12 @@ export async function slipBillingRoutes(app: FastifyInstance): Promise<void> {
     if (!rcv.enabled) return reply.code(400).send({ error: 'ยังไม่เปิดรับชำระด้วยการโอน — ทักแชททีมงานได้เลย' });
     // ราคาจากเซิร์ฟเวอร์เท่านั้น (ไม่เชื่อยอดจากหน้าเว็บ)
     const isMascot = p.data.planCode === 'mascot';
-    const plan = isMascot
+    const plan0 = isMascot
       ? { code: 'mascot', name: 'มาสคอตหน้าตัวเอง', priceCents: await mascotPriceCents(userId), currency: 'thb' }
       : getPlans().find((x) => x.code === p.data.planCode && x.priceCents > 0);
-    if (!plan) return reply.code(400).send({ error: 'ไม่พบแพลนนี้' });
+    if (!plan0) return reply.code(400).send({ error: 'ไม่พบแพลนนี้' });
+    const promo = isMascot ? 0 : await firstMonthPct(userId); // โปรเดือนแรก (ราคาคิดที่เซิร์ฟเวอร์)
+    const plan = promo ? { ...plan0, name: `${plan0.name} (เดือนแรกลด ${promo}%)`, priceCents: promoCents(plan0.priceCents, promo) } : plan0;
     if (isMascot && !p.data.photos?.length) return reply.code(400).send({ error: 'แนบรูปหน้าตัวเองอย่างน้อย 1 รูป' });
     const sub = isMascot ? null : await prisma.subscription.findUnique({ where: { userId } });
     if (sub?.provider === 'stripe' && ['ACTIVE', 'TRIALING', 'PAST_DUE'].includes(sub.status)) return reply.code(409).send({ error: 'คุณตัดบัตรอัตโนมัติอยู่แล้ว — เปลี่ยนแพลนผ่านแชททีมงาน' });

@@ -15,7 +15,7 @@ export type EffectName = NonNullable<Rule['action']['effect']>;
 export const EFFECTS: [EffectName, string, NonNullable<Rule['action']['tint']>][] = [
   ['butterflies', '🦋 ผีเสื้อเทพนิยาย', 'pink'], ['sakura', '🌸 ซากุระร่วง', 'pink'], ['hearts', '💗 หัวใจลอยฟุ้ง', 'pink'], ['coins', '🪙 ฝนเหรียญทอง', 'gold'],
   ['stars', '⭐ ฝนดาววิบวับ', 'gold'], ['snow', '❄️ หิมะโปรย', 'blue'], ['bubbles', '🫧 ฟองสบู่ลอย', 'blue'], ['balloons', '🎈 ลูกโป่งลอย', 'rainbow'],
-  ['roses', '🌹 กลีบกุหลาบหมุนวน', 'pink'], ['fireflies', '✨ หิ่งห้อยเรืองแสง', 'gold'], ['confetti', '🎊 คอนเฟตติฉลอง', 'rainbow'],
+  ['roses', '🌹 กลีบกุหลาบหมุนวน', 'pink'], ['fireflies', '✨ หิ่งห้อยเรืองแสง', 'gold'], ['confetti', '🎊 คอนเฟตติฉลอง', 'rainbow'], ['bats', '🦇 ค้างคาวน่ารักบินผ่าน (ฮาโลวีน)', 'purple'], ['candy', '🍬 ฝนลูกอมฮาโลวีน', 'gold'],
   ['vcake', '🎬 เค้กปาหน้า (วิดีโอ)', 'pink'], ['vcat', '🎬 แมวร่มชูชีพ (วิดีโอ)', 'pink'],
   ['animal', '🐾 สัตว์น่ารักออกมาเต้น', 'pink'], ['prank', '😈 แกล้งวีเจ (30 มุก)', 'pink'],
   ['chest', '🎁 กล่องสมบัติเด้งเปิด', 'gold'], ['bag', '💜 ถุงซูเปอร์แฟนเด้งเปิด', 'purple'],
@@ -156,6 +156,10 @@ export const TEMPLATES: Template[] = [
     rule: { name: 'กลีบกุหลาบหมุนวน', trigger: { event: 'gift', giftName: 'Rose Hand' }, action: { type: 'effect', effect: 'roses', tint: 'pink', count: 14, durationMs: 8000 } } },
   { id: 'fx-fireflies', group: 'fx', icon: '✨', title: 'พิมพ์ “ฝันดี” → หิ่งห้อย', desc: 'หิ่งห้อยเรืองแสงล่องลอยกะพริบนุ่ม ๆ',
     rule: { name: 'หิ่งห้อยฝันดี', trigger: { event: 'chat', keyword: 'ฝันดี' }, action: { type: 'effect', effect: 'fireflies', tint: 'gold', count: 16, durationMs: 9000 } } },
+  { id: 'fx-bats', group: 'fx', icon: '🦇', title: 'พิมพ์ “ฮาโลวีน” → ค้างคาวบิน', desc: '🎃 ฮาโลวีน: ค้างคาวน่ารักฝูงบินผ่านจอ กระพือปีกเป็นคลื่น',
+    rule: { name: 'ค้างคาวฮาโลวีน', trigger: { event: 'chat', keyword: 'ฮาโลวีน' }, action: { type: 'effect', effect: 'bats', tint: 'purple', count: 14, durationMs: 8000 } } },
+  { id: 'fx-candy', group: 'fx', icon: '🍬', title: 'ได้ Doughnut → ฝนลูกอมฮาโลวีน', desc: '🎃 ฮาโลวีน: ลูกอม ข้าวโพดหวาน อมยิ้ม ฟักทอง ร่วงหมุนทั่วจอ',
+    rule: { name: 'ฝนลูกอมฮาโลวีน', trigger: { event: 'gift', giftName: 'Doughnut' }, action: { type: 'effect', effect: 'candy', tint: 'gold', count: 16, durationMs: 8000 } } },
   { id: 'fx-confetti', group: 'fx', icon: '🎊', title: 'ได้ Confetti → คอนเฟตติฉลอง', desc: 'ยิงกระดาษสีจากมุมจอแล้วโปรยพลิ้วลงมา',
     rule: { name: 'คอนเฟตติฉลอง', trigger: { event: 'gift', giftName: 'Confetti' }, action: { type: 'effect', effect: 'confetti', tint: 'rainbow', count: 14, durationMs: 7000 } } },
   // 🔮 ดูดวง & ไพ่ (แอดมินเท่านั้น)

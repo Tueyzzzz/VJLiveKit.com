@@ -6,7 +6,7 @@ import { useT } from '@/lib/i18n';
 
 /** ป้าย "🔥 ยอดนิยม" / "ใหม่" บนการ์ดเทมเพลต — แก้รายการได้ที่นี่ */
 const HOT = new Set(['fx-butterflies', 'fx-hearts', 'fx-coins', 'tarot-rose', 'thanks-led', 'fun-glove-chat']);
-const NEW = new Set(['tarot-lakshmi', 'tarot-swords', 'fx-fireflies']);
+const NEW = new Set(['fx-bats', 'fx-candy', 'tarot-lakshmi', 'tarot-swords', 'fx-fireflies']);
 
 /** ชิปบอกว่าเทมเพลตนี้ทำงานเมื่อไร (🎁 Rose / 💬 พิมพ์ … / ➕ ติดตาม) */
 export function triggerChip(tp: Template, t: (s: string) => string): string {

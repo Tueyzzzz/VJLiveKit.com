@@ -407,7 +407,7 @@
     const SPR={};
     function spr(key,w,h,draw){ if(SPR[key]) return SPR[key]; const c=document.createElement('canvas'); c.width=w*2; c.height=h*2; const g=c.getContext('2d'); g.scale(2,2); draw(g,w,h); return SPR[key]={c,w,h}; }
     // ชิ้นส่วนเอฟเฟกต์จากภาพ AI (fx/sp/<ชนิด>-0..3.webp) — โหลดไม่ได้ = ใช้แบบวาดด้วยโค้ดเดิม · เปลี่ยนโทนสีด้วย hue-rotate
-    const AIS={}, AI_SIZE={petal:44,heart:68,coin:58,star:64,flake:58,bubble:92,balloon:150,rose:50}, HUE={pink:330,purple:275,blue:210,mint:160,gold:45};
+    const AIS={}, AI_SIZE={petal:44,heart:68,coin:58,star:64,flake:58,bubble:92,balloon:150,rose:50,bat:96,candy:62}, HUE={pink:330,purple:275,blue:210,mint:160,gold:45};
     for(const k in AI_SIZE){ AIS[k]=[]; for(let i=0;i<4;i++){ const im=new Image(); im.onload=()=>{ AIS[k].push(im); }; im.src='fx/sp/'+k+'-'+i+'.webp'+(window.VJL_VERSION?'?v='+window.VJL_VERSION:''); } }
     const tintOf=(c)=>Object.keys(PAL).find((k)=>PAL[k]===c);
     function ai(kind,c,base){
@@ -519,7 +519,24 @@
       L.raf=requestAnimationFrame(pfLoop);
     }
     const flip=(v)=>Math.abs(v)<.12?(v<0?-.12:.12):v; // พลิก 3 มิติ (ไม่ให้บางจนหาย)
+    // 🎃 ฮาโลวีน: ภาพ AI (fx/sp/bat|candy-N.webp) · โหลดไม่ได้ → อีโมจิ
+    const sprEmoji=(ch,px)=>spr('em'+ch+px,px,px,(g)=>{ g.font=Math.round(px*.85)+'px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif'; g.textAlign='center'; g.textBaseline='middle'; g.fillText(ch,px/2,px/2+px*.04); });
     const PFX={
+      // 🦇 ค้างคาวน่ารักฝูงบินผ่านจอ: บินเป็นคลื่น กระพือปีก (ยืด-หดแนวตั้ง) เอียงตามทิศ หันหน้าตามทางบิน
+      bats:{ def:'purple', rate:(n)=>n*.9, burst:(n)=>Math.round(n*.6), spawn(a,i,W,H,U,b){ const dir=i%2?1:-1, y=H*rnd(.08,.75);
+        const p={ img:ai('bat')||sprEmoji('🦇',72), x:dir>0?-70*U:W+70*U, y, y0:y, vx:dir*rnd(170,320)*U, s:rnd(.7,1.35), ph:rnd(0,6.3), amp:rnd(25,70), fq:rnd(1.4,2.4), flap:rnd(9,13), life:30, fi:.2, dl:b?rnd(0,1.2):0 };
+        depth(p,.2);
+        p.upd=(p,dt,W,H,U)=>{ const t=p.t+p.ph; p.x+=p.vx*dt; p.y=p.y0+Math.sin(t*p.fq)*p.amp*U+Math.sin(t*p.fq*2.3)*p.amp*.25*U;
+          const fl=Math.sin(t*p.flap); p.sy=.78+.22*fl; p.sx=(p.vx>0?-1:1)*(1-.06*fl); p.r=Math.cos(t*p.fq)*.22*(p.vx>0?1:-1); // ภาพหันซ้าย → บินขวาพลิกภาพ
+          return p.vx>0?p.x<W+90*U:p.x>-90*U; };
+        return p; } },
+      // 🍬 ฝนลูกอมฮาโลวีน: ลูกอมห่อ/ข้าวโพดหวาน/อมยิ้ม/ฟักทอง ร่วงหมุนแบบมีน้ำหนัก + ประกายเล็ก ๆ
+      candy:{ def:'gold', rate:(n)=>n*1.2, burst:(n)=>n, spawn(a,i,W,H,U,b){ const p={ img:ai('candy')||sprEmoji(['🍬','🍭','🎃','🍫'][i%4],56), x:rnd(0,W), y:b?-rnd(30,H*.5):-40*U, vx:rnd(-30,30)*U, vy:rnd(60,140)*U*L.RY, term:rnd(480,700)*U*L.RY,
+        r:rnd(0,6.3), vr:rnd(-3,3), s:rnd(.75,1.35), life:30, fi:.15, dl:b?rnd(0,.9):0 };
+        depth(p,.2);
+        p.upd=(p,dt,W,H,U)=>{ p.vy+=(900*U*L.RY-p.vy*900*U*L.RY/p.term)*dt; p.y+=p.vy*dt; p.x+=(p.vx+L.wind*20*U)*dt; p.r+=p.vr*dt;
+          if(p.z>.6 && Math.random()<dt*.9) glint(p.x+rnd(-10,10)*U*p.s,p.y-8*U*p.s,PAL.pink,U,rnd(.3,.5)); return p.y<H+50*U; };
+        return p; } },
       // 🌸 ซากุระร่วง: กลีบร่อนซ้าย-ขวาแบบใบไม้ร่วง (ช้าลงตอนกลับทิศ) ลมพัดเป็นระลอก พลิก 3 มิติ
       sakura:{ def:'pink', rate:(n)=>n*1.1, burst:(n)=>n*2, spawn(a,i,W,H,U,b){ const p={ img:sprPetal(palOf(a,i,'pink')), x:rnd(-.05,1.25)*W, y:b?rnd(-.1,.7)*H:-30*U,
         vx:-rnd(15,50)*U, vy:rnd(55,100)*U*L.RY, rb:rnd(0,6.3), vr:rnd(-.7,.7), s:rnd(.7,1.45), ph:rnd(0,6.3), f1:rnd(.7,1.2), f2:rnd(1.7,2.6), amp:rnd(30,60), fl:rnd(1.4,2.8), fp:rnd(0,6.3), life:40, fi:.5, dl:b?rnd(0,1.4):0 };

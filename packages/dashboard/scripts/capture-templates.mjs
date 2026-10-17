@@ -36,7 +36,7 @@ const ROOM = {
   night: { bg: 'radial-gradient(ellipse at 20% 20%,rgba(255,190,230,.35) 0,rgba(255,190,230,0) 40%),radial-gradient(ellipse at 80% 75%,rgba(160,180,255,.3) 0,rgba(160,180,255,0) 45%),linear-gradient(165deg,#2f2560 0%,#5b3f8c 55%,#a8709f 100%)',
     body: 'rgba(200,170,230,.22)', skin: 'rgba(205,160,175,.45)', hair: 'rgba(25,12,40,.5)', bokeh: 'rgba(255,220,250,.35)' },
 };
-const NIGHT = new Set(['fireflies', 'stars']);
+const NIGHT = new Set(['fireflies', 'stars', 'bats']);
 const roomJs = (r) => `(() => { const d = document.createElement('div');
   d.style.cssText = 'position:fixed;inset:-60px;z-index:-1;pointer-events:none;filter:blur(24px);background:${r.bg}';
   d.innerHTML = '<svg viewBox="0 0 540 960" width="660" height="1080" style="position:absolute;left:0;top:0" preserveAspectRatio="xMidYMid slice">'

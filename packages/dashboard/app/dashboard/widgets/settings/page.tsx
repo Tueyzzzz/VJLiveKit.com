@@ -14,6 +14,7 @@ import { NumberInput } from '@/components/NumberInput';
 import { GiftPicker, useGifts } from '@/components/GiftPicker';
 import { useLang, useT } from '@/lib/i18n';
 import { useAuth } from '@/lib/auth';
+import { contentBox } from '@/lib/previewFit';
 import { useMascotOrder } from '@/components/MascotOrder';
 import { FREE_ALL_STYLES, WIDGET_SETTINGS, defaultsOf, toOverlayParams, type FieldDef, type Values } from '@/lib/widgetSettings';
 
@@ -350,19 +351,9 @@ function WidgetSettings() {
   const measure = useCallback(() => {
     const d = frameRef.current?.contentDocument; if (!d?.body) return;
     const { VW: MW, VH: MH } = dims.current;
-    let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
-    for (const el of Array.from(d.body.querySelectorAll<HTMLElement>('*'))) {
-      if (/^(SCRIPT|STYLE|IFRAME)$/.test(el.tagName)) continue;
-      const r = el.getBoundingClientRect();
-      if (el.hasAttribute('data-fit')) { x0 = Math.min(x0, Math.max(0, r.left)); y0 = Math.min(y0, Math.max(0, r.top)); x1 = Math.max(x1, Math.min(MW, r.right)); y1 = Math.max(y1, Math.min(MH, r.bottom)); continue; } // วิดเจ็ตวาดบนแคนวาส บอกกรอบเนื้อหาเอง
-      if (r.width < 4 || r.height < 4 || (r.width > MW * 0.88 && r.height > MH * 0.88) || r.right < 0 || r.bottom < 0 || r.left > MW || r.top > MH) continue; // นอกจอ/เต็มจอ ไม่นับ
-      const cs = d.defaultView!.getComputedStyle(el);
-      if (cs.visibility === 'hidden' || cs.display === 'none' || Number(cs.opacity) < 0.05) continue;
-      if (!el.children.length || el.tagName === 'IMG' || el.tagName === 'CANVAS' || cs.backgroundImage !== 'none' || cs.backgroundColor !== 'rgba(0, 0, 0, 0)') {
-        x0 = Math.min(x0, Math.max(0, r.left)); y0 = Math.min(y0, Math.max(0, r.top)); x1 = Math.max(x1, Math.min(MW, r.right)); y1 = Math.max(y1, Math.min(MH, r.bottom));
-      }
-    }
-    if (x1 <= x0) { setFit({ z: portraitFit(MW), cx: MW / 2, cy: MH / 2 }); return; } // หาไม่เจอ (วาดบนแคนวาสเต็มจอ เช่น โหล) → ซูมกลางจอ
+    const box = contentBox(d, MW, MH); // DOM + [data-fit] + พิกเซลที่วาดบนแคนวาสเต็มจอ (เกม/รถ/เครื่องหยอดเหรียญ)
+    if (!box) { setFit({ z: portraitFit(MW), cx: MW / 2, cy: MH / 2 }); return; } // หาไม่เจอ → ซูมกลางจอ
+    const { x0, y0, x1, y1 } = box;
     const w = x1 - x0, h = y1 - y0;
     setFit({ z: Math.max(1, Math.min(3, 0.85 * Math.min(MW / w, MH / h))), cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 });
   }, []);

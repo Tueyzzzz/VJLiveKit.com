@@ -828,6 +828,8 @@ export const EN_WIDGETS: Record<string, string> = {
   "ความหนาก้าน": "Stem thickness",
   "แบบดอกไม้": "Flower style",
   "แบบกิ่ง": "Branch style",
+  "ฐานโหลชิดขอบล่างจอ": "Jar base at the screen bottom",
+  "ปิด = เว้นที่ใต้โหลให้ป้ายผู้ให้สูงสุด (แบบเดิม)": "Off = leave room under the jar for the top-gifter label (old layout)",
   "🌱 กิ่งเรียวใบกลมน่ารัก": "🌱 Slender cute branches",
   "🌿 ก้านใบยาวแบบเดิม": "🌿 Classic long-leaf stems",
   "🌿 ก้านยาว": "🌿 Long stems",

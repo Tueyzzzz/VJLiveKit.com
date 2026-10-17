@@ -1076,9 +1076,10 @@
     const shapeBack = SH.image && SH.image.back ? Juice.skin(SH.image.back, num('hue', 0), num('sat', 1), num('bright', 1)) : null;
     const domeFlakes = SH.dome ? Array.from({ length: 60 }, () => ({ x: (Math.random() - .5) * SH.dome.r * 1.6, y: SH.dome.cy - SH.dome.r + Math.random() * SH.dome.r * 1.4, r: 1.5 + Math.random() * 2.5, sp: .2 + Math.random() * .45, ph: Math.random() * 6.28 })) : null;
     // เว้นที่ใต้โหลไว้ให้ป้ายผู้ให้สูงสุด
-    const BOARD_SPACE = SHOW_BOARD ? (TOP === 1 ? 70 : TOP * 46 + 14) : 0;
+    const BASE_EDGE = P('baseEdge', '1') !== '0'; // ค่าเริ่มต้น: ฐานโหลชิดขอบล่างจอ · ป้ายผู้ให้สูงสุดลอยทับฐานโหลแทน (0 = เว้นที่ใต้โหลให้ป้ายแบบเดิม)
+    const BOARD_H = SHOW_BOARD ? (TOP === 1 ? 70 : TOP * 46 + 14) : 0, BOARD_SPACE = BASE_EDGE ? 0 : BOARD_H;
     // SH.center: กึ่งกลางโหลอยู่กลางจอ (แบบ TikFinity) แล้วเลื่อนด้วย X/Y ได้ · แบบอื่น: วางชิดล่างจอ
-    const origin = () => ({ x: W / 2 + OX, y: (SH.center ? H / 2 + (-SH.topY / 2) * S() : H - 24 * SCALE - BOARD_SPACE) + OY });
+    const origin = () => ({ x: W / 2 + OX, y: (SH.center && !BASE_EDGE ? H / 2 + (-SH.topY / 2) * S() : H - (BASE_EDGE ? 2 : 24 * SCALE) - BOARD_SPACE) + OY }); // ฐานชิดขอบจอ (ค่าเริ่มต้น) ใช้กับทุกแบบ รวมโหลใส
     // SH.px: ขนาดคงที่เป็นพิกเซล (ไม่ขยายตามจอ) — โหลแก้วใสตั้งให้ตัวแก้วสูง 278px เท่าโหล TikFinity
     const S = () => SCALE * (SH.px || Math.min(1.6, Math.max(0.5, H / 720)));
 
@@ -1756,7 +1757,7 @@
     function layoutUi() {
       const o = origin(), s = S();
       $alert.style.left = o.x + 'px'; $alert.style.top = Math.max(4, o.y + (SH.topY - 130) * s) + 'px';
-      $board.style.left = o.x + 'px'; $board.style.top = (o.y + 10) + 'px';
+      $board.style.left = o.x + 'px'; $board.style.top = (BASE_EDGE ? Math.min(o.y, H) - BOARD_H - 4 : o.y + 10) + 'px';
       $full.style.left = o.x + 'px'; $full.style.top = (o.y + (SH.fullY + 140) * s) + 'px';
       $total.style.left = o.x + 'px'; $total.style.top = Math.max(4, o.y + (SH.topY - 60) * s) + 'px';
     }

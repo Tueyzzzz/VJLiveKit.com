@@ -315,7 +315,9 @@
       .concat(stems.flatMap((st) => st.twigs.map((tw) => ({ stem: st, twig: tw }))));
     if (TREE) slots.splice(0, slots.length, ...TREE.slots.map(([x, y]) => ({ tree: true, x, y, t: rnd() })));
     if (BUSH) { // พุ่ม: จุดดอกเรียงแบบเมล็ดทานตะวัน จากกลางพุ่มออกไปขอบ → ของน้อยก็เป็นพุ่มกลม ของเยอะพุ่มฟูเต็มโดม
-      const N = 132, out = [];
+      const N = 132, out = [], SH2 = BUSH.ry * 1.05; // ไม้ค้ำกลางกระถาง: ดอกแรก ๆ ไต่ขึ้นตามไม้ (ซ้าย-ขวาสลับ) แล้วดอกบนยอด → ของเยอะค่อยแผ่เป็นพุ่ม
+      for (let i = 0; i < 14; i++) out.push({ tree: true, br: 0.35, x: (i % 2 ? 1 : -1) * (9 + (i % 3) * 3), y: BUSH.rimY - 26 - i * (SH2 - 60) / 13, t: rnd(), c: 0.25 + i * 0.03 });
+      out.push({ tree: true, br: 1, x: 0, y: BUSH.rimY - SH2, t: rnd(), c: 1 }); // ดอกใหญ่บนยอดไม้
       for (let i = 0; i < N; i++) { const r = Math.sqrt((i + 0.5) / N) * 0.97, th = Math.PI + i * 2.39996; const q = bushPt(r, th); if (q.y > BUSH.rimY - 4 && Math.abs(q.x) < POT_SKIN.w * 0.25) continue; out.push({ tree: true, br: r, x: q.x, y: q.y, t: rnd(), c: 0.6 * (1 - r) + 0.4 * Math.max(0, Math.min(1, (BUSH.rimY - q.y) / (BUSH.ry * 1.1))) }); }
       slots.splice(0, slots.length, ...out);
     }
@@ -1071,6 +1073,12 @@
         ctx.quadraticCurveTo(Math.cos(a2) * R * 0.85, Math.sin(a2) * R * 0.85, Math.cos(a2) * R * 0.3, Math.sin(a2) * R * 0.3); ctx.closePath(); }
       ctx.fillStyle = f.pg; ctx.fill(); ctx.lineWidth = Math.max(0.8, R * 0.05); ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.stroke();
     }
+    function drawBushStake(time) { // ไม้ค้ำสีชมพูตั้งตรงจากดินถึงยอด (ไหวนิด ๆ ตามยอด)
+      const top = BUSH.rimY - BUSH.ry * 1.05, sw = Math.sin(time * 0.9 + top * 0.02) * 3 * SWAY * (-top / 400);
+      ctx.save(); ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(0, BUSH.rimY + 4); ctx.quadraticCurveTo(sw * 0.3, (BUSH.rimY + top) / 2, sw, top + 10);
+      ctx.lineWidth = 7; ctx.strokeStyle = '#e68bb0'; ctx.stroke(); ctx.lineWidth = 2.5; ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.stroke(); ctx.restore();
+    }
     function drawBushLeaves(time) { // ใบเขียวแซมหลังดอกแต่ละดอก (พุ่มฟูขึ้นตามจำนวนดอก) — ไหวเบา ๆ
       for (const f of flowers) {
         if (f.lv == null) { const base = Math.atan2(f.sl.y - BUSH.rimY + 30, f.sl.x); f.lv = [base - 0.9 + Math.random() * 0.5, base + 0.4 + Math.random() * 0.5]; }
@@ -1112,7 +1120,7 @@
       const br = Juice.breathe(time, 0.012), breathe = () => ctx.scale(1 + (1 - br) * 0.5, br);
       ctx.save(); breathe();
       // ห่อช่อ/แจกัน (behind): กิ่งอยู่หลังห่อ ดูเหมือนงอกจากด้านใน ไม่มีดิน
-      if (TREE) { drawPot(); drawMeadow(time, 0); } else if (BUSH) { drawPot(); } else if (BOUQ) { drawBouquetGreens(time); drawPot(); } else if (BED) { drawPot(); drawBed(time, now); } else if (POT_SKIN) { drawPot(); drawStems(time); if (GROW_POT) drawPotLeaves(time); else drawSoilTufts(time); } else { drawStems(time); drawPot(); }
+      if (TREE) { drawPot(); drawMeadow(time, 0); } else if (BUSH) { drawPot(); drawBushStake(time); } else if (BOUQ) { drawBouquetGreens(time); drawPot(); } else if (BED) { drawPot(); drawBed(time, now); } else if (POT_SKIN) { drawPot(); drawStems(time); if (GROW_POT) drawPotLeaves(time); else drawSoilTufts(time); } else { drawStems(time); drawPot(); }
       ctx.restore();
       tickGround();
       drawGround(time, now); // กองบนพื้นอยู่นิ่ง และอยู่หน้าเนิน/กระถาง

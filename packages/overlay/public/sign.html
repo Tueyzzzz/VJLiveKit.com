@@ -10,6 +10,7 @@
   html,body { margin:0; width:100%; height:100%; background:transparent; overflow:hidden; }
   #wrap { position:fixed; left:50%; transform:translateX(-50%); width:var(--w,80vw); }
   #wrap.top { top:4vh } #wrap.center { top:50%; transform:translate(-50%,-50%) } #wrap.bottom { bottom:5vh }
+  #wrap.left, #wrap.right { top:var(--vy,35vh); transform:none; } #wrap.left { left:2vw } #wrap.right { left:auto; right:2vw } /* ข้างจอ (ป้ายเล็ก) */
   .board { position:relative; overflow:hidden; border-radius:18px; padding:var(--pad,14px) 0; background:rgba(8,6,16,var(--bg,.85)); box-shadow:0 10px 30px rgba(0,0,0,.35); }
   .track { white-space:nowrap; display:flex; justify-content:center; }
   .txt { display:inline-block; font-size:var(--fs,64px); line-height:1.15; color:var(--c,#ff4fa3); font-family:var(--font,'Kanit'),sans-serif; padding:0 .3em; }
@@ -90,7 +91,7 @@
     const P = (k, d) => Overlay.param(k, d);
     const num = (k, d, lo, hi) => Math.max(lo, Math.min(hi, parseFloat(P(k, d)) || parseFloat(d)));
     const wrap = document.getElementById('wrap'); let txt = document.getElementById('txt'); const bulbs = document.getElementById('bulbs');
-    const STYLE = ['led', 'neon', 'bulb', 'cute', 'pixel', 'y2k', 'glass', 'surreal', 'boho', 'victorian', 'graffiti', 'future', 'mwhite', 'mblack', 'mline', 'mpill'].includes(P('style', 'led')) ? P('style', 'led') : 'led';
+    const STYLE = ['led', 'neon', 'bulb', 'cute', 'pixel', 'y2k', 'glass', 'surreal', 'boho', 'victorian', 'graffiti', 'future', 'mwhite', 'mblack', 'mline', 'mpill', 'tile'].includes(P('style', 'led')) ? P('style', 'led') : 'led';
     const MODE = ['scroll', 'static', 'blink', 'pulse'].includes(P('mode', 'scroll')) ? P('mode', 'scroll') : 'scroll';
     const RAINBOW = ['1', 'true'].includes(String(P('rainbow', '0')));
     // มินิมอล: min-white|min-black|min-glass|min-outline|min-pastel|min-mono-led (วาดด้วย CSS) · รูปกรอบ: 01..20
@@ -100,13 +101,15 @@
     const FRAME = MIN ? RAWF : RAWF.replace(/[^0-9]/g, '').slice(0, 2);
     const DOTS = MIN ? MIN === 'led' : !['0', 'false'].includes(String(P('dots', '1')));
     document.body.className = FRAME ? ['framed', MIN ? 'fm-' + MIN : '', MODE, RAINBOW ? 'rainbow' : '', DOTS ? 'dots' : ''].join(' ') : [STYLE, 'st-' + STYLE, MODE, RAINBOW ? 'rainbow' : '', STYLE === 'neon' ? 'flicker' : ''].join(' ');
-    wrap.classList.add(['top', 'center', 'bottom'].includes(P('pos', 'top')) ? P('pos', 'top') : 'top');
+    const POS = ['top', 'center', 'bottom', 'left', 'right'].includes(P('pos', 'top')) ? P('pos', 'top') : 'top';
+    wrap.classList.add(POS);
+    if (POS === 'left' || POS === 'right') wrap.style.setProperty('--vy', num('vpos', '35', 0, 95) + 'vh'); // ข้างจอ: ความสูงจากขอบบน
     const S = document.documentElement.style;
     const color = /^#[0-9a-f]{3,8}$/i.test(P('color', '#ff4fa3')) ? P('color', '#ff4fa3') : '#ff4fa3';
     S.setProperty('--c', color);
     S.setProperty('--fs', num('size', '64', 16, 220) + 'px');
     S.setProperty('--pad', Math.round(num('size', '64', 16, 220) * 0.22) + 'px');
-    S.setProperty('--w', num('width', '80', 20, 100) + 'vw');
+    S.setProperty('--w', num('width', '80', 10, 100) + 'vw');
     S.setProperty('--bg', num('bg', '85', 0, 100) / 100);
     S.setProperty('--font', `'${String(P('font', 'Kanit')).replace(/[^\w ]/g, '')}'`);
 

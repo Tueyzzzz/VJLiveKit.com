@@ -467,7 +467,6 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
     sections: [
       { title: 'กระถาง', fields: [
         { key: 'sway', label: 'ความแรงลม (กิ่งแกว่ง)', type: 'range', min: 0, max: 3, step: 0.1, def: 1, hint: '0 = นิ่ง' },
-        { key: 'look', label: 'แบบดอกไม้', type: 'select', def: 'stems', when: (v) => v.skin !== 'tree', options: [['stems', '🌿 ก้านยาว ของขวัญติดตามกิ่ง'], ['bush', '💐 พุ่มดอกไม้ฟู (ของขวัญเป็นเกสรกลางดอก)']] },
         { key: 'stemLen', label: 'ความยาวกิ่ง', type: 'range', min: 0.8, max: 2, step: 0.05, def: 1.35, unit: '×', when: (v) => v.skin !== 'tree' && v.look !== 'bush' },
         { key: 'stemW', label: 'ความหนาก้าน', type: 'range', min: 0.35, max: 1.5, step: 0.05, def: 0.55, unit: '×', hint: 'น้อย = ก้านเรียวบาง', when: (v) => v.skin !== 'tree' && v.look !== 'bush' },
         { key: 'big', label: 'ของขวัญที่เป็นดอกใหญ่บนยอด ตั้งแต่ (เหรียญ)', type: 'number', min: 1, def: 1000 },
@@ -478,6 +477,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
           ['trumpet', 'กระถางแตรทอง', '🎤 สายนักร้อง', 'pot-trumpet'], ['drum', 'กระถางกลอง', '🎤 สายนักร้อง', 'pot-drum'],
           ['vwood', 'แปลงไม้ยกพื้น', '🥕 แปลงผัก', 'pot-vwood'], ['vpink', 'กล่องไม้ชมพูหัวใจ', '🥕 แปลงผัก', 'pot-vpink'], ['vcrate', 'ลังผลไม้สตรอว์เบอร์รี่', '🥕 แปลงผัก', 'pot-vcrate'], ['vbarrow', 'รถเข็นดิน', '🥕 แปลงผัก', 'pot-vbarrow'], ['vbathtub', 'อ่างอาบน้ำวินเทจ', '🥕 แปลงผัก', 'pot-vbathtub'], ['vstone', 'แปลงหินกลม', '🥕 แปลงผัก', 'pot-vstone'], ['vbrick', 'แปลงอิฐแดง', '🥕 แปลงผัก', 'pot-vbrick'], ['vbamboo', 'แปลงไม้ไผ่สาน', '🥕 แปลงผัก', 'pot-vbamboo'], ['vboat', 'เรือพายไม้', '🥕 แปลงผัก', 'pot-vboat'], ['vcart', 'รถเข็นตลาดนัด', '🥕 แปลงผัก', 'pot-vcart'], ['vbasket', 'ตะกร้าปิกนิก', '🥕 แปลงผัก', 'pot-vbasket'], ['vtrough', 'รางสังกะสีผูกโบว์', '🥕 แปลงผัก', 'pot-vtrough'], ['vcarrot', 'กล่องแครอท', '🥕 แปลงผัก', 'pot-vcarrot'], ['vpumpkin', 'กระถางฟักทองยาว', '🥕 แปลงผัก', 'pot-vpumpkin'], ['vwatering', 'บัวรดน้ำยักษ์', '🥕 แปลงผัก', 'pot-vwatering'], ['vcloud', 'กระถางก้อนเมฆ', '🥕 แปลงผัก', 'pot-vcloud'], ['vrainbow', 'กล่องสายรุ้ง', '🥕 แปลงผัก', 'pot-vrainbow'], ['vtractor', 'รถแทรกเตอร์ของเล่น', '🥕 แปลงผัก', 'pot-vtractor'], ['vbarrel', 'ถังไม้ครึ่งซีก', '🥕 แปลงผัก', 'pot-vbarrel'], ['vtire', 'ยางรถทาสีพาสเทล', '🥕 แปลงผัก', 'pot-vtire'],
         ] },
+        { key: 'look', label: 'แบบดอกไม้', type: 'select', def: 'stems', when: (v) => v.skin !== 'tree' && !/^(v|bq)/.test(String(v.skin ?? '')), options: [['stems', '🌿 ก้านยาว', '', 'look-stems'], ['bush', '💐 พุ่มดอกไม้ฟู', '', 'look-bush']] },
         ...tint(() => true),
         { key: 'minCoins', label: 'รับเฉพาะของขวัญตั้งแต่ (เหรียญ)', type: 'number', min: 0, def: 0 },
       ] },

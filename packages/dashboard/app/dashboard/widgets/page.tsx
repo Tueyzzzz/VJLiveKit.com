@@ -322,13 +322,11 @@ function WidgetsInner() {
               <WidgetPreview type={w.type} config={configs[w.type]} live={livePreview === w.type}
                 onLive={(on) => setLivePreview((cur) => (on ? w.type : cur === w.type ? null : cur))} />
             )}
+            {/* ชื่อ + ปุ่มอยู่แถวเดียวกัน · คำอธิบายลงบรรทัดใหม่เต็มความกว้างการ์ด (เดิมอยู่ข้างปุ่ม การ์ดแคบแล้วโดนบีบเหลือคำละบรรทัด) */}
             <div className="mt-3 flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 text-sm font-medium">
-                  {t(WIDGET_LABELS[w.type] ?? w.type)}
-                  {w.locked && <Badge tone="pink"><Lock className="size-3" /> Pro</Badge>}
-                </div>
-                <p className="mt-0.5 text-xs text-muted">{WIDGET_BLURB[w.type] ? t(WIDGET_BLURB[w.type]) : ''}</p>
+              <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium">
+                {t(WIDGET_LABELS[w.type] ?? w.type)}
+                {w.locked && <Badge tone="pink"><Lock className="size-3" /> Pro</Badge>}
               </div>
               <div className="flex shrink-0 gap-1.5">
                 {title === COLLECT_GROUP ? (
@@ -340,6 +338,7 @@ function WidgetsInner() {
                 </Link>
               </div>
             </div>
+            {WIDGET_BLURB[w.type] && <p className="mt-1.5 text-xs leading-relaxed text-muted">{t(WIDGET_BLURB[w.type])}</p>}
           </Card>
         )).flatMap((card, i) => title === COLLECT_GROUP && list[i]?.type === 'giftjar' ? [card, ...JAR_CARDS.map((j) => (
           <Card key={j.g} className={`p-3 ${collectStyle === 'giftjar' ? 'ring-1 ring-pink/40' : ''}`}>
@@ -348,14 +347,12 @@ function WidgetsInner() {
               <img src={`/cards/jar-${j.g}.webp`} alt="" loading="lazy" className="h-full w-full object-contain drop-shadow-sm" />
             </Link>
             <div className="mt-3 flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <div className="text-sm font-medium">{t(j.label)}</div>
-                <p className="mt-0.5 text-xs text-muted">{t(j.blurb)}</p>
-              </div>
+              <div className="min-w-0 flex-1 text-sm font-medium">{t(j.label)}</div>
               <Link href={`/dashboard/widgets/settings/?type=giftjar&g=${j.g}`} className="shrink-0">
                 <Button variant="secondary" className="px-3 text-xs">{t('เลือกแบบโหล')}</Button>
               </Link>
             </div>
+            <p className="mt-1.5 text-xs leading-relaxed text-muted">{t(j.blurb)}</p>
           </Card>
         ))] : [card])}
       </div>

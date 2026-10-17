@@ -46,7 +46,7 @@
     let kills = 0, level = 1; try { const v = JSON.parse(localStorage.getItem(KEY) || '{}'); kills = v.kills || 0; level = v.level || 1; } catch { /* ignore */ }
     const save = () => { try { localStorage.setItem(KEY, JSON.stringify({ kills, level })); } catch { /* ignore */ } };
     const $k = document.getElementById('kills'), $l = document.getElementById('lvl'), $win = document.getElementById('win');
-    const hud = () => { $k.textContent = kills.toLocaleString('en-US'); $l.textContent = 'ด่าน ' + level; };
+    const hud = () => { $k.textContent = kills.toLocaleString('en-US'); const k = Math.min(3, 1 + Math.max(0, level - 5) * 0.12); $l.textContent = 'ด่าน ' + level + (k > 1 ? ' · 💪×' + k.toFixed(1) : ''); }; // ด่าน 6+: บอกว่าปราสาทแข็งขึ้นกี่เท่า
     hud();
 
     const engine = M.Engine.create(); engine.gravity.y = 1.1; engine.positionIterations = 8; engine.velocityIterations = 6;
@@ -63,8 +63,12 @@
       M.Composite.add(world, [ground, wall]);
       build();
     }
-    function add(kind, x, y, w, h) { const b = M.Bodies.rectangle(x, y, w, h, { density: KIND[kind].d, friction: 0.8, restitution: 0.05, chamfer: { radius: Math.min(w, h) * 0.12 } }); b.kind = kind; b.w = w; b.h = h; b.hp = KIND[kind].hp; things.push(b); M.Composite.add(world, b); return b; }
-    function monster(x, y, r) { const b = M.Bodies.circle(x, y, r, { density: 0.001, friction: 0.6, restitution: 0.2 }); b.kind = 'monster'; b.r = r; b.hp = 3; things.push(b); M.Composite.add(world, b); return b; }
+    // ความยาก: ด่าน 1–5 ปราสาทโตขึ้นเรื่อย ๆ (สูงสุด 3 ช่อง × 4 ชั้น — ใหญ่กว่านี้ล้นจอ)
+    //   ด่าน 6 ขึ้นไป ขนาดเท่าเดิมแต่ "แข็งขึ้น" ทุกด่าน: บล็อก/มอนสเตอร์ทนขึ้น + ใช้ลูกอม (หนักสุด) มากขึ้น · เพดาน 3 เท่าที่ด่าน ~22
+    const tier = () => Math.max(0, level - 5);
+    const tough = () => Math.min(3, 1 + tier() * 0.12);
+    function add(kind, x, y, w, h) { const b = M.Bodies.rectangle(x, y, w, h, { density: KIND[kind].d, friction: 0.8, restitution: 0.05, chamfer: { radius: Math.min(w, h) * 0.12 } }); b.kind = kind; b.w = w; b.h = h; b.hp = KIND[kind].hp * tough(); things.push(b); M.Composite.add(world, b); return b; }
+    function monster(x, y, r, boss) { const b = M.Bodies.circle(x, y, r, { density: 0.001 * (boss ? 1.6 : 1), friction: 0.6, restitution: 0.2 }); b.kind = 'monster'; b.r = r; b.hp = 3 * tough() * (boss ? 1.5 : 1); b.boss = !!boss; things.push(b); M.Composite.add(world, b); return b; }
     function build() { // ปราสาทฝั่งขวา: ชั้นละ [เสา เสา คาน] + มอนสเตอร์บนแต่ละชั้น · ด่านสูงขึ้นทุกด่าน (สูงสุด 4 ชั้น 3 ช่อง)
       for (const b of things) M.Composite.remove(world, b); things = [];
       const cols = Math.min(3, 1 + Math.floor((level + 1) / 2)), floors = Math.min(4, 1 + Math.floor(level / 2) + 1);
@@ -73,13 +77,13 @@
       for (let c = 0; c < cols; c++) {
         let y = GY; const cx = x0 + c * bw * 0.98 - (cols > 1 ? bw * 0.0 : 0);
         for (let f = 0; f < floors - (c === 1 ? 0 : (c + f) % 2 ? 1 : 0); f++) {
-          const m = mats[(c + f + level) % 3];
+          const m = tier() && ((c * 7 + f * 3 + level) % 10) < Math.min(6, tier()) ? 'candy' : mats[(c + f + level) % 3]; // ด่านสูง: ลูกอม (หนัก/ทน) แทนที่มากขึ้นทีละนิด
           const vk = m === 'wood' ? 'wood-v' : m, hk = m === 'wood' ? 'wood-h' : m;
           add(vk, cx - bw * 0.36, y - ph / 2, pw, ph); add(vk, cx + bw * 0.36, y - ph / 2, pw, ph);
           monster(cx, y - U * 6, U * 5);
           y -= ph; add(hk, cx, y - bh / 2, bw, bh); y -= bh;
         }
-        monster(cx, y - U * 6, U * 5.2);
+        monster(cx, y - U * 6, U * 5.2, tier() > 0 && c === Math.floor(cols / 2)); // ด่าน 6+: ตัวบนยอดกลางเป็นหัวหน้า (ทนกว่า มีมงกุฎ)
       }
     }
     addEventListener('resize', layout); layout();
@@ -156,7 +160,8 @@
       if (queue.length && !winAt) { const q = queue[0], im = giftImg(q.img), r = U * 3; if (im && im.complete && im.naturalWidth) g.drawImage(im, slingX() - r, slingY() - r, r * 2, r * 2); } // ก้อนถัดไปรอบนหนังสติ๊ก
       // บล็อก + มอนสเตอร์
       for (const b of things) {
-        if (b.kind === 'monster') { const s = b.r * 2.3; sprite('monster', b.position.x, b.position.y, s, s * (ok('monster') ? IMG.monster.naturalHeight / IMG.monster.naturalWidth : 1), b.angle); }
+        if (b.kind === 'monster') { const s = b.r * 2.3; sprite('monster', b.position.x, b.position.y, s, s * (ok('monster') ? IMG.monster.naturalHeight / IMG.monster.naturalWidth : 1), b.angle);
+          if (b.boss) { g.save(); g.translate(b.position.x, b.position.y); g.rotate(b.angle); g.font = Math.round(b.r * 1.1) + 'px serif'; g.textAlign = 'center'; g.fillText('👑', 0, -b.r * 0.95); g.restore(); } } // หัวหน้า (ด่าน 6+)
         else sprite(b.kind, b.position.x, b.position.y, b.w, b.h, b.angle);
       }
       // ก้อนที่ยิง: หินกลม + รูปของขวัญติดหน้า

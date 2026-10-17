@@ -36,7 +36,7 @@
   /*
    * สวนแห่งความรัก (กระถางต้นไม้) — ของขวัญจริงกลายเป็นดอกไม้บนกิ่งที่แกว่งตามลม
    *   scale=1 flowerScale=1 x=0 y=0   ขนาด/ตำแหน่ง
-   *   big=1000                        ของขวัญมูลค่าตั้งแต่นี้ = ดอกใหญ่บนยอด
+   *   big=99                          ของขวัญมูลค่าตั้งแต่นี้ = ดอกใหญ่บนยอด
    *   sway=1                          ความแรงลม (0 = นิ่ง)
    *   skin=image|tree|sakura|night|heart|bonsai|palm|autumn|classic        กระถางรูป 3D (ค่าเริ่มต้น) / ต้นไม้ใหญ่ (ดอกไม้บานบนพุ่มใบ) / วาดด้วยโค้ด
    *   hue=0 sat=1 bright=1            เปลี่ยนสีกระถางรูป 3D
@@ -47,7 +47,7 @@
     const P = (k, d) => Overlay.param(k, d);
     const num = (k, d) => { const v = parseFloat(P(k, d)); return Number.isFinite(v) ? v : d; };
     const SCALE = num('scale', 1), FLOWER = num('flowerScale', 1), OX = num('x', 0), OY = num('y', 0);
-    const BIG = num('big', 1000), SWAY = num('sway', 1), POT = P('pot', '#f3e6cc'), MIN_COINS = num('minCoins', 0);
+    const BIG = num('big', 99), SWAY = num('sway', 1), POT = P('pot', '#f3e6cc'), MIN_COINS = num('minCoins', 0);
     const SHOW_ALERT = P('alert', '1') !== '0', SHOW_BOARD = P('board', '1') !== '0';
 
     const canvas = document.getElementById('fx'), ctx = canvas.getContext('2d');

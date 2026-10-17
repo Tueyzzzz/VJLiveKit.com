@@ -474,7 +474,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
         { key: 'stemArt', label: 'แบบกิ่ง', type: 'select', def: 'cute', when: (v) => v.skin !== 'tree' && v.look !== 'bush' && !/^(v|bq)/.test(String(v.skin ?? '')), options: [['cute', '🌱 กิ่งเรียวใบกลมน่ารัก'], ['classic', '🌿 ก้านใบยาวแบบเดิม']] },
         { key: 'stemLen', label: 'ความยาวกิ่ง', type: 'range', min: 0.8, max: 2, step: 0.05, def: 1.35, unit: '×', when: (v) => v.skin !== 'tree' && v.look !== 'bush' },
         { key: 'stemW', label: 'ความหนาก้าน', type: 'range', min: 0.35, max: 1.5, step: 0.05, def: 0.55, unit: '×', hint: 'น้อย = ก้านเรียวบาง', when: (v) => v.skin !== 'tree' && v.look !== 'bush' },
-        { key: 'big', label: 'ของขวัญที่เป็นดอกใหญ่บนยอด ตั้งแต่ (เหรียญ)', type: 'number', min: 1, def: 1000 },
+        { key: 'big', label: 'ของขวัญที่เป็นดอกใหญ่บนยอด ตั้งแต่ (เหรียญ)', type: 'number', min: 1, def: 99 },
         { key: 'leafTone', label: 'สีใบไม้', type: 'select', def: 'pastel', options: [['pastel', '🌿 พาสเทลอ่อน (ไม่เขียวเข้ม)'], ['mint', '💚 มิ้นต์'], ['pink', '🩷 ชมพู'], ['lavender', '💜 ลาเวนเดอร์'], ['sakura', '🌸 ซากุระ'], ['gold', '💛 ทอง'], ['original', 'สีเดิมของแบบ']] },
         { key: 'skin', label: 'แบบกระถาง', type: 'select', def: 'image', options: [
           ['image', 'กระถางหัวใจมีปีก', '🌸 พาสเทลน่ารัก', 'gd-image'], ['cat', 'กระถางหน้าแมว', '🌸 พาสเทลน่ารัก', 'pot-cat'], ['bunny', 'กระถางกระต่าย', '🌸 พาสเทลน่ารัก', 'pot-bunny'], ['bear', 'กระถางหมี', '🌸 พาสเทลน่ารัก', 'pot-bear'], ['teacup', 'กระถางถ้วยชา', '🌸 พาสเทลน่ารัก', 'pot-teacup'], ['boot', 'กระถางรองเท้าบูท', '🌸 พาสเทลน่ารัก', 'pot-boot'], ['pumpkin', 'กระถางฟักทอง', '🌸 พาสเทลน่ารัก', 'pot-pumpkin'], ['star', 'กระถางดาว', '🌸 พาสเทลน่ารัก', 'pot-star'], ['cart', 'รถเข็นดอกไม้', '🌸 พาสเทลน่ารัก', 'pot-cart'], ['basket', 'ตะกร้าสาน', '🌸 พาสเทลน่ารัก', 'pot-basket'], ['bqpaper', 'ช่อกระดาษชมพู', '💐 ช่อดอกไม้ & แจกัน', 'pot-bqpaper'], ['bqtulle', 'ช่อผ้าโปร่งลาเวนเดอร์', '💐 ช่อดอกไม้ & แจกัน', 'pot-bqtulle'], ['bqkorean', 'ช่อสไตล์เกาหลี', '💐 ช่อดอกไม้ & แจกัน', 'pot-bqkorean'], ['bqheart', 'ช่อทรงหัวใจ', '💐 ช่อดอกไม้ & แจกัน', 'pot-bqheart'], ['bqbasket', 'ตะกร้าหูหิ้ว', '💐 ช่อดอกไม้ & แจกัน', 'pot-bqbasket'], ['vasegold', 'แจกันพอร์ซเลนทอง', '💐 ช่อดอกไม้ & แจกัน', 'pot-vasegold'], ['vasecat', 'แจกันแมวขยิบตา', '💐 ช่อดอกไม้ & แจกัน', 'pot-vasecat'], ['bqcrown', 'ช่อมงกุฎเจ้าหญิง', '💐 ช่อดอกไม้ & แจกัน', 'pot-bqcrown'],
@@ -503,7 +503,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
     sections: [
       { title: 'ต้นไม้', fields: [
         { key: 'sway', label: 'ความแรงลม (กิ่งแกว่ง)', type: 'range', min: 0, max: 3, step: 0.1, def: 1, hint: '0 = นิ่ง' },
-        { key: 'big', label: 'ของขวัญที่เป็นดอกใหญ่บนยอด ตั้งแต่ (เหรียญ)', type: 'number', min: 1, def: 1000 },
+        { key: 'big', label: 'ของขวัญที่เป็นดอกใหญ่บนยอด ตั้งแต่ (เหรียญ)', type: 'number', min: 1, def: 99 },
         { key: 'skin', label: 'แบบต้นไม้', type: 'select', def: 'tree', options: [
           ['tree', 'ต้นไม้ใหญ่', '🌸 พาสเทลน่ารัก', 'gd-tree'], ['sakura', 'ต้นซากุระ', '🌸 พาสเทลน่ารัก', 'gd-sakura'], ['night', 'ต้นไม้ดวงดาว', '🌸 พาสเทลน่ารัก', 'gd-night'], ['heart', 'ต้นหัวใจ', '🌸 พาสเทลน่ารัก', 'gd-heart'], ['bonsai', 'บอนไซกระถางหัวใจ', '🌸 พาสเทลน่ารัก', 'gd-bonsai'], ['palm', 'ต้นปาล์มเกาะ', '🌸 พาสเทลน่ารัก', 'gd-palm'], ['autumn', 'ต้นไม้ใบไม้ร่วง', '🌸 พาสเทลน่ารัก', 'gd-autumn'],
           ['cyber', 'ต้นไม้ไซเบอร์', '🎮 สายเท่ เกมมิ่ง', 'gd-cyber'],

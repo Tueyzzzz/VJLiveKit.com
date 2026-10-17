@@ -1047,7 +1047,7 @@
         for (const f of mList) drawFlower(f, time, now);
         drawMeadow(time, 1);
       }
-      if (BUSH) drawBushLeaves(time);
+      if (BUSH) { bushPrep(); drawBushBranches(time); drawBushLeaves(time); }
       if (BUSH && bVer !== fVer) { bVer = fVer; bList = flowers.slice().sort((p, q) => (p.sl.rim ? 1 : 0) - (q.sl.rim ? 1 : 0) || (p.fs || 0) - (q.fs || 0)); } // พุ่ม: ดอกเล็ก/ข้างในก่อน → ดอกใหญ่/วงนอกอยู่บนสุด (ไม่ถูกบัง)
       for (const f of BUSH ? bList : flowers) {
         if (f.sl.cl || f.sl.meadow) continue; // แปลงผัก: วาดไปพร้อมกอแล้ว (drawBed) · ดอกในทุ่งวาดไปแล้วข้างบน
@@ -1092,17 +1092,26 @@
       ctx.beginPath(); ctx.moveTo(0, BUSH.rimY + 4); ctx.quadraticCurveTo(sw * 0.3, (BUSH.rimY + top) / 2, sw, top + 10);
       ctx.lineWidth = 7; ctx.strokeStyle = '#e68bb0'; ctx.stroke(); ctx.lineWidth = 2.5; ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.stroke(); ctx.restore();
     }
-    const BUSH_LV = BUSH ? Array.from({ length: 230 }, (_, i) => { const r = 0.1 + 0.85 * Math.sqrt((i + 0.5) / 230), th = Math.PI + ((i * 0.618034) % 1) * Math.PI, q = bushPt(r, th); return { r, x: q.x, y: q.y, a: th + (rnd() - 0.5) * 1.6, s: 15 + rnd() * 10, c: ['#2f9e55', '#43b764', '#5cc878', '#278a49'][i % 4], ph: rnd() * 6 }; }) : [];
     let bushFill = 0, bfVer = -1;
-    function drawBushLeaves(time) { // พุ่มใบเขียวแน่น ขยายตามของขวัญที่อยู่ในพุ่ม (ใบไหวเบา ๆ)
-      if (bfVer !== fVer) { bfVer = fVer; const n = flowers.filter((f) => !f.sl.rim && f.sl.br !== 0.3).length; bushFill = n ? 0.2 + 0.72 * Math.sqrt(Math.min(1, n / 110)) : 0; } // พุ่มโตตามจำนวนของขวัญในพุ่ม
-      const lim = bushFill ? bushFill + 0.1 : 0, sc = 0.8 + 0.4 * dens;
-      for (const L of BUSH_LV) {
-        if (L.r > lim) continue;
-        ctx.save(); ctx.translate(L.x + Math.sin(time * 0.9 + L.y * 0.02) * 3 * SWAY * (-L.y / 400), L.y); ctx.rotate(L.a + Math.sin(time * 1.2 + L.ph) * 0.06 * SWAY);
-        leafPath('oval', L.s * sc); ctx.fillStyle = L.c; ctx.fill(); ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.stroke(); ctx.restore();
+    function bushPrep() { if (bfVer !== fVer) { bfVer = fVer; const n = flowers.filter((f) => !f.sl.rim && f.sl.br !== 0.3).length; bushFill = n ? 0.2 + 0.72 * Math.sqrt(Math.min(1, n / 110)) : 0; } } // พุ่มโตตามจำนวนของขวัญในพุ่ม
+    // กิ่งใบ: ภาพกิ่งเรียวใบกลม (GPT) แตกจากกลางกระถางเป็นพัด 2 ชั้น — ยาวตามพุ่มที่โต ไหวตามลม
+    const BUSH_SPR = [['themes/veg/bushbr-0.webp', 5.789], ['themes/veg/bushbr-1.webp', 6.281], ['themes/veg/bushbr-2.webp', 5.614], ['themes/veg/bushbr-3.webp', 5.536]]; // กิ่งเรียวใบกลมน่ารัก (GPT · docs/bush)
+    const BUSH_BR = BUSH ? [...Array.from({ length: 13 }, (_, i) => ({ u: (i + 0.5) / 13, k: 1 })), ...Array.from({ length: 10 }, (_, i) => ({ u: (i + 1) / 11, k: 0.68 }))].map((b, i) => {
+      const spr = BUSH_SPR[(i * 3 + 1) % 4];
+      return { th: Math.PI + 0.1 + b.u * (Math.PI - 0.2), k: b.k * (0.92 + rnd() * 0.16), spr: spr[0], asp: spr[1], m: i % 2 ? -1 : 1, ph: rnd() * 6 };
+    }) : [];
+    BUSH_BR.forEach((b) => vegImg(b.spr));
+    function drawBushBranches(time) {
+      if (!bushFill) return;
+      const reach = Math.max(0.32, bushFill + 0.06), x0 = 0, y0 = BUSH.rimY + 6;
+      for (const b of BUSH_BR) {
+        const im = vegImg(b.spr); if (!im) continue;
+        const e = bushPt(reach * b.k, b.th), L = Math.hypot(e.x - x0, e.y - y0) * 1.05, W = L / b.asp;
+        const ang = Math.atan2(e.y - y0, e.x - x0) + Math.PI / 2 + Math.sin(time * 1.1 + b.ph) * 0.035 * SWAY;
+        ctx.save(); ctx.translate(x0, y0); ctx.rotate(ang); ctx.scale(b.m, 1); ctx.drawImage(im, -W / 2, -L, W, L); ctx.restore();
       }
     }
+    function drawBushLeaves() { /* ใบไม้ = ภาพกิ่งใบใน drawBushBranches */ }
     function drawBigs(time, now) {
       bigs.forEach((b, i) => {
         // ตำแหน่งดอกใหญ่: ยอดกิ่งหลัก (กลางก่อน) → ปลายกิ่งย่อย · เกินแล้ววนซ้ำแบบเหลื่อมนิด ๆ (ไม่ซ้อนเป็นเสา)

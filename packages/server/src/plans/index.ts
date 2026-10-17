@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../db/prisma.js';
 import { settings } from '../settings/index.js';
 import { trialEndOf, trialInfo, seedTrialHistory } from './trials.js';
+import { CUSTOM_MASCOTS } from '../mascots/custom.js';
 
 /** วิดเจ็ตทั้งหมดที่ระบบมี (ชื่อตรงกับไฟล์ /overlay/<type>.html) */
 export const WIDGET_TYPES = ['coinjar', 'giftjar', 'aquarium', 'spacedome', 'belly', 'snowglobe', 'vehicle', 'garden', 'tree', 'alerts', 'goal', 'chat', 'follower', 'topgifters', 'toplikers', 'pkmvp', 'timer', 'league', 'tts', 'fx', 'fxmenu', 'donate', 'collect', 'sign', 'pile', 'mascot', 'tugwar', 'giftjump', 'giftsling'] as const;
@@ -211,7 +212,17 @@ export async function ensurePlans(): Promise<void> {
 const PAID_STATUSES = new Set(['ACTIVE', 'TRIALING', 'PAST_DUE']);
 
 /** คำนวณสิทธิ์ปัจจุบันของผู้ใช้ (หมดอายุ/ยกเลิก -> กลับเป็น free) */
+/**
+ * สิทธิ์ปัจจุบันของผู้ใช้
+ * มาสคอตสั่งทำ (ลูกค้าจ่ายเงินสั่งทำหน้าตัวเองแล้ว) = ของเขาตลอดไป → วิดเจ็ตมาสคอตใช้ได้เสมอไม่ว่าแพลนไหน/หมดอายุ
+ */
 export async function getEntitlements(userId: string): Promise<Entitlements> {
+  const ent = await planEntitlements(userId);
+  if (CUSTOM_MASCOTS[userId]?.length && !ent.widgets.includes('mascot')) return { ...ent, widgets: [...ent.widgets, 'mascot'] };
+  return ent;
+}
+
+async function planEntitlements(userId: string): Promise<Entitlements> {
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { createdAt: true, tiktokUsername: true, subscription: { include: { plan: true } } } });
   const sub = user?.subscription;
   const active = sub && PAID_STATUSES.has(sub.status)

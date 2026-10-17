@@ -88,6 +88,9 @@ const WIDGET_BLURB: Record<string, string> = {
 
 /** พรีวิวสดของวิดเจ็ต (โหมดเดโม) — ย่อจาก 1920×1080 ให้พอดีการ์ด, โหลดเฉพาะตอนเลื่อนมาเห็น */
 /** ความกว้างจอจำลองของตัวอย่าง (ยิ่งแคบ = วิดเจ็ตดูใหญ่ขึ้น) — วิดเจ็ตเล็ก ๆ ไม่ต้องย่อจากจอ 1920 */
+/** ภาพตัวอย่างที่ถ่ายเต็มเฟรม 16:9 (ฉากเกม) → เต็มการ์ด ไม่ต้องเว้นขอบ */
+const FULL_POSTER = new Set(['giftjump', 'giftsling', 'tugwar']);
+const GAME_GROUP = '🎮 เกมกับผู้ชม';
 const PREVIEW_W: Record<string, number> = { goal: 1500, chat: 820, follower: 640, alerts: 900, timer: 760, topgifters: 900, toplikers: 900, pkmvp: 760, tts: 900, fx: 1100, fxmenu: 760, sign: 1000, mascot: 900, league: 1400, donate: 900 };
 
 /** ตั้งค่าที่บันทึกไว้ → พารามิเตอร์ URL ของตัวอย่าง (พารามิเตอร์ใน URL มาก่อนค่าเริ่มต้นเสมอ) */
@@ -170,7 +173,7 @@ function WidgetPreview({ type, config, live, onLive }: { type: string; config?: 
         <button type="button" onClick={() => onLive(true)} aria-label={t('เล่นตัวอย่าง')}
           className="absolute inset-0 grid place-items-center">
           {poster
-            ? <img src={poster} alt="" loading="lazy" className="absolute inset-0 m-auto h-[86%] w-[92%] object-contain drop-shadow-lg" />
+            ? <img src={poster} alt="" loading="lazy" className={FULL_POSTER.has(type) ? 'absolute inset-0 h-full w-full object-cover' : 'absolute inset-0 m-auto h-[86%] w-[92%] object-contain drop-shadow-lg'} />
             : <span className="text-5xl">{ICON[type] ?? '🎁'}</span>}
           <span className="absolute bottom-2 right-2 rounded-full bg-black/45 px-2.5 py-1 text-[11px] text-white opacity-80 group-hover:opacity-100">{t('▶ ดูตัวอย่าง')}</span>
         </button>
@@ -304,7 +307,8 @@ function WidgetsInner() {
           </div>
         </Card>
       )}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+      {/* เกมกับผู้ชม: การ์ดใหญ่ (แถวละไม่เกิน 2) ให้เห็นภาพเกมชัด ๆ น่าเล่น · หมวดอื่นแถวละ 3–4 */}
+      <div className={`grid gap-4 ${title === GAME_GROUP ? 'md:grid-cols-2' : 'sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'}`}>
         {list.map((w) => soon(w.type) ? (
           <Card key={w.type} className="relative p-3 opacity-60 grayscale">
             <div className="grid aspect-video place-items-center rounded-xl bg-canvas text-4xl">🚧</div>

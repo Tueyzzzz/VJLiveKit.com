@@ -1369,7 +1369,7 @@
 
     let capArea = 0;
     function jarCap() { // พื้นที่ช่องในโหล (ปากโหล → พื้น) × 0.8 (มีฝา × 0.6)
-      if (!capArea) { const f = SH.floor ?? -3; for (let y = SH.openY; y < f; y += 2) capArea += 2 * Math.max(0, SH.hw(Math.min(-0.5, y))) * 2; capArea = Math.max(4000, capArea * (SH.closed ? 0.6 : 0.8)); } // ปากเปิด: ให้เต็มจริงก่อนล้น (ของกลมวางแล้วมีช่องว่าง ~20%) · มีฝา: เผื่อที่ไว้ไม่อัดแน่นจนค้าง
+      if (!capArea) { const f = SH.floor ?? -3; for (let y = SH.openY; y < f; y += 2) capArea += 2 * Math.max(0, SH.hw(Math.min(-0.5, y))) * 2; capArea = Math.max(4000, capArea * (SH.closed ? 0.8 : 0.88)); /* ให้ของเต็มโหลจริง (เดิม 0.6/0.8 = ดูไม่เต็ม) */ } // ปากเปิด: ให้เต็มจริงก่อนล้น (ของกลมวางแล้วมีช่องว่าง ~20%) · มีฝา: เผื่อที่ไว้ไม่อัดแน่นจนค้าง
       return capArea;
     }
     const jarUsed = () => bodies.reduce((a, b) => a + (!b.out && !b.dying && !b.eat ? Math.PI * b.r * b.r : 0), 0);
@@ -1378,7 +1378,7 @@
       const r = radiusFor(g.d) * (gi >= 0 ? FER.gr : 1);
       // โหลเต็ม (โหมด spill) → ชิ้นใหม่ทะลักออกปากโหลไปกองข้าง ๆ
       // เช็กที่ว่างก่อนใส่ (พื้นที่ของขวัญรวม ≤ 60% ของช่องในโหล) → โหลเล็ก/ปิดฝาไม่อัดแน่นจนของเด้งเหมือนจะระเบิด
-      const over = dropFromTop && g.o !== 1 && !SH.solid && !FER && !SPACE_FLOAT && jarUsed() + Math.PI * r * r > jarCap();
+      const used0 = jarUsed(), over = dropFromTop && g.o !== 1 && !SH.solid && !FER && !SPACE_FLOAT && used0 + Math.PI * r * r > jarCap() && used0 > jarCap() * 0.7; /* ชิ้นใหญ่ได้เข้าโหลก่อน ถ้าโหลยังไม่ถึง 70% */
       if (over && FULL_MODE !== 'spill') ((window.VJLCollect && VJLCollect.victims) ? VJLCollect.victims(bodies, 1, (k) => !k.out) : bodies.filter((k) => !k.out && !k.dying).slice(0, 1)).forEach((k) => { k.dying = true; });
       const out = SH.solid || g.o === 1 || (dropFromTop && spilling) || (FER && gi < 0) || (over && FULL_MODE === 'spill');
       const side = Math.random() < .5 ? -1 : 1;

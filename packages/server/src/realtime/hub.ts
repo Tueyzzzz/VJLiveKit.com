@@ -4,7 +4,7 @@ import type { Server } from 'socket.io';
 import { loadSession, saveSession } from './sessions.js';
 import { connStats } from './connstats.js';
 import { trackLive, listLives } from './lives.js';
-import { autoClearOnNewLive } from '../widgets/autoClear.js';
+import { autoClearOnNewLive, recentlyLive, RELIVE_GAP_MS } from '../widgets/autoClear.js';
 import { noteLiveEvent } from './livestats.js';
 import { settings } from '../settings/index.js';
 import { config } from '../config/index.js';
@@ -295,10 +295,11 @@ export class RoomHub {
         setTimeout(() => {
           void (async () => {
             if (room.isConnected() && room.liveRoomId === endedRoom) return; // ต่อกลับเข้าห้องเดิมได้ = ยังไลฟ์อยู่
+            if (recentlyLive(room.username, endedRoom)) return; // ขึ้นไลฟ์ใหม่ไปแล้ว (ลงแล้วขึ้นใหม่) = ไลฟ์ต่อเนื่อง ห้ามล้าง
             if ((await room.checkLive().catch(() => null)) !== false) return; // ยังไลฟ์ / เช็กไม่ได้ → ไม่ล้าง (ไว้ล้างตอนเริ่มไลฟ์ใหม่แทน)
             await autoClearOnNewLive(room.username, true);
           })().catch((err) => console.error('[autoClear] end failed', err));
-        }, 120_000).unref();
+        }, RELIVE_GAP_MS).unref(); // จบไลฟ์แล้วรอ 1 ชม. ไม่กลับมาไลฟ์ค่อยล้าง (เดิม 2 นาที → ลงแล้วขึ้นใหม่ของหาย)
       }
     });
     return entry;
@@ -332,7 +333,7 @@ export class RoomHub {
         if (entry.room.liveRoomId) {
           const rid = entry.room.liveRoomId, isNew = !listLives().some((x) => x.roomId === rid); // ห้องที่ไม่เคยเห็น = ไลฟ์ใหม่ (รีสตาร์ท/deploy ต่อห้องเดิม = ไม่ใช่)
           trackLive(entry.room.liveRoomId, entry.room.username, {}); // นับไลฟ์ (หน้าแอดมิน)
-          if (isNew) void autoClearOnNewLive(entry.room.username).catch((err) => console.error('[autoClear] failed', err)); // ล้าง Auto
+          if (isNew && !recentlyLive(entry.room.username, rid)) void autoClearOnNewLive(entry.room.username).catch((err) => console.error('[autoClear] failed', err)); // ล้าง Auto — เฉพาะไลฟ์ใหม่หลังพักเกิน 1 ชม. (ลงแล้วขึ้นใหม่ไม่นาน = ไลฟ์ต่อเนื่อง ของต้องอยู่ครบ)
           entry.restoredFor = entry.room.liveRoomId;
           try { await loadSession(entry.room); } catch (err) { console.error('[sessions] load failed', err); }
         }

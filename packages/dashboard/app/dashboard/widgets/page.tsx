@@ -51,12 +51,13 @@ const WIDGET_GROUPS: [string, string[]][] = [
   ['🏆 เป้าหมายและลีก', ['league', 'goal', 'timer']],
   ['🔔 แจ้งเตือนและแชท', ['alerts', 'chat', 'follower']],
   ['✨ เอฟเฟกต์', ['fx', 'fxmenu', 'sign']],
-  ['🎮 เกมกับผู้ชม', ['tugwar', 'giftjump']],
+  ['🎮 เกมกับผู้ชม', ['tugwar', 'giftjump', 'giftsling']],
 ];
 
 /** คำอธิบายสั้นในแกลเลอรี */
 const WIDGET_BLURB: Record<string, string> = {
   donate: 'แจ้งเตือนโดเนทผ่านพร้อมเพย์ — ตั้งค่าที่เมนู “โดเนทขึ้นจอ”',
+  giftsling: 'ของขวัญกลายเป็นก้อนหิน ยิงจากหนังสติ๊กถล่มปราสาทมอนสเตอร์ ยิ่งแพงยิ่งก้อนใหญ่ ทำลายแรง ล้มหมดผ่านด่าน',
   giftjump: 'ฮีโร่วิ่งบนพื้นล่างจอ ส่งของขวัญ = กล่องหัวใจลอยมา กระโดดเอาหัวชน ของขวัญเด้งออกมาพร้อมเหรียญและชื่อคนส่ง',
   tugwar: 'ผู้ชมแบ่ง 2 ทีม ส่งของขวัญประจำทีมดึงเชือก ทีมที่ดึงถึงเส้นชัยหรือนำตอนหมดเวลาชนะ มี MVP',
   pile: 'ไม่มีโหล ของขวัญตกลงมากองทับกันเป็นภูเขาที่ขอบล่างจอ ของแพงอยู่บนสุด',
@@ -131,6 +132,7 @@ function posterOf(type: string, config?: Record<string, unknown>): string | null
   if (type === 'pile') return `${API_BASE}/overlay/thumbs/pile.webp`;
   if (type === 'tugwar') return `${API_BASE}/overlay/thumbs/tugwar.webp`;
   if (type === 'giftjump') return `${API_BASE}/overlay/thumbs/giftjump.webp`;
+  if (type === 'giftsling') return `${API_BASE}/overlay/thumbs/giftsling.webp`;
   return null;
 }
 const ICON: Record<string, string> = { league: '🏆', goal: '🎯', timer: '⏱️', alerts: '🔔', chat: '💬', follower: '➕', topgifters: '🥇', toplikers: '💗', pkmvp: '👑', tts: '🔊', fx: '✨', fxmenu: '📜', sign: '💡', donate: '💸', mascot: '🧸' };

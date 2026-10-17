@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gift Slingshot Overlay</title>
+  <link rel="icon" href="favicon.svg" />
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;700&family=Mali:wght@700&display=swap" rel="stylesheet" />
+  <style>
+    html,body{margin:0;height:100%;background:transparent;overflow:hidden;font-family:'Kanit',sans-serif}
+    #cv{position:fixed;inset:0}
+    #hud{position:fixed;top:12px;left:50%;transform:translateX(-50%);display:flex;gap:8px;pointer-events:none}
+    .pill{display:flex;align-items:center;gap:6px;padding:5px 14px;border-radius:999px;background:#fff;color:#8a5bd6;font-weight:700;font-size:20px;border:3px solid #b9e58c;box-shadow:0 4px 0 #8cc75a,0 8px 16px rgba(60,100,40,.2)}
+    #win{position:fixed;left:50%;top:22%;transform:translate(-50%,-50%) scale(.6);opacity:0;transition:all .45s cubic-bezier(.3,1.6,.5,1);font:700 56px/1.1 'Mali','Kanit',sans-serif;color:#fff;
+      text-shadow:0 4px 0 #b0508e,0 0 18px rgba(255,140,200,.8);pointer-events:none;text-align:center}
+    #win.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+    #win small{display:block;font-size:24px;margin-top:6px}
+  </style>
+</head>
+<body>
+  <canvas id="cv"></canvas>
+  <div id="hud"><div class="pill">👾 <span id="kills">0</span></div><div class="pill" id="lvl">ด่าน 1</div></div>
+  <div id="win"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.20.0/matter.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/overlay-client.js"></script>
+  <script src="js/juice.js"></script>
+  <script>
+  /*
+   * 🪨 เกมหนังสติ๊กของขวัญ (ตัวละคร/ฉากของเราเอง) — ภาพวาด GPT: sling/*.webp · ฟิสิกส์ Matter.js (MIT)
+   * ได้ของขวัญ = ของขวัญกลายเป็นก้อนหิน ถูกยิงจากหนังสติ๊กใส่ปราสาท · ยิ่งแพง ยิ่งก้อนใหญ่/หนัก ทำลายแรง · ≥1000 เหรียญ ระเบิดตอนชน
+   * ล้มมอนสเตอร์หมด = ผ่านด่าน (ด่านใหม่สูงขึ้น) · ชื่อคนยิงขึ้นเหนือก้อน · นับมอนสเตอร์ที่ล้ม (จำในเครื่อง)
+   * พารามิเตอร์: scale=1 height=55 (% ของจอ ส่วนเกม) names=1 minCoins=0
+   */
+  (function () {
+    const P = (k, d) => Overlay.param(k, d), num = (k, d) => { const v = Number(P(k, d)); return Number.isFinite(v) ? v : d; };
+    const SCALE = Math.max(0.4, Math.min(2, num('scale', 1))), HPCT = Math.max(25, Math.min(90, num('height', 55))) / 100;
+    const NAMES = P('names', '1') !== '0', MIN = Math.max(0, num('minCoins', 0));
+    const M = window.Matter, cv = document.getElementById('cv'), g = cv.getContext('2d'), DPR = Math.min(2, devicePixelRatio || 1);
+    let W = 0, H = 0;
+    const IMG = {}; ['slingshot', 'rock', 'monster', 'puff', 'wood-h', 'wood-v', 'ice', 'candy'].forEach((n) => { const im = new Image(); im.src = 'sling/' + n + '.webp' + (window.VJL_VERSION ? '?v=' + window.VJL_VERSION : ''); IMG[n] = im; });
+    const ok = (n) => IMG[n] && IMG[n].complete && IMG[n].naturalWidth;
+    const gifts = {}; const giftImg = (u) => { if (!u || !/^https:\/\//.test(u)) return null; if (!gifts[u]) { const im = new Image(); im.src = u; gifts[u] = im; } return gifts[u]; };
+    const KEY = 'vjl-sling:' + (P('t', '') || P('username', 'demo')).slice(-24);
+    let kills = 0, level = 1; try { const v = JSON.parse(localStorage.getItem(KEY) || '{}'); kills = v.kills || 0; level = v.level || 1; } catch { /* ignore */ }
+    const save = () => { try { localStorage.setItem(KEY, JSON.stringify({ kills, level })); } catch { /* ignore */ } };
+    const $k = document.getElementById('kills'), $l = document.getElementById('lvl'), $win = document.getElementById('win');
+    const hud = () => { $k.textContent = kills.toLocaleString('en-US'); $l.textContent = 'ด่าน ' + level; };
+    hud();
+
+    const engine = M.Engine.create(); engine.gravity.y = 1.1; engine.positionIterations = 8; engine.velocityIterations = 6;
+    const world = engine.world, fx = new Juice.Particles(400);
+    let U = 1, GY = 0, things = [], shots = [], labels = [], puffs = [], ground = null, wall = null, queue = [], nextShot = 0, winAt = 0;
+    const KIND = { 'wood-h': { d: 0.0012, hp: 9 }, 'wood-v': { d: 0.0012, hp: 9 }, ice: { d: 0.0009, hp: 5 }, candy: { d: 0.0022, hp: 16 } };
+
+    function layout() {
+      W = innerWidth; H = innerHeight; cv.width = W * DPR; cv.height = H * DPR; cv.style.width = W + 'px'; cv.style.height = H + 'px';
+      U = (H * HPCT * SCALE) / 100; GY = H - U * 6;
+      if (ground) M.Composite.remove(world, [ground, wall]);
+      ground = M.Bodies.rectangle(W / 2, GY + 200, W * 3, 400, { isStatic: true, friction: 0.9 });
+      wall = M.Bodies.rectangle(W + 60, H / 2, 120, H * 3, { isStatic: true });
+      M.Composite.add(world, [ground, wall]);
+      build();
+    }
+    function add(kind, x, y, w, h) { const b = M.Bodies.rectangle(x, y, w, h, { density: KIND[kind].d, friction: 0.8, restitution: 0.05, chamfer: { radius: Math.min(w, h) * 0.12 } }); b.kind = kind; b.w = w; b.h = h; b.hp = KIND[kind].hp; things.push(b); M.Composite.add(world, b); return b; }
+    function monster(x, y, r) { const b = M.Bodies.circle(x, y, r, { density: 0.001, friction: 0.6, restitution: 0.2 }); b.kind = 'monster'; b.r = r; b.hp = 3; things.push(b); M.Composite.add(world, b); return b; }
+    function build() { // ปราสาทฝั่งขวา: ชั้นละ [เสา เสา คาน] + มอนสเตอร์บนแต่ละชั้น · ด่านสูงขึ้นทุกด่าน (สูงสุด 4 ชั้น 3 ช่อง)
+      for (const b of things) M.Composite.remove(world, b); things = [];
+      const cols = Math.min(3, 1 + Math.floor((level + 1) / 2)), floors = Math.min(4, 1 + Math.floor(level / 2) + 1);
+      const pw = U * 3.8, ph = U * 16, bw = U * 22, bh = U * 3.8, x0 = Math.min(W * 0.8, W - bw * cols * 0.55 - U * 6) - (cols - 1) * bw * 0.5;
+      const mats = ['wood', 'ice', 'candy'];
+      for (let c = 0; c < cols; c++) {
+        let y = GY; const cx = x0 + c * bw * 0.98 - (cols > 1 ? bw * 0.0 : 0);
+        for (let f = 0; f < floors - (c === 1 ? 0 : (c + f) % 2 ? 1 : 0); f++) {
+          const m = mats[(c + f + level) % 3];
+          const vk = m === 'wood' ? 'wood-v' : m, hk = m === 'wood' ? 'wood-h' : m;
+          add(vk, cx - bw * 0.36, y - ph / 2, pw, ph); add(vk, cx + bw * 0.36, y - ph / 2, pw, ph);
+          monster(cx, y - U * 6, U * 5);
+          y -= ph; add(hk, cx, y - bh / 2, bw, bh); y -= bh;
+        }
+        monster(cx, y - U * 6, U * 5.2);
+      }
+    }
+    addEventListener('resize', layout); layout();
+
+    const sizeOf = (d) => 1 + Math.min(1.6, Math.log10(Math.max(1, d)) * 0.42); // ราคา → ขนาดก้อน (1–2.6 เท่า)
+    function onGift(e) {
+      if (!e || e.type !== 'gift' || e.streaking) return;
+      const n = Math.max(1, e.repeatCount || 1), d = (e.diamondCount || 1) * n; if (d < MIN) return;
+      if (queue.length > 20) queue.shift();
+      queue.push({ img: e.giftImage || '', name: e.giftName || '', d, n, user: (e.user && (e.user.nickname || e.user.uniqueId)) || 'ผู้ชม' });
+    }
+    Overlay.on('event', onGift);
+
+    const slingX = () => W * 0.12, slingY = () => GY - U * 19;
+    function fire(q) { // ยิงโค้งแบบขีปนวิถีไปหาเป้าหมายที่ยังเหลือ (สุ่มนิด ๆ ให้ไม่ซ้ำ)
+      const s = sizeOf(q.d), r = U * 3.6 * s, sx = slingX(), sy = slingY();
+      const alive = things.filter((b) => b.kind === 'monster'); const tgt = alive.length ? alive[Math.floor(Math.random() * alive.length)] : { position: { x: W * 0.85, y: GY - U * 15 } };
+      const dx = tgt.position.x - sx, dy = tgt.position.y - sy, T = 52 + Math.random() * 14; // เวลาบิน (เฟรม)
+      const gpf = engine.gravity.y * 0.001 * (1000 / 60) * (1000 / 60);
+      const vx = dx / T, vy = (dy - 0.5 * gpf * T * T) / T;
+      const b = M.Bodies.circle(sx, sy, r, { density: 0.004 * (0.6 + s * 0.6), restitution: 0.25, friction: 0.5, frictionAir: 0 });
+      b.kind = 'shot'; b.r = r; b.q = q; b.img = giftImg(q.img); b.born = performance.now(); b.boom = q.d >= 1000;
+      M.Body.setVelocity(b, { x: vx * (0.97 + Math.random() * 0.06), y: vy });
+      M.Body.setAngularVelocity(b, 0.2);
+      M.Composite.add(world, b); shots.push(b);
+      if (NAMES) labels.push({ b, s: `${q.user} ${q.name ? q.name + ' ' : ''}×${q.n}`, t: 0 });
+      slingKick = 1; fx.sparkle(sx, sy, 8);
+    }
+    let slingKick = 0;
+
+    function defeat(b) { // มอนสเตอร์ล้ม → พัฟควัน + ประกาย
+      if (b.dead) return; b.dead = true; kills++; save(); hud();
+      puffs.push({ x: b.position.x, y: b.position.y, s: b.r * 3, t: 0 }); fx.sparkle(b.position.x, b.position.y, 12, '#ffe08a');
+      M.Composite.remove(world, b); things = things.filter((x) => x !== b);
+    }
+    function breakBlock(b) { if (b.dead) return; b.dead = true; puffs.push({ x: b.position.x, y: b.position.y, s: Math.max(b.w, b.h) * 0.9, t: 0 }); fx.dust(b.position.x, b.position.y, 8); M.Composite.remove(world, b); things = things.filter((x) => x !== b); }
+    M.Events.on(engine, 'collisionStart', (ev) => {
+      for (const p of ev.pairs) {
+        const a = p.bodyA, c = p.bodyB, rv = Math.hypot(a.velocity.x - c.velocity.x, a.velocity.y - c.velocity.y);
+        for (const [x, o] of [[a, c], [c, a]]) {
+          const m = o.isStatic ? 1 : Math.min(3, (o.mass || 1) / Math.max(0.5, x.mass || 1)), dmg = rv * (o.kind === 'shot' ? 1.4 : 0.6) * m;
+          if (x.kind === 'monster' && dmg > 2.2) { x.hp -= dmg; if (x.hp <= 0) defeat(x); }
+          if (KIND[x.kind] && dmg > 3) { x.hp -= dmg * 0.5; if (x.hp <= 0) breakBlock(x); }
+          if (x.kind === 'shot' && x.boom && !x.boomed && o !== ground && rv > 2) { x.boomed = true; explode(x); }
+        }
+      }
+    });
+    function explode(b) { // ของแพง: ระเบิดแรงผลักรอบตัว
+      const R = b.r * 5; puffs.push({ x: b.position.x, y: b.position.y, s: R * 1.4, t: 0 }); fx.confetti(b.position.x, b.position.y, 50);
+      for (const x of things) { const dx = x.position.x - b.position.x, dy = x.position.y - b.position.y, d = Math.hypot(dx, dy); if (d < R) { const k = (1 - d / R) * 0.06 * x.mass; M.Body.applyForce(x, x.position, { x: (dx / (d || 1)) * k, y: (dy / (d || 1)) * k - k * 0.5 }); if (x.kind === 'monster') { x.hp -= 6; if (x.hp <= 0) defeat(x); } } }
+    }
+
+    function tick(now) {
+      if (queue.length && now > nextShot && !winAt) { fire(queue.shift()); nextShot = now + Math.max(500, 1500 - queue.length * 80); }
+      M.Engine.update(engine, 1000 / 60);
+      for (const b of [...things]) if (b.kind === 'monster' && (b.position.y > GY + U * 2 || b.position.x > W + 40 || Math.abs(b.angle) > 2.6 && b.speed < 0.3 && b.position.y > GY - b.r * 1.4)) defeat(b); // ตก/กลิ้งลงพื้นแรง ๆ = ล้ม
+      for (let i = shots.length - 1; i >= 0; i--) { const b = shots[i]; if (now - b.born > 7000 || b.position.x > W + 200 || b.position.x < -200) { M.Composite.remove(world, b); shots.splice(i, 1); } }
+      for (let i = labels.length - 1; i >= 0; i--) { labels[i].t += 1 / 60; if (labels[i].t > 3 || !shots.includes(labels[i].b)) labels.splice(i, 1); }
+      for (let i = puffs.length - 1; i >= 0; i--) { puffs[i].t += 1 / 60; if (puffs[i].t > 0.7) puffs.splice(i, 1); }
+      slingKick = Math.max(0, slingKick - 0.06); fx.step();
+      if (!winAt && !things.some((b) => b.kind === 'monster')) { winAt = now; $win.innerHTML = `🎉 ผ่านด่าน ${level}!<small>ขอบคุณทุกคนที่ช่วยกันยิง</small>`; $win.classList.add('show'); fx.confetti(W / 2, H * 0.3, 80); }
+      if (winAt && now - winAt > 3500) { winAt = 0; level++; save(); hud(); $win.classList.remove('show'); for (const b of shots) M.Composite.remove(world, b); shots = []; build(); }
+    }
+
+    function sprite(n, x, y, w, h, a) { g.save(); g.translate(x, y); g.rotate(a || 0); if (ok(n)) g.drawImage(IMG[n], -w / 2, -h / 2, w, h); else { g.fillStyle = '#d9b48a'; g.fillRect(-w / 2, -h / 2, w, h); } g.restore(); }
+    function draw() {
+      g.setTransform(DPR, 0, 0, DPR, 0, 0); g.clearRect(0, 0, W, H);
+      // พื้นหญ้า
+      const gr = g.createLinearGradient(0, GY, 0, H); gr.addColorStop(0, '#9be07a'); gr.addColorStop(0.25, '#7cc95e'); gr.addColorStop(1, '#a87b52');
+      g.fillStyle = gr; g.beginPath(); g.roundRect ? g.roundRect(0, GY, W, H - GY + 20, [18, 18, 0, 0]) : g.rect(0, GY, W, H - GY); g.fill();
+      // หนังสติ๊ก
+      const sh = U * 26, sw = ok('slingshot') ? sh * IMG.slingshot.naturalWidth / IMG.slingshot.naturalHeight : sh * 0.6;
+      sprite('slingshot', slingX(), GY - sh / 2 + U * 0.6, sw * (1 + slingKick * 0.05), sh * (1 - slingKick * 0.06), -slingKick * 0.08);
+      if (queue.length && !winAt) { const q = queue[0], im = giftImg(q.img), r = U * 3; if (im && im.complete && im.naturalWidth) g.drawImage(im, slingX() - r, slingY() - r, r * 2, r * 2); } // ก้อนถัดไปรอบนหนังสติ๊ก
+      // บล็อก + มอนสเตอร์
+      for (const b of things) {
+        if (b.kind === 'monster') { const s = b.r * 2.3; sprite('monster', b.position.x, b.position.y, s, s * (ok('monster') ? IMG.monster.naturalHeight / IMG.monster.naturalWidth : 1), b.angle); }
+        else sprite(b.kind, b.position.x, b.position.y, b.w, b.h, b.angle);
+      }
+      // ก้อนที่ยิง: หินกลม + รูปของขวัญติดหน้า
+      for (const b of shots) {
+        const s = b.r * 2.25; sprite('rock', b.position.x, b.position.y, s, s, b.angle);
+        if (b.img && b.img.complete && b.img.naturalWidth) { const st = Juice.sticker ? Juice.sticker(b.img, b.r * 1.5 * DPR) : null; g.save(); g.translate(b.position.x, b.position.y); g.rotate(b.angle * 0.3); const q = b.r * 1.5 * (st ? Juice.STICKER_PAD : 1); g.drawImage(st || b.img, -q / 2, -q / 2 - b.r * 0.15, q, q); g.restore(); }
+        if (b.boom && !b.boomed) { g.globalAlpha = 0.35 + 0.25 * Math.sin(performance.now() / 80); g.fillStyle = '#ffd36b'; g.beginPath(); g.arc(b.position.x, b.position.y, b.r * 1.25, 0, 6.3); g.fill(); g.globalAlpha = 1; }
+      }
+      for (const p of puffs) { const k = p.t / 0.7; g.globalAlpha = 1 - k; sprite('puff', p.x, p.y, p.s * (0.6 + k * 0.7), p.s * (0.6 + k * 0.7), 0); g.globalAlpha = 1; }
+      for (const l of labels) {
+        const b = l.b; g.globalAlpha = Math.min(1, (3 - l.t) / 0.5); g.font = `700 ${Math.round(U * 3.6)}px Kanit, sans-serif`; g.textAlign = 'center'; g.lineJoin = 'round';
+        g.lineWidth = U * 0.6; g.strokeStyle = '#4f7f2e'; g.strokeText(l.s, b.position.x, b.position.y - b.r - U * 1.2); g.fillStyle = '#fff'; g.fillText(l.s, b.position.x, b.position.y - b.r - U * 1.2); g.globalAlpha = 1;
+      }
+      fx.draw(g);
+    }
+    (function loop(now) { tick(now); draw(); requestAnimationFrame(loop); })(performance.now());
+
+    if (!Overlay.connected) { // เดโม
+      const demo = [['Rose', 1], ['Finger Heart', 5], ['Perfume', 20], ['Doughnut', 30], ['Galaxy', 1000]], names = ['mimi', 'บิ๊ก', 'ต้นน้ำ', 'lisa'];
+      const cat = {}; fetch('/api/gifts').then((r) => r.json()).then(({ gifts: gs }) => { for (const x of gs || []) if (x.image) cat[x.name] = x.image; }).catch(() => {});
+      setInterval(() => { const [n, d] = demo[Math.floor(Math.random() * demo.length)], u2 = names[Math.floor(Math.random() * names.length)];
+        onGift({ type: 'gift', giftName: n, giftImage: cat[n] || '', diamondCount: d, repeatCount: 1, user: { uniqueId: u2, nickname: u2 } }); }, 1800);
+    }
+  })();
+  </script>
+</body>
+</html>

@@ -39,7 +39,7 @@ async function main(): Promise<void> {
   } catch (err) { console.warn('[migrate] pkmain failed', (err as Error).message); }
 
   // วิดเจ็ตใหม่ (เกม): แพลนที่แอดมินเคยบันทึกรายการวิดเจ็ตไว้ → เพิ่มให้ตามค่าเริ่มต้นของแพลนนั้น · ทำครั้งเดียวต่อวิดเจ็ต (ถอดออกเองภายหลังได้)
-  for (const w of ['tugwar', 'giftjump'] as const) {
+  for (const w of ['tugwar', 'giftjump', 'giftsling'] as const) {
     try {
       const mark = path.join(process.env.SNAPSHOT_DIR ? path.dirname(process.env.SNAPSHOT_DIR) : path.resolve(process.cwd(), '../../data'), `migrate-${w}.done`);
       if (fs.existsSync(mark)) continue;

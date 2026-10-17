@@ -615,6 +615,19 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
       ] },
     ],
   },
+  giftsling: {
+    resettable: 'เริ่มด่าน 1 ใหม่ (ล้างคะแนน)',
+    sections: [
+      { title: 'เกม', fields: [
+        { key: 'names', label: 'แสดงชื่อคนยิงเหนือก้อนหิน', type: 'toggle', def: true },
+        { key: 'minCoins', label: 'ยิงเฉพาะของขวัญตั้งแต่ (เหรียญ)', type: 'number', min: 0, def: 0 },
+      ] },
+      { title: 'ขนาด', fields: [
+        size(),
+        { key: 'height', label: 'ความสูงส่วนเกม', type: 'range', min: 25, max: 90, step: 1, def: 55, unit: '% ของจอ' },
+      ] },
+    ],
+  },
   giftjump: {
     resettable: 'ล้างเหรียญและอันดับ',
     sections: [

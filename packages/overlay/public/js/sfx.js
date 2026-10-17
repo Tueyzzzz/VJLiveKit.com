@@ -80,9 +80,13 @@
     alarm: ['🚨 ไซเรน', (c, o) => { for (let i = 0; i < 3; i++) tone(c, o, { f: 700, f2: 1300, t: i * 0.4, d: 0.38, type: 'sawtooth', v: 0.08 }); }],
   };
 
+  /** ความยาวโดยประมาณ (ms) — ใช้ต่อคิวให้เสียงถัดไปเริ่มหลังเสียงนี้จบ ไม่ซ้อนกัน */
+  const DUR = { chime: 900, coin: 500, levelup: 600, fanfare: 1800, magic: 1000, pop: 200, whoosh: 650, drum: 800, boing: 500, heart: 1000, applause: 1700, punch: 1000, boom: 1700, airhorn: 1300, sadtrombone: 2400, crickets: 2600, scratch: 500, bonk: 300, correct: 700, wrong: 600, drumroll: 2200, suspense: 2200, tada: 1200, pew: 300, kaching: 800, slideup: 700, slidedown: 900, alarm: 1300 };
+
   window.VJLSfx = {
     list: Object.entries(SOUNDS).map(([id, [name]]) => [id, name]),
     has: (id) => !!SOUNDS[id],
+    dur: (id) => DUR[id] || 800,
     play(id, vol = 1) {
       const s = SOUNDS[id]; if (!s) return false;
       try {

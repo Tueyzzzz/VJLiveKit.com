@@ -45,31 +45,71 @@ function loadSfx(): Promise<void> {
   }));
 }
 
+let current: HTMLAudioElement | null = null;
+let cancelWait: (() => void) | null = null;
+
 /** เล่นเสียงหนึ่งครั้ง → resolve เมื่อเล่นจบ (ไว้ต่อคิว) */
 export async function playSound(a: { sound?: string; url?: string; volume?: number }): Promise<void> {
   const vol = Math.max(0, Math.min(1.5, a.volume ?? 1));
   if (a.sound) {
     try { await loadSfx(); } catch { return; }
-    (window as unknown as { VJLSfx?: { play: (id: string, v?: number) => boolean } }).VJLSfx?.play(a.sound, vol);
-    await new Promise((r) => setTimeout(r, SFX_MS[a.sound!] ?? 800));
+    const sfx = (window as unknown as { VJLSfx?: { play: (id: string, v?: number) => boolean; dur?: (id: string) => number } }).VJLSfx;
+    sfx?.play(a.sound, vol);
+    await new Promise<void>((r) => { const t = setTimeout(r, (sfx?.dur?.(a.sound!) ?? SFX_MS[a.sound!] ?? 800) + 120); cancelWait = () => { clearTimeout(t); r(); }; });
+    cancelWait = null;
     return;
   }
   if (!a.url) return;
   await new Promise<void>((done) => {
     const au = new Audio(a.url); au.volume = Math.min(1, vol);
-    const end = () => done(); au.onended = end; au.onerror = end;
+    let fin = false;
+    const end = () => { if (fin) return; fin = true; clearTimeout(cap); if (current === au) current = null; cancelWait = null; done(); };
+    const cap = setTimeout(() => { au.pause(); end(); }, 60_000); // ไฟล์ยาวเกิน 1 นาที → ตัด ไม่ให้คิวค้าง
+    au.onended = end; au.onerror = end;
+    current = au; cancelWait = () => { au.pause(); end(); };
     au.play().catch(end);
-    setTimeout(end, 60_000); // กันไฟล์ยาวค้างคิว
   });
 }
 
-/** ตั้งค่าการเล่นเสียง (เก็บในเบราว์เซอร์เครื่องที่เปิดเว็บ เพราะเสียงดังที่เครื่องนี้) */
+/**
+ * ตั้งค่าการเล่นเสียง — เก็บในบัญชี (ตั้งค่าวิดเจ็ต fx) ใช้ทั้งเว็บนี้และลิงก์ FX ในโปรแกรมไลฟ์
+ * simultaneous=true เล่นซ้อนกันได้ · false (ค่าเริ่มต้น) = เข้าคิวเล่นทีละเสียงต่อกัน
+ * มีสำเนาใน localStorage ไว้อ่านแบบทันที (enqueueSound ต้องรู้ค่าโดยไม่รอเน็ต)
+ */
 export interface SoundPrefs { simultaneous: boolean; maxQueue: number }
 const PREF_KEY = 'vjl-sound-prefs';
+const DEFAULT_PREFS: SoundPrefs = { simultaneous: false, maxQueue: 20 };
 export function getSoundPrefs(): SoundPrefs {
-  try { return { simultaneous: false, maxQueue: 20, ...(JSON.parse(localStorage.getItem(PREF_KEY) || '{}') as Partial<SoundPrefs>) }; } catch { return { simultaneous: false, maxQueue: 20 }; }
+  try { return { ...DEFAULT_PREFS, ...(JSON.parse(localStorage.getItem(PREF_KEY) || '{}') as Partial<SoundPrefs>) }; } catch { return { ...DEFAULT_PREFS }; }
 }
 export function setSoundPrefs(p: SoundPrefs): void { try { localStorage.setItem(PREF_KEY, JSON.stringify(p)); } catch { /* ignore */ } }
+/** แปลงจากตั้งค่า fx ในบัญชี (soundOverlap / soundQueue) */
+export function prefsFromFx(c: Record<string, unknown> | undefined): SoundPrefs {
+  const q = Number(c?.soundQueue);
+  return { simultaneous: String(c?.soundOverlap ?? '0') === '1', maxQueue: q >= 1 ? Math.min(500, Math.floor(q)) : DEFAULT_PREFS.maxQueue };
+}
+/** โหลดตั้งค่าจากบัญชีมาเก็บในเครื่องนี้ (เรียกตอนเปิดเว็บ) */
+export async function syncSoundPrefs(get: () => Promise<{ config?: Record<string, unknown> }>): Promise<SoundPrefs> {
+  try { const p = prefsFromFx((await get()).config); setSoundPrefs(p); return p; } catch { return getSoundPrefs(); }
+}
+
+/**
+ * แท็บไหนเป็นตัวเล่นเสียง — เปิดเว็บหลายแท็บพร้อมกันจะได้ไม่ดังซ้ำหลายรอบ (เสียงดังเกิน/ตีกัน)
+ * แต่ละแท็บเรียก claimSoundLead() ทุก ๆ 3 วิ แท็บแรกได้สิทธิ์ ปิดแท็บนั้น → ~8 วิแท็บอื่นรับต่อ
+ */
+const LEAD_KEY = 'vjl-sound-lead';
+const tabId = () => (typeof window === 'undefined' ? '' : ((window as unknown as { __vjlTab?: string }).__vjlTab ??= Math.random().toString(36).slice(2, 10)));
+export function claimSoundLead(): boolean {
+  const me = tabId(), now = Date.now();
+  try {
+    const lead = JSON.parse(localStorage.getItem(LEAD_KEY) ?? '{}') as { tab?: string; ts?: number };
+    if (!lead.tab || lead.tab === me || now - (lead.ts ?? 0) > 8000) { localStorage.setItem(LEAD_KEY, JSON.stringify({ tab: me, ts: now })); return true; }
+    return false;
+  } catch { return true; } // storage ปิด → เล่นเองตามปกติ
+}
+export function releaseSoundLead(): void {
+  try { const lead = JSON.parse(localStorage.getItem(LEAD_KEY) ?? '{}') as { tab?: string }; if (lead.tab === tabId()) localStorage.removeItem(LEAD_KEY); } catch { /* ignore */ }
+}
 
 /** คิวเสียง: เล่นซ้อนกันได้ หรือเล่นทีละเสียงตามลำดับ (ไม่เกินความยาวคิวที่ตั้ง) */
 const queue: (() => Promise<void>)[] = [];
@@ -77,9 +117,17 @@ let running = false;
 export function enqueueSound(a: { sound?: string; url?: string; volume?: number }): void {
   const p = getSoundPrefs();
   if (p.simultaneous) { void playSound(a); return; }
-  if (queue.length >= p.maxQueue) return;
+  if (queue.length >= p.maxQueue) return; // คิวเต็ม → ข้าม (กันเสียงค้างยาวหลายนาที)
   queue.push(() => playSound(a));
   if (running) return;
   running = true;
-  void (async () => { while (queue.length) await queue.shift()!(); running = false; })();
+  void (async () => { while (queue.length) { try { await queue.shift()!(); } catch { /* ข้ามเสียงที่เสีย */ } } running = false; })();
+}
+/** จำนวนเสียงที่รอคิวอยู่ */
+export const queuedSounds = () => queue.length;
+/** หยุดเสียงที่กำลังเล่น + ล้างคิว (ในเครื่องนี้) */
+export function stopAllSounds(): void {
+  queue.length = 0;
+  current?.pause();
+  cancelWait?.();
 }

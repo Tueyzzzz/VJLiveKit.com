@@ -1,14 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Play, Plus, Search, Trash2, Upload as UploadIcon, X } from 'lucide-react';
 import { Alert, Button, Card, Input, PageHeader, Select, Spinner } from '@/components/ui';
 import { GiftCell, GiftPicker } from '@/components/GiftPicker';
 import { api, ApiError, type Rule, type TriggerEvent } from '@/lib/api';
 import { SoundUpload } from '@/components/SoundUpload';
 import { translate, useT } from '@/lib/i18n';
-import { SFX, enqueueSound, getSoundPrefs, playSound, readAsDataUrl, toAudioDataUrl, setSoundPrefs, type SoundPrefs, type Upload } from '@/lib/sounds';
+import { SFX, enqueueSound, getSoundPrefs, playSound, prefsFromFx, readAsDataUrl, stopAllSounds, toAudioDataUrl, setSoundPrefs, type SoundPrefs, type Upload } from '@/lib/sounds';
 
 const EVENTS: [TriggerEvent, string][] = [['gift', '🎁 ได้รับกิฟต์'], ['follow', '➕ มีคนติดตาม'], ['share', '🔁 มีคนแชร์'], ['like', '❤️ มีคนกดไลก์'], ['chat', '💬 แชทมีคำว่า']];
 const KEYS = ['', ...'1234567890QWERTYUIOPASDFGHJKLZXCVBNM'.split(''), 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10'];
@@ -36,6 +36,8 @@ export default function SoundsPage() {
     void load();
     api<{ sounds: Upload[]; maxBytes: number }>('/api/sounds').then((r) => { setUploads(r.sounds); if (r.maxBytes) setMaxBytes(r.maxBytes); }).catch(() => {});
     setPrefs(getSoundPrefs());
+    // ตั้งค่าคิวเสียงเก็บในบัญชี (ใช้ทั้งเว็บนี้และลิงก์ FX) — โหลดค่าล่าสุดมาแสดง
+    api<{ config: Record<string, unknown> }>('/api/widgets/fx/config').then((r) => { const p = prefsFromFx(r.config); setPrefs(p); setSoundPrefs(p); }).catch(() => {});
   }, [load]);
 
   async function save(r: Rule, patch: { enabled?: boolean; trigger?: Rule['trigger']; action?: Partial<Rule['action']> }) {
@@ -59,7 +61,22 @@ export default function SoundsPage() {
     if (!confirm(t('ลบเสียงแจ้งเตือนนี้?'))) return;
     try { await api(`/api/actions/${r.id}`, { method: 'DELETE' }); await load(); changed(); } catch (e) { setErr({ text: (e as Error).message }); }
   }
-  function setPref(p: SoundPrefs) { setPrefs(p); setSoundPrefs(p); }
+  const [prefSaved, setPrefSaved] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const prefTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  function setPref(p: SoundPrefs) {
+    setPrefs(p); setSoundPrefs(p); // ใช้ทันทีที่เครื่องนี้
+    // บันทึกลงบัญชี (หน่วงนิดนึง กันยิงทุกตัวอักษร) → ลิงก์ FX ในโปรแกรมไลฟ์ได้ค่าเดียวกัน
+    if (prefTimer.current) clearTimeout(prefTimer.current);
+    setPrefSaved('saving');
+    prefTimer.current = setTimeout(async () => {
+      try {
+        const cur = (await api<{ config: Record<string, unknown> }>('/api/widgets/fx/config')).config ?? {};
+        await api('/api/widgets/fx/config', { method: 'PUT', body: { ...cur, soundOverlap: p.simultaneous ? '1' : '0', soundQueue: p.maxQueue } });
+        window.dispatchEvent(new Event('vjl-sound-prefs'));
+        setPrefSaved('saved');
+      } catch { setPrefSaved('error'); }
+    }, 700);
+  }
 
   const shown = useMemo(() => {
     const qq = q.trim().toLowerCase();
@@ -122,7 +139,8 @@ export default function SoundsPage() {
       </Card>
 
       <Card className="max-w-xl">
-        <h2 className="mb-3 font-medium">{t('ตั้งค่าการเล่นเสียง')} <span className="text-xs font-normal text-muted">{t('(เก็บในเครื่องนี้)')}</span></h2>
+        <h2 className="mb-1 font-medium">{t('ตั้งค่าการเล่นเสียง')} <span className="text-xs font-normal text-muted">{t('(ใช้ทั้งเว็บนี้และลิงก์ FX ในโปรแกรมไลฟ์)')}</span></h2>
+        <p className="mb-2 text-xs text-muted">{t('ค่าเริ่มต้น = เข้าคิว: ส่งของขวัญเป็นคอมโบหรือกดปุ่มรัว ๆ เสียงจะเล่นต่อกันทีละเสียง ไม่ตีกันและไม่ดังเกินที่ตั้งไว้')}</p>
         <label className="flex items-center justify-between gap-3 py-2 text-sm">{t('เล่นเสียงซ้อนกันได้ (ไม่ต้องรอคิว)')}
           <input type="checkbox" className="size-4 accent-pink" checked={prefs.simultaneous} onChange={(e) => setPref({ ...prefs, simultaneous: e.target.checked })} />
         </label>
@@ -130,7 +148,14 @@ export default function SoundsPage() {
           <Input className="w-24 text-right" inputMode="numeric" value={String(prefs.maxQueue)} disabled={prefs.simultaneous}
             onChange={(e) => setPref({ ...prefs, maxQueue: Math.max(1, Math.min(500, Number(e.target.value.replace(/\D/g, '')) || 1)) })} />
         </label>
-        <Button variant="secondary" className="mt-2" onClick={() => { enqueueSound({ sound: 'pop' }); enqueueSound({ sound: 'coin' }); enqueueSound({ sound: 'chime' }); }}><Play className="size-4" /> {t('ลองเล่น 3 เสียงติดกัน')}</Button>
+        <p className="text-xs text-muted">{t('คิวเต็มแล้วเสียงที่มาเพิ่มจะถูกข้าม · อยากให้คอมโบ (เช่น กุหลาบ 20 ดอก) ดังแค่ครั้งเดียว ตั้ง "ส่งคอมโบ เล่นซ้ำสูงสุด" = 1 ที่หน้า Actions')}</p>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <Button variant="secondary" onClick={() => { enqueueSound({ sound: 'pop' }); enqueueSound({ sound: 'coin' }); enqueueSound({ sound: 'chime' }); }}><Play className="size-4" /> {t('ลองเล่น 3 เสียงติดกัน')}</Button>
+          <Button variant="secondary" onClick={() => stopAllSounds()}>⏹ {t('หยุดเสียง + ล้างคิว (เครื่องนี้)')}</Button>
+          {prefSaved === 'saving' && <span className="text-xs text-muted">{t('กำลังบันทึก…')}</span>}
+          {prefSaved === 'saved' && <span className="text-xs text-mint">✓ {t('บันทึกแล้ว')}</span>}
+          {prefSaved === 'error' && <span className="text-xs text-red-600">{t('บันทึกไม่สำเร็จ')}</span>}
+        </div>
       </Card>
 
       {lib && <SoundLibrary uploads={uploads} maxBytes={maxBytes} onUploaded={(u) => setUploads((x) => [u, ...x])}

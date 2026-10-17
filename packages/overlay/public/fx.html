@@ -861,16 +861,42 @@
       if(a.type==='effect') return a.effect&&PFX[a.effect]?particles(a,ev):butterflies(a,ev); // ผีเสื้อ = แบบเดิม · อื่น ๆ = อนุภาค canvas
       const dur=a.durationMs||5000;
       const text=fill(a.text,ev);
-      const vol=Math.max(0,Math.min(1.5,a.volume==null?1:a.volume));
-      if(a.type==='sound' && a.sound && window.VJLSfx){ if(!VJLSfx.play(a.sound,vol) && !audioArmed) armBtn.style.display='block'; }
-      else if(a.type==='sound' && a.url){
-        // OBS อนุญาต autoplay อยู่แล้ว — ถ้าเบราว์เซอร์บล็อกค่อยให้กดปุ่มเปิดเสียง
-        const au=new Audio(a.url); au.volume=Math.min(1,vol); au.play().catch(()=>{ if(!audioArmed) armBtn.style.display='block'; });
-      }
-      else if(a.type==='image' && a.url){ const img=document.createElement('img'); img.src=a.url; img.className='media'; fx.appendChild(img); clearLater(img,dur); }
+      if(a.type==='sound') return queueSound(a,ev); // เสียง → เข้าคิว เล่นทีละเสียงต่อกัน (ข้อความโชว์ตอนเสียงนั้นเริ่ม)
+      if(a.type==='image' && a.url){ const img=document.createElement('img'); img.src=a.url; img.className='media'; fx.appendChild(img); clearLater(img,dur); }
       else if(a.type==='video' && a.url){ const v=document.createElement('video'); v.src=a.url; v.autoplay=true; v.playsInline=true; v.className='media'; fx.appendChild(v);
         v.play().catch(()=>{ v.muted=true; v.play().catch(()=>{}); if(!audioArmed) armBtn.style.display='block'; }); v.onended=()=>v.remove(); clearLater(v,dur); }
       if(text) showText(text,dur);
+    }
+
+    // 🔊 คิวเสียง: ส่งคอมโบ (กุหลาบ 20 ดอก) หรือหลายคนส่งพร้อมกัน → เล่นทีละเสียงต่อกัน ไม่ซ้อน/ไม่ดังทับกันจนเกินระดับที่ตั้ง
+    //   ตั้งค่าที่หน้า "เสียงแจ้งเตือน" (เก็บในบัญชี ใช้ทั้งเว็บและลิงก์ FX): soundOverlap=1 เล่นซ้อนได้ · soundQueue=ความยาวคิวสูงสุด
+    const SND_OVERLAP=Overlay.param('soundOverlap','0')==='1';
+    const SND_MAX=Math.max(1,Math.min(500,parseInt(Overlay.param('soundQueue','20'),10)||20));
+    const sndQ=[]; let sndBusy=false;
+    function playSoundNow(a,ev){
+      return new Promise((done)=>{
+        const vol=Math.max(0,Math.min(1.5,a.volume==null?1:a.volume));
+        const text=fill(a.text,ev); if(text) showText(text,a.durationMs||5000);
+        if(a.sound && window.VJLSfx){
+          if(!VJLSfx.play(a.sound,vol) && !audioArmed) armBtn.style.display='block';
+          setTimeout(done,(VJLSfx.dur?VJLSfx.dur(a.sound):800)+120); return;
+        }
+        if(!a.url){ done(); return; }
+        // OBS อนุญาต autoplay อยู่แล้ว — ถ้าเบราว์เซอร์บล็อกค่อยให้กดปุ่มเปิดเสียง
+        const au=new Audio(a.url); au.volume=Math.min(1,vol);
+        let fin=false; const end=()=>{ if(fin) return; fin=true; clearTimeout(cap); done(); };
+        const cap=setTimeout(()=>{ try{ au.pause(); }catch(e){} end(); },60000); // ไฟล์ยาวเกิน 1 นาที → ตัด ไม่ให้คิวค้าง
+        au.onended=end; au.onerror=end;
+        au.play().catch(()=>{ if(!audioArmed) armBtn.style.display='block'; end(); });
+      });
+    }
+    function queueSound(a,ev){
+      if(SND_OVERLAP){ playSoundNow(a,ev); return; }
+      if(sndQ.length>=SND_MAX) return; // คิวเต็ม → ข้ามเสียงนี้ (กันเสียงค้างยาวหลายนาที)
+      sndQ.push([a,ev]);
+      if(sndBusy) return;
+      sndBusy=true;
+      (async()=>{ while(sndQ.length){ const [x,e]=sndQ.shift(); try{ await playSoundNow(x,e); }catch(err){} } sndBusy=false; })();
     }
 
     // PK: วิดีโอการ์ด (WebP เคลื่อนไหวพื้นใส) เล่นกลางจอ — ใช้กับกฎ PK อัตโนมัติ ไม่ต้องตั้งเพิ่ม
@@ -917,7 +943,8 @@
       if(fire.elsewhere && fire.action.type==='sound'){ const t=fill(fire.action.text,fire.event); if(t) showText(t,fire.action.durationMs||5000); return; }
       // ส่งคอมโบ (เช่น กุหลาบ 10 ดอก) → เล่นซ้ำตามจำนวน ไม่เกินที่วีเจตั้ง (ไพ่ทาโร่ = 1 เสมอ)
       const a=fire.action, n=a.type==='tarot'?1:Math.max(1,Math.min(20,fire.times||1));
-      const gap=a.type==='sound'?700:a.type==='effect'?1400:(a.durationMs||5000)+300;
+      if(a.type==='sound'){ for(let i=0;i<n;i++) queueSound(a,fire.event); return; } // เสียงเข้าคิวทันที เล่นต่อกันเอง
+      const gap=a.type==='effect'?1400:(a.durationMs||5000)+300;
       for(let i=0;i<n;i++) setTimeout(()=>play(a,fire.event), pkDelay+i*gap);
     });
     if(Overlay.param('debug','0')==='1') window.__play=play;

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useAuth } from '@/lib/auth';
-import { enqueueSound } from '@/lib/sounds';
+import { claimSoundLead, enqueueSound, releaseSoundLead, syncSoundPrefs } from '@/lib/sounds';
 import { Volume2, VolumeX } from 'lucide-react';
 import { api, getToken, type Rule } from '@/lib/api';
 import { cx } from './ui';
@@ -69,6 +69,15 @@ export function LiveLink() {
   }, [username]);
 
   useEffect(() => { try { store.on = localStorage.getItem(KEY) !== 'off'; emit(); } catch { /* ignore */ } }, []);
+  // ตั้งค่าคิวเสียง (เก็บในบัญชี) + แย่งสิทธิ์เป็นแท็บที่เล่นเสียง (เปิดหลายแท็บจะได้ไม่ดังซ้ำ)
+  useEffect(() => {
+    if (!username) return;
+    const sync = () => void syncSoundPrefs(() => api<{ config: Record<string, unknown> }>('/api/widgets/fx/config'));
+    sync(); window.addEventListener('vjl-sound-prefs', sync);
+    claimSoundLead(); const beat = setInterval(claimSoundLead, 3000);
+    window.addEventListener('pagehide', releaseSoundLead);
+    return () => { window.removeEventListener('vjl-sound-prefs', sync); clearInterval(beat); window.removeEventListener('pagehide', releaseSoundLead); releaseSoundLead(); };
+  }, [username]);
   // มีกฎเสียงที่เปิดอยู่ไหม (เช็กซ้ำทุกนาที เผื่อเพิ่งสร้างกฎ)
   useEffect(() => {
     if (!username) return;
@@ -103,7 +112,7 @@ export function LiveLink() {
       sock.on('action', (f: Fire) => {
         const who = f.event?.user?.nickname || f.event?.user?.uniqueId || '';
         if (f.tab && f.tab === TAB_ID) return; // ปุ่ม Beat Pad ที่กดจากแท็บนี้เอง — แท็บนี้เล่นเองแล้ว/ไม่ต้องเล่นซ้ำ
-        if (f.action.type === 'sound' && store.on) {
+        if (f.action.type === 'sound' && store.on && claimSoundLead()) { // เปิดหลายแท็บ → ดังที่แท็บเดียว
           const n = Math.max(1, Math.min(20, f.times ?? 1)); // คอมโบ → ดังซ้ำตามจำนวน (ไม่เกินที่ตั้ง) — เข้าคิว/ซ้อนตามตั้งค่าหน้าเสียงแจ้งเตือน
           for (let i = 0; i < n; i++) enqueueSound(f.action);
         }

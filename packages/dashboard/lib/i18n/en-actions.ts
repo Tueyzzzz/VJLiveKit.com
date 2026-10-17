@@ -246,6 +246,11 @@ export const EN_ACTIONS: Record<string, string> = {
   'ไม่มีปุ่มลัด': 'No hotkey',
   'ความดัง': 'Volume',
   'ตั้งค่าการเล่นเสียง': 'Playback settings',
+  '(ใช้ทั้งเว็บนี้และลิงก์ FX ในโปรแกรมไลฟ์)': '(applies to this website and the FX link in your streaming app)',
+  'ค่าเริ่มต้น = เข้าคิว: ส่งของขวัญเป็นคอมโบหรือกดปุ่มรัว ๆ เสียงจะเล่นต่อกันทีละเสียง ไม่ตีกันและไม่ดังเกินที่ตั้งไว้': 'Default = queue: combo gifts or rapid button presses play one after another, never overlapping or louder than your volume setting',
+  'คิวเต็มแล้วเสียงที่มาเพิ่มจะถูกข้าม · อยากให้คอมโบ (เช่น กุหลาบ 20 ดอก) ดังแค่ครั้งเดียว ตั้ง "ส่งคอมโบ เล่นซ้ำสูงสุด" = 1 ที่หน้า Actions': 'When the queue is full, extra sounds are skipped · to play a combo (e.g. 20 roses) only once, set "combo max repeats" = 1 on the Actions page',
+  'หยุดเสียง + ล้างคิว (เครื่องนี้)': 'Stop sounds + clear queue (this device)',
+
   '(เก็บในเครื่องนี้)': '(saved on this device)',
   'เล่นเสียงซ้อนกันได้ (ไม่ต้องรอคิว)': 'Allow overlapping sounds (no queue)',
   'ความยาวคิวสูงสุด (เสียง)': 'Max queue length (sounds)',

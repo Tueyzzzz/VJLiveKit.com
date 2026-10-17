@@ -393,6 +393,27 @@ export class TikTokRoom extends EventEmitter {
 
   // ---------- โหมดเดโม ----------
   private isDemo = false;
+  /**
+   * 🧪 แอดมินทดสอบ: ส่งของขวัญเข้าห้องเหมือนของจริงทุกทาง (วิดเจ็ต · กฎ Actions · อันดับ · กองสะสม)
+   * combo = ส่งแบบกดรัว (streaking ทีละก้าว แล้วจบคอมโบ) ให้เห็นพฤติกรรมเดียวกับไลฟ์จริง
+   */
+  testGift(g: { giftName: string; giftId?: number; giftImage?: string; diamonds: number; count: number; combo?: boolean; user: NormalizedUser }): void {
+    const { giftName, giftId, giftImage, diamonds, count, user } = g;
+    if (g.combo && count > 1) {
+      const steps = Math.min(count - 1, 8);
+      for (let i = 1; i <= steps; i++) {
+        const c = Math.max(1, Math.round((count * i) / (steps + 1)));
+        setTimeout(() => this.send('gift', { user, giftName, giftId, giftImage, repeatCount: c, diamondCount: diamonds, streaking: true }), i * 250);
+      }
+      setTimeout(() => this.testGift({ ...g, combo: false }), (steps + 1) * 250);
+      return;
+    }
+    const value = diamonds * count;
+    this.stats.giftCount += count; this.stats.diamondCount += value;
+    this.addGifter(user, value);
+    this.send('gift', { user, giftName, giftId, giftImage, repeatCount: count, diamondCount: diamonds, totalValue: value, streaking: false });
+  }
+
   private startDemo(): void {
     this.isDemo = true;
     this.connected = true;

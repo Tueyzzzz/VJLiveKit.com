@@ -277,6 +277,28 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
   });
   app.get('/api/admin/audit', { preHandler: requireAdmin }, async () => ({ audit: listAudit().slice(0, 300) }));
 
+  // 🧪 ทดสอบส่งของขวัญ: เข้าห้องของบัญชีแอดมินเองเท่านั้น (ไม่ยุ่งกองของขวัญลูกค้า) — ดูว่าวิดเจ็ต/กฎ Actions บนจอทำงานถูก ไม่บัก
+  app.post('/api/admin/test-gift', { preHandler: requireAdmin }, async (req, reply) => {
+    const me = await prisma.user.findUnique({ where: { id: getUser(req)!.userId }, select: { tiktokUsername: true } });
+    const room = (me?.tiktokUsername ?? '').replace(/^@/, '').trim();
+    if (!room) return reply.code(400).send({ error: 'บัญชีแอดมินยังไม่ได้ใส่ชื่อ TikTok — ใส่ที่หน้าภาพรวมก่อน' });
+    const b = (req.body ?? {}) as { giftName?: string; giftId?: number; image?: string; diamonds?: number; count?: number; combo?: boolean; nickname?: string; burst?: number };
+    const giftName = String(b.giftName ?? '').slice(0, 60); if (!giftName) return reply.code(400).send({ error: 'เลือกของขวัญก่อน' });
+    const diamonds = Math.max(1, Math.min(50_000, Math.round(Number(b.diamonds) || 1)));
+    const count = Math.max(1, Math.min(999, Math.round(Number(b.count) || 1)));
+    const burst = Math.max(1, Math.min(50, Math.round(Number(b.burst) || 1)));
+    const nick = String(b.nickname ?? '').trim().slice(0, 30) || 'ทดสอบ';
+    const hub = getHub(); if (!hub) return reply.code(503).send({ error: 'ระบบไลฟ์ยังไม่พร้อม' });
+    let sockets = 0;
+    for (let i = 0; i < burst; i++) {
+      const name = burst > 1 ? `${nick}${i + 1}` : nick;
+      const user = { userId: 'test-' + name, uniqueId: 'test_' + name, nickname: name, avatar: '' };
+      const g = { giftName, giftId: b.giftId ? Number(b.giftId) : undefined, giftImage: b.image ? String(b.image).slice(0, 500) : undefined, diamonds, count, combo: !!b.combo, user };
+      if (i === 0) sockets = await hub.testGift(room, g); else setTimeout(() => void hub.testGift(room, g), i * 180);
+    }
+    return { ok: true, room, widgets: sockets };
+  });
+
   app.get('/api/admin/live', { preHandler: requireAdmin }, async () => ({ rooms: getHub()?.listRooms() ?? [] }));
   // สุขภาพเซิร์ฟเวอร์ (แท็บ "เซิร์ฟเวอร์")
   app.get('/api/admin/server', { preHandler: requireAdmin }, async () => {

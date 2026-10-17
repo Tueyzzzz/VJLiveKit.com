@@ -187,6 +187,15 @@ export class RoomHub {
     return (await this.io.in(ch).fetchSockets()).length + (event === 'action' ? (await this.io.in(RoomHub.speakerChannel(userId)).fetchSockets()).length : 0);
   }
 
+  /** 🧪 แอดมินทดสอบส่งของขวัญเข้าห้องของชื่อนี้ (ไม่ต้องไลฟ์อยู่ — วิดเจ็ตที่เปิดอยู่ได้รับเหมือนของจริง) · คืนจำนวนวิดเจ็ตที่เปิดห้องนี้อยู่ */
+  async testGift(username: string, g: Parameters<TikTokRoom['testGift']>[0]): Promise<number> {
+    const key = normalize(username);
+    let entry = this.rooms.get(key);
+    if (!entry) { entry = this.create(key); this.rooms.set(key, entry); entry.stopTimer = setTimeout(() => void this.stop(key), this.IDLE_STOP_MS); }
+    entry.room.testGift(g);
+    return (await this.io.in(RoomHub.roomChannel(key)).fetchSockets()).length;
+  }
+
   /** ล้าง Auto: ล้างอันดับผู้ชมในห้อง (หน่วยความจำ) แล้วส่ง state ใหม่ให้วิดเจ็ต */
   clearRanking(username: string): void {
     const entry = this.rooms.get(normalize(username)); if (!entry) return;

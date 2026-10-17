@@ -270,6 +270,40 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
   });
 
   // ---- การชำระเงิน + บันทึกการกระทำ ----
+  // 💰 รายงานการเงิน: รายได้รายเดือน/ตามแพลน · สมาชิกจ่ายเงินที่ยัง active (MRR) · ทดลองที่ใกล้หมด (โอกาสขาย) · รายการล่าสุด
+  app.get('/api/admin/finance', { preHandler: requireAdmin }, async () => {
+    const now = Date.now(), TZ = 7 * 3600_000; // เดือนตามเวลาไทย
+    const monthOf = (d: Date) => new Date(d.getTime() + TZ).toISOString().slice(0, 7);
+    const paid = await prisma.payment.findMany({ where: { status: 'PAID' }, orderBy: { createdAt: 'desc' }, take: 5000,
+      select: { id: true, provider: true, amountCents: true, createdAt: true, rawPayload: true, user: { select: { email: true, tiktokUsername: true } } } });
+    const pending = await prisma.payment.count({ where: { status: 'PENDING' } });
+    const kindOf = (r: unknown) => { const x = (r ?? {}) as { product?: string; planName?: string; planCode?: string }; return x.product === 'mascot' ? 'มาสคอตสั่งทำ' : (x.planName ?? x.planCode ?? 'แพลน').replace(/ \(เดือนแรกลด.*\)$/, ''); };
+    const byMonth = new Map<string, number>(), byKind = new Map<string, { n: number; baht: number }>();
+    for (let i = 11; i >= 0; i--) { const d = new Date(now + TZ); d.setUTCDate(1); d.setUTCMonth(d.getUTCMonth() - i); byMonth.set(d.toISOString().slice(0, 7), 0); }
+    for (const p of paid) {
+      const m = monthOf(p.createdAt); if (byMonth.has(m)) byMonth.set(m, (byMonth.get(m) ?? 0) + p.amountCents / 100);
+      const k = kindOf(p.rawPayload), cur = byKind.get(k) ?? { n: 0, baht: 0 }; cur.n++; cur.baht += p.amountCents / 100; byKind.set(k, cur);
+    }
+    const thisM = monthOf(new Date(now)), d = new Date(now + TZ); d.setUTCDate(1); d.setUTCMonth(d.getUTCMonth() - 1); const lastM = d.toISOString().slice(0, 7);
+    const subs = await prisma.subscription.findMany({ where: { status: { in: ['ACTIVE', 'TRIALING', 'PAST_DUE'] }, currentPeriodEnd: { gt: new Date() } },
+      select: { currentPeriodEnd: true, provider: true, plan: { select: { code: true, name: true, priceCents: true } }, user: { select: { email: true, tiktokUsername: true } } } });
+    const active = subs.filter((s) => s.plan.priceCents > 0);
+    const mrr = active.reduce((a, s) => a + s.plan.priceCents / 100, 0);
+    const renew14 = active.filter((s) => s.currentPeriodEnd!.getTime() - now < 14 * DAY).map((s) => ({ user: s.user.tiktokUsername || s.user.email, plan: s.plan.name, baht: s.plan.priceCents / 100, ends: s.currentPeriodEnd }));
+    const subUsers = new Set((await prisma.subscription.findMany({ where: { status: { in: ['ACTIVE', 'TRIALING', 'PAST_DUE'] } }, select: { userId: true } })).map((s) => s.userId));
+    const users = await prisma.user.findMany({ select: { id: true, email: true, tiktokUsername: true, createdAt: true } });
+    const trials = users.filter((u) => !subUsers.has(u.id)).map((u) => ({ user: u.tiktokUsername || u.email, ends: trialEndOf(u.createdAt, u.tiktokUsername) }))
+      .filter((x) => x.ends && x.ends.getTime() > now).sort((a, b) => a.ends!.getTime() - b.ends!.getTime());
+    return {
+      total: paid.reduce((a, p) => a + p.amountCents / 100, 0), count: paid.length, pending,
+      thisMonth: byMonth.get(thisM) ?? 0, lastMonth: byMonth.get(lastM) ?? 0, mrr, activePaid: active.length,
+      months: [...byMonth].map(([month, baht]) => ({ month, baht })),
+      byKind: [...byKind].map(([kind, v]) => ({ kind, ...v })).sort((a, b) => b.baht - a.baht),
+      renewSoon: renew14, trialsEnding: trials.slice(0, 50), trialsActive: trials.length,
+      recent: paid.slice(0, 100).map((p) => ({ id: p.id, at: p.createdAt, user: p.user.tiktokUsername || p.user.email, kind: kindOf(p.rawPayload), baht: p.amountCents / 100, provider: p.provider })),
+    };
+  });
+
   app.get('/api/admin/payments', { preHandler: requireAdmin }, async () => {
     const payments = await prisma.payment.findMany({ orderBy: { createdAt: 'desc' }, take: 200,
       select: { id: true, provider: true, providerRef: true, amountCents: true, currency: true, status: true, createdAt: true, user: { select: { id: true, email: true, tiktokUsername: true } } } });

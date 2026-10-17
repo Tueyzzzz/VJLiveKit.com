@@ -1,10 +1,11 @@
 'use client';
 
 import { Fragment, useCallback, useEffect, useState, type FormEvent } from 'react';
-import { Activity, BarChart3, Bell, CreditCard, Download, FlaskConical, Gift, History, KeyRound, Radio, RefreshCw, Search, Settings2, Users, MessageCircle, Smile, Mail, Music, Tags } from 'lucide-react';
+import { Activity, BarChart3, Bell, CreditCard, Download, FlaskConical, Wallet, Gift, History, KeyRound, Radio, RefreshCw, Search, Settings2, Users, MessageCircle, Smile, Mail, Music, Tags } from 'lucide-react';
 import { AdminUserDetail } from '@/components/AdminUserDetail';
 import { AdminSupport } from '@/components/AdminSupport';
 import { AdminGiftTester } from '@/components/AdminGiftTester';
+import { AdminFinance } from '@/components/AdminFinance';
 import { AdminMascots } from '@/components/AdminMascots';
 import { AdminNotifications } from '@/components/AdminNotifications';
 import { AdminServer } from '@/components/AdminServer';
@@ -71,7 +72,7 @@ const PLAN: Record<string, [string, 'pink' | 'mint' | 'gray']> = { starter: ['�
 /** หลังบ้านแอดมิน: ภาพรวม · ผู้ใช้ (แจก Pro / รีเซ็ตรหัส) · ไลฟ์ที่ออนไลน์ */
 export default function AdminPage() {
   const { isAdmin } = useAuth();
-  const [tab, setTab] = useState<'overview' | 'reports' | 'users' | 'live' | 'lives' | 'settings' | 'payments' | 'audit' | 'notify' | 'support' | 'mascots' | 'mail' | 'media' | 'plans' | 'test'>(() => (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('tab') === 'test' ? 'test' : new URLSearchParams(window.location.search).get('tab') === 'plans' ? 'plans' : 'overview')); // ?tab=test เปิดหน้าทดสอบของขวัญตรง ๆ
+  const [tab, setTab] = useState<'overview' | 'reports' | 'users' | 'live' | 'lives' | 'settings' | 'payments' | 'audit' | 'notify' | 'support' | 'mascots' | 'mail' | 'media' | 'plans' | 'test' | 'finance'>(() => (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('tab') === 'test' ? 'test' : new URLSearchParams(window.location.search).get('tab') === 'plans' ? 'plans' : new URLSearchParams(window.location.search).get('tab') === 'finance' ? 'finance' : 'overview')); // ?tab=test เปิดหน้าทดสอบของขวัญตรง ๆ
   const [detail, setDetail] = useState<string | null>(null); // ลูกค้าที่เปิดดูรายละเอียด
   const [payments, setPayments] = useState<{ id: string; provider: string; providerRef: string; amountCents: number; status: string; createdAt: string; user: { id: string; email: string; tiktokUsername: string | null } }[] | null>(null);
   const [auditLog, setAuditLog] = useState<{ at: string; admin: string; action: string; target?: string; detail?: string }[] | null>(null);
@@ -158,7 +159,7 @@ export default function AdminPage() {
     <div>
       <PageHeader title="หลังบ้าน (แอดมิน)" description="ภาพรวมระบบ · จัดการผู้ใช้ · ไลฟ์ที่ออนไลน์อยู่" />
       <div className="mb-5 flex flex-wrap gap-2">
-        {([['overview', 'ภาพรวม', Activity], ['reports', 'รายงาน', BarChart3], ['users', 'ลูกค้า', Users], ['live', 'ไลฟ์ตอนนี้', RefreshCw], ['test', 'ทดสอบของขวัญ', FlaskConical], ['lives', 'จำนวนไลฟ์', Radio], ['plans', 'แพลน', Tags], ['payments', 'การชำระเงิน', CreditCard], ['support', 'แชทลูกค้า', MessageCircle], ['mascots', 'มาสคอตสั่งทำ', Smile], ['notify', 'แจ้งเตือน', Bell], ['settings', 'ตั้งค่าระบบ', Settings2], ['mail', 'เมลเซิร์ฟเวอร์', Mail], ['media', 'ไฟล์ลูกค้า', Music], ['audit', 'บันทึกแอดมิน', History]] as const).map(([k, l, Icon]) => (
+        {([['overview', 'ภาพรวม', Activity], ['reports', 'รายงาน', BarChart3], ['users', 'ลูกค้า', Users], ['live', 'ไลฟ์ตอนนี้', RefreshCw], ['test', 'ทดสอบของขวัญ', FlaskConical], ['lives', 'จำนวนไลฟ์', Radio], ['plans', 'แพลน', Tags], ['finance', 'การเงิน', Wallet], ['payments', 'การชำระเงิน', CreditCard], ['support', 'แชทลูกค้า', MessageCircle], ['mascots', 'มาสคอตสั่งทำ', Smile], ['notify', 'แจ้งเตือน', Bell], ['settings', 'ตั้งค่าระบบ', Settings2], ['mail', 'เมลเซิร์ฟเวอร์', Mail], ['media', 'ไฟล์ลูกค้า', Music], ['audit', 'บันทึกแอดมิน', History]] as const).map(([k, l, Icon]) => (
           <Button key={k} variant={tab === k ? 'primary' : 'secondary'} onClick={() => setTab(k)}><Icon className="size-4" /> {l}</Button>
         ))}
       </div>
@@ -311,6 +312,7 @@ export default function AdminPage() {
       {detail && <AdminUserDetail id={detail} onClose={() => { setDetail(null); void loadUsers(q); }} />}
 
       {tab === 'test' && <AdminGiftTester />}
+      {tab === 'finance' && <AdminFinance />}
       {tab === 'notify' && <AdminNotifications />}
       {tab === 'support' && <AdminSupport />}
       {tab === 'mascots' && <AdminMascots />}

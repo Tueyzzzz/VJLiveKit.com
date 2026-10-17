@@ -70,7 +70,7 @@ const PLAN: Record<string, [string, 'pink' | 'mint' | 'gray']> = { starter: ['�
 /** หลังบ้านแอดมิน: ภาพรวม · ผู้ใช้ (แจก Pro / รีเซ็ตรหัส) · ไลฟ์ที่ออนไลน์ */
 export default function AdminPage() {
   const { isAdmin } = useAuth();
-  const [tab, setTab] = useState<'overview' | 'reports' | 'users' | 'live' | 'lives' | 'settings' | 'payments' | 'audit' | 'notify' | 'support' | 'mascots' | 'mail' | 'media' | 'plans' | 'test'>(() => (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('tab') === 'test' ? 'test' : 'overview')); // ?tab=test เปิดหน้าทดสอบของขวัญตรง ๆ
+  const [tab, setTab] = useState<'overview' | 'reports' | 'users' | 'live' | 'lives' | 'settings' | 'payments' | 'audit' | 'notify' | 'support' | 'mascots' | 'mail' | 'media' | 'plans' | 'test'>(() => (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('tab') === 'test' ? 'test' : new URLSearchParams(window.location.search).get('tab') === 'plans' ? 'plans' : 'overview')); // ?tab=test เปิดหน้าทดสอบของขวัญตรง ๆ
   const [detail, setDetail] = useState<string | null>(null); // ลูกค้าที่เปิดดูรายละเอียด
   const [payments, setPayments] = useState<{ id: string; provider: string; providerRef: string; amountCents: number; status: string; createdAt: string; user: { id: string; email: string; tiktokUsername: string | null } }[] | null>(null);
   const [auditLog, setAuditLog] = useState<{ at: string; admin: string; action: string; target?: string; detail?: string }[] | null>(null);

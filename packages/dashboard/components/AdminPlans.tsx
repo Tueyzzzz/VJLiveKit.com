@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { RotateCcw, Save, Tags } from 'lucide-react';
-import { Alert, Badge, Button, Card, Field, Input, Spinner } from './ui';
+import { Check, Minus, RotateCcw, Save, Tags } from 'lucide-react';
+import { Alert, Badge, Button, Card, Field, Input, Spinner, cx } from './ui';
 import { WIDGET_LABELS } from './Pricing';
 import { api, formatMoney } from '@/lib/api';
 
@@ -41,7 +41,7 @@ const FLAGS: [keyof Features, string][] = [
 export function AdminPlans() {
   const [plans, setPlans] = useState<PlanRow[] | null>(null);
   const [all, setAll] = useState<string[]>([]);
-  const [open, setOpen] = useState<string>('free');
+  const [open, setOpen] = useState<string>('');
   const [busy, setBusy] = useState('');
   const [dirty, setDirty] = useState(false);
   const [msg, setMsg] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
@@ -75,6 +75,8 @@ export function AdminPlans() {
         <Button onClick={save} loading={busy === 'save'} disabled={!dirty}><Save className="size-4" /> บันทึกทั้งหมด</Button>
       </Card>
       {msg && <Alert tone={msg.tone === 'error' ? undefined : msg.tone}>{msg.text}</Alert>}
+      <PlanMatrix plans={plans} all={all} edit={edit} />
+      <h3 className="pt-2 text-sm font-semibold text-muted">รายละเอียดแต่ละแพลน (ป้ายเด่น · คำโปรย · จุดเด่นบนการ์ดราคา) — กดชื่อแพลนเพื่อเปิด</h3>
 
       {plans.map((p) => (
         <Card key={p.code} className="p-0">
@@ -148,5 +150,89 @@ export function AdminPlans() {
         </Card>
       ))}
     </div>
+  );
+}
+
+/** หมวดในตาราง (แบบเดียวกับตารางเทียบแพลนของลูกค้า) */
+const MATRIX_GROUPS: [string, string[]][] = [
+  ['🎁 สะสมของขวัญบนจอ', ['collect', 'pile', 'giftjar', 'aquarium', 'belly', 'snowglobe', 'spacedome', 'vehicle', 'garden', 'tree', 'coinjar']],
+  ['🏆 อันดับ & PK', ['topgifters', 'toplikers', 'pkmvp', 'league']],
+  ['🔔 แจ้งเตือน & แชท', ['alerts', 'follower', 'chat', 'goal', 'timer', 'sign', 'tts']],
+  ['✨ Actions & ตัวแทนวีเจ', ['fx', 'fxmenu', 'mascot']],
+  ['🎮 เกม', ['tugwar']],
+  ['💸 รายได้', ['donate']],
+];
+
+/** ตารางจัดการแพลน: แถว = ฟีเจอร์ · คอลัมน์ = แพลน · กดช่อง ✓/– เพื่อเปิด/ปิด · ลิมิตพิมพ์ตัวเลขในช่อง · ชื่อ/ราคาแก้ที่หัวคอลัมน์ */
+function PlanMatrix({ plans, all, edit }: { plans: PlanRow[]; all: string[]; edit: (code: string, f: (p: PlanRow) => PlanRow) => void }) {
+  const hotIdx = plans.findIndex((p) => !!p.badge);
+  const other = all.filter((w) => !MATRIX_GROUPS.some(([, ws]) => ws.includes(w)));
+  const groups = [...MATRIX_GROUPS.map(([g, ws]) => [g, ws.filter((w) => all.includes(w))] as [string, string[]]), ['อื่น ๆ', other] as [string, string[]]].filter(([, ws]) => ws.length);
+  const setW = (code: string, f: (ws: string[]) => string[]) => edit(code, (x) => ({ ...x, features: { ...x.features, widgets: f(x.features.widgets) } }));
+  const td = (i: number, child: React.ReactNode) => <td key={i} className={cx('min-w-[92px] px-1.5 py-1.5 text-center', i === hotIdx && 'bg-pink-soft/40')}>{child}</td>;
+  const toggle = (on: boolean, onClick: () => void) => (
+    <button type="button" onClick={onClick} aria-pressed={on} title={on ? 'กดเพื่อปิด' : 'กดเพื่อเปิด'}
+      className={cx('mx-auto grid size-8 place-items-center rounded-lg transition', on ? 'bg-mint/15 hover:bg-mint/25' : 'hover:bg-canvas')}>
+      {on ? <Check className="size-5 text-mint" /> : <Minus className="size-4 text-muted/40" />}
+    </button>
+  );
+  const row = (key: string, label: React.ReactNode, cells: React.ReactNode[]) => (
+    <tr key={key} className="border-t border-line/70">
+      <th scope="row" className="sticky left-0 z-10 bg-white px-3 py-1.5 text-left text-sm font-normal shadow-[2px_0_4px_-2px_rgba(0,0,0,.08)]">{label}</th>
+      {cells.map((c, i) => td(i, c))}
+    </tr>
+  );
+  const head = (title: string, ws?: string[]) => (
+    <tr key={'h' + title} className="bg-canvas">
+      <th className="sticky left-0 z-10 bg-canvas px-3 py-2 text-left text-xs font-semibold text-violet">{title}</th>
+      {plans.map((p, i) => (
+        <td key={p.code} className={cx('px-1.5 py-2 text-center', i === hotIdx && 'bg-pink-soft/40')}>
+          {ws && (
+            <span className="inline-flex gap-1.5 text-[11px]">
+              <button type="button" className="text-violet underline" onClick={() => setW(p.code, (cur) => [...new Set([...cur, ...ws])])}>ทั้งหมด</button>
+              <button type="button" className="text-muted underline" onClick={() => setW(p.code, (cur) => cur.filter((w) => !ws.includes(w)))}>ล้าง</button>
+            </span>
+          )}
+        </td>
+      ))}
+    </tr>
+  );
+  const numIn = (p: PlanRow, k: keyof Features) => (
+    <Input type="number" min={0} className="mx-auto h-8 w-20 px-1 text-center" value={p.features[k] as number}
+      onChange={(e) => edit(p.code, (x) => ({ ...x, features: { ...x.features, [k]: Math.max(0, Math.round(Number(e.target.value)) || 0) } }))} />
+  );
+  return (
+    <Card className="overflow-x-auto p-0">
+      <table className="w-full min-w-[640px] text-sm">
+        <thead>
+          <tr>
+            <th className="sticky left-0 z-20 min-w-[130px] bg-white px-3 py-3 text-left align-bottom text-xs text-muted sm:min-w-[200px]">ฟีเจอร์ · กดช่องเพื่อเปิด/ปิด</th>
+            {plans.map((p, i) => (
+              <th key={p.code} className={cx('min-w-[92px] px-1.5 py-3 text-center align-bottom', i === hotIdx && 'bg-pink-soft/40')}>
+                {p.badge && <div className="mb-1 inline-block rounded-full bg-pink px-2 py-0.5 text-[10px] font-semibold text-white">{p.badge}</div>}
+                <input value={p.name} maxLength={40} aria-label="ชื่อแพลน" onChange={(e) => edit(p.code, (x) => ({ ...x, name: e.target.value }))}
+                  className="w-full rounded-md bg-transparent text-center font-display text-base outline-none hover:bg-canvas focus:bg-canvas" />
+                <div className="mt-0.5 flex items-center justify-center gap-0.5 whitespace-nowrap text-xs font-normal text-muted">
+                  ฿<input type="number" min={0} aria-label="ราคาต่อเดือน" disabled={p.code === 'free'} value={p.priceCents / 100}
+                    onChange={(e) => edit(p.code, (x) => ({ ...x, priceCents: Math.max(0, Math.round(Number(e.target.value) * 100) || 0) }))}
+                    className="w-12 rounded-md bg-canvas/60 text-center outline-none hover:bg-canvas focus:bg-canvas disabled:bg-transparent disabled:opacity-60" />/ด.
+                </div>
+                <div className="text-[10px] font-normal text-muted">{p.features.widgets.length}/{all.length} วิดเจ็ต</div>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {groups.flatMap(([g, ws]) => [
+            head(g, ws),
+            ...ws.map((w) => row(w, WIDGET_LABELS[w] ?? w, plans.map((p) => toggle(p.features.widgets.includes(w),
+              () => setW(p.code, (cur) => (cur.includes(w) ? cur.filter((y) => y !== w) : [...cur, w])))))),
+          ])}
+          {head('⚙️ ลิมิต & สิทธิพิเศษ')}
+          {NUMS.map(([k, label, unit]) => row(String(k), <>{label} <span className="text-xs text-muted">({unit})</span></>, plans.map((p) => numIn(p, k))))}
+          {FLAGS.map(([k, label]) => row(String(k), label, plans.map((p) => toggle(!!p.features[k], () => edit(p.code, (x) => ({ ...x, features: { ...x.features, [k]: !x.features[k] } }))))))}
+        </tbody>
+      </table>
+    </Card>
   );
 }

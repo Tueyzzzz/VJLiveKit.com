@@ -822,9 +822,10 @@
     let gCheck = 0;
     function trimGround() {
       const limitY = GROUND_Y - (H / S()) * PILE_MAX;
-      const over = ground.filter((b) => !b.dying && b.age > 180 && b.y - b.r < limitY).length; // อยู่มาเกิน 3 วิ (ไม่นับชิ้นที่กำลังร่วง)
+      const isOver = (b) => !b.dying && b.age > 180 && b.y - b.r < limitY && b.y + b.r < floorAt(b.x) - 3; // โผล่เกินเส้นเอง + ไม่ได้วางบนพื้นตรง ๆ
+      const cand = ground.filter(isOver), over = cand.length; // อยู่มาเกิน 3 วิ (ไม่นับชิ้นที่กำลังร่วง)
       if (!over) return;
-      ((window.VJLCollect && VJLCollect.victims) ? VJLCollect.victims(ground.map((b) => ({ ...b, d: b.g.d, ref: b })), Math.min(6, over)).map((x) => x.ref) : ground.filter((b) => !b.dying).slice(0, Math.min(6, over))).forEach((b) => { b.dying = true; }); // ถูกก่อน แล้วเก่าก่อน
+      ((window.VJLCollect && VJLCollect.victims) ? VJLCollect.victims(cand.map((b) => ({ ...b, d: b.g.d, ref: b })), Math.min(6, over)).map((x) => x.ref) : cand.slice(0, Math.min(6, over))).forEach((b) => { b.dying = true; }); // ถูกก่อน แล้วเก่าก่อน
     }
     function stepGround() {
       if (++gCheck % 30 === 0) trimGround();

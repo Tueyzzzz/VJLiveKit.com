@@ -178,10 +178,10 @@
     function trimPile() {
       const limitY = FLOOR - DH * PILE_MAX;
       // นับเฉพาะชิ้นที่วางนิ่งแล้ว (ไม่นับชิ้นที่ยังตกอยู่กลางอากาศ)
-      const over = bodies.filter((b) => !b.dying && b.age > 120 && Math.abs(b.y - b.py) < 0.6 && b.y - b.r < limitY).length;
+      const isOver = (b) => !b.dying && b.age > 120 && Math.abs(b.y - b.py) < 0.6 && b.y - b.r < limitY && b.y + b.r < FLOOR - 3; // ลบเฉพาะชิ้นที่โผล่เกินเส้นเอง (ไม่ลบชิ้นล่างจนกองหาย)
+      const cand = bodies.filter(isOver), over = cand.length;
       if (!over) return;
-      const alive = bodies.filter((b) => !b.dying).sort((p, q) => q.age - p.age);
-      ((window.VJLCollect && VJLCollect.victims) ? VJLCollect.victims(bodies, Math.min(6, over)) : alive.slice(0, Math.min(6, over))).forEach((k) => { k.dying = true; }); // ถูกก่อน แล้วเก่าก่อน
+      ((window.VJLCollect && VJLCollect.victims) ? VJLCollect.victims(cand, Math.min(6, over)) : cand.slice(0, Math.min(6, over))).forEach((k) => { k.dying = true; }); // ถูกก่อน แล้วเก่าก่อน
     }
     function step() {
       if (++pileCheck % 30 === 0) trimPile();

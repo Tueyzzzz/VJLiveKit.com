@@ -1656,8 +1656,10 @@
     function trimOutside() {
       if (++outCheck % 30) return;
       const limitY = groundY() - (H / S()) * (FER ? Math.min(OUT_MAX, 0.22) : OUT_MAX); // ชิงช้า: กองพื้นต่ำ ไม่บังวงล้อ
-      const over = bodies.filter((b) => b.out && !b.dying && b.age > 180 && b.y - b.r < limitY).length;
-      if (over) ((window.VJLCollect && VJLCollect.victims) ? VJLCollect.victims(bodies, Math.min(6, over), (b) => b.out) : bodies.filter((b) => b.out && !b.dying).slice(0, Math.min(6, over))).forEach((b) => { b.dying = true; });
+      // ลบเฉพาะชิ้นที่ "โผล่เกินเส้น" เอง (ถูกสุดก่อน) · ชิ้นที่วางบนพื้นตรง ๆ ไม่ลบ — เดิมลบชิ้นถูกสุดทั้งกอง (ส่วนใหญ่อยู่ล่าง) ชิ้นแพงที่โผล่เกินเส้นไม่ถูกลบ → ลบวนจนของหายเกือบหมด
+      const GY = groundY(), isOver = (b) => b.out && !b.dying && b.age > 180 && b.y - b.r < limitY && b.y + b.r < GY - 3;
+      const over = bodies.filter(isOver).length;
+      if (over) ((window.VJLCollect && VJLCollect.victims) ? VJLCollect.victims(bodies, Math.min(6, over), isOver) : bodies.filter(isOver).slice(0, Math.min(6, over))).forEach((b) => { b.dying = true; });
     }
     function checkFull() {
       trimOutside();

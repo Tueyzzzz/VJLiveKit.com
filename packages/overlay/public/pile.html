@@ -45,7 +45,10 @@
     const canvas = document.getElementById('fx'), ctx = canvas.getContext('2d'), $alert = document.getElementById('alert');
     const DPR = Math.min(2, window.devicePixelRatio || 1);
     let W = 0, H = 0;
-    function resize() { W = innerWidth; H = innerHeight; canvas.width = W * DPR; canvas.height = H * DPR; canvas.style.width = W + 'px'; canvas.style.height = H + 'px'; }
+    // กรอบเนื้อหา (มองไม่เห็น) ให้พรีวิวในแดชบอร์ดซูมไปที่กองล่างจอ — ของบนแคนวาสวัดจาก DOM ไม่ได้ (เดิมซูมกลางจอที่ว่าง)
+    const fitbox = document.createElement('div'); fitbox.setAttribute('data-fit', ''); fitbox.style.cssText = 'position:fixed;pointer-events:none;visibility:hidden'; document.body.appendChild(fitbox);
+    function resize() { W = innerWidth; H = innerHeight; canvas.width = W * DPR; canvas.height = H * DPR; canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+      const fw = W * WIDTH, fh = Math.min(H * 0.5, Math.max(H * 0.28, fw * 0.32)); fitbox.style.left = (W - fw) / 2 + 'px'; fitbox.style.width = fw + 'px'; fitbox.style.top = (H - fh) + 'px'; fitbox.style.height = fh + 'px'; }
     addEventListener('resize', resize); resize();
     // พื้นที่กอง: กลางจอ กว้าง WIDTH ของจอ — ผนังข้างโค้งเล็กน้อยให้กองเป็นทรงภูเขา
     const left = () => W * (1 - WIDTH) / 2, right = () => W * (1 + WIDTH) / 2, floor = () => H - 2;

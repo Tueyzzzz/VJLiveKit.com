@@ -527,7 +527,7 @@ function WidgetSettings() {
                   const S = (boxW / VW) * f.z, boxH = (boxW * VH) / VW;
                   // เลื่อนให้ตรงกลางวิดเจ็ตอยู่กลางกรอบ แต่ไม่เลยขอบจอจำลอง
                   const tx = Math.min(0, Math.max(boxW - VW * S, boxW / 2 - f.cx * S)), ty = Math.min(0, Math.max(boxH - VH * S, boxH / 2 - f.cy * S));
-                  return <iframe key={previewSrc} ref={frameRef} src={previewSrc} title={t('พรีวิววิดเจ็ต')}
+                  return <iframe key={previewSrc + (portrait ? "|p" : "|l")} ref={frameRef} src={previewSrc} title={t('พรีวิววิดเจ็ต')}
                     onLoad={() => { for (const ms of [600, 1500, 3000]) setTimeout(measure, ms); setTimeout(() => setPrevShown(true), 700); }}
                     className="absolute left-0 top-0 origin-top-left border-0"
                     style={{ width: VW, height: VH, transform: `translate(${tx}px, ${ty}px) scale(${S})`, transition: 'transform .4s ease, opacity .35s ease', opacity: prevShown ? 1 : 0 }} />;

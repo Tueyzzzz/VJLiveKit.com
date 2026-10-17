@@ -1066,7 +1066,7 @@
       },
     };
     const SH = SHAPES[P('shape', Overlay.widget === 'giftjar' ? 'clear' : 'heart')] || SHAPES.heart; // ค่าเริ่มต้นโหลของขวัญ = โหลแก้วใส (แบบเดียวที่แพลน Free ใช้ได้)
-    const SPACE_FLOAT0 = !!SH.space && P('float', '0') === '1'; // โดมอวกาศ: ค่าเริ่มต้นของวางบนฐาน · float=1 = ลอยไร้น้ำหนักแบบเดิม
+    const SPACE_FLOAT0 = !!SH.space && P('float', '1') === '1'; // โดมอวกาศ: ค่าเริ่มต้นลอยไร้น้ำหนัก · float=0 = วางบนฐาน
     const SNOW_FLOAT = !!SH.dome && !SH.space && P('float', '0') === '1'; // ลูกแก้วหิมะ (?float=1): ของขวัญลอยฟุ้งไปมาเหมือนหิมะในลูกแก้ว
     const SPACE_FLOAT = SPACE_FLOAT0 || SNOW_FLOAT; // ลอยในโดม (ไม่กองพื้น/ไม่ล้น)
     // ทุกแบบ (รวมลูกแก้ว/โดม/ตัวละครท้องใส) ล้นแล้วกองพื้นข้าง ๆ — ไม่ทำให้ชิ้นเก่าหายไปเอง (เว้นวีเจเลือกโหมดอื่นเอง)
@@ -1559,9 +1559,12 @@
           b.px += (b.x / d.r) * 0.035; b.py += ((b.y - d.cy) / d.r) * 0.012; // ดึงเข้ากลางโดมเบา ๆ (ไม่ไปกองติดผนัง)
           g *= 0.1; damp = 0.985;
           if (low > 0.35 && Math.sin(tw * 0.35 + ph) > 0.2) b.py += 0.09 * low; // กระแสหมุนวนพาขึ้น
-        } else if (SPACE_FLOAT && !b.out && !b.eat) { // โดมอวกาศ (?float=1): ไร้แรงโน้มถ่วง ลอยหมุนวนช้า ๆ รอบกลางโดม
-          const dx = b.x, dy = b.y - SH.dome.cy, dd = Math.hypot(dx, dy) || 1;
-          b.px += (dy / dd) * 0.012; b.py -= (dx / dd) * 0.012; g *= 0.38; damp = 0.99;
+        } else if (SPACE_FLOAT && !b.out && !b.eat) { // โดมอวกาศ (ค่าเริ่มต้น · float=0 = วางบนฐาน): ไร้น้ำหนัก ลอยล่องไปมากลางโดม หมุนตัวช้า ๆ ไม่ไปติดผนัง
+          const tw = performance.now() / 1000, ph = b.wph ?? (b.wph = Math.random() * 6.28), d = SH.dome, cy = d.cy - d.r * 0.15;
+          b.px -= Math.sin(tw * 0.42 + ph) * 0.045; b.py -= Math.cos(tw * 0.33 + ph * 1.7) * 0.045; // ล่องลอยแบบสุ่มนุ่ม ๆ
+          b.px += (b.x / d.r) * 0.05; b.py += ((b.y - cy) / d.r) * 0.05; // ดึงกลับเข้ากลางโดมเบา ๆ
+          b.rot += (b.wph > 3.14 ? 1 : -1) * 0.004; // หมุนตัวช้า ๆ แบบไร้น้ำหนัก
+          g = 0; damp = 0.985;
         } else if (SH.space && !b.out && !b.eat) { g *= 0.6; damp = 0.98; } // ค่าเริ่มต้น: ค่อย ๆ ลอยลงไปวางบนฐานโดม (ตกช้ากว่าโหลปกตินิด ให้ดูเบาแบบอวกาศ)
         if (orbitK > 0 && swirlK === 0 && !b.out && !b.eat) { // ลอยหมุนวนรอบโหลเบา ๆ (ของยังน้อย)
           const dx = b.x, dy = b.y - SH.dome.cy, d = Math.hypot(dx, dy) || 1;

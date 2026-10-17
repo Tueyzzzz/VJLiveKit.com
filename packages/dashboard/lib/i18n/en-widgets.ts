@@ -440,6 +440,8 @@ export const EN_WIDGETS: Record<string, string> = {
   "ลูกแก้วเวทีคอนเสิร์ต": "Concert stage globe",
   "ลูกแก้วกล่องดนตรีเปียโน": "Piano music box globe",
   "ของขวัญหมุนวนเมื่อมีของใหม่": "Gifts swirl when a new one arrives",
+  "🚀 ของขวัญลอยไร้น้ำหนักแบบอวกาศ": "🚀 Gifts float weightlessly, like in space",
+  "เปิด = ลอยล่องหมุนตัวไปมากลางโดม · ปิด = ค่อย ๆ ลงไปวางบนฐาน": "On = drift and spin around the dome · Off = settle onto the base",
   "❄️ ของขวัญลอยฟุ้งเหมือนหิมะ": "❄️ Gifts float around like snow",
   "เปิด = ของขวัญลอยไปมาทั่วลูกแก้วตลอดเวลา · ปิด = กองที่ฐาน": "On = gifts drift all around the globe · Off = they pile at the base",
   "เหมือนเขย่าลูกแก้วหิมะเบา ๆ แล้วค่อย ๆ ตกกลับมากอง": "Like gently shaking a snow globe, then everything slowly settles back down",

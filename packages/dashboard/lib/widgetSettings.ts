@@ -319,6 +319,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
     resettable: 'ล้างของขวัญในโดมและอันดับ',
     sections: [
       { title: 'โดมอวกาศ', fields: [
+        { key: 'float', label: '🚀 ของขวัญลอยไร้น้ำหนักแบบอวกาศ', type: 'toggle', def: true, hint: 'เปิด = ลอยล่องหมุนตัวไปมากลางโดม · ปิด = ค่อย ๆ ลงไปวางบนฐาน' },
         { key: 'shape', label: 'แบบโดม', type: 'select', def: 'smoon', options: [
           ['smoon', 'ฐานบนดวงจันทร์', '🌸 พาสเทลน่ารัก', 'sp-moon'],
           ['sring', 'ดาวเคราะห์วงแหวน', '🌸 พาสเทลน่ารัก', 'sp-ring'],

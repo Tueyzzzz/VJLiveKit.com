@@ -216,6 +216,8 @@ export const EN_ACTIONS: Record<string, string> = {
   'กด “ใช้เลย” แล้วใช้ได้ทันที — แก้ข้อความหรือเงื่อนไขทีหลังได้ด้วยปุ่มดินสอ': 'Press “Use” and it works right away — edit the text or conditions later with the pencil button',
   'เพิ่มแล้ว': 'Added',
   'ใช้เลย': 'Use',
+  'ใช้แบบนี้อยู่': 'In use',
+  'เปลี่ยนเป็นแบบนี้': 'Switch to this style',
   'ยังไม่มีกฎ — เลือกเทมเพลตด้านบน หรือกด “เพิ่มกฎ” เพื่อตั้งเอง': 'No rules yet — pick a template above or press “Add rule” to create your own',
   'ของขวัญ': 'Gift',
   'กฎ': 'rules',

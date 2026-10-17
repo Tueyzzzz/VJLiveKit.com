@@ -864,11 +864,14 @@
       }
       fin();
     }
+    const pkbLast={};
     function play(a,ev){
       if(a.type==='mascot') return; // ท่าของมาสคอต → วิดเจ็ตมาสคอตทำเอง
       if(a.type==='effect'&&a.effect==='animal') return animal(a,ev);
       if(a.type==='effect'&&(a.effect==='chest'||a.effect==='bag')&&window.VJLChestFx) return VJLChestFx.play({kind:a.effect,style:a.style,volume:a.volume,caption:fill(a.text||(a.effect==='bag'?'💜 {user} ส่งถุงซูเปอร์แฟน':'🎁 {user} ส่งกล่องสมบัติ 💎{diamonds}'),ev)}).catch(()=>particles({...a,effect:'coins'},ev)); // 🎁 กล่องสมบัติ/💜 ถุงม่วง (js/chestfx.js)
       if(a.type==='effect'&&a.effect==='prank'&&window.VJLPrank) return VJLPrank.play({key:a.prank,volume:a.volume,caption:fill(a.text,ev),onBlocked:()=>{ if(!audioArmed) armBtn.style.display='block'; }}).catch(()=>particles({...a,effect:'confetti'},ev)); // 😈 แกล้งวีเจ 30 มุก (js/prank.js)
+      if(a.type==='effect'&&a.effect==='pkbanner'){ // 1 จังหวะ = 1 ป้าย: กฎป้ายหมวดเดียวกันซ้ำ (เช่น นวม 2 แบบ) ยิงพร้อมกัน → แสดงอันแรกอันเดียว ไม่ซ้อน
+        const cat=String(a.style||'').split('-')[0], now=Date.now(); if(pkbLast[cat]&&now-pkbLast[cat]<1500) return; pkbLast[cat]=now; }
       if(a.type==='effect'&&a.effect==='pkbanner'&&window.VJLPkBanner) return VJLPkBanner.play({style:a.style,volume:a.volume,durationMs:a.durationMs,caption:fill(a.text,ev)}).catch(()=>particles({...a,effect:'confetti'},ev)); // ⚔️ ป้าย PK สไตล์ GPT (js/pkbanner.js)
       if(a.type==='tarot') return tarot(a,ev);
       if(a.type==='glove') return glove(a,ev);

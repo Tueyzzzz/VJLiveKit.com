@@ -308,6 +308,20 @@ function ActionsInner() {
     catch (err) { setError({ text: (err as Error).message, upgrade: err instanceof ApiError && err.upgrade }); }
     finally { setAdding(null); }
   }
+  // ป้าย PK: 1 จังหวะ = 1 แบบ — มีป้ายหมวดนี้อยู่แล้ว → เปลี่ยนแบบในกฎเดิม (ข้อความที่แก้ไว้คงเดิม) + ลบป้ายซ้ำหมวดเดียวกัน · ไม่มี → เพิ่มใหม่
+  const pkbOf = (cat: string) => (rules ?? []).filter((r) => r.action.effect === 'pkbanner' && String(r.action.style ?? '').startsWith(cat + '-'));
+  async function applyPkBanner(cat: string, tp: Template) {
+    const cur = pkbOf(cat);
+    if (!cur.length) return applyTemplate(tp);
+    setAdding(tp.rule.name); setError(null);
+    try {
+      const [keep, ...dups] = cur;
+      await api(`/api/actions/${keep.id}`, { method: 'PUT', body: { name: tp.rule.name, enabled: true, action: { ...keep.action, style: tp.rule.action.style } } });
+      for (const d of dups) await api(`/api/actions/${d.id}`, { method: 'DELETE' });
+      await load();
+    } catch (err) { setError({ text: (err as Error).message, upgrade: err instanceof ApiError && err.upgrade }); }
+    finally { setAdding(null); }
+  }
   // ⚙️ ตั้งค่าก่อนใช้: เปิดฟอร์มกฎเติมค่าจากเทมเพลต (ยังไม่บันทึกจนกดบันทึก) · เพิ่มไปแล้ว = เปิดกฎชื่อเดียวกันมาแก้
   function customizeTemplate(tp: Template) {
     setError(null);
@@ -318,7 +332,8 @@ function ActionsInner() {
   }
   const have = new Set((rules ?? []).map((r) => r.name));
   // ป้าย PK ภาพวาด: แบบที่เลือกไว้ต่อจังหวะ (เริ่มต้น = แบบที่สวยสุดของหมวด)
-  const [pkbPick, setPkbPick] = useState<Record<string, string>>(() => Object.fromEntries(PKB_CATS.map(([k, , , , , , best]) => [k, best])));
+  const [pkbPick, setPkbPick] = useState<Record<string, string>>({}); // ยังไม่กดเลือก → แบบที่ใช้อยู่ · ยังไม่มี → แบบที่สวยสุดของหมวด
+  const pkbBest = (cat: string) => PKB_CATS.find(([k]) => k === cat)?.[6] ?? '01';
   // เทมเพลตจัดหมวด: ไพ่ทาโร่ = แอดมินเท่านั้น (เหมือนเดิม) · โชว์เฉพาะหมวดที่มีเทมเพลต
   const ADMIN_ONLY_TPL = new Set(['tarot-swords']); // ร่างกายต้องการดาบ: ปิดไว้ให้แอดมินเห็นคนเดียว
   const tplVisible = TEMPLATES.filter((tp) => isAdmin || !ADMIN_ONLY_TPL.has(tp.id ?? '')); // ไพ่ทาโร่เปิดให้ทุกคนแล้ว ยกเว้นชุดดาบ
@@ -646,7 +661,7 @@ function ActionsInner() {
             <p className="mb-3 text-xs text-muted">{t('ป้ายเด้งกลางจอพร้อมเสียงและประกาย แทนวิดีโอ PK ของจังหวะนั้น · กดรูปเล็กเพื่อเปลี่ยนแบบ')}</p>
             <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {PKB_CATS.filter(([k]) => PKB_READY.has(k)).map(([cat, label]) => {
-                const st = pkbPick[cat] ?? '01', rule = pkBannerRule(cat as PkBannerCat, st), added = have.has(rule.name);
+                const cur = pkbOf(cat), curSt = String(cur[0]?.action.style ?? '').slice(cat.length + 1), st = pkbPick[cat] ?? (curSt || pkbBest(cat)), rule = pkBannerRule(cat as PkBannerCat, st), added = cur.length === 1 && curSt === st;
                 const tp: Template = { icon: '⚔️', title: label, desc: '', rule };
                 return (
                   <div key={cat} className="flex flex-col rounded-xl border border-line bg-canvas/50 p-3">
@@ -663,8 +678,8 @@ function ActionsInner() {
                       ))}
                     </div>
                     <div className="mt-3 flex gap-2">
-                      <Button variant={added ? 'ghost' : 'secondary'} className="min-w-0 flex-1" disabled={added} loading={adding === rule.name} onClick={() => applyTemplate(tp)}>
-                        {added ? <><Check className="size-4" /> {t('เพิ่มแล้ว')}</> : t('ใช้เลย')}
+                      <Button variant={added ? 'ghost' : 'secondary'} className="min-w-0 flex-1" disabled={added} loading={adding === rule.name} onClick={() => applyPkBanner(cat, tp)}>
+                        {added ? <><Check className="size-4" /> {t('ใช้แบบนี้อยู่')}</> : cur.length ? t('เปลี่ยนเป็นแบบนี้') : t('ใช้เลย')}
                       </Button>
                       <Button variant="ghost" className="shrink-0 px-2.5" title={t('ตั้งค่าก่อนใช้ (เปลี่ยนข้อความ สี ระยะเวลา ฯลฯ)')} aria-label={t('ตั้งค่า')} onClick={() => customizeTemplate(tp)}>
                         <Settings2 className="size-4" /> {t('ตั้งค่า')}

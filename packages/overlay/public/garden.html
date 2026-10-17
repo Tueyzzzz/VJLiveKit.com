@@ -303,10 +303,10 @@
     })() : null;
     // 💐 พุ่มดอกไม้ฟู (?look=bush · กระถางทุกแบบ): ไม่มีก้าน — ของขวัญ 1 ชิ้น = ดอก 1 ดอก (ของขวัญเป็นเกสร กลีบแหลมสีสดรอบ ๆ) อัดเป็นพุ่มทรงโดมกว้างเหนือกระถาง ใบเขียวแซม
     const BUSH = POT_SKIN && !TREE && !BOUQ && !(POT_SKIN && POT_SKIN.soil) && P('look', 'stems') === 'bush' ? (() => {
-      const rimY = POT_TOP + 6, rx = Math.max(190, POT_SKIN.w * 0.78), ry = rx * 0.62, cy = rimY - ry * 0.12;
+      const rimY = POT_TOP + 6, rx = Math.max(240, POT_SKIN.w * 1.0), ry = rx * 0.66, cy = rimY - 16;
       return { rimY, rx, ry, cy };
     })() : null;
-    const bushPt = (r, th) => { const sx = Math.cos(th), sy = Math.sin(th); return { x: BUSH.rx * r * sx, y: Math.min(BUSH.rimY - 14, BUSH.cy + BUSH.ry * r * (sy > 0 ? sy * 0.1 : sy)) }; };
+    const bushPt = (r, th) => ({ x: BUSH.rx * r * Math.cos(th), y: BUSH.cy + BUSH.ry * r * Math.min(0, Math.sin(th)) }); // ครึ่งบนของวงรี (ทรงพัด)
     const BIG_SPOTS = BUSH ? [[0, -0.92], [-0.55, -0.7], [0.55, -0.7], [-0.85, -0.3], [0.85, -0.3], [-0.28, -0.5], [0.28, -0.5]].map(([fx2, fy]) => ({ tree: true, x: BUSH.rx * fx2, y: BUSH.cy + BUSH.ry * fy, t: rnd() }))
       : BOUQ ? [[0, -0.85], [-0.5, -0.6], [0.5, -0.6], [-0.78, -0.25], [0.78, -0.25], [-0.25, -0.35], [0.25, -0.35]].map(([fx2, fy]) => ({ tree: true, x: BOUQ.rx * fx2, y: BOUQ.cy + BOUQ.ry * fy, t: rnd() }))
       : TREE ? TREE.bigs.map(([x, y]) => ({ tree: true, x, y, t: rnd() }))
@@ -314,11 +314,18 @@
       : [5, 4, 6, 3, 7, 2, 8, 1, 9, 0, 10].map((i) => ({ stem: stems[i] }))
       .concat(stems.flatMap((st) => st.twigs.map((tw) => ({ stem: st, twig: tw }))));
     if (TREE) slots.splice(0, slots.length, ...TREE.slots.map(([x, y]) => ({ tree: true, x, y, t: rnd() })));
-    if (BUSH) { // พุ่ม: จุดดอกเรียงแบบเมล็ดทานตะวัน จากกลางพุ่มออกไปขอบ → ของน้อยก็เป็นพุ่มกลม ของเยอะพุ่มฟูเต็มโดม
-      const N = 132, out = [], SH2 = BUSH.ry * 1.05; // ไม้ค้ำกลางกระถาง: ดอกแรก ๆ ไต่ขึ้นตามไม้ (ซ้าย-ขวาสลับ) แล้วดอกบนยอด → ของเยอะค่อยแผ่เป็นพุ่ม
-      for (let i = 0; i < 14; i++) out.push({ tree: true, br: 0.35, x: (i % 2 ? 1 : -1) * (9 + (i % 3) * 3), y: BUSH.rimY - 26 - i * (SH2 - 60) / 13, t: rnd(), c: 0.25 + i * 0.03 });
-      out.push({ tree: true, br: 1, x: 0, y: BUSH.rimY - SH2, t: rnd(), c: 1 }); // ดอกใหญ่บนยอดไม้
-      for (let i = 0; i < N; i++) { const r = Math.sqrt((i + 0.5) / N) * 0.97, th = Math.PI + i * 2.39996; const q = bushPt(r, th); if (q.y > BUSH.rimY - 4 && Math.abs(q.x) < POT_SKIN.w * 0.25) continue; out.push({ tree: true, br: r, x: q.x, y: q.y, t: rnd(), c: 0.6 * (1 - r) + 0.4 * Math.max(0, Math.min(1, (BUSH.rimY - q.y) / (BUSH.ry * 1.1))) }); }
+    if (BUSH) { // พุ่ม (แบบร้านอื่น): ไม้ค้ำกลาง → พุ่มใบเขียวแน่นมีของขวัญชิ้นเล็กแซม → ดอกใหญ่กลีบแฉกเรียงเป็นแนวโค้งรอบขอบพัด
+      // จุดดอกเลือกตามราคา (takeSlot · c): ของถูก = ไม้ค้ำ/ในพุ่ม · ของแพง = ดอกใหญ่ขอบพัด (แพงสุดอยู่บนยอด)
+      const out = [], SH2 = BUSH.ry * 1.0;
+      for (let i = 0; i < 12; i++) out.push({ tree: true, br: 0.3, x: (i % 2 ? 1 : -1) * (9 + (i % 3) * 3), y: BUSH.rimY - 26 - i * (SH2 - 70) / 11, t: rnd(), c: i * 0.008 });
+      out.push({ tree: true, br: 1, rim: true, x: 0, y: BUSH.rimY - SH2 - 8, t: rnd(), c: 1 }); // ยอดไม้ค้ำ
+      const N = 130;
+      for (let i = 0; i < N; i++) { const r = 0.12 + 0.76 * Math.sqrt((i + 0.5) / N), th = Math.PI + ((i * 0.618034) % 1) * Math.PI; const q = bushPt(r, th); out.push({ tree: true, br: r, x: q.x, y: q.y, t: rnd(), c: 0.1 + 0.35 * r }); }
+      for (const [K, rr, off] of [[15, 1.0, 0], [12, 0.84, 0.5]]) for (let k = 0; k < K; k++) { // ดอกใหญ่ขอบพัด 2 แถว
+        const u = (k + off + 0.5) / (K + (off ? 1 : 0)), th = Math.PI + u * Math.PI, q = bushPt(rr, th);
+        out.push({ tree: true, br: rr, rim: true, x: q.x, y: q.y, t: rnd(), c: 0.55 + 0.4 * (1 - Math.abs(u - 0.5) * 2) * (rr > 0.9 ? 1 : 0.8) });
+      }
+      out.forEach((o) => { o.j = rnd() * 0.06; });
       slots.splice(0, slots.length, ...out);
     }
     // ทุ่งหญ้าโคนต้น (ต้นไม้ทุกแบบ): แถบหญ้ากว้างกว่าโคนต้นนิดหน่อย อยู่หน้าเนินโคนต้น · ของขวัญถูกสุดโผล่เป็นดอกเล็กบนก้านสั้นในหญ้า
@@ -611,7 +618,7 @@
     //   จุดเดิม (BASE_N) ใช้ตามลำดับเหมือนเดิม · จุดเสริมสุ่มคงที่ (seed ตามแบบ) กระจายในพื้นที่เดิมของแต่ละแบบ
     //   แต่ละจุดมีค่า c (0 = ล่าง/ริม … 1 = บน/กลาง) → ของถูกได้จุดล่าง/ริม ของแพงได้จุดบน/กลาง
     const BASE_N = slots.length, BIG_BASE = BIG_SPOTS.length, SLOT_CAP = 600, BIG_CAP = 120;
-    const freeSlots = TREE ? slots.slice() : []; // ต้นไม้: ทุกจุด (พุ่มใบ + ทุ่งหญ้า) เลือกตามราคาตั้งแต่ชิ้นแรก
+    const freeSlots = TREE || BUSH ? slots.slice() : []; // ต้นไม้: ทุกจุด (พุ่มใบ + ทุ่งหญ้า) เลือกตามราคาตั้งแต่ชิ้นแรก
     let s3 = 11; for (const ch of SKIN_NAME) s3 = (s3 * 31 + ch.charCodeAt(0)) % 2147483647;
     const xr = () => (s3 = (s3 * 48271) % 2147483647) / 2147483647;
     const clamp01 = (v) => Math.max(0, Math.min(1, v));
@@ -625,9 +632,9 @@
       if (TREE) { // พุ่มต้นไม้: เกาะใกล้จุดเดิมในพุ่มใบ
         const b = TREE.slots[Math.floor(xr() * TREE.slots.length)], a = xr() * 6.283, r = 6 + xr() * 22, x = b[0] + Math.cos(a) * r, y = b[1] + Math.sin(a) * r * 0.8;
         sl = { tree: true, x, y, t: xr(), c: clamp01((-y - 180) / 290) * 0.6 + (1 - Math.min(1, Math.abs(x) / 240)) * 0.4 };
-      } else if (BUSH) { // พุ่ม: จุดสุ่มทั่วโดม
-        const r = Math.sqrt(xr()) * 0.98, q = bushPt(r, xr() * 6.283);
-        sl = { tree: true, br: r, x: q.x, y: q.y, t: xr(), c: 0.6 * (1 - r) + 0.4 * clamp01((BUSH.rimY - q.y) / (BUSH.ry * 1.1)) };
+      } else if (BUSH) { // พุ่ม: จุดสุ่มในพุ่มใบ (ไม่ใช่ขอบ)
+        const r = 0.12 + 0.78 * Math.sqrt(xr()), q = bushPt(r, Math.PI + xr() * Math.PI);
+        sl = { tree: true, br: r, x: q.x, y: q.y, t: xr(), c: 0.1 + 0.35 * r };
       } else if (BOUQ) { // ช่อ: จุดสุ่มในโดมเดิม ไม่ล้นกรวยปากห่อ (BQ_MOUTH)
         const r = Math.sqrt(xr()) * 0.98, th = xr() * 6.283, sx = Math.cos(th), sy = Math.sin(th);
         const y = Math.min(BOUQ.rimY + 6, BOUQ.cy + BOUQ.ry * r * (sy > 0 ? sy * 0.45 : sy));
@@ -655,7 +662,15 @@
     function takeSlot(g) { // จุดว่างที่ c ใกล้ "ระดับราคา" ของของขวัญที่สุด
       const r = clamp01(Math.log10(Math.max(1, g.d || 1)) / Math.log10(Math.max(10, BIG)));
       let bi = 0, bs = 1e9;
-      for (let i = 0; i < freeSlots.length; i++) { const s = Math.abs(freeSlots[i].c - r) + freeSlots[i].j; if (s < bs) { bs = s; bi = i; } }
+      // พุ่ม: โตตามลำดับ ไม้ค้ำ (12 ชิ้นแรก) → พุ่มใบ → ดอกใหญ่ขอบพัดเปิดเมื่อพุ่มมีของ ≥ 30 ชิ้น (ยอดไม้ค้ำได้ตลอด = ของแพงชิ้นแรก)
+      const inner = BUSH ? flowers.filter((f) => !f.sl.rim).length : 0, stakeFree = BUSH && inner < 12 && freeSlots.some((x) => x.br === 0.3);
+      for (let i = 0; i < freeSlots.length; i++) {
+        const fs = freeSlots[i];
+        if (BUSH && fs.rim && fs.c < 1 && inner < 30) continue;
+        if (stakeFree && fs.br !== 0.3 && fs.c < 1) continue;
+        if (BUSH && !fs.rim && fs.br !== 0.3 && fs.br > 0.3 + 0.72 * Math.sqrt(Math.min(1, (inner + 1) / 110))) continue; // ในพุ่ม: ลงเฉพาะส่วนที่พุ่มโตถึงแล้ว (ไม่ลอยนอกใบ)
+        const s = Math.abs(fs.c - r) + fs.j; if (s < bs) { bs = s; bi = i; }
+      }
       const sl = freeSlots[bi]; freeSlots[bi] = freeSlots[freeSlots.length - 1]; freeSlots.pop(); return sl;
     }
     function growBigs() { // ดอกใหญ่เสริม: เลือกจุดที่บน/กลางที่สุดจากตัวเลือกสุ่ม
@@ -769,7 +784,7 @@
           const f = flowers[k]; if (f.sl.stem && f.sl.stem.grow) feedStem(f.sl.stem, g, born, f);
           return;
         }
-        flowers.push({ g, img: giftImg(g.u), born, sl: !TREE && flowers.length < BASE_N ? slots[flowers.length] : takeSlot(g), jx: 0, jy: 0 });
+        flowers.push({ g, img: giftImg(g.u), born, sl: !TREE && !BUSH && flowers.length < BASE_N ? slots[flowers.length] : takeSlot(g), jx: 0, jy: 0 });
         const f = flowers[flowers.length - 1]; if (f.sl.stem && f.sl.stem.grow) feedStem(f.sl.stem, g, born, f);
       }
     }
@@ -1033,7 +1048,7 @@
         drawMeadow(time, 1);
       }
       if (BUSH) drawBushLeaves(time);
-      if (BUSH && bVer !== fVer) { bVer = fVer; bList = flowers.slice().sort((p, q) => (p.fs || 0) * (0.75 + Math.pow(p.sl.br || 0, 3)) - (q.fs || 0) * (0.75 + Math.pow(q.sl.br || 0, 3))); } // พุ่ม: ดอกเล็ก/ข้างในก่อน → ดอกใหญ่/วงนอกอยู่บนสุด (ไม่ถูกบัง)
+      if (BUSH && bVer !== fVer) { bVer = fVer; bList = flowers.slice().sort((p, q) => (p.sl.rim ? 1 : 0) - (q.sl.rim ? 1 : 0) || (p.fs || 0) - (q.fs || 0)); } // พุ่ม: ดอกเล็ก/ข้างในก่อน → ดอกใหญ่/วงนอกอยู่บนสุด (ไม่ถูกบัง)
       for (const f of BUSH ? bList : flowers) {
         if (f.sl.cl || f.sl.meadow) continue; // แปลงผัก: วาดไปพร้อมกอแล้ว (drawBed) · ดอกในทุ่งวาดไปแล้วข้างบน
         drawFlower(f, time, now);
@@ -1048,30 +1063,28 @@
         if (!f.sparkled && bk >= 1) { f.sparkled = true; if (f.born > 0) fx.sparkle(p.x + f.jx, p.y + f.jy, 4); }
         ctx.save(); ctx.translate(p.x + f.jx, p.y + f.jy); ctx.scale(s, s); ctx.rotate(Math.sin(time * 1.6 + f.sl.t * 9) * .12 * SWAY);
         if (f.fs == null) f.fs = Math.min(30 * FLOWER * (BOUQ ? 1.35 : f.sl.cl ? 0.9 : f.sl.meadow ? 0.8 : 1) * flowerSize(f.g.d, 2.5), 75); // ของแพงดอกใหญ่ขึ้น
-        const bz = BUSH ? 0.75 + 0.95 * Math.pow(f.sl.br || 0, 3) : 1; // พุ่ม: ดอกวงนอกใหญ่บานเป็นขอบพุ่ม · ข้างในดอกเล็กแน่น
-        if (BUSH) drawBushPetals(f, f.fs * dens * bz, (f.sl.br || 0) > 0.8);
-        drawGift(f.img, f.g.e, f.fs * dens * (BUSH ? 0.92 * bz : 1), f); ctx.restore(); // ดอกเยอะ = เล็กลงพร้อมกันทุกดอก
+        const rim = BUSH && f.sl.rim, bz = !BUSH ? 1 : rim ? 1.55 : 0.62, rs = rim ? 46 * FLOWER * (0.75 + 0.25 * dens) * Math.min(1.25, f.fs / 30) : 0; // พุ่ม: ข้างใน = ของขวัญชิ้นเล็กแซมในใบ · ขอบพัด = ดอกใหญ่กลีบแฉก
+        if (rim) drawBushPetals(f, rs);
+        drawGift(f.img, f.g.e, rim ? rs * 0.8 : f.fs * dens * bz, f); ctx.restore(); // ดอกเยอะ = เล็กลงพร้อมกันทุกดอก
       }
     }
     // พุ่ม: กลีบแหลม 8 กลีบรอบของขวัญ (สีสดตามของขวัญ ไล่ขาวที่ปลาย) — ของขวัญเป็นเกสรกลางดอก
-    const BUSH_COLS = ['#ff8a3d', '#ff6fa8', '#5ab8ff', '#ffc93d', '#b77dff', '#ff5d5d', '#3fd3b0', '#ff9ec4'];
-    function drawBushPetals(f, size, big) {
-      if (big) { // ดอกวงนอก: กลีบชั้นนอกแหลมยาวสีเข้ม + ชั้นในสีอ่อนสลับมุม (บานแบบดอกพัด)
-        const R2 = size * 1.05, n2 = 10, c2 = f.pc2 || (f.pc2 = (() => { const h = (f.pc || '#ff9ec4').slice(1), m = (i) => Math.round(parseInt(h.slice(i, i + 2), 16) * 0.55 + 255 * 0.45); return `rgb(${m(0)},${m(2)},${m(4)})`; })()); // กลีบนอก = สีเดียวกันแต่อ่อนกว่า
-        ctx.beginPath();
-        for (let k = 0; k < n2; k++) { const a = (k / n2) * Math.PI * 2 + 0.31, a1 = a - Math.PI / n2 * 0.9, a2 = a + Math.PI / n2 * 0.9;
-          ctx.moveTo(Math.cos(a1) * R2 * 0.3, Math.sin(a1) * R2 * 0.3); ctx.quadraticCurveTo(Math.cos(a1) * R2 * 0.8, Math.sin(a1) * R2 * 0.8, Math.cos(a) * R2, Math.sin(a) * R2);
-          ctx.quadraticCurveTo(Math.cos(a2) * R2 * 0.8, Math.sin(a2) * R2 * 0.8, Math.cos(a2) * R2 * 0.3, Math.sin(a2) * R2 * 0.3); ctx.closePath(); }
-        ctx.fillStyle = c2; ctx.fill(); ctx.lineWidth = Math.max(0.8, R2 * 0.04); ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.stroke();
-      }
-      const R = size * 0.8, n = 8;
-      if (f.pc == null) f.pc = BUSH_COLS[Math.abs(Math.round(f.sl.x * 7 + f.sl.y * 13)) % BUSH_COLS.length]; // สีตามตำแหน่ง → ดอกข้าง ๆ สีต่างกัน คงที่ทุกครั้งที่รีโหลด
-      if (f.pgR !== R) { f.pgR = R; f.pg = ctx.createRadialGradient(0, 0, R * 0.2, 0, 0, R); f.pg.addColorStop(0, f.pc); f.pg.addColorStop(0.7, f.pc); f.pg.addColorStop(1, '#fff6ea'); }
+    const BUSH_COLS = [['#ff7a1a', '#ffd08a'], ['#ff4f9a', '#ffc2dc'], ['#3d8bff', '#bfe0ff'], ['#ff5a3c', '#ffd2a8'], ['#b46bff', '#e6d0ff'], ['#ffb300', '#fff0b3']];
+    function bushStar(R, n, rot, inner) { // กลีบแฉกแหลม (ดอกพัด)
       ctx.beginPath();
-      for (let k = 0; k < n; k++) { const a = (k / n) * Math.PI * 2, a1 = a - Math.PI / n * 0.95, a2 = a + Math.PI / n * 0.95;
-        ctx.moveTo(Math.cos(a1) * R * 0.3, Math.sin(a1) * R * 0.3); ctx.quadraticCurveTo(Math.cos(a1) * R * 0.85, Math.sin(a1) * R * 0.85, Math.cos(a) * R, Math.sin(a) * R);
-        ctx.quadraticCurveTo(Math.cos(a2) * R * 0.85, Math.sin(a2) * R * 0.85, Math.cos(a2) * R * 0.3, Math.sin(a2) * R * 0.3); ctx.closePath(); }
-      ctx.fillStyle = f.pg; ctx.fill(); ctx.lineWidth = Math.max(0.8, R * 0.05); ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.stroke();
+      for (let k = 0; k < n; k++) { // กลีบโค้งปลายแหลม (ไม่ใช่ดาวแข็ง ๆ)
+        const a = rot + (k / n) * Math.PI * 2, w = Math.PI / n * 0.95, a1 = a - w, a2 = a + w;
+        ctx.moveTo(Math.cos(a1) * R * inner * 0.6, Math.sin(a1) * R * inner * 0.6);
+        ctx.quadraticCurveTo(Math.cos(a1) * R * 0.95, Math.sin(a1) * R * 0.95, Math.cos(a) * R, Math.sin(a) * R);
+        ctx.quadraticCurveTo(Math.cos(a2) * R * 0.95, Math.sin(a2) * R * 0.95, Math.cos(a2) * R * inner * 0.6, Math.sin(a2) * R * inner * 0.6);
+        ctx.closePath();
+      }
+    }
+    function drawBushPetals(f, size) { // ดอกใหญ่ขอบพัด: กลีบแฉก 2 ชั้น สีสด + ขอบขาว (ของขวัญเป็นเกสรกลางดอก)
+      if (f.pc == null) f.pc = BUSH_COLS[Math.abs(Math.round(f.sl.x * 7 + f.sl.y * 3)) % BUSH_COLS.length];
+      const R = size * 0.95;
+      bushStar(R, 8, -Math.PI / 2, 0.42); ctx.fillStyle = f.pc[0]; ctx.fill(); ctx.lineWidth = Math.max(1, R * 0.05); ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.stroke();
+      bushStar(R * 0.72, 8, -Math.PI / 2 + Math.PI / 8, 0.45); ctx.fillStyle = f.pc[1]; ctx.fill(); ctx.lineWidth = Math.max(0.8, R * 0.035); ctx.stroke();
     }
     function drawBushStake(time) { // ไม้ค้ำสีชมพูตั้งตรงจากดินถึงยอด (ไหวนิด ๆ ตามยอด)
       const top = BUSH.rimY - BUSH.ry * 1.05, sw = Math.sin(time * 0.9 + top * 0.02) * 3 * SWAY * (-top / 400);
@@ -1079,11 +1092,15 @@
       ctx.beginPath(); ctx.moveTo(0, BUSH.rimY + 4); ctx.quadraticCurveTo(sw * 0.3, (BUSH.rimY + top) / 2, sw, top + 10);
       ctx.lineWidth = 7; ctx.strokeStyle = '#e68bb0'; ctx.stroke(); ctx.lineWidth = 2.5; ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.stroke(); ctx.restore();
     }
-    function drawBushLeaves(time) { // ใบเขียวแซมหลังดอกแต่ละดอก (พุ่มฟูขึ้นตามจำนวนดอก) — ไหวเบา ๆ
-      for (const f of flowers) {
-        if (f.lv == null) { const base = Math.atan2(f.sl.y - BUSH.rimY + 30, f.sl.x); f.lv = [base - 0.9 + Math.random() * 0.5, base + 0.4 + Math.random() * 0.5]; }
-        const p = slotPoint(f.sl, time), L = (f.fs || 30) * dens * (0.6 + 0.6 * Math.pow(f.sl.br || 0, 2));
-        for (let k = 0; k < 2; k++) { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(f.lv[k] + Math.sin(time * 1.2 + f.sl.t * 7 + k) * 0.07 * SWAY); leafPath('oval', L); ctx.fillStyle = k ? '#43b764' : '#2f9e55'; ctx.fill(); ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(255,255,255,.28)'; ctx.stroke(); ctx.restore(); }
+    const BUSH_LV = BUSH ? Array.from({ length: 230 }, (_, i) => { const r = 0.1 + 0.85 * Math.sqrt((i + 0.5) / 230), th = Math.PI + ((i * 0.618034) % 1) * Math.PI, q = bushPt(r, th); return { r, x: q.x, y: q.y, a: th + (rnd() - 0.5) * 1.6, s: 15 + rnd() * 10, c: ['#2f9e55', '#43b764', '#5cc878', '#278a49'][i % 4], ph: rnd() * 6 }; }) : [];
+    let bushFill = 0, bfVer = -1;
+    function drawBushLeaves(time) { // พุ่มใบเขียวแน่น ขยายตามของขวัญที่อยู่ในพุ่ม (ใบไหวเบา ๆ)
+      if (bfVer !== fVer) { bfVer = fVer; const n = flowers.filter((f) => !f.sl.rim && f.sl.br !== 0.3).length; bushFill = n ? 0.2 + 0.72 * Math.sqrt(Math.min(1, n / 110)) : 0; } // พุ่มโตตามจำนวนของขวัญในพุ่ม
+      const lim = bushFill ? bushFill + 0.1 : 0, sc = 0.8 + 0.4 * dens;
+      for (const L of BUSH_LV) {
+        if (L.r > lim) continue;
+        ctx.save(); ctx.translate(L.x + Math.sin(time * 0.9 + L.y * 0.02) * 3 * SWAY * (-L.y / 400), L.y); ctx.rotate(L.a + Math.sin(time * 1.2 + L.ph) * 0.06 * SWAY);
+        leafPath('oval', L.s * sc); ctx.fillStyle = L.c; ctx.fill(); ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.stroke(); ctx.restore();
       }
     }
     function drawBigs(time, now) {

@@ -1592,7 +1592,9 @@
         else b.w *= 0.997; // ลอยกลางอากาศ → หมุนต่อเรื่อย ๆ
         b.rot += b.w; b.gnd = false; b.age = (b.age || 0) + 1;
       }
-      for (let it = 0; it < 4; it++) {
+      for (const b of bodies) b.nc = 0;
+      const ITER = bodies.length < 400 ? 8 : 4; // ของไม่เยอะ → แก้การชนหลายรอบ (กองแน่นแล้วไม่ซ้อน/ไม่เด้งไปมา)
+      for (let it = 0; it < ITER; it++) {
         // เรียงตามแกน x แล้วเช็กเฉพาะชิ้นที่ช่วง x ซ้อนกัน (เร็วพอสำหรับหลักพันชิ้น)
         const ord = bodies.slice().sort((p, q) => p.x - q.x);
         let maxR = 0; for (const b of bodies) if (b.r > maxR) maxR = b.r;
@@ -1604,14 +1606,17 @@
             if (Math.abs(dx) > min || Math.abs(dy) > min || a.gi !== c.gi) continue; // ชิงช้า: ชนเฉพาะในกระเช้าเดียวกัน
             const d2 = dx * dx + dy * dy;
             if (d2 >= min * min || d2 === 0) continue;
-            const d = Math.sqrt(d2), f = (min - d) / d, ma = a.r * a.r * (a.zz > 40 ? 6 : 1), mc = c.r * c.r * (c.zz > 40 ? 6 : 1), ka = mc / (ma + mc), kc = 1 - ka; // มวล ∝ พื้นที่
+            const d = Math.sqrt(d2), f = (min - d) / d, ma = a.r * a.r * (a.zz > 40 ? 6 : 1), mc = c.r * c.r * (c.zz > 40 ? 6 : 1), ka = Math.max(0.12, Math.min(0.88, mc / (ma + mc))), kc = 1 - ka; // มวล ∝ พื้นที่ (จำกัดส่วนต่าง: ชิ้นเล็กไม่ถูกดีดกระเด็นแรงเกินจริง)
             a.x -= dx * f * ka; a.y -= dy * f * ka; c.x += dx * f * kc; c.y += dy * f * kc;
+            if (it === 0) { a.nc++; c.nc++; }
             if (dy > min * 0.3) a.gnd = true; else if (dy < -min * 0.3) c.gnd = true; // ชิ้นบนวางอยู่บนชิ้นล่าง
             if (a.out && c.out && dy * dy > dx * dx * 0.5) { a.px += (a.x - a.px) * 0.08; c.px += (c.x - c.px) * 0.08; } // ทับกันนอกโหล → กองนิ่ง
           }
         }
         for (const b of bodies) constrain(b); // เหนือปากโหลก็มีผนัง (ช่องทางเข้า) กันกระเด็นออกนอกโหล
       }
+      // ชิ้นที่อัดแน่นชนรอบตัว (≥3 ชิ้น) → หน่วงความเร็ว ไม่เด้งชนกันไปมาตอนโดนชิ้นใหญ่ทับ
+      for (const b of bodies) if (b.nc >= 3 && !b.out) { b.px = b.x - (b.x - b.px) * 0.6; b.py = b.y - (b.y - b.py) * 0.6; }
       // ตกกระทบ = ความเร็วลงหายไปมากในเฟรมเดียว → ยุบตัว + ฝุ่น (+ โหลสั่นถ้าของใหญ่)
       for (const b of bodies) {
         const vout = b.y - b.py;

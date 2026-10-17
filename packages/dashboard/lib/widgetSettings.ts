@@ -286,6 +286,7 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
           ['gsakura', 'ลูกแก้วซากุระ', '🌸 พาสเทลน่ารัก', 'gl-sakura'],
           ['gstage', 'ลูกแก้วเวทีคอนเสิร์ต', '🎤 สายนักร้อง', 'gl-gstage'], ['gpiano', 'ลูกแก้วกล่องดนตรีเปียโน', '🎤 สายนักร้อง', 'gl-gpiano'],
         ] },
+        { key: 'float', label: '❄️ ของขวัญลอยฟุ้งเหมือนหิมะ', type: 'toggle', def: false, hint: 'เปิด = ของขวัญลอยไปมาทั่วลูกแก้วตลอดเวลา · ปิด = กองที่ฐาน' },
         { key: 'swirl', label: 'ของขวัญหมุนวนเมื่อมีของใหม่', type: 'toggle', def: true, hint: 'เหมือนเขย่าลูกแก้วหิมะเบา ๆ แล้วค่อย ๆ ตกกลับมากอง' },
         ...tint(() => true),
         { key: 'fullText', label: 'ข้อความตอนโหลเต็ม', type: 'text', def: 'โหลเต็มแล้ว! 🎉', when: (v) => v.full === 'reset' },

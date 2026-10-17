@@ -19,9 +19,9 @@ export const EFFECTS: [EffectName, string, NonNullable<Rule['action']['tint']>][
   ['vcake', '🎬 เค้กปาหน้า (วิดีโอ)', 'pink'], ['vcat', '🎬 แมวร่มชูชีพ (วิดีโอ)', 'pink'],
   ['animal', '🐾 สัตว์น่ารักออกมาเต้น', 'pink'], ['prank', '😈 แกล้งวีเจ (30 มุก)', 'pink'],
   ['chest', '🎁 กล่องสมบัติเด้งเปิด', 'gold'], ['bag', '💜 ถุงซูเปอร์แฟนเด้งเปิด', 'purple'],
-  ['pkbanner', '⚔️ ป้าย PK สไตล์ GPT', 'gold'],
+  ['pkbanner', '⚔️ ป้าย PK', 'gold'],
 ];
-/** ป้าย PK สไตล์ GPT (effect=pkbanner, action.style = <หมวด>-NN) — รูป overlay/public/pkb/<หมวด>-NN.webp · รูปย่อ /pkb/<หมวด>-NN.webp (dashboard) */
+/** ป้าย PK ภาพวาด (effect=pkbanner, action.style = <หมวด>-NN) — รูป overlay/public/pkb/<หมวด>-NN.webp · รูปย่อ /pkb/<หมวด>-NN.webp (dashboard) */
 export type PkBannerCat = 'start' | 'win' | 'lose' | 'draw' | 'mvp' | 'top2' | 'top3' | 'glove' | 'critical' | 'smoke' | 'extra';
 /** [หมวด, ชื่อ, คำบนป้าย, ทริกเกอร์ PK, ฝั่ง, ข้อความประกอบเริ่มต้น, แบบที่สวยสุด (ใช้เป็นรูปการ์ด)] */
 export const PKB_CATS: [PkBannerCat, string, string, string, '' | 'us' | 'them', string, string][] = [

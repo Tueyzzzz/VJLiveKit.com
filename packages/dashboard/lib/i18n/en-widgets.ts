@@ -1118,7 +1118,7 @@ export const EN_WIDGETS: Record<string, string> = {
   "ตำแหน่งแถบ": "Bar position",
   "✨ อัตโนมัติ (ฝั่งตรงข้ามแจ้งเตือน)": "✨ Auto (opposite the alert)",
   "ขนาดแถบ": "Bar size",
-  "🖼️ แถบกรอบ GPT": "🖼️ Illustrated frames",
+  "🖼️ แถบกรอบภาพวาด": "🖼️ Illustrated frames",
   "💗 ริบบิ้นหัวใจชมพู": "💗 Pink heart ribbon",
   "👑 มงกุฎทองเพชร": "👑 Gold diamond crown",
   "🎮 นีออนไซเบอร์": "🎮 Neon cyber",

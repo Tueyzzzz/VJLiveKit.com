@@ -3,9 +3,9 @@
  * ค่าที่บันทึกถูกส่งให้ overlay ผ่าน socket → จอเปลี่ยนทันทีโดยไม่ต้องเปลี่ยนลิงก์
  */
 
-/** แถบเป้าหมายกรอบ GPT 20 แบบ (overlay/public/goal/frame-NN.webp) — ใช้ทั้งวิดเจ็ตแถบเป้าหมาย และเป้าหมายโดเนท */
+/** แถบเป้าหมายกรอบภาพวาด 20 แบบ (overlay/public/goal/frame-NN.webp) — ใช้ทั้งวิดเจ็ตแถบเป้าหมาย และเป้าหมายโดเนท */
 const GOAL_FRAME_NAMES = ['💗 ริบบิ้นหัวใจชมพู', '👑 มงกุฎทองเพชร', '🎮 นีออนไซเบอร์', '🌙 กาแล็กซี่', '🌸 ซากุระ', '🍭 ลูกกวาด', '🏯 ทองไทย', '🐚 ทะเลเปลือกหอย', '🧸 หมีเท็ดดี้', '🔥 ไฟสายฟ้าอนิเมะ', '👼 ปีกนางฟ้า', '🎤 K-POP แท่งไฟ', '🍓 นมสตรอว์เบอร์รี', '🦄 ยูนิคอร์นสายรุ้ง', '🐱 หูแมวมิ้นต์', '❄️ หิมะน้ำแข็ง', '🎄 คริสต์มาส', '🎃 ฮาโลวีนน่ารัก', '🤍 มินิมอลขาวทอง', '🖤 มินิมอลดำเงิน'];
-const GOAL_FRAME_OPTS: [string, string, string, string][] = GOAL_FRAME_NAMES.map((n, i) => { const k = String(i + 1).padStart(2, '0'); return [`f-${k}`, n, '🖼️ แถบกรอบ GPT', `/overlay/goal/thumb-${k}.webp`]; });
+const GOAL_FRAME_OPTS: [string, string, string, string][] = GOAL_FRAME_NAMES.map((n, i) => { const k = String(i + 1).padStart(2, '0'); return [`f-${k}`, n, '🖼️ แถบกรอบภาพวาด', `/overlay/goal/thumb-${k}.webp`]; });
 
 export type FieldDef =
   | { key: string; label: string; type: 'range'; min: number; max: number; step: number; def: number; unit?: string; hint?: string; when?: (v: Values) => boolean }

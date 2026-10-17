@@ -615,6 +615,20 @@ export const WIDGET_SETTINGS: Record<string, WidgetSettingsDef> = {
       ] },
     ],
   },
+  giftjump: {
+    resettable: 'ล้างเหรียญและอันดับ',
+    sections: [
+      { title: 'เกม', fields: [
+        { key: 'speed', label: 'ความเร็ววิ่ง', type: 'range', min: 0.5, max: 2, step: 0.1, def: 1, unit: '×' },
+        { key: 'names', label: 'แสดงชื่อคนส่งเหนือกล่อง', type: 'toggle', def: true },
+        { key: 'minCoins', label: 'รับเฉพาะของขวัญตั้งแต่ (เหรียญ)', type: 'number', min: 0, def: 0 },
+      ] },
+      { title: 'ขนาดและตำแหน่ง', fields: [
+        size(),
+        { key: 'height', label: 'ความสูงส่วนเกม', type: 'range', min: 15, max: 70, step: 1, def: 34, unit: '% ของจอ' },
+      ] },
+    ],
+  },
   tugwar: {
     resettable: 'เริ่มรอบใหม่ (ล้างคะแนนทั้ง 2 ทีม)',
     sections: [

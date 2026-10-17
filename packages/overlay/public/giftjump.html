@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gift Jump Overlay</title>
+  <link rel="icon" href="favicon.svg" />
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;700&family=Mali:wght@700&display=swap" rel="stylesheet" />
+  <style>
+    html,body{margin:0;height:100%;background:transparent;overflow:hidden;font-family:'Kanit',sans-serif}
+    #cv{position:fixed;inset:0}
+    #hud{position:fixed;top:12px;left:50%;transform:translateX(-50%) scale(var(--k,1));transform-origin:50% 0;display:flex;gap:8px;align-items:center;pointer-events:none}
+    #hud.bottom{top:auto}
+    .pill{display:flex;align-items:center;gap:6px;padding:5px 14px;border-radius:999px;background:#fff;color:#8a5bd6;font-weight:700;font-size:20px;border:3px solid #ffd36b;box-shadow:0 4px 0 #f0b43c,0 8px 16px rgba(120,80,40,.2)}
+    .pill img{width:26px;height:26px}
+  </style>
+</head>
+<body>
+  <canvas id="cv"></canvas>
+  <div id="hud"><div class="pill"><img src="jump/coin.webp" alt="" /><span id="coins">0</span></div><div class="pill" id="best" hidden>👑 <span id="bestn"></span></div></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/overlay-client.js"></script>
+  <script src="js/juice.js"></script>
+  <script>
+  /*
+   * 🍄 เกมกระโดดชนกล่อง (ตัวละครเดิมของเรา สไตล์เกมแพลตฟอร์ม) — ภาพวาด GPT: jump/*.webp
+   * ฮีโร่วิ่งบนพื้นล่างจอ · ได้ของขวัญ = กล่องหัวใจลอยมาข้างหน้า → กระโดดเอาหัวชน → ของขวัญเด้งออกมา + เหรียญ + ชื่อคนส่ง
+   * ของแพง = กล่องใหญ่ เหรียญเยอะ · ของเข้ารัว ๆ = เข้าคิว วิ่งเร็วขึ้น · เหรียญ = เพชรรวม (จำในเครื่อง)
+   * พารามิเตอร์: scale=1 height=34 (% ของจอ ส่วนเกม) speed=1 names=1 minCoins=0
+   */
+  (function () {
+    const P = (k, d) => Overlay.param(k, d), num = (k, d) => { const v = Number(P(k, d)); return Number.isFinite(v) ? v : d; };
+    const SCALE = Math.max(0.4, Math.min(2, num('scale', 1))), HPCT = Math.max(15, Math.min(70, num('height', 34))) / 100, SPEED = Math.max(0.3, Math.min(3, num('speed', 1)));
+    const NAMES = P('names', '1') !== '0', MIN = Math.max(0, num('minCoins', 0));
+    document.getElementById('hud').style.setProperty('--k', String(SCALE));
+    const cv = document.getElementById('cv'), g = cv.getContext('2d'), DPR = Math.min(2, devicePixelRatio || 1);
+    let W = 0, H = 0;
+    const resize = () => { W = innerWidth; H = innerHeight; cv.width = W * DPR; cv.height = H * DPR; cv.style.width = W + 'px'; cv.style.height = H + 'px'; };
+    addEventListener('resize', resize); resize();
+    const IMG = {}, load = (n) => { const im = new Image(); im.src = 'jump/' + n + '.webp' + (window.VJL_VERSION ? '?v=' + window.VJL_VERSION : ''); IMG[n] = im; };
+    ['hero-run0', 'hero-run1', 'hero-jump', 'hero-idle', 'block', 'block-used', 'ground', 'cloud', 'coin', 'coin-edge', 'spark', 'bush'].forEach(load);
+    const ok = (n) => IMG[n] && IMG[n].complete && IMG[n].naturalWidth;
+    const gifts = {}; const giftImg = (u) => { if (!u || !/^https:\/\//.test(u)) return null; if (!gifts[u]) { const im = new Image(); im.src = u; gifts[u] = im; } return gifts[u]; };
+
+    // ---- โลก (หน่วย u = ความสูงส่วนเกม / 100) ----
+    const U = () => (H * HPCT * SCALE) / 100;
+    const JUMP = 16; // ความสูงกระโดด (หน่วย u) = ระยะหัวฮีโร่ถึงใต้กล่อง
+    const KEY = 'vjl-jump:' + (P('t', '') || P('username', 'demo')).slice(-24);
+    let total = 0, best = {}; try { const v = JSON.parse(localStorage.getItem(KEY) || '{}'); total = v.total || 0; best = v.best || {}; } catch { /* ignore */ }
+    const save = () => { try { localStorage.setItem(KEY, JSON.stringify({ total, best })); } catch { /* ignore */ } };
+    const $coins = document.getElementById('coins'), $best = document.getElementById('best'), $bestn = document.getElementById('bestn');
+    function hud() { $coins.textContent = Math.round(total).toLocaleString('en-US'); const b = Object.values(best).sort((a, c) => c.p - a.p)[0]; $best.hidden = !b; if (b) $bestn.textContent = b.n; }
+    hud();
+
+    const queue = [], blocks = [], pops = [], coins = [], texts = [];
+    let scroll = 0, speed = 0, t = 0;
+    const hero = { x: 0.3, y: 0, vy: 0, air: false, jumpFor: null, bump: 0 };
+    const fx = new Juice.Particles(300);
+    const sizeOf = (d) => 1 + Math.min(1.1, Math.log10(Math.max(1, d)) * 0.32); // ของแพง → กล่องใหญ่ขึ้น (สูงสุด ~2.1 เท่า)
+
+    function onGift(e) {
+      if (!e || e.type !== 'gift' || e.streaking) return;
+      const n = Math.max(1, e.repeatCount || 1), d = (e.diamondCount || 1) * n; if (d < MIN) return;
+      if (queue.length > 30) queue.shift();
+      queue.push({ img: e.giftImage || '', name: e.giftName || '', d, n, user: (e.user && (e.user.nickname || e.user.uniqueId)) || 'ผู้ชม', id: (e.user && (e.user.uniqueId || e.user.nickname)) || '?' });
+    }
+    Overlay.on('event', onGift);
+
+    let nextSpawn = 0;
+    function spawn(now) { // กล่องใหม่โผล่จากขอบขวา (ห่างจากกล่องก่อนหน้าพอให้กระโดดทัน)
+      if (!queue.length || now < nextSpawn) return;
+      const last = blocks[blocks.length - 1]; if (last && last.x > W - 200 * U() / 10) return;
+      const q = queue.shift(), s = sizeOf(q.d);
+      blocks.push({ q, x: W + 60, s, hit: false, bump: 0, img: giftImg(q.img) });
+      nextSpawn = now + Math.max(350, 1100 - queue.length * 60) / SPEED;
+    }
+
+    function step(dt) {
+      t += dt;
+      const u = U(), gy = H - u * 14; // ระดับพื้น (บนสุดของดิน)
+      const target = W * (blocks.length || queue.length ? 0.26 + Math.min(0.3, queue.length * 0.03) : 0.08) * SPEED; // มีงาน = วิ่งเร็ว (กล่องถึงตัวใน ~2.5 วิ) · ว่าง = เดินเล่น
+      speed += (target - speed) * Math.min(1, dt * 2.5); scroll += speed * dt;
+      const hx = W * hero.x, heroH = u * 30, G = 420 * u, jumpV = Math.sqrt(2 * G * (JUMP + 4) * u); // ขึ้นสูงกว่าใต้กล่องนิด → หัวชนตอนยังพุ่งขึ้น
+      // ชนกล่อง: กล่องเข้ามาในระยะ → กระโดด (ถึงจุดสูงสุดตอนกล่องอยู่เหนือหัวพอดี)
+      for (const b of blocks) {
+        b.x -= speed * dt; b.bump = Math.max(0, b.bump - dt * 4);
+        const tUp = jumpV / G, lead = speed * tUp;
+        if (!b.hit && !hero.air && b.x - hx < lead + u * 2 && b.x - hx > lead - u * 6) { hero.air = true; hero.vy = -jumpV; hero.jumpFor = b; }
+      }
+      spawn(performance.now());
+      if (hero.air) {
+        hero.vy += G * dt; hero.y += hero.vy * dt;
+        const b = hero.jumpFor;
+        if (b && !b.hit && hero.vy < 0) { // หัวแตะใต้กล่อง?
+          const bs = u * 12 * b.s, bBottom = gy - heroH - JUMP * u + u * 1.5;
+          if (gy + hero.y - heroH <= bBottom + 2 && Math.abs(b.x - hx) < bs) hitBlock(b, u, gy, heroH);
+        }
+        if (hero.y >= 0) { hero.y = 0; hero.vy = 0; hero.air = false; hero.jumpFor = null; fx.dust(hx, gy, 4); }
+      }
+      for (let i = blocks.length - 1; i >= 0; i--) if (blocks[i].x < -u * 30) blocks.splice(i, 1);
+      for (let i = pops.length - 1; i >= 0; i--) { const p = pops[i]; p.t += dt; p.vy = Math.min(p.vy + 420 * U() * 0.5 * dt, -U() * 6); /* เด้งขึ้นแล้วลอยค้างช้า ๆ (ไม่ตกใส่หัว) */ p.y += p.vy * dt; if (p.t > 2.4) pops.splice(i, 1); }
+      for (let i = coins.length - 1; i >= 0; i--) { const c = coins[i]; c.t += dt; c.vy += 420 * U() * 0.8 * dt; c.x += c.vx * dt - speed * dt * 0.5; c.y += c.vy * dt; if (c.t > 1.3) coins.splice(i, 1); }
+      for (let i = texts.length - 1; i >= 0; i--) { const x = texts[i]; x.t += dt; if (x.t > 2.6) texts.splice(i, 1); }
+      fx.step();
+    }
+
+    function hitBlock(b, u, gy, heroH) {
+      b.hit = true; b.bump = 1; hero.vy = Math.abs(hero.vy) * 0.25; // หัวชน → เด้งลง
+      const by = gy - heroH - JUMP * u - u * 6 * b.s;
+      pops.push({ img: b.img, emoji: '🎁', x: b.x, y: by - u * 8, vy: -u * 55, s: b.s, t: 0 });
+      const nC = Math.min(14, 3 + Math.round(Math.log10(Math.max(1, b.q.d)) * 3));
+      for (let i = 0; i < nC; i++) coins.push({ x: b.x, y: by, vx: (Math.random() - 0.5) * u * 60, vy: -u * (60 + Math.random() * 50), t: -i * 0.04, r: Math.random() * 6 });
+      fx.sparkle(b.x, by, 10, b.q.d >= 1000 ? '#ffe08a' : '#fff6e8'); if (b.q.d >= 1000) fx.confetti(b.x, by, 40);
+      if (NAMES) texts.push({ x: b.x, y: by - u * 26 * b.s, s: `${b.q.user} ${b.q.name ? b.q.name + ' ' : ''}×${b.q.n}`, t: 0 });
+      total += b.q.d; const cur = best[b.q.id] || { n: b.q.user, p: 0 }; cur.p += b.q.d; cur.n = b.q.user; best[b.q.id] = cur; save(); hud();
+    }
+
+    function drawImg(n, x, y, w, h, flip) { if (!ok(n)) return false; g.save(); g.translate(x, y); if (flip) g.scale(-1, 1); g.drawImage(IMG[n], -w / 2, -h, w, h); g.restore(); return true; }
+    function fit(n, h) { const im = IMG[n]; return ok(n) ? h * im.naturalWidth / im.naturalHeight : h; }
+    function draw() {
+      const u = U(), gy = H - u * 14, heroH = u * 30, hx = W * hero.x;
+      g.setTransform(DPR, 0, 0, DPR, 0, 0); g.clearRect(0, 0, W, H);
+      // เมฆ (พารัลแลกซ์ช้า) + พุ่มไม้
+      if (ok('cloud')) for (let i = 0; i < 4; i++) { const w = u * 30, x = ((i * W / 3.2 - scroll * 0.15) % (W + w * 2) + W + w * 2) % (W + w * 2) - w; drawImg('cloud', x, H - u * (70 + (i % 2) * 14), w, fit('cloud', w) ? w * IMG.cloud.naturalHeight / IMG.cloud.naturalWidth : w * 0.6); }
+      if (ok('bush')) for (let i = 0; i < 3; i++) { const h = u * 12, w = fit('bush', h), x = ((i * W / 2.3 - scroll * 0.6) % (W + w * 2) + W + w * 2) % (W + w * 2) - w; drawImg('bush', x, gy + u * 1, w, h); }
+      // พื้น (ไทล์ต่อกัน)
+      if (ok('ground')) { const s = u * 14, n = Math.ceil(W / s) + 2, off = -(scroll % s); for (let i = 0; i < n; i++) g.drawImage(IMG.ground, off + i * s, gy - u * 1, s, s + u); }
+      else { g.fillStyle = '#8fd17a'; g.fillRect(0, gy, W, u * 14); }
+      // กล่อง
+      for (const b of blocks) {
+        const bs = u * 12 * b.s, y = gy - heroH - JUMP * u - b.bump * u * 4;
+        if (!drawImg(b.hit ? 'block-used' : 'block', b.x, y, bs, bs)) { g.fillStyle = b.hit ? '#c9b49a' : '#ffd36b'; g.fillRect(b.x - bs / 2, y - bs, bs, bs); }
+        if (!b.hit && b.img && b.img.complete && b.img.naturalWidth) { g.globalAlpha = 0.9; const s2 = bs * 0.42; g.drawImage(b.img, b.x - s2 / 2, y - bs - s2 * 0.9, s2, s2); g.globalAlpha = 1; } // แอบโชว์ของขวัญที่อยู่ในกล่อง
+      }
+      // ของขวัญเด้งออก
+      for (const p of pops) {
+        const a = Math.min(1, (2.4 - p.t) / 0.5), s = u * 16 * p.s * Math.min(1, 0.4 + p.t * 3);
+        g.globalAlpha = Math.max(0, a);
+        const st = p.img && Juice.sticker ? Juice.sticker(p.img, s * DPR) : null;
+        if (st) g.drawImage(st, p.x - s * Juice.STICKER_PAD / 2, p.y - s * Juice.STICKER_PAD / 2, s * Juice.STICKER_PAD, s * Juice.STICKER_PAD);
+        else { g.font = Math.round(s * 0.8) + 'px serif'; g.textAlign = 'center'; g.fillText(p.emoji, p.x, p.y); }
+        g.globalAlpha = 1;
+      }
+      // เหรียญหมุน
+      for (const c of coins) { if (c.t < 0) continue; const w = u * 6, edge = Math.abs(Math.sin(t * 9 + c.r)); const n = edge < 0.35 ? 'coin-edge' : 'coin'; g.globalAlpha = Math.min(1, (1.3 - c.t) / 0.3); drawImg(n, c.x, c.y + w / 2, w * (n === 'coin' ? Math.max(0.35, edge) : 0.4), w); g.globalAlpha = 1; }
+      // ฮีโร่
+      const pose = hero.air ? 'hero-jump' : speed > u * 4 ? (Math.floor(scroll / (u * 9)) % 2 ? 'hero-run1' : 'hero-run0') : 'hero-idle';
+      if (!drawImg(pose, hx, gy + hero.y, fit(pose, heroH), heroH)) { g.fillStyle = '#ff7fb2'; g.fillRect(hx - heroH * 0.3, gy + hero.y - heroH, heroH * 0.6, heroH); }
+      // ชื่อคนส่ง
+      for (const x of texts) {
+        const a = Math.min(1, x.t / 0.2, (2.6 - x.t) / 0.5);
+        g.globalAlpha = Math.max(0, a); g.font = `700 ${Math.round(u * 6.4)}px Kanit, sans-serif`; g.textAlign = 'center'; g.lineJoin = 'round';
+        g.lineWidth = u * 1.1; g.strokeStyle = '#8a3f9e'; g.strokeText(x.s, x.x, x.y - x.t * u * 6); g.fillStyle = '#fff'; g.fillText(x.s, x.x, x.y - x.t * u * 6);
+        g.globalAlpha = 1;
+      }
+      fx.draw(g);
+    }
+    let last = performance.now();
+    (function loop(now) { const dt = Math.min(0.05, (now - last) / 1000); last = now; step(dt); draw(); requestAnimationFrame(loop); })(last);
+
+    if (!Overlay.connected) { // เดโม
+      const demo = [['Rose', 1], ['Finger Heart', 5], ['Perfume', 20], ['Doughnut', 30], ['Galaxy', 1000]], names = ['mimi', 'บิ๊ก', 'ต้นน้ำ', 'lisa'];
+      let cat = {}; fetch('/api/gifts').then((r) => r.json()).then(({ gifts: gs }) => { for (const x of gs || []) if (x.image) cat[x.name] = x.image; }).catch(() => {});
+      setInterval(() => { const [n, d] = demo[Math.floor(Math.random() * demo.length)], u2 = names[Math.floor(Math.random() * names.length)];
+        onGift({ type: 'gift', giftName: n, giftImage: cat[n] || '', diamondCount: d, repeatCount: 1, user: { uniqueId: u2, nickname: u2 } }); }, 1600);
+    }
+  })();
+  </script>
+</body>
+</html>

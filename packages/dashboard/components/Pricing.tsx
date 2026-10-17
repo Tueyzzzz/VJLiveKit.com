@@ -12,6 +12,7 @@ export const WIDGET_LABELS: Record<string, string> = {
   collect: 'สะสมของขวัญ (ลิงก์เดียว ทุกแบบ)',
   sign: 'ป้ายไฟ LED ข้อความวิ่ง',
   tugwar: 'เกมชักเย่อ 2 ทีม',
+  giftjump: 'เกมกระโดดชนกล่องของขวัญ',
   mascot: 'ตัวแทนวีเจ (มาสคอต)',
   pile: 'กองทับกัน',
   coinjar: 'Coin Jar',

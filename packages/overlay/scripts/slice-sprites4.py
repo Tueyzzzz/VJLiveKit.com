@@ -6,7 +6,9 @@ from PIL import Image, ImageFilter
 from scipy import ndimage as nd
 
 src, name = sys.argv[1], sys.argv[2]
-OUT = __file__.replace('\\', '/').rsplit('/scripts/', 1)[0] + '/public/fx/sp/'
+OUT = __file__.replace(chr(92), '/').rsplit('/scripts/', 1)[0] + '/public/' + (sys.argv[3] if len(sys.argv) > 3 else 'fx/sp') + '/'  # โฟลเดอร์ปลายทาง (ไม่ใส่ = fx/sp)
+NAMES = sys.argv[4].split(',') if len(sys.argv) > 4 else None  # ชื่อไฟล์ 4 ชิ้น (บนซ้าย บนขวา ล่างซ้าย ล่างขวา)
+MAXPX = int(sys.argv[5]) if len(sys.argv) > 5 else 256
 im = Image.open(src).convert('RGB'); a = np.asarray(im).astype(np.int16)
 mn = a.min(2); sp = a.max(2) - mn
 lab, _ = nd.label((mn >= 232) & (sp <= 20))
@@ -26,6 +28,6 @@ for i, (qy, qx) in enumerate([(0, 0), (0, 1), (1, 0), (1, 1)]):  # บนซ้�
     y0, y1, x0, x1 = ys.min(), ys.max(), xs.min(), xs.max()
     piece = rgba.copy(); piece[..., 3] = np.where(m, piece[..., 3], 0)
     c = Image.fromarray(piece).crop((max(0, x0 - 3), max(0, y0 - 3), min(W, x1 + 4), min(H, y1 + 4)))
-    c.thumbnail((256, 256), Image.LANCZOS)
-    c.save(f'{OUT}{name}-{i}.webp', 'WEBP', quality=90, alpha_quality=95, method=6)
+    c.thumbnail((MAXPX, MAXPX), Image.LANCZOS)
+    c.save(f'{OUT}{NAMES[i] if NAMES else name + "-" + str(i)}.webp', 'WEBP', quality=90, alpha_quality=95, method=6)
     print(name, i, c.size)

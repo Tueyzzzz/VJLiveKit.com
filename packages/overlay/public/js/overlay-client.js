@@ -65,7 +65,7 @@ window.Overlay = (function () {
   const unhide = () => { document.documentElement.style.visibility = ''; };
   if (firstCfg) { document.documentElement.style.visibility = 'hidden'; setTimeout(unhide, 5000); } // ต่อไม่ติด → โชว์ตามปกติหลัง 5 วิ
   // ปุ่ม "ล้าง/เริ่มใหม่" ใน Dashboard (resetAt เปลี่ยน) → ลบข้อมูลที่วิดเจ็ตจำไว้ (กองของขวัญ, อันดับ, เวลา)
-  const STORE_PREFIX = { giftjar: 'vjl-giftjar:', belly: 'vjl-belly:', aquarium: 'vjl-aquarium:', spacedome: 'vjl-spacedome:', snowglobe: 'vjl-snowglobe:', vehicle: 'vjl-vehicle:', garden: 'vjl-garden:', tree: 'vjl-tree:', coinjar: 'vjl-coinjar2:', pile: 'vjl-pile:', tugwar: 'vjl-tug:', timer: 'vjl-timer:', league: 'vjl-league:', topgifters: 'vjl-rank:gifts:', toplikers: 'vjl-rank:likes:' };
+  const STORE_PREFIX = { giftjar: 'vjl-giftjar:', belly: 'vjl-belly:', aquarium: 'vjl-aquarium:', spacedome: 'vjl-spacedome:', snowglobe: 'vjl-snowglobe:', vehicle: 'vjl-vehicle:', garden: 'vjl-garden:', tree: 'vjl-tree:', coinjar: 'vjl-coinjar2:', pile: 'vjl-pile:', tugwar: 'vjl-tug:', giftjump: 'vjl-jump:', timer: 'vjl-timer:', league: 'vjl-league:', topgifters: 'vjl-rank:gifts:', toplikers: 'vjl-rank:likes:' };
   try {
     const RESET_KEY = 'vjl-resetAt:' + widgetName + ':' + owner;
     if (cfg.resetAt && localStorage.getItem(RESET_KEY) !== String(cfg.resetAt)) {

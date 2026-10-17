@@ -24,7 +24,7 @@ const GROUPS: [string, string[]][] = [
   ['🏆 อันดับ & PK', ['topgifters', 'toplikers', 'pkmvp', 'league']],
   ['🔔 แจ้งเตือน & แชท', ['alerts', 'follower', 'chat', 'goal', 'timer', 'sign', 'tts']],
   ['✨ Actions & ตัวแทนวีเจ', ['fx', 'fxmenu', 'mascot']],
-  ['🎮 เกม', ['tugwar']],
+  ['🎮 เกม', ['tugwar', 'giftjump']],
   ['💸 รายได้', ['donate']],
 ];
 

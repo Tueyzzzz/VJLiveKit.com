@@ -38,16 +38,17 @@ async function main(): Promise<void> {
     }
   } catch (err) { console.warn('[migrate] pkmain failed', (err as Error).message); }
 
-  // วิดเจ็ตใหม่ (เกมชักเย่อ): แพลนที่แอดมินเคยบันทึกรายการวิดเจ็ตไว้ → เพิ่มให้ตามค่าเริ่มต้นของแพลนนั้น · ทำครั้งเดียว (ถอดออกเองภายหลังได้)
-  try {
-    const mark = path.join(process.env.SNAPSHOT_DIR ? path.dirname(process.env.SNAPSHOT_DIR) : path.resolve(process.cwd(), '../../data'), 'migrate-tugwar.done');
-    if (!fs.existsSync(mark)) {
-      const plans = getPlans(), add = plans.filter((p) => DEFAULT_PLANS.find((d) => d.code === p.code)?.features.widgets.includes('tugwar') && !p.features.widgets.includes('tugwar'));
-      if (add.length) await savePlans(add.map((p) => ({ ...p, features: { ...p.features, widgets: [...p.features.widgets, 'tugwar'] } }))); // บันทึกเฉพาะแพลนที่ขาด (ไม่แช่แข็งแพลนอื่น)
+  // วิดเจ็ตใหม่ (เกม): แพลนที่แอดมินเคยบันทึกรายการวิดเจ็ตไว้ → เพิ่มให้ตามค่าเริ่มต้นของแพลนนั้น · ทำครั้งเดียวต่อวิดเจ็ต (ถอดออกเองภายหลังได้)
+  for (const w of ['tugwar', 'giftjump'] as const) {
+    try {
+      const mark = path.join(process.env.SNAPSHOT_DIR ? path.dirname(process.env.SNAPSHOT_DIR) : path.resolve(process.cwd(), '../../data'), `migrate-${w}.done`);
+      if (fs.existsSync(mark)) continue;
+      const add = getPlans().filter((p) => DEFAULT_PLANS.find((d) => d.code === p.code)?.features.widgets.includes(w) && !p.features.widgets.includes(w));
+      if (add.length) await savePlans(add.map((p) => ({ ...p, features: { ...p.features, widgets: [...p.features.widgets, w] } }))); // บันทึกเฉพาะแพลนที่ขาด
       fs.mkdirSync(path.dirname(mark), { recursive: true }); fs.writeFileSync(mark, new Date().toISOString());
-      console.log(`[migrate] tugwar: เพิ่มเกมชักเย่อให้ ${add.length} แพลน`);
-    }
-  } catch (err) { console.warn('[migrate] tugwar failed', (err as Error).message); }
+      console.log(`[migrate] ${w}: เพิ่มให้ ${add.length} แพลน`);
+    } catch (err) { console.warn(`[migrate] ${w} failed`, (err as Error).message); }
+  }
 
   const app = await buildApp();
   await app.ready();

@@ -6,7 +6,7 @@ import { settings } from '../settings/index.js';
 import { trialEndOf, trialInfo, seedTrialHistory } from './trials.js';
 
 /** วิดเจ็ตทั้งหมดที่ระบบมี (ชื่อตรงกับไฟล์ /overlay/<type>.html) */
-export const WIDGET_TYPES = ['coinjar', 'giftjar', 'aquarium', 'spacedome', 'belly', 'snowglobe', 'vehicle', 'garden', 'tree', 'alerts', 'goal', 'chat', 'follower', 'topgifters', 'toplikers', 'pkmvp', 'timer', 'league', 'tts', 'fx', 'fxmenu', 'donate', 'collect', 'sign', 'pile', 'mascot', 'tugwar'] as const;
+export const WIDGET_TYPES = ['coinjar', 'giftjar', 'aquarium', 'spacedome', 'belly', 'snowglobe', 'vehicle', 'garden', 'tree', 'alerts', 'goal', 'chat', 'follower', 'topgifters', 'toplikers', 'pkmvp', 'timer', 'league', 'tts', 'fx', 'fxmenu', 'donate', 'collect', 'sign', 'pile', 'mascot', 'tugwar', 'giftjump'] as const;
 export type WidgetType = (typeof WIDGET_TYPES)[number];
 
 export function isWidgetType(t: string): t is WidgetType {
@@ -74,7 +74,7 @@ export const isPlanCode = (c: string): c is PlanCode => (PLAN_CODES as readonly 
 
 // ---- ชุดวิดเจ็ตแต่ละขั้น ----
 const W_FREE: WidgetType[] = ['alerts', 'goal', 'chat', 'follower', 'coinjar', 'collect', 'giftjar', 'aquarium', 'belly', 'spacedome', 'sign']; // + ป้ายไฟ LED (ทุกแบบ) // ตรงกับที่ใช้จริงบนเว็บ (Free เคยได้ 10 ตัวนี้)
-const W_STARTER: WidgetType[] = [...W_FREE, 'topgifters', 'toplikers', 'timer', 'fx', 'fxmenu', 'sign', 'donate', 'tugwar'];
+const W_STARTER: WidgetType[] = [...W_FREE, 'topgifters', 'toplikers', 'timer', 'fx', 'fxmenu', 'sign', 'donate', 'tugwar', 'giftjump'];
 // ชั่วคราว: Pro เดิมเคยได้ MVP/ลีก/มาสคอต — ยังให้ไว้จนกว่าเจ้าของจะตัดสินใจ (ไม่ลดของลูกค้าที่จ่ายแล้วแบบไม่บอก) · แก้ได้ที่ Admin › แพลน
 const W_PRO: WidgetType[] = [...W_STARTER, 'giftjar', 'aquarium', 'spacedome', 'belly', 'snowglobe', 'vehicle', 'garden', 'tree', 'pile', 'tts', 'pkmvp', 'league', 'mascot'];
 const W_PROMAX: WidgetType[] = [...new Set<WidgetType>([...W_PRO, 'pkmvp', 'league', 'mascot'])];

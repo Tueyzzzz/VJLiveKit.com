@@ -6,7 +6,7 @@ import { buildApp } from './app.js';
 import { setupRealtime } from './realtime/socket.js';
 import { config } from './config/index.js';
 import { disconnectDb, prisma } from './db/prisma.js';
-import { ensurePlans } from './plans/index.js';
+import { ensurePlans, getPlans, savePlans, DEFAULT_PLANS } from './plans/index.js';
 import { runtime } from './runtime.js';
 
 async function main(): Promise<void> {
@@ -37,6 +37,17 @@ async function main(): Promise<void> {
       console.log(`[migrate] pkmain: ลิงก์ FX ยังเล่น PK ให้ลูกค้าเดิม ${rows.length} คน`);
     }
   } catch (err) { console.warn('[migrate] pkmain failed', (err as Error).message); }
+
+  // วิดเจ็ตใหม่ (เกมชักเย่อ): แพลนที่แอดมินเคยบันทึกรายการวิดเจ็ตไว้ → เพิ่มให้ตามค่าเริ่มต้นของแพลนนั้น · ทำครั้งเดียว (ถอดออกเองภายหลังได้)
+  try {
+    const mark = path.join(process.env.SNAPSHOT_DIR ? path.dirname(process.env.SNAPSHOT_DIR) : path.resolve(process.cwd(), '../../data'), 'migrate-tugwar.done');
+    if (!fs.existsSync(mark)) {
+      const plans = getPlans(), add = plans.filter((p) => DEFAULT_PLANS.find((d) => d.code === p.code)?.features.widgets.includes('tugwar') && !p.features.widgets.includes('tugwar'));
+      if (add.length) await savePlans(add.map((p) => ({ ...p, features: { ...p.features, widgets: [...p.features.widgets, 'tugwar'] } }))); // บันทึกเฉพาะแพลนที่ขาด (ไม่แช่แข็งแพลนอื่น)
+      fs.mkdirSync(path.dirname(mark), { recursive: true }); fs.writeFileSync(mark, new Date().toISOString());
+      console.log(`[migrate] tugwar: เพิ่มเกมชักเย่อให้ ${add.length} แพลน`);
+    }
+  } catch (err) { console.warn('[migrate] tugwar failed', (err as Error).message); }
 
   const app = await buildApp();
   await app.ready();
